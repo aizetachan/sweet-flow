@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
-import { IconExternalLink, IconMessageCircle, IconMovie, IconPlus, IconSearch, IconStack2, IconWand, IconX } from "@tabler/icons-react";
+import type { ReactNode } from "react";
+import { IconExternalLink, IconMessageCircle, IconPlus, IconSearch, IconStack2, IconWand, IconX } from "@tabler/icons-react";
 import {
   childrenOf,
   codeOf,
@@ -52,8 +52,8 @@ export function Board() {
       <div className={cx("board__body", `cards-${cardSize}`)}>
         {p.levels.length === 1 ? (
           <div className="lane"><div className="lane__cards">{childrenOf(snap.nodes, null).map((n) => <UnitCard key={n.id} node={n} />)}</div></div>
-        ) : <Siblings nodes={roots} />}
-        {!scope && !filtersActive(filters) ? <AddBar parentId={null} big={!roots.length} /> : null}
+        ) : roots.map((r) => <Group key={r.id} node={r} />)}
+        {!scope && !filtersActive(filters) ? <AddBar big={!roots.length} /> : null}
       </div>
     </main>
   );
@@ -68,69 +68,58 @@ function Group({ node }: { node: ProdNode }) {
   const rowLevel = p.levels.length - 2;
   const li = levelIndex(p, node);
   const filters = useStore((s) => s.filters);
+  const createRow = useCreateRow();
   if (li === rowLevel) return <Lane row={node} />;
   const kids = childrenOf(snap.nodes, node.id);
   const prog = progressOf(snap, node);
+  const childLevel = p.levels[li + 1]!;
   return (
     <section className="group">
       <GroupHead node={node}>
         <span className="group__code">{codeOf(p, node)}</span>
         <span className="group__title">{node.title}</span>
         <span className="sf-faint sf-small">{levelOf(p, node).name} · {prog.done}/{prog.total} aprobados · {fmtDur(durationOf(snap, node))}</span>
+        <span className="group__spacer" />
+        {!filtersActive(filters) ? (
+          <Button size="sm" variant="ghost" title={`Nueva ${childLevel.name.toLowerCase()} al final de ${codeOf(p, node)}`} onClick={() => createRow(node.id)}>
+            <IconPlus size={14} /> {childLevel.name}
+          </Button>
+        ) : null}
       </GroupHead>
-      <Siblings nodes={kids} />
-      {!kids.length && !filtersActive(filters) ? <AddBar parentId={node.id} /> : null}
+      {kids.map((k) => <Group key={k.id} node={k} />)}
     </section>
   );
 }
 
-/** Sibling groups or lanes, with a "+ below" gap between each pair. */
-function Siblings({ nodes }: { nodes: ProdNode[] }) {
-  const active = filtersActive(useStore((s) => s.filters));
-  return (
-    <>
-      {nodes.map((n, i) => (
-        <div key={n.id}>
-          <Group node={n} />
-          {i < nodes.length - 1 && !active ? <InsertGap after={n} /> : null}
-        </div>
-      ))}
-    </>
-  );
-}
-
-/** Thin gap under a scene (or sequence): on hover, "+ Escena debajo" inserts a sibling right there. */
-function InsertGap({ after }: { after: ProdNode }) {
-  const snap = useSnap();
-  const { source, select } = useStore();
-  const level = levelOf(snap.production, after);
-  return (
-    <div className="gap">
-      <button className="gap__btn" onClick={() => select(source.insertAfter(after.id))}>
-        <IconPlus size={13} /> {level.name} debajo
-      </button>
-    </div>
-  );
-}
-
 /**
- * Square "+" at the end of the board (new sequence) or of an empty group (its
- * first scene). A non-empty group already adds scenes from its rows ("+" card
- * and the gap below each one), so it shows none.
+ * Creates a node under `parentId` and, down to the row level, its first child
+ * (a new sequence comes with its first scene), then selects the row.
  */
-function AddBar({ parentId, big }: { parentId: Id | null; big?: boolean }) {
+function useCreateRow(): (parentId: Id | null) => void {
   const snap = useSnap();
   const { source, select } = useStore();
+  return (parentId) => {
+    const p = snap.production;
+    const rowLevel = p.levels.length - 2;
+    const parent = parentId ? snap.nodes.find((n) => n.id === parentId) : undefined;
+    let li = parent ? levelIndex(p, parent) + 1 : 0;
+    let id = source.createNode(parentId, "");
+    for (; li < rowLevel; li++) id = source.createNode(id, "");
+    select(id);
+  };
+}
+
+/** Square "+" at the end of the board: a new top-level node (a sequence, with its first scene). */
+function AddBar({ big }: { big?: boolean }) {
+  const snap = useSnap();
+  const createRow = useCreateRow();
   const p = snap.production;
-  const parent = parentId ? snap.nodes.find((n) => n.id === parentId) : undefined;
-  const level = p.levels[parent ? levelIndex(p, parent) + 1 : 0];
-  if (!level) return null;
-  const name = level.name.toLowerCase();
-  const label = big ? `Crear la primera ${name}` : `Nueva ${name}${parent ? ` en ${codeOf(p, parent)}` : ""}`;
+  const name = p.levels[0]!.name.toLowerCase();
+  const label = big ? `Crear la primera ${name}` : `Nueva ${name}`;
   return (
     <div className={cx("addbar", big && "addbar--big")}>
       {big ? <p className="sf-muted">La producción está vacía. Empieza por la primera {name}: dentro irán sus {p.levels[1]?.name.toLowerCase() ?? "elementos"}s.</p> : null}
-      <button className="addbar__btn" title={label} aria-label={label} onClick={() => select(source.createNode(parentId, ""))}>
+      <button className="addbar__btn" title={label} aria-label={label} onClick={() => createRow(null)}>
         <IconPlus size={18} stroke={1.6} />
       </button>
     </div>
@@ -185,61 +174,16 @@ function Lane({ row }: { row: ProdNode }) {
   );
 }
 
-/**
- * "+" at the end of a lane: a new shot here (a short video) or a new scene
- * right after this one (a long video to extract shots from).
- */
+/** "+" at the end of a row: a new shot in that scene (the row grows to the right). */
 function AddCard({ row }: { row: ProdNode }) {
   const snap = useSnap();
   const { source, select } = useStore();
-  // Where the menu shows: fixed on screen, since the lane scrolls and would clip it.
-  const [at, setAt] = useState<{ x: number; y: number } | null>(null);
-  const open = at !== null;
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const off = (e: Event) => !ref.current?.contains(e.target as Node) && setAt(null);
-    window.addEventListener("mousedown", off);
-    window.addEventListener("scroll", off, true);
-    return () => {
-      window.removeEventListener("mousedown", off);
-      window.removeEventListener("scroll", off, true);
-    };
-  }, [open]);
   const p = snap.production;
-  const rowLevel = levelOf(p, row);
-  const unitLevel = p.levels[levelIndex(p, row) + 1]!;
-  const pick = (create: () => string) => {
-    setAt(null);
-    select(create());
-  };
+  const label = `Nuevo ${p.levels[levelIndex(p, row) + 1]!.name.toLowerCase()} en ${codeOf(p, row)}`;
   return (
-    <div className="addcard" ref={ref}>
-      <button
-        className="card card--add"
-        title="Añadir"
-        aria-haspopup="menu"
-        aria-expanded={open}
-        onClick={(e) => {
-          const r = e.currentTarget.getBoundingClientRect();
-          setAt(open ? null : { x: r.left + r.width / 2, y: r.top + r.height / 2 });
-        }}
-      >
-        <IconPlus size={24} stroke={1.5} />
-      </button>
-      {open ? (
-        <div className="menu addcard__menu" role="menu" style={{ left: at.x, top: at.y }}>
-          <button className="menu__item" role="menuitem" onClick={() => pick(() => source.createNode(row.id, ""))}>
-            <IconMovie size={15} />
-            <span className="menu__label">{unitLevel.name}<span className="menu__hint">Un vídeo corto, en {codeOf(p, row)}</span></span>
-          </button>
-          <button className="menu__item" role="menuitem" onClick={() => pick(() => source.insertAfter(row.id))}>
-            <IconStack2 size={15} />
-            <span className="menu__label">{rowLevel.name}<span className="menu__hint">Un vídeo largo del que extraer {unitLevel.name.toLowerCase()}s</span></span>
-          </button>
-        </div>
-      ) : null}
-    </div>
+    <button className="card card--add" title={label} aria-label={label} onClick={() => select(source.createNode(row.id, ""))}>
+      <IconPlus size={24} stroke={1.5} />
+    </button>
   );
 }
 

@@ -107,18 +107,15 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
   avatar**.
 - **Secciones** (Producción, Biblioteca, Equipo, Ajustes): barra **flotante
   centrada abajo**, para que el tablero tenga todo el ancho.
-- **"+" al final de cada fila:** del mismo tamaño que las tarjetas, sin texto.
-  Al pulsarlo se elige **plano** (un vídeo corto, en esa escena) o **escena**
-  (un vídeo largo del que extraer planos; se crea justo después).
-- **Añadir escenas y secuencias en el tablero:**
-  - Entre dos escenas (o secuencias), al pasar el ratón aparece una línea con
-    **"+ Escena debajo"**: crea una justo ahí, con el primer código libre.
-  - Al final del tablero, un **botón "+" cuadrado alineado a la izquierda**
-    (sin texto; el tooltip dice «Nueva secuencia»). Una secuencia vacía muestra
-    el mismo botón para su primera escena; con escenas no hace falta (ya están
-    el "+" de cada fila y la línea entre escenas).
-  - Con la producción vacía, una frase que explica qué va dentro y el mismo
-    botón "+".
+- **Crear en el tablero, un sitio por nivel:**
+  - **Plano:** el **"+"** al final de cada fila de escena (del tamaño de una
+    tarjeta, sin texto). La fila crece hacia la derecha; solo crea planos.
+  - **Escena:** botón **"+ Escena"** a la derecha de la cabecera de cada
+    secuencia; la crea al final de esa secuencia.
+  - **Secuencia:** botón **"+" cuadrado** al final del tablero, alineado a la
+    izquierda (sin texto; el tooltip lo dice). La secuencia nueva trae ya su
+    primera escena (SC010), así nunca hay secuencias vacías. Con la producción
+    vacía, una frase que explica qué va dentro y el mismo botón.
   - Lo creado se abre en el panel y empieza en Pendiente. Con filtros activos no
     se muestran (no se sabría dónde cae).
 - El **panel de trabajo** aparece al seleccionar un plano o una escena y es donde
