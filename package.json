@@ -9,9 +9,18 @@
   },
   "scripts": {
     "dev": "pnpm --filter @sweetflow/app dev",
+    "dev:desktop": "concurrently -k -n app,desktop -c cyan,magenta \"pnpm --filter @sweetflow/app dev\" \"pnpm --filter @sweetflow/desktop dev\"",
     "build": "pnpm -r build",
+    "build:desktop": "pnpm --filter @sweetflow/app build && pnpm --filter @sweetflow/desktop build",
+    "dist:mac": "pnpm build:desktop && pnpm --filter @sweetflow/desktop dist:mac",
+    "dist:win": "pnpm build:desktop && pnpm --filter @sweetflow/desktop dist:win",
     "typecheck": "pnpm -r typecheck",
-    "test": "pnpm -r test"
+    "test": "pnpm -r test",
+    "test:rules": "pnpm --filter @sweetflow/firebase-tests test:rules",
+    "emulators": "pnpm --filter @sweetflow/firebase-tests emulators"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.5"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

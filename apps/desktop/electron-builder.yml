@@ -1,0 +1,41 @@
+# Unsigned builds for the validation phase (docs/ARCHITECTURE.md §7.2).
+# Signing is added later (Developer ID + notarization / Trusted Signing)
+# without touching the app: fill in identity / signing options here.
+appId: com.sweetflow.app
+productName: Sweet Flow
+copyright: Copyright © Sweet Flow
+directories:
+  output: release
+  buildResources: build
+# Main, preload, mirror and the renderer are bundled into out/ by
+# scripts/build.mjs, so the package ships no node_modules at all.
+files:
+  - out/**
+  - "!out/**/*.map"
+  - package.json
+asar: true
+artifactName: "${productName}-${version}-${os}-${arch}.${ext}"
+publish:
+  provider: github
+  owner: aizetachan
+  repo: sweet-flow
+  releaseType: release
+mac:
+  category: public.app-category.video
+  target:
+    - target: dmg
+      arch: universal
+  identity: null
+  hardenedRuntime: false
+  notarize: false
+dmg:
+  sign: false
+win:
+  target:
+    - target: nsis
+      arch: x64
+  signAndEditExecutable: false
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true

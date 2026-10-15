@@ -1,0 +1,30 @@
+/**
+ * Contract between the Electron main process and the renderer. The preload
+ * exposes `SweetflowApi` as `window.sweetflow`; the main process answers the
+ * IPC channels below. Renderer code must treat `window.sweetflow` as optional
+ * (the same React app also runs in a plain browser).
+ */
+
+export interface SweetflowApi {
+  /** App version (package.json of the desktop shell). */
+  readonly version: string;
+  readonly platform: "darwin" | "win32" | "linux";
+  /** Native folder picker. Resolves to the chosen absolute path, or null if cancelled. */
+  pickFolder(): Promise<string | null>;
+  /** Shows a file or folder in Finder / Explorer. */
+  revealInFolder(path: string): Promise<void>;
+}
+
+export const IPC = {
+  pickFolder: "sf:pick-folder",
+  revealInFolder: "sf:reveal-in-folder",
+} as const;
+
+/** Passed to the renderer through `additionalArguments` (preload is sandboxed). */
+export const VERSION_ARG = "--sf-version=";
+
+declare global {
+  interface Window {
+    sweetflow?: SweetflowApi;
+  }
+}
