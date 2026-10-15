@@ -10,7 +10,7 @@
  */
 
 import { parseStamp, type Stamp } from "./clock";
-import { byNumber } from "./tree";
+import { byNumber, splitTrash } from "./tree";
 import type { Id, LevelDef, Member, Millis, ProdNode, Production, StatusDef } from "./types";
 
 /** Bump when an event's shape changes incompatibly. */
@@ -42,6 +42,9 @@ export type LogEventBody =
    */
   | { type: "node.moved"; id: Id; parentId: Id | null; order: number; number?: number }
   /** Removes the node and its whole subtree. */
+  | { type: "node.trashed"; id: Id }
+  /** `number`: a new one when its code was taken while it was in the trash. */
+  | { type: "node.restored"; id: Id; number?: number }
   | { type: "node.deleted"; id: Id };
 
 export type LogEvent = LogEventBody & {
@@ -121,6 +124,8 @@ const TYPES = new Set<string>([
   "node.updated",
   "node.renumbered",
   "node.moved",
+  "node.trashed",
+  "node.restored",
   "node.deleted",
 ]);
 
@@ -147,6 +152,8 @@ const wallOf = (s: Stamp): Millis => parseStamp(s)?.clock.wall ?? 0;
  * Deterministic: the same set of events always gives the same state.
  *
  * - Events apply in stamp order; per field, the last write wins.
+ * - A trashed node keeps its place and number but takes no part in number
+ *   clashes until it is restored.
  * - A deleted node ignores later events, and its subtree disappears (also
  *   children another device created concurrently).
  * - Siblings that end up with the same number are separated: the node whose
@@ -222,6 +229,20 @@ export function foldLog(events: LogEvent[]): LogState {
         if (reparented || e.number !== undefined) numberAt.set(e.id, e.at);
         break;
       }
+      case "node.trashed": {
+        const n = nodes.get(e.id);
+        if (n) nodes.set(e.id, { ...n, trashedAt: at, updatedAt: at, updatedBy: e.userId });
+        break;
+      }
+      case "node.restored": {
+        const n = nodes.get(e.id);
+        if (!n) break;
+        const { trashedAt: _gone, ...rest } = n;
+        nodes.set(e.id, { ...rest, number: e.number ?? n.number, updatedAt: at, updatedBy: e.userId });
+        // Back on the board it competes for its number like a node arriving there.
+        numberAt.set(e.id, e.at);
+        break;
+      }
       case "node.deleted":
         deleted.add(e.id);
         nodes.delete(e.id);
@@ -231,7 +252,8 @@ export function foldLog(events: LogEvent[]): LogState {
 
   const productionId = production?.id ?? "";
   const live = pruneOrphans([...nodes.values()].map((n) => ({ ...n, productionId })));
-  const conflicts = production ? separateClashes(production, live, numberAt) : [];
+  // Codes only clash on the board: what is in the trash keeps its number untouched.
+  const conflicts = production ? separateClashes(production, splitTrash(live).live, numberAt) : [];
 
   return { production, nodes: live, members: [...members.values()], conflicts, lastStamp: sorted.at(-1)?.at ?? null };
 }

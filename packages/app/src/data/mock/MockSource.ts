@@ -15,7 +15,10 @@ import {
   planInsertAfter,
   planMoveNode,
   planMoveNodes,
+  planRestoreNode,
   planSetNumber,
+  planTrashNode,
+  splitTrash,
   type Activity,
   type Id,
   type LevelDef,
@@ -41,6 +44,7 @@ export class MockSource implements DataSource {
     this.moods = moods;
     this.s = {
       ...seed,
+      trash: [],
       presence: [
         { uid: "u_laura", nodeId: seed.nodes.find((n) => n.title === "La linterna se enciende")?.id, at: Date.now() },
         { uid: "u_marc", nodeId: seed.nodes.find((n) => n.title === "Mar abierto")?.id, at: Date.now() },
@@ -134,12 +138,39 @@ export class MockSource implements DataSource {
     return plan.nodeId;
   }
 
+  trashNode(nodeId: Id): void {
+    const all = [...this.s.nodes, ...this.s.trash];
+    if (!planTrashNode(all, nodeId).events.length) return;
+    this.setAll(all.map((n) => (n.id === nodeId ? { ...n, trashedAt: Date.now() } : n)));
+  }
+
+  restoreNode(nodeId: Id): number | undefined {
+    const all = [...this.s.nodes, ...this.s.trash];
+    const plan = planRestoreNode(this.s.production, all, nodeId);
+    if (!plan.events.length) return undefined;
+    this.setAll(all.map((n) => {
+      if (n.id !== nodeId) return n;
+      const { trashedAt: _gone, ...rest } = n;
+      return { ...rest, number: plan.renumbered ?? n.number, updatedAt: Date.now(), updatedBy: this.s.me.uid };
+    }));
+    return plan.renumbered;
+  }
+
+  /** Board and trash from one list. */
+  private setAll(all: ProdNode[]): void {
+    const { live, trash } = splitTrash(all);
+    this.commit({ nodes: live, trash }, true);
+  }
+
   deleteNode(nodeId: Id): void {
-    const ids = new Set([nodeId, ...descendantsOf(this.s.nodes, nodeId).map((d) => d.id)]);
+    const all = [...this.s.nodes, ...this.s.trash];
+    const ids = new Set([nodeId, ...descendantsOf(all, nodeId).map((d) => d.id)]);
     const mediaIds = new Set(this.s.media.filter((m) => ids.has(m.nodeId)).map((m) => m.id));
+    const { live, trash } = splitTrash(all.filter((n) => !ids.has(n.id)));
     this.commit(
       {
-        nodes: this.s.nodes.filter((n) => !ids.has(n.id)),
+        nodes: live,
+        trash,
         media: this.s.media.filter((m) => !mediaIds.has(m.id)),
         takes: this.s.takes.filter((t) => !ids.has(t.nodeId) && !mediaIds.has(t.mediaId)),
         comments: this.s.comments.filter((c) => !ids.has(c.nodeId)),

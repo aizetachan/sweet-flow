@@ -8,8 +8,10 @@ import {
   IconLayoutBoard,
   IconLibraryPhoto,
   IconSettings,
+  IconTrash,
   IconUsers,
 } from "@tabler/icons-react";
+import { splitTrash } from "@sweetflow/domain";
 import { Avatar, AvatarStack, cx, IconButton, Spinner } from "@sweetflow/ui";
 import { useSnap, useStore, type View } from "../state/store";
 import { memberName } from "../state/selectors";
@@ -24,6 +26,7 @@ const NAV: Array<{ id: View; label: string; icon: typeof IconLayoutBoard }> = [
 /** Production sections, floating at the bottom centre so the board keeps the full width. */
 export function Dock() {
   const view = useStore((s) => s.view);
+  const trashed = useStore((s) => (s.snap ? splitTrash([...s.snap.nodes, ...s.snap.trash]).roots.length : 0));
   const set = useStore((s) => s.set);
   return (
     <nav className="dock" aria-label="Secciones de la producción">
@@ -33,6 +36,11 @@ export function Dock() {
           <span>{n.label}</span>
         </button>
       ))}
+      <button className={cx("dock__item", view === "trash" && "dock__item--on")} onClick={() => set({ view: "trash" })} title="Papelera de la producción">
+        <IconTrash size={17} stroke={1.6} />
+        <span>Papelera</span>
+        {trashed ? <span className="dock__count">{trashed}</span> : null}
+      </button>
       <span className="dock__sep" />
       <button className="dock__item" title="Ajustes de la producción" onClick={() => set({ modal: "levels" })}>
         <IconSettings size={17} stroke={1.6} />

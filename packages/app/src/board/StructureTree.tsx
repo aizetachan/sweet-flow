@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { IconExternalLink, IconArrowDown, IconArrowUp, IconChevronRight, IconFolderPlus, IconLayoutList, IconPlus, IconTrash } from "@tabler/icons-react";
 import { childrenOf, codeOf, isUnit, levelIndex, type ProdNode } from "@sweetflow/domain";
 import { cx, IconButton } from "@sweetflow/ui";
@@ -51,13 +50,7 @@ function TreeRow({ node, depth }: { node: ProdNode; depth: number }) {
   const open = !collapsed[node.id];
   const isScope = depth === 0 && scopeId === node.id;
   const drop = useNodeDrop(node, "y", !unit);
-  // Two-step delete (no native confirm dialogs: they are blocked in some hosts).
-  const [armed, setArmed] = useState(false);
-  useEffect(() => {
-    if (!armed) return;
-    const t = setTimeout(() => setArmed(false), 3000);
-    return () => clearTimeout(t);
-  }, [armed]);
+  const trashNodes = useStore((s) => s.trashNodes);
 
   return (
     <>
@@ -95,11 +88,7 @@ function TreeRow({ node, depth }: { node: ProdNode; depth: number }) {
           <IconButton size="sm" label="Insertar después" onClick={() => select(source.insertAfter(node.id))}><IconPlus size={13} /></IconButton>
           <IconButton size="sm" label="Subir" onClick={() => source.moveNode(node.id, -1)}><IconArrowUp size={13} /></IconButton>
           <IconButton size="sm" label="Bajar" onClick={() => source.moveNode(node.id, 1)}><IconArrowDown size={13} /></IconButton>
-          <IconButton size="sm" className={armed ? "danger" : undefined} label={armed ? `Pulsa otra vez para eliminar ${codeOf(p, node)} y su contenido` : "Eliminar"} onClick={() => {
-            if (!armed) return setArmed(true);
-            source.deleteNode(node.id);
-            if (selectedId === node.id) select(null);
-          }}><IconTrash size={13} /></IconButton>
+          <IconButton size="sm" label="Mover a la papelera (Supr)" onClick={() => trashNodes([node.id])}><IconTrash size={13} /></IconButton>
         </span>
       </div>
       {open && !unit ? kids.map((k) => <TreeRow key={k.id} node={k} depth={depth + 1} />) : null}

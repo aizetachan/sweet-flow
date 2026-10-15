@@ -87,6 +87,11 @@ export interface ProdNode {
   /** Breakdown: cast / props / locations linked to this node. */
   assetIds: Id[];
   selectedTakeId?: Id;
+  /**
+   * In the production's trash since then (docs/INTERFAZ.md §2.2); its subtree
+   * goes with it. Hidden from the board; its code can be reused meanwhile.
+   */
+  trashedAt?: Millis;
   updatedAt: Millis;
   updatedBy: Id;
 }

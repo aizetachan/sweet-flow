@@ -103,3 +103,29 @@ export function numberBetween(after: ProdNode, next: ProdNode | undefined, step:
 export function renumbered(siblings: ProdNode[], step: number): Map<Id, number> {
   return new Map([...siblings].sort(byNumber).map((s, i) => [s.id, (i + 1) * step]));
 }
+
+/**
+ * Board and trash (docs/INTERFAZ.md §2.2): a node is in the trash when it or
+ * an ancestor was trashed. `roots` are the trashed nodes not inside another
+ * trashed node — what the trash lists and restores.
+ */
+export function splitTrash(nodes: ProdNode[]): { live: ProdNode[]; trash: ProdNode[]; roots: ProdNode[] } {
+  const byId = new Map(nodes.map((n) => [n.id, n]));
+  const memo = new Map<Id, boolean>();
+  const trashed = (n: ProdNode, depth = 0): boolean => {
+    const known = memo.get(n.id);
+    if (known !== undefined) return known;
+    const parent = n.parentId ? byId.get(n.parentId) : undefined;
+    const v = n.trashedAt !== undefined || (!!parent && depth < 64 && trashed(parent, depth + 1));
+    memo.set(n.id, v);
+    return v;
+  };
+  const live: ProdNode[] = [];
+  const trash: ProdNode[] = [];
+  for (const n of nodes) (trashed(n) ? trash : live).push(n);
+  const roots = trash.filter((n) => {
+    const parent = n.parentId ? byId.get(n.parentId) : undefined;
+    return n.trashedAt !== undefined && !(parent && trashed(parent));
+  });
+  return { live, trash, roots };
+}

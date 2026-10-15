@@ -32,7 +32,10 @@ export interface Snapshot {
   productions: Production[];
   /** The open production and its collections. */
   production: Production;
+  /** Nodes on the board (not in the trash). */
   nodes: ProdNode[];
+  /** Nodes in the production's trash (with their subtrees); roots carry `trashedAt`. */
+  trash: ProdNode[];
   media: Media[];
   takes: Take[];
   comments: Comment[];
@@ -93,6 +96,11 @@ export interface DataSource {
   moveNodes(ids: Id[], parentId: Id | null, beforeId: Id | null): void;
   /** Change the number of a node's code by hand. Throws with a UI message if invalid or taken. */
   setNodeNumber(nodeId: Id, number: number): void;
+  /** Move to the production's trash, with everything inside (docs/INTERFAZ.md §2.2). */
+  trashNode(nodeId: Id): void;
+  /** Back from the trash to where it was; returns the new number if its code was taken meanwhile. */
+  restoreNode(nodeId: Id): number | undefined;
+  /** Delete for good (from the trash), with everything inside. */
   deleteNode(nodeId: Id): void;
   updateNode(nodeId: Id, patch: Partial<Pick<ProdNode, "title" | "notes" | "statusId" | "assigneeIds" | "assetIds">>): void;
 

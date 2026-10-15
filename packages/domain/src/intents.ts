@@ -11,7 +11,7 @@
 
 import { codeFor } from "./naming";
 import type { LogEventBody, NodePatch } from "./log";
-import { byNumber, childrenOf, descendantsOf, levelIndex, nextNumber, numberBetween, sortValue } from "./tree";
+import { byNumber, childrenOf, descendantsOf, levelIndex, nextNumber, numberBetween, sortValue, splitTrash } from "./tree";
 import type { Id, ProdNode, Production } from "./types";
 
 export interface Plan {
@@ -130,6 +130,28 @@ export function planSetNumber(p: Production, nodes: ProdNode[], nodeId: Id, numb
 
 export function planDeleteNode(nodes: ProdNode[], nodeId: Id): Plan {
   return nodes.some((n) => n.id === nodeId) ? { events: [{ type: "node.deleted", id: nodeId }] } : EMPTY;
+}
+
+/** Move a node (and what it contains) to the production's trash. `nodes`: all of them, trash included. */
+export function planTrashNode(nodes: ProdNode[], nodeId: Id): Plan {
+  const n = nodes.find((x) => x.id === nodeId);
+  return n && n.trashedAt === undefined ? { events: [{ type: "node.trashed", id: nodeId }] } : EMPTY;
+}
+
+/**
+ * Bring a node back from the trash to where it was. If its code was taken
+ * meanwhile, it gets the next free number (like a move, docs/INTERFAZ.md §2.1).
+ * `nodes`: all of them, trash included. Returns the new number in `renumbered`.
+ */
+export function planRestoreNode(p: Production, nodes: ProdNode[], nodeId: Id): Plan & { renumbered?: number } {
+  const n = nodes.find((x) => x.id === nodeId);
+  if (!n || n.trashedAt === undefined) return EMPTY;
+  const { live } = splitTrash(nodes);
+  const siblings = childrenOf(live, n.parentId);
+  if (!siblings.some((s) => s.number === n.number)) return { events: [{ type: "node.restored", id: nodeId }] };
+  const level = p.levels.find((l) => l.id === n.levelId);
+  const number = nextNumber(siblings, level?.step ?? 10);
+  return { events: [{ type: "node.restored", id: nodeId, number }], renumbered: number };
 }
 
 /** Only the fields that actually change, so concurrent edits of other fields survive. */

@@ -180,6 +180,8 @@ export class FirebaseSource implements DataSource {
       productions: l.myProductionIds.flatMap((id) => (l.productions[id] ? [l.productions[id]!] : [])),
       production,
       nodes: l.nodes,
+      // The production trash lands with stage C; until then deletes are for good.
+      trash: [],
       media: l.media.map((m) => this.withUrls(m)),
       takes: l.takes,
       comments: l.comments,
@@ -326,6 +328,14 @@ export class FirebaseSource implements DataSource {
 
   moveNode(nodeId: Id, dir: -1 | 1): void {
     this.call<MoveNodeRequest>(CALLABLES.moveNode, { productionId: this.prodId(), nodeId, dir });
+  }
+
+  trashNode(_nodeId: Id): void {
+    throw new NotImplemented("Papelera de la producción", "etapa C");
+  }
+
+  restoreNode(_nodeId: Id): number | undefined {
+    throw new NotImplemented("Papelera de la producción", "etapa C");
   }
 
   deleteNode(nodeId: Id): void {

@@ -24,7 +24,10 @@ import {
   planInsertAfter,
   planMoveNode,
   planMoveNodes,
+  planRestoreNode,
   planSetNumber,
+  planTrashNode,
+  splitTrash,
   planUpdateNode,
   serializeEvent,
   ZERO_HLC,
@@ -179,6 +182,11 @@ export class LocalSource implements DataSource {
     return plan.nodeId;
   }
 
+  /** Nodes on the board: what structure intents work on (the trash keeps its codes aside). */
+  private board(): ProdNode[] {
+    return splitTrash(this.loaded().nodes).live;
+  }
+
   private loaded(): LogState & { production: Production } {
     if (!this.state?.production) throw new Error("La producción aún se está cargando.");
     return this.state as LogState & { production: Production };
@@ -191,13 +199,15 @@ export class LocalSource implements DataSource {
     if (!s?.production) return;
     const members = s.members.some((m) => m.uid === this.me.uid) ? s.members : [this.me, ...s.members];
     const pending = this.unsaved.length;
+    const split = splitTrash(s.nodes);
     this.snapshot = {
       workspace: { id: "local", name: this.store.label, createdAt: s.production.createdAt },
       me: this.me,
       members,
       productions: [s.production],
       production: s.production,
-      nodes: s.nodes,
+      nodes: split.live,
+      trash: split.trash,
       media: [],
       takes: [],
       comments: [],
@@ -214,27 +224,38 @@ export class LocalSource implements DataSource {
 
   createNode(parentId: Id | null, title?: string): Id {
     const s = this.loaded();
-    return this.apply(planCreateNode(s.production, s.nodes, parentId, this.newId("n"), title))!;
+    return this.apply(planCreateNode(s.production, this.board(), parentId, this.newId("n"), title))!;
   }
 
   insertAfter(nodeId: Id): Id {
     const s = this.loaded();
-    return this.apply(planInsertAfter(s.production, s.nodes, nodeId, this.newId("n")))!;
+    return this.apply(planInsertAfter(s.production, this.board(), nodeId, this.newId("n")))!;
   }
 
   moveNode(nodeId: Id, dir: -1 | 1): void {
     const s = this.loaded();
-    this.apply(planMoveNode(s.production, s.nodes, nodeId, dir));
+    this.apply(planMoveNode(s.production, this.board(), nodeId, dir));
   }
 
   moveNodes(ids: Id[], parentId: Id | null, beforeId: Id | null): void {
     const s = this.loaded();
-    this.apply(planMoveNodes(s.production, s.nodes, ids, parentId, beforeId));
+    this.apply(planMoveNodes(s.production, this.board(), ids, parentId, beforeId));
   }
 
   setNodeNumber(nodeId: Id, number: number): void {
     const s = this.loaded();
-    this.apply(planSetNumber(s.production, s.nodes, nodeId, number));
+    this.apply(planSetNumber(s.production, this.board(), nodeId, number));
+  }
+
+  trashNode(nodeId: Id): void {
+    this.apply(planTrashNode(this.loaded().nodes, nodeId));
+  }
+
+  restoreNode(nodeId: Id): number | undefined {
+    const s = this.loaded();
+    const plan = planRestoreNode(s.production, s.nodes, nodeId);
+    this.apply(plan);
+    return plan.renumbered;
   }
 
   deleteNode(nodeId: Id): void {

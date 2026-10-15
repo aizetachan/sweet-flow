@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { codeOf, descendantsOf, isUnit, levelOf } from "@sweetflow/domain";
+import { codeOf, isUnit } from "@sweetflow/domain";
 import { Button, cx, Modal, Spinner } from "@sweetflow/ui";
 import { useSnap, useStore } from "./state/store";
 import { Dock, Topbar } from "./shell/Shell";
@@ -10,6 +10,7 @@ import { Board } from "./board/Board";
 import { DockedInspector, FloatingInspectors, WindowInspector } from "./inspector/Inspector";
 import { Modals } from "./settings/Modals";
 import { LibraryView, TeamView } from "./views/OtherViews";
+import { TrashView } from "./views/TrashView";
 
 /** Splash → dashboard → production (docs/INTERFAZ.md). Popped-out windows show one node. */
 export function App() {
@@ -43,13 +44,12 @@ function Production() {
             <SidePanel />
             <Board />
           </div>
-        ) : view === "library" ? <LibraryView /> : <TeamView />}
+        ) : view === "library" ? <LibraryView /> : view === "trash" ? <TrashView /> : <TeamView />}
       </div>
       <Dock />
       <FloatingInspectors />
       <Notice />
       <LeaveConfirm />
-      <DeleteConfirm />
       <DeleteKey />
       <Modals />
     </div>
@@ -81,55 +81,19 @@ function SidePanel() {
 }
 
 /** Leaving the production closes every floating panel and popped window: ask first. */
-/** What deleting the asked nodes takes with it, and a confirmation (docs/INTERFAZ.md §2.2). */
-function DeleteConfirm() {
-  const ask = useStore((s) => s.deleteAsk);
-  const snap = useStore((s) => s.snap);
-  const { set, confirmDelete } = useStore.getState();
-  if (!ask || !snap) return null;
-  const p = snap.production;
-  const nodes = ask.map((id) => snap.nodes.find((n) => n.id === id)).filter((n) => !!n);
-  if (!nodes.length) return null;
-  const inside = new Map<string, number>();
-  const gone = new Set(nodes.map((n) => n.id));
-  for (const n of nodes) for (const d of descendantsOf(snap.nodes, n.id)) gone.add(d.id);
-  for (const id of gone) {
-    if (ask.includes(id)) continue;
-    const name = levelOf(p, snap.nodes.find((n) => n.id === id)!).name.toLowerCase();
-    inside.set(name, (inside.get(name) ?? 0) + 1);
-  }
-  const media = snap.media.filter((m) => gone.has(m.nodeId)).length;
-  const comments = snap.comments.filter((c) => gone.has(c.nodeId)).length;
-  const what = nodes.length === 1 ? `${codeOf(p, nodes[0]!)}${nodes[0]!.title ? ` «${nodes[0]!.title}»` : ""}` : `${nodes.length} elementos (${nodes.map((n) => codeOf(p, n)).join(", ")})`;
-  const parts = [...inside].map(([name, n]) => `${n} ${name}${n === 1 ? "" : "s"}`);
-  if (media) parts.push(`${media} ${media === 1 ? "imagen o vídeo" : "imágenes y vídeos"}`);
-  if (comments) parts.push(`${comments} comentario${comments === 1 ? "" : "s"}`);
-  return (
-    <Modal title="Eliminar" onClose={() => set({ deleteAsk: null })} width={440}>
-      <p>¿Eliminar {what}?</p>
-      {parts.length ? <p className="sf-muted">También se eliminará lo que contiene: {parts.join(", ")}.</p> : null}
-      <p className="sf-muted sf-small">No se puede deshacer. Los códigos que queden libres se podrán volver a usar.</p>
-      <div className="modal-actions">
-        <Button onClick={() => set({ deleteAsk: null })}>Cancelar</Button>
-        <Button className="danger" autoFocus onClick={confirmDelete}>Eliminar</Button>
-      </div>
-    </Modal>
-  );
-}
-
-/** Delete / Backspace on the board asks to delete the selection (never while typing). */
+/** Delete / Backspace on the board moves the selection to the trash (never while typing). */
 function DeleteKey() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Delete" && e.key !== "Backspace") return;
       const t = e.target as HTMLElement | null;
       if (t?.closest("input, textarea, select, [contenteditable=true], [role=dialog]")) return;
-      const { multi, selectedId, deleteAsk, requestDelete } = useStore.getState();
-      if (deleteAsk) return;
+      const { multi, selectedId, trashNodes, view } = useStore.getState();
+      if (view !== "board") return;
       const ids = multi.length ? multi : selectedId ? [selectedId] : [];
       if (!ids.length) return;
       e.preventDefault();
-      requestDelete(ids);
+      trashNodes(ids);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -157,7 +121,13 @@ function LeaveConfirm() {
 
 function Notice() {
   const notice = useStore((s) => s.notice);
-  return notice ? <div className="notice" role="status">{notice}</div> : null;
+  if (!notice) return null;
+  return (
+    <div className="notice" role="status">
+      {notice.text}
+      {notice.action ? <button className="notice__action" onClick={notice.action.run}>{notice.action.label}</button> : null}
+    </div>
+  );
 }
 
 function PoppedWindow() {

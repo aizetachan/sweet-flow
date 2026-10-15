@@ -69,7 +69,7 @@ function Group({ node }: { node: ProdNode }) {
   const li = levelIndex(p, node);
   const filters = useStore((s) => s.filters);
   const createRow = useCreateRow();
-  const requestDelete = useStore((s) => s.requestDelete);
+  const trashNodes = useStore((s) => s.trashNodes);
   if (li === rowLevel) return <Lane row={node} />;
   const kids = childrenOf(snap.nodes, node.id);
   const prog = progressOf(snap, node);
@@ -86,7 +86,7 @@ function Group({ node }: { node: ProdNode }) {
             <IconPlus size={14} /> {childLevel.name}
           </Button>
         ) : null}
-        <IconButton size="sm" className="head__del" label={`Eliminar ${codeOf(p, node)} y todo su contenido`} onClick={() => requestDelete([node.id])}><IconTrash size={14} /></IconButton>
+        <IconButton size="sm" className="head__del" label={`Mover ${codeOf(p, node)} y su contenido a la papelera`} onClick={() => trashNodes([node.id])}><IconTrash size={14} /></IconButton>
       </GroupHead>
       {kids.map((k) => <Group key={k.id} node={k} />)}
     </section>
@@ -135,7 +135,7 @@ function GroupHead({ node, children }: { node: ProdNode; children: ReactNode }) 
 
 function Lane({ row }: { row: ProdNode }) {
   const snap = useSnap();
-  const { filters, source, requestDelete } = useStore();
+  const { filters, source, trashNodes } = useStore();
   const p = snap.production;
   const all = childrenOf(snap.nodes, row.id);
   const active = filtersActive(filters);
@@ -166,7 +166,7 @@ function Lane({ row }: { row: ProdNode }) {
             <IconWand size={14} /> Keyframes vacíos ({empty.length})
           </Button>
         ) : null}
-        <IconButton size="sm" className="head__del" label={`Eliminar ${codeOf(p, row)} y sus ${unitLevel.name.toLowerCase()}s`} onClick={() => requestDelete([row.id])}><IconTrash size={14} /></IconButton>
+        <IconButton size="sm" className="head__del" label={`Mover ${codeOf(p, row)} y sus ${unitLevel.name.toLowerCase()}s a la papelera`} onClick={() => trashNodes([row.id])}><IconTrash size={14} /></IconButton>
       </div>
       <div className={cx("lane__cards", endDrop.over && "dnd-end")} {...endDrop.props}>
         <SceneCard node={row} />

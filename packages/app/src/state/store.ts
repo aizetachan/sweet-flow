@@ -6,14 +6,14 @@
  */
 
 import { create } from "zustand";
-import type { Id } from "@sweetflow/domain";
+import { codeOf, type Id } from "@sweetflow/domain";
 import type { DataSource, Snapshot } from "../data/source";
 import type { Library, LibraryState, Pin } from "../data/library";
 import { createLibrary } from "../data";
 import { closePoppedWindow, closePoppedWindows, focusPoppedWindow, hostWindows, onFlashRequest, openerShare, popOutWindow, watchOpener, type PoppedWindow } from "./windows";
 
 export type Phase = "dashboard" | "production" | "window";
-export type View = "board" | "library" | "team";
+export type View = "board" | "library" | "team" | "trash";
 export type CardSize = "s" | "m" | "l";
 export type PanelTab = "produce" | "cut" | "review" | "activity";
 export type DashLayout = "grid" | "list";
@@ -21,6 +21,12 @@ export type DashSection = "home" | "recent" | "trash" | "settings";
 export type SettingsTab = "profile" | "storage" | "integrations" | "about";
 /** Left column of the production screen: the work panel or the structure tree. */
 export type SideTab = "work" | "structure";
+
+/** Short message at the bottom, optionally with one action (e.g. "Deshacer"). */
+export interface Notice {
+  text: string;
+  action?: { label: string; run: () => void };
+}
 
 export interface Filters {
   query: string;
@@ -70,13 +76,11 @@ interface UiState {
   collapsed: Record<Id, boolean>;
   floating: FloatingPanel[];
   /** Short message at the bottom of the screen (e.g. a code changed on move). */
-  notice: string | null;
+  notice: Notice | null;
   /** Popped window: glowing frame while the main window points at it. */
   flash: number;
   /** Windows popped out from this one (own OS/browser windows). */
   popped: PoppedWindow[];
-  /** Nodes waiting for the user to confirm their deletion. */
-  deleteAsk: Id[] | null;
   /** Asking to confirm leaving the production with windows open; holds where to go. */
   leaveAsk: { folderId?: Id | null } | null;
 }
@@ -111,10 +115,9 @@ interface Store extends UiState {
   focusPopped: (nodeId: Id) => void;
   /** Close a node's popped window and show it in the side panel again. */
   bringBack: (nodeId: Id) => void;
-  notify: (text: string) => void;
-  /** Ask to delete nodes (with everything inside); `confirmDelete` does it. */
-  requestDelete: (ids: Id[]) => void;
-  confirmDelete: () => void;
+  notify: (text: string, action?: Notice["action"]) => void;
+  /** Move nodes (with everything inside) to the production's trash, with "Deshacer". */
+  trashNodes: (ids: Id[]) => void;
 }
 
 /** Stand-in while no production is open: views that need a source are not mounted then. */
@@ -166,7 +169,6 @@ export const useStore = create<Store>((set, get) => ({
   flash: 0,
   popped: [],
   leaveAsk: null,
-  deleteAsk: null,
   sideTab: "work",
   set: (patch) => set(patch),
   select: (id, tab, stay) => {
@@ -197,6 +199,8 @@ export const useStore = create<Store>((set, get) => ({
       queueMicrotask(() => {
         if (snap.nodes.some((n) => n.id === nodeId)) {
           get().select(nodeId);
+        } else if (snap.trash.some((n) => n.id === nodeId)) {
+          get().notify("Ese elemento está en la papelera de la producción.");
         } else {
           get().library.setPinned({ entryId: id, nodeId }, false);
           get().notify("Ese elemento ya no existe en la producción: lo he quitado de Fijados.");
@@ -223,7 +227,7 @@ export const useStore = create<Store>((set, get) => ({
     unsubscribeSource = () => undefined;
     if (!sourceIsShared) get().source.dispose?.();
     sourceIsShared = false;
-    set({ ...PANEL_RESET, source: IDLE, snap: null, productionId: null, phase: "dashboard", popped: [], leaveAsk: null, deleteAsk: null, ...(folderId !== undefined ? { folderId, dashSection: "home" as DashSection } : {}) });
+    set({ ...PANEL_RESET, source: IDLE, snap: null, productionId: null, phase: "dashboard", popped: [], leaveAsk: null, ...(folderId !== undefined ? { folderId, dashSection: "home" as DashSection } : {}) });
   },
   requestLeave: (folderId) => {
     const { floating, popped } = get();
@@ -252,30 +256,39 @@ export const useStore = create<Store>((set, get) => ({
   },
   closeFloating: (key) => set({ floating: get().floating.filter((f) => f.key !== key) }),
   updateFloating: (key, patch) => set({ floating: get().floating.map((f) => (f.key === key ? { ...f, ...patch } : f)) }),
-  notify: (text) => {
+  notify: (text, action) => {
     clearTimeout(noticeTimer);
-    set({ notice: text });
-    noticeTimer = setTimeout(() => set({ notice: null }), 5000);
+    set({ notice: { text, action } });
+    noticeTimer = setTimeout(() => set({ notice: null }), action ? 8000 : 5000);
   },
-  requestDelete: (ids) => ids.length && set({ deleteAsk: ids }),
-  confirmDelete: () => {
-    const { deleteAsk, snap, source, selectedId, multi } = get();
-    set({ deleteAsk: null });
-    if (!deleteAsk || !snap) return;
-    const asked = new Set(deleteAsk);
-    // A node inside another one being deleted goes with it.
+  trashNodes: (ids) => {
+    const { snap, source, selectedId, multi } = get();
+    if (!snap || !ids.length) return;
+    const asked = new Set(ids);
+    const byId = new Map(snap.nodes.map((n) => [n.id, n]));
+    // A node inside another one being trashed goes with it.
     const isInside = (id: Id) => {
-      for (let n = snap.nodes.find((x) => x.id === id); n?.parentId; n = snap.nodes.find((x) => x.id === n!.parentId)) if (asked.has(n.parentId)) return true;
+      for (let n = byId.get(id); n?.parentId; n = byId.get(n.parentId)) if (asked.has(n.parentId)) return true;
       return false;
     };
-    const top = deleteAsk.filter((id) => !isInside(id));
+    const top = ids.filter((id) => byId.has(id) && !isInside(id));
+    if (!top.length) return;
+    const gone = new Set(snap.nodes.filter((n) => asked.has(n.id) || isInside(n.id)).map((n) => n.id));
     for (const id of top) {
       closePoppedWindow(id);
-      source.deleteNode(id);
+      source.trashNode(id);
     }
-    const gone = new Set(snap.nodes.filter((n) => asked.has(n.id) || isInside(n.id)).map((n) => n.id));
     if (selectedId && gone.has(selectedId)) get().select(null);
     if (multi.some((id) => gone.has(id))) set({ multi: multi.filter((id) => !gone.has(id)) });
+    const p = snap.production;
+    const what = top.length === 1 ? codeOf(p, byId.get(top[0]!)!) : `${top.length} elementos`;
+    get().notify(`${what} a la papelera de la producción.`, {
+      label: "Deshacer",
+      run: () => {
+        for (const id of top) get().source.restoreNode(id);
+        set({ notice: null });
+      },
+    });
   },
   focusPopped: (nodeId) => focusPoppedWindow(nodeId),
   bringBack: (nodeId) => {

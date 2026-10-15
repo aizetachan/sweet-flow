@@ -139,19 +139,28 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
   siempre se sepa qué es cada cosa. Si el número ya existe en ese padre, se
   avisa y no se cambia.
 
-### 2.2 Eliminar
+### 2.2 Papelera de la producción
 
-- **Dónde:**
+- **Quitar del tablero** lo manda a la papelera de la producción, con todo lo
+  que contiene. No pide confirmación: avisa abajo («SC020 a la papelera de la
+  producción») con **Deshacer**.
+- **Dónde se quita:**
   - Papelera en la cabecera del panel (a la izquierda de fijar).
   - Papelera en la cabecera de cada secuencia y de cada escena; aparece al
     pasar el ratón.
   - Tecla **Supr** (o borrar) con lo seleccionado en el tablero o el árbol;
     con selección múltiple, todo lo seleccionado. Nunca mientras se escribe.
-  - En el árbol de Estructura, como hasta ahora.
-- **Siempre pide confirmación** y dice qué se va con ello: «También se
-  eliminará lo que contiene: 2 escenas, 6 planos, 2 imágenes y vídeos».
-- No se puede deshacer. Si lo eliminado estaba en una ventana aparte, la
-  ventana se cierra; si estaba fijado, desaparece de Fijados al abrirlo.
+  - En el árbol de Estructura.
+- **Papelera** en la barra de secciones de abajo, con el número de elementos.
+  Lista cada elemento con su código, título, dónde estaba, qué contiene y
+  cuándo se quitó:
+  - **Restaurar** lo devuelve a su sitio. Si su código se ha usado mientras
+    tanto (los códigos de la papelera quedan libres), recibe el siguiente libre
+    y lo avisa («SC040 ha vuelto como SC050»), con **Ver** para ir a él.
+  - **Eliminar definitivamente** y **Vaciar papelera** piden pulsar dos veces.
+    Eso sí borra para siempre.
+- No se vacía sola. Si lo quitado estaba en una ventana aparte, se cierra; si
+  estaba fijado, al pulsarlo avisa de que está en la papelera.
 
 ## 3. Ventanas aparte
 

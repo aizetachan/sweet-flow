@@ -12,7 +12,10 @@ import {
   planInsertAfter,
   planMoveNode,
   planMoveNodes,
+  planRestoreNode,
   planSetNumber,
+  planTrashNode,
+  splitTrash,
   planUpdateNode,
   ZERO_HLC,
   type Hlc,
@@ -149,5 +152,36 @@ describe("structure intents", () => {
     run((s) => planDeleteNode(s.nodes, a));
     expect(state().nodes).toEqual([]);
     expect(run((s) => planDeleteNode(s.nodes, "nope")).events).toEqual([]);
+  });
+
+  it("trashes a subtree, frees its code and restores it with a new number if taken", () => {
+    const { run, state } = session();
+    const sq = run((s) => planCreateNode(s.production!, s.nodes, null, "tsq")).nodeId!;
+    run((s) => planCreateNode(s.production!, s.nodes, sq, "tsc10", "A"));
+    const sc20 = run((s) => planCreateNode(s.production!, s.nodes, sq, "tsc20", "B")).nodeId!;
+    run((s) => planCreateNode(s.production!, s.nodes, sc20, "tsh", "Plano"));
+    run((s) => planTrashNode(s.nodes, sc20));
+
+    const live = () => splitTrash(state().nodes).live;
+    expect(live().map((n) => n.id).sort()).toEqual(["tsc10", "tsq"]);
+    expect(splitTrash(state().nodes).roots.map((n) => n.id)).toEqual([sc20]);
+
+    // While it is in the trash its code is free on the board.
+    run((s) => planCreateNode(s.production!, splitTrash(s.nodes).live, sq, "tsc20b", "C"));
+    expect(childrenOf(live(), sq).map((n) => `${n.number}:${n.title}`)).toEqual(["10:A", "20:C"]);
+
+    const plan = run((s) => planRestoreNode(s.production!, s.nodes, sc20));
+    expect((plan as { renumbered?: number }).renumbered).toBe(30);
+    expect(childrenOf(live(), sq).map((n) => `${n.number}:${n.title}`)).toEqual(["10:A", "20:C", "30:B"]);
+    expect(live().some((n) => n.id === "tsh")).toBe(true);
+  });
+
+  it("restores with its own number when it is still free", () => {
+    const { run, state } = session();
+    const a = run((s) => planCreateNode(s.production!, s.nodes, null, "ra")).nodeId!;
+    run((s) => planTrashNode(s.nodes, a));
+    run((s) => planRestoreNode(s.production!, s.nodes, a));
+    expect(state().nodes.find((n) => n.id === a)).toMatchObject({ number: 10 });
+    expect(state().nodes.find((n) => n.id === a)?.trashedAt).toBeUndefined();
   });
 });
