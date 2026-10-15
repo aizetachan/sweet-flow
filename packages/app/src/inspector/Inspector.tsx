@@ -160,6 +160,16 @@ function InspectorBody({ floatKey, onDragHandle }: { floatKey?: string; onDragHa
           {panel.mode === "floating" && floatKey ? (
             <IconButton label="Acoplar al panel lateral" size="sm" onClick={() => dockPanel(floatKey)}><IconLayoutSidebarLeftExpand size={14} /></IconButton>
           ) : null}
+          {panel.mode !== "window" ? (
+            <IconButton
+              label="Abrir en una ventana aparte (puedes llevarla a otro monitor)"
+              size="sm"
+              onClick={() => {
+                popOut(node.id);
+                if (floatKey) closeFloating(floatKey);
+              }}
+            ><IconExternalLink size={14} /></IconButton>
+          ) : null}
           <IconButton
             label={panel.mode === "window" ? "Cerrar ventana" : "Cerrar panel"}
             size="sm"
@@ -177,16 +187,6 @@ function InspectorBody({ floatKey, onDragHandle }: { floatKey?: string; onDragHa
             ))}
             <span className="sf-faint"> · {levelOf(p, node).name}{roleOf(p, node) === "production" ? " · punto de producción" : roleOf(p, node) === "group" ? " · montaje" : ""}</span>
           </span>
-          {panel.mode !== "window" ? (
-            <IconButton
-              label="Abrir en una ventana aparte (puedes llevarla a otro monitor)"
-              size="sm"
-              onClick={() => {
-                popOut(node.id);
-                if (floatKey) closeFloating(floatKey);
-              }}
-            ><IconExternalLink size={14} /></IconButton>
-          ) : null}
           <IconButton label={`Copiar la ruta de la carpeta: ${path}`} size="sm" onClick={() => void navigator.clipboard?.writeText(path)}><IconCopy size={14} /></IconButton>
           <span className="insp__spacer" />
           <StatusPicker statuses={p.statuses} value={node.statusId} onChange={(id) => source.updateNode(node.id, { statusId: id })} onEdit={() => set({ modal: "statuses" })} />

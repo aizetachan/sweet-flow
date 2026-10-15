@@ -246,7 +246,7 @@ export class MockSource implements DataSource {
           id: newId("n"), productionId: production.id, parentId: parent.id, levelId: level.id,
           number: nextNumber(childrenOf(nodes, parent.id), level.step),
           title: `Corte ${pl.segment.inSec}–${pl.segment.outSec}s`, notes: "",
-          statusId: production.statuses[1]?.id ?? production.statuses[0]!.id,
+          statusId: production.statuses[0]!.id,
           assigneeIds: [this.s.me.uid], assetIds: [], updatedAt: Date.now(), updatedBy: this.s.me.uid,
         };
         nodes = [...nodes, n];

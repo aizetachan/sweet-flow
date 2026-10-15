@@ -93,9 +93,18 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
 - El **tablero** es la vista general: se va actualizando solo mientras se genera
   y mientras el equipo trabaja.
 - **Cabecera del panel:** primera fila con el código (número editable), el
-  título y cerrar; debajo, la ubicación (`SQ010 / SC010 / SH0040 · Plano`), el
-  botón de ventana aparte, copiar la ruta de la carpeta y, pegado a la derecha,
-  el estado.
+  título, ventana aparte y cerrar; debajo, la ubicación
+  (`SQ010 / SC010 / SH0040 · Plano`), copiar la ruta de la carpeta y, pegado a
+  la derecha, el estado. **El estado es solo la etiqueta**: al hacer clic se
+  despliega la lista. Todo lo nuevo empieza en **Pendiente**.
+- **Barra superior:** logo (vuelve al inicio) y migas de pan a la izquierda; a
+  la derecha, quién está en la producción, Carpeta, Magnific, equipo y **tu
+  avatar**.
+- **Secciones** (Producción, Biblioteca, Equipo, Ajustes): barra **flotante
+  centrada abajo**, para que el tablero tenga todo el ancho.
+- **"+" al final de cada fila:** del mismo tamaño que las tarjetas, sin texto.
+  Al pulsarlo se elige **plano** (un vídeo corto, en esa escena) o **escena**
+  (un vídeo largo del que extraer planos; se crea justo después).
 - El **panel de trabajo** aparece al seleccionar un plano o una escena y es donde
   se trabaja (Producir · Cortar y repartir · Revisión · Actividad).
 - Volver al dashboard desde la barra superior (las migas de pan sustituyen al

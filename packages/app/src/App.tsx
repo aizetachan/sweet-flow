@@ -2,7 +2,7 @@ import { useState } from "react";
 import { codeOf, isUnit } from "@sweetflow/domain";
 import { Button, cx, Modal, Spinner } from "@sweetflow/ui";
 import { useSnap, useStore } from "./state/store";
-import { Rail, Topbar } from "./shell/Shell";
+import { Dock, Topbar } from "./shell/Shell";
 import { Splash } from "./shell/Splash";
 import { Dashboard } from "./dashboard/Dashboard";
 import { StructureTree } from "./board/StructureTree";
@@ -35,7 +35,6 @@ function Production() {
   if (!snap) return <Loading />;
   return (
     <div className="app">
-      <Rail />
       <div className="app__main">
         <Topbar />
         {view === "board" ? (
@@ -46,6 +45,7 @@ function Production() {
           </div>
         ) : view === "library" ? <LibraryView /> : <TeamView />}
       </div>
+      <Dock />
       <FloatingInspectors />
       <Notice />
       <LeaveConfirm />

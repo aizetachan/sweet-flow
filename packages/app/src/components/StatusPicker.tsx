@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { IconCheck, IconChevronDown, IconSettings } from "@tabler/icons-react";
+import { IconCheck, IconSettings } from "@tabler/icons-react";
 import type { Id, StatusDef } from "@sweetflow/domain";
 import { Pill } from "@sweetflow/ui";
 
@@ -27,9 +27,8 @@ export function StatusPicker({
   const list = statuses.filter((s) => !s.archived).sort((a, b) => a.order - b.order);
   return (
     <div className="picker" ref={ref}>
-      <button className="picker__btn" onClick={() => setOpen(!open)}>
+      <button className="picker__btn" title="Cambiar el estado" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}>
         <Pill color={cur.color}>{cur.name}</Pill>
-        <IconChevronDown size={13} />
       </button>
       {open ? (
         <div className="menu">

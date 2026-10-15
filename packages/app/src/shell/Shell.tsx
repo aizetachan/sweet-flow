@@ -21,25 +21,23 @@ const NAV: Array<{ id: View; label: string; icon: typeof IconLayoutBoard }> = [
   { id: "team", label: "Equipo", icon: IconUsers },
 ];
 
-export function Rail() {
+/** Production sections, floating at the bottom centre so the board keeps the full width. */
+export function Dock() {
   const view = useStore((s) => s.view);
   const set = useStore((s) => s.set);
-  const snap = useSnap();
   return (
-    <nav className="rail">
-      <button className="rail__logo" title="Volver al inicio" onClick={() => useStore.getState().requestLeave()}>sf</button>
+    <nav className="dock" aria-label="Secciones de la producción">
       {NAV.map((n) => (
-        <button key={n.id} className={cx("rail__item", view === n.id && "rail__item--on")} onClick={() => set({ view: n.id })} title={n.label}>
-          <n.icon size={19} stroke={1.6} />
+        <button key={n.id} className={cx("dock__item", view === n.id && "dock__item--on")} onClick={() => set({ view: n.id })} title={n.label}>
+          <n.icon size={17} stroke={1.6} />
           <span>{n.label}</span>
         </button>
       ))}
-      <div className="rail__spacer" />
-      <button className="rail__item" title="Ajustes de la producción" onClick={() => set({ modal: "levels" })}>
-        <IconSettings size={19} stroke={1.6} />
+      <span className="dock__sep" />
+      <button className="dock__item" title="Ajustes de la producción" onClick={() => set({ modal: "levels" })}>
+        <IconSettings size={17} stroke={1.6} />
         <span>Ajustes</span>
       </button>
-      <div className="rail__me"><Avatar name={snap.me.displayName} size={28} /></div>
     </nav>
   );
 }
@@ -54,6 +52,7 @@ export function Topbar() {
 
   return (
     <header className="topbar">
+      <button className="topbar__logo" title="Volver al inicio" onClick={() => requestLeave()}>sf</button>
       <nav className="crumbs crumbs--top" aria-label="Ubicación">
         <button className="crumbs__btn" onClick={() => requestLeave(null)} title="Volver al inicio"><IconHome size={14} /> Inicio</button>
         {trail.map((f) => (
@@ -95,6 +94,7 @@ export function Topbar() {
       </button>
 
       <IconButton label={team ? "Invitar al equipo" : "Invitar: próximamente en modo local"} disabled={!team} onClick={() => set({ modal: "invite" })}><IconUsers size={16} /></IconButton>
+      <span className="topbar__me" title={snap.me.displayName}><Avatar name={snap.me.displayName} size={28} /></span>
     </header>
   );
 }

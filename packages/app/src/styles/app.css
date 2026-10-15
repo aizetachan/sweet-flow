@@ -10,14 +10,6 @@
 .live-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 3px #3cd39f26; animation: live 2s infinite; vertical-align: middle; }
 @keyframes live { 50% { box-shadow: 0 0 0 5px #3cd39f00; } }
 
-/* ---------- rail ---------- */
-.rail { width: 68px; flex: none; background: var(--bg-1); border-right: 1px solid var(--line-0); display: flex; flex-direction: column; align-items: center; padding: 12px 0; gap: 4px; }
-.rail__logo { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; margin-bottom: 10px; font-weight: 800; letter-spacing: -.04em; color: #140810; background: linear-gradient(135deg, var(--accent), #ffb36b); }
-.rail__item { width: 56px; padding: 7px 0 6px; border: 0; border-radius: var(--r-md); background: none; color: var(--fg-3); display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 10px; }
-.rail__item:hover { background: var(--ghost); color: var(--fg-0); }
-.rail__item--on { background: var(--bg-4); color: var(--fg-0); }
-.rail__spacer { flex: 1; }
-.rail__me { padding-top: 6px; }
 
 /* ---------- topbar ---------- */
 .topbar { height: 50px; flex: none; display: flex; align-items: center; gap: 10px; padding: 0 14px 0 12px; border-bottom: 1px solid var(--line-0); background: var(--bg-1); }
@@ -37,8 +29,10 @@
 .menu__label { flex: 1; }
 .menu__sep { height: 1px; background: var(--line-1); margin: 4px 2px; }
 .picker { position: relative; }
-.picker__btn { display: inline-flex; align-items: center; gap: 4px; padding: 3px 6px 3px 3px; border: 1px solid var(--line-1); border-radius: 99px; background: var(--bg-2); color: var(--fg-3); }
-.picker__btn:hover { border-color: var(--line-2); }
+/* Status: just the label; a click opens the list. */
+.picker__btn { display: inline-flex; padding: 0; border: 0; border-radius: 99px; background: none; }
+.picker__btn:hover .sf-pill, .picker__btn[aria-expanded="true"] .sf-pill { filter: brightness(1.25); box-shadow: 0 0 0 1px var(--line-2); }
+.insp__meta .picker .menu { left: auto; right: 0; }
 
 /* ---------- workspace ---------- */
 /* Left column (work panel | structure tabs) and the board (docs/INTERFAZ.md §2). */
@@ -119,7 +113,11 @@
 .card--on { border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary); }
 .card--watched { box-shadow: 0 0 0 1px #3cd39f66; }
 .card--scene { background: var(--bg-3); border: 1px dashed var(--line-2); }
-.card--add { align-items: center; justify-content: center; color: var(--fg-4); border-style: dashed; width: 96px; background: none; }
+/* Same size as the cards next to it; just a "+". */
+.card--add { align-items: center; justify-content: center; color: var(--fg-4); border-style: dashed; width: var(--card); height: 100%; background: none; }
+.addcard { position: relative; flex: none; display: flex; }
+.addcard__menu { position: fixed; transform: translate(-50%, -50%); min-width: 260px; }
+.menu__hint { display: block; font-size: 11px; color: var(--fg-4); }
 .card--add:hover { color: var(--fg-1); }
 .card__swatch { position: absolute; left: 7px; right: 7px; top: 7px; height: 3px; border-radius: 3px 3px 0 0; opacity: .85; }
 .card__meta { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
@@ -291,8 +289,7 @@
   .workspace { grid-template-columns: 330px minmax(0, 1fr); }
 }
 @media (max-width: 720px) {
-  .rail { display: none; }
-  .workspace { grid-template-columns: 1fr; grid-template-rows: minmax(0, 45%) minmax(0, 1fr); }
+    .workspace { grid-template-columns: 1fr; grid-template-rows: minmax(0, 45%) minmax(0, 1fr); }
   .side { border-right: 0; border-bottom: 1px solid var(--line-0); }
   .topbar { overflow-x: auto; }
   .crumbs--top .crumbs__item:not(:last-of-type), .topbar__format { display: none; }
@@ -302,8 +299,7 @@
 
 /* ---------- app phases ---------- */
 .loading { height: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; color: var(--fg-3); }
-button.rail__logo { border: 0; padding: 0; cursor: pointer; }
-.tree__hint { padding: 0 14px 8px; }
+button.tree__hint { padding: 0 14px 8px; }
 
 /* ---------- breadcrumbs (dashboard + top bar) ---------- */
 .crumbs { display: flex; align-items: center; gap: 2px; min-width: 0; }
@@ -476,3 +472,17 @@ button.rail__logo { border: 0; padding: 0; cursor: pointer; }
 /* Popped window: glow when the main window points at it. */
 .flashframe { position: fixed; inset: 0; z-index: 200; pointer-events: none; border-radius: 6px; box-shadow: inset 0 0 0 2px var(--primary), inset 0 0 60px 6px #5b72f5aa; animation: flashframe 1.8s ease-out forwards; }
 @keyframes flashframe { 0%, 35% { opacity: 1; } 100% { opacity: 0; } }
+
+/* ---------- production: logo + avatar in the top bar, floating section dock ---------- */
+.topbar__logo { flex: none; width: 30px; height: 30px; border: 0; padding: 0; border-radius: 9px; display: grid; place-items: center; font-weight: 800; letter-spacing: -.04em; color: #140810; background: linear-gradient(135deg, var(--accent), #ffb36b); cursor: pointer; }
+.topbar__me { display: inline-flex; margin-left: 2px; }
+.dock { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 30; display: flex; align-items: center; gap: 2px; padding: 5px; border-radius: 14px; background: color-mix(in srgb, var(--bg-3) 88%, transparent); backdrop-filter: blur(12px); box-shadow: var(--shadow-pop); }
+.dock__item { display: flex; align-items: center; gap: 7px; height: 34px; padding: 0 12px; border: 0; border-radius: 10px; background: none; color: var(--fg-3); white-space: nowrap; }
+.dock__item:hover { background: var(--ghost); color: var(--fg-0); }
+.dock__item--on { background: var(--bg-5); color: var(--fg-0); }
+.dock__sep { width: 1px; height: 20px; margin: 0 3px; background: var(--line-1); }
+/* Room so the dock never hides the last row of the board. */
+.board__body { padding-bottom: 80px; }
+@media (max-width: 720px) {
+  .dock__item span { display: none; }
+}

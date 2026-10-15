@@ -1,5 +1,5 @@
-import type { ReactNode } from "react";
-import { IconExternalLink, IconMessageCircle, IconPlus, IconSearch, IconStack2, IconWand, IconX } from "@tabler/icons-react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { IconExternalLink, IconMessageCircle, IconMovie, IconPlus, IconSearch, IconStack2, IconWand, IconX } from "@tabler/icons-react";
 import {
   childrenOf,
   codeOf,
@@ -88,7 +88,7 @@ function GroupHead({ node, children }: { node: ProdNode; children: ReactNode }) 
 
 function Lane({ row }: { row: ProdNode }) {
   const snap = useSnap();
-  const { filters, source, select } = useStore();
+  const { filters, source } = useStore();
   const p = snap.production;
   const all = childrenOf(snap.nodes, row.id);
   const active = filtersActive(filters);
@@ -123,14 +123,67 @@ function Lane({ row }: { row: ProdNode }) {
       <div className={cx("lane__cards", endDrop.over && "dnd-end")} {...endDrop.props}>
         <SceneCard node={row} />
         {units.map((u) => <UnitCard key={u.id} node={u} />)}
-        {!active ? (
-          <button className="card card--add" onClick={() => select(source.createNode(row.id, ""))}>
-            <IconPlus size={18} />
-            <span>{unitLevel.name}</span>
-          </button>
-        ) : null}
+        {!active ? <AddCard row={row} /> : null}
       </div>
     </section>
+  );
+}
+
+/**
+ * "+" at the end of a lane: a new shot here (a short video) or a new scene
+ * right after this one (a long video to extract shots from).
+ */
+function AddCard({ row }: { row: ProdNode }) {
+  const snap = useSnap();
+  const { source, select } = useStore();
+  // Where the menu shows: fixed on screen, since the lane scrolls and would clip it.
+  const [at, setAt] = useState<{ x: number; y: number } | null>(null);
+  const open = at !== null;
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const off = (e: Event) => !ref.current?.contains(e.target as Node) && setAt(null);
+    window.addEventListener("mousedown", off);
+    window.addEventListener("scroll", off, true);
+    return () => {
+      window.removeEventListener("mousedown", off);
+      window.removeEventListener("scroll", off, true);
+    };
+  }, [open]);
+  const p = snap.production;
+  const rowLevel = levelOf(p, row);
+  const unitLevel = p.levels[levelIndex(p, row) + 1]!;
+  const pick = (create: () => string) => {
+    setAt(null);
+    select(create());
+  };
+  return (
+    <div className="addcard" ref={ref}>
+      <button
+        className="card card--add"
+        title="Añadir"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={(e) => {
+          const r = e.currentTarget.getBoundingClientRect();
+          setAt(open ? null : { x: r.left + r.width / 2, y: r.top + r.height / 2 });
+        }}
+      >
+        <IconPlus size={24} stroke={1.5} />
+      </button>
+      {open ? (
+        <div className="menu addcard__menu" role="menu" style={{ left: at.x, top: at.y }}>
+          <button className="menu__item" role="menuitem" onClick={() => pick(() => source.createNode(row.id, ""))}>
+            <IconMovie size={15} />
+            <span className="menu__label">{unitLevel.name}<span className="menu__hint">Un vídeo corto, en {codeOf(p, row)}</span></span>
+          </button>
+          <button className="menu__item" role="menuitem" onClick={() => pick(() => source.insertAfter(row.id))}>
+            <IconStack2 size={15} />
+            <span className="menu__label">{rowLevel.name}<span className="menu__hint">Un vídeo largo del que extraer {unitLevel.name.toLowerCase()}s</span></span>
+          </button>
+        </div>
+      ) : null}
+    </div>
   );
 }
 
