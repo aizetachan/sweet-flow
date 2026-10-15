@@ -7,6 +7,8 @@ revisa directamente sobre las cards, y todo se replica en la carpeta del
 escritorio de cada miembro.
 
 - Arquitectura y decisiones: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+- Estado y siguientes pasos: [`docs/ROADMAP.md`](docs/ROADMAP.md)
+- Cómo desarrollar: [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md)
 
 ## Desarrollo
 
