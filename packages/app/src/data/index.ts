@@ -12,7 +12,7 @@
 import { isDesktop } from "../platform";
 import { buildSeed } from "./mock/seed";
 import { MockSource } from "./mock/MockSource";
-import { browserLibrary, demoLibrary, summarize, type Library, type LibraryState } from "./library";
+import { browserLibrary, demoLibrary, folderLibrary, summarize, type Library, type LibraryState } from "./library";
 import type { DataSource, Snapshot } from "./source";
 
 export type DataMode = "demo" | "local" | "firebase";
@@ -25,8 +25,36 @@ export function dataMode(): DataMode {
 
 let demo: MockSource | undefined;
 
+/** Team folder state found at startup (local mode). */
+export type StorageStatus = { status: "browser" } | { status: "folder"; name: string } | { status: "reconnect"; name: string };
+let prepared: { library: Library; status: StorageStatus } | null = null;
+
+/**
+ * Before the app renders: in local mode, open the remembered team folder.
+ * If the browser wants a click to allow it again, the app starts on this
+ * browser's own storage and Settings offers to reconnect.
+ */
+export async function initStorage(mode = dataMode()): Promise<void> {
+  if (mode !== "local") return;
+  const { restoreLocalFolder } = await import("./folder/browserFs");
+  const found = await restoreLocalFolder();
+  if (found.status === "ready") {
+    try {
+      prepared = { library: await folderLibrary(found.fs), status: { status: "folder", name: found.fs.label } };
+      return;
+    } catch (err) {
+      console.error("[carpeta] no se pudo abrir la carpeta del equipo", err);
+    }
+  }
+  prepared = { library: browserLibrary(), status: found.status === "reconnect" ? { status: "reconnect", name: found.name } : { status: "browser" } };
+}
+
+export function storageStatus(): StorageStatus {
+  return prepared?.status ?? { status: "browser" };
+}
+
 export function createLibrary(mode = dataMode()): Library {
-  if (mode === "local") return browserLibrary();
+  if (mode === "local") return prepared?.library ?? browserLibrary();
   if (mode === "firebase") {
     return singleLibrary("Firebase", () => deferred(() => import("./firebase/FirebaseSource").then((m) => new m.FirebaseSource())));
   }
@@ -52,6 +80,7 @@ function singleLibrary(name: string, open: () => DataSource): Library {
   const state: LibraryState = {
     label: name,
     mode: "firebase",
+    storage: { kind: "firebase" },
     me: { uid: "", email: "", displayName: "Firebase", role: "viewer", magnificConnected: false },
     entries: [{ id: "p_single", kind: "production", name, parentId: null, createdAt: t, updatedAt: t }],
     summaries: {},

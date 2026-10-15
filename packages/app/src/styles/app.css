@@ -521,3 +521,7 @@ button.tree__hint { padding: 0 14px 8px; }
 .trash__code { font-family: var(--mono); font-weight: 600; font-size: 12.5px; }
 .trash__main { display: flex; flex-direction: column; min-width: 0; gap: 2px; }
 .trash__title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Team folder needs permission again */
+.reconnect { display: flex; align-items: center; gap: 10px; margin: 14px 28px 0; padding: 10px 12px; border-radius: var(--r-lg); background: var(--primary-soft); color: var(--fg-1); font-size: 13px; }
+.reconnect span { flex: 1; }

@@ -1,0 +1,95 @@
+/**
+ * The team folder, whatever holds it (docs/ARCHITECTURE.md §2.1 and §2.2):
+ * a folder on this computer now, Dropbox and Google Drive through their APIs
+ * next. Everything above it (event logs, the dashboard, folders on disk) is
+ * written once against this interface.
+ *
+ * Paths are relative to the team folder, "/"-separated, with no leading slash
+ * ("" is the folder itself).
+ */
+
+export interface FsEntry {
+  name: string;
+  kind: "file" | "dir";
+  /** Files only: what changed detection compares. */
+  size?: number;
+  modified?: number;
+}
+
+export interface FolderFs {
+  /** What the UI shows: the folder's name. */
+  readonly label: string;
+  readonly kind: "local" | "dropbox" | "drive" | "memory";
+  /** Entries of a folder; [] when it does not exist. */
+  list(dir: string): Promise<FsEntry[]>;
+  /** null when the file does not exist. */
+  readText(path: string): Promise<string | null>;
+  /** Creates or replaces the file, and the folders above it. */
+  writeText(path: string, text: string): Promise<void>;
+  mkdir(path: string): Promise<void>;
+  /** Moves or renames a file or a folder (with its contents). */
+  move(from: string, to: string): Promise<void>;
+  /** Removes a file or a folder with everything inside; nothing if missing. */
+  remove(path: string): Promise<void>;
+}
+
+export const joinPath = (...parts: string[]) => parts.filter(Boolean).join("/");
+
+export function splitPath(path: string): { dir: string; name: string } {
+  const i = path.lastIndexOf("/");
+  return i < 0 ? { dir: "", name: path } : { dir: path.slice(0, i), name: path.slice(i + 1) };
+}
+
+/** In-memory folder, for tests (several stores on one instance act as devices sharing a folder). */
+export class MemoryFolderFs implements FolderFs {
+  readonly label = "memoria";
+  readonly kind = "memory" as const;
+  readonly files = new Map<string, { text: string; modified: number }>();
+  readonly dirs = new Set<string>([""]);
+  private tick = 0;
+
+  async list(dir: string): Promise<FsEntry[]> {
+    const prefix = dir ? `${dir}/` : "";
+    const out = new Map<string, FsEntry>();
+    for (const d of this.dirs) {
+      if (d === dir || !d.startsWith(prefix)) continue;
+      const name = d.slice(prefix.length).split("/")[0]!;
+      out.set(name, { name, kind: "dir" });
+    }
+    for (const [p, f] of this.files) {
+      if (!p.startsWith(prefix)) continue;
+      const rest = p.slice(prefix.length);
+      if (rest.includes("/")) continue;
+      out.set(rest, { name: rest, kind: "file", size: f.text.length, modified: f.modified });
+    }
+    return [...out.values()];
+  }
+
+  async readText(path: string): Promise<string | null> {
+    return this.files.get(path)?.text ?? null;
+  }
+
+  async writeText(path: string, text: string): Promise<void> {
+    await this.mkdir(splitPath(path).dir);
+    this.files.set(path, { text, modified: ++this.tick });
+  }
+
+  async mkdir(path: string): Promise<void> {
+    const parts = path.split("/").filter(Boolean);
+    for (let i = 1; i <= parts.length; i++) this.dirs.add(parts.slice(0, i).join("/"));
+  }
+
+  async move(from: string, to: string): Promise<void> {
+    const under = (p: string) => p === from || p.startsWith(`${from}/`);
+    const moved = (p: string) => to + p.slice(from.length);
+    for (const [p, f] of [...this.files]) if (under(p)) (this.files.delete(p), this.files.set(moved(p), f));
+    for (const d of [...this.dirs]) if (under(d)) (this.dirs.delete(d), this.dirs.add(moved(d)));
+    await this.mkdir(splitPath(to).dir);
+  }
+
+  async remove(path: string): Promise<void> {
+    const under = (p: string) => p === path || p.startsWith(`${path}/`);
+    for (const p of [...this.files.keys()]) if (under(p)) this.files.delete(p);
+    for (const d of [...this.dirs]) if (d && under(d)) this.dirs.delete(d);
+  }
+}

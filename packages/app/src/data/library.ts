@@ -25,6 +25,9 @@ import {
 } from "@sweetflow/domain";
 import { LocalSource } from "./local/LocalSource";
 import { BrowserLogStore, MemoryLogStore, type LogStore } from "./local/store";
+import { FolderEntries } from "./folder/folderEntries";
+import { FolderLogStore } from "./folder/FolderLogStore";
+import type { FolderFs } from "./folder/fs";
 import type { DataSource } from "./source";
 
 export type EntryKind = "folder" | "production";
@@ -76,6 +79,10 @@ export interface UserPrefs {
   opened: Record<Id, Millis>;
 }
 
+export type StorageInfo =
+  | { kind: "demo" | "browser" | "firebase" }
+  | { kind: "folder"; provider: FolderFs["kind"]; name: string };
+
 export type Profile = Pick<Member, "displayName" | "email">;
 
 export interface LibraryState {
@@ -83,6 +90,8 @@ export interface LibraryState {
   label: string;
   /** "demo" | "local" | "firebase": what Settings can offer. */
   mode: "demo" | "local" | "firebase";
+  /** Where productions are kept, for Settings. */
+  storage: StorageInfo;
   me: Member;
   entries: LibraryEntry[];
   summaries: Record<Id, ProductionSummary>;
@@ -138,6 +147,7 @@ interface Persisted<T> {
 interface EntryLibraryOptions {
   label: string;
   mode: LibraryState["mode"];
+  storage: StorageInfo;
   entries: Persisted<LibraryEntry[]>;
   prefs: Persisted<UserPrefs>;
   profile: Persisted<Member>;
@@ -186,11 +196,13 @@ class EntryLibrary implements Library {
 
   async createProduction(parentId: Id | null, name: string): Promise<Id> {
     const id = newId("p");
+    // The entry first: in a team folder it gives the production its folder.
+    this.commit([...this.entries, this.entry(id, "production", name, parentId)]);
     const src = this.source(id, { id, name, levels: defaultLevels(newId), statuses: defaultStatuses(newId) });
     await src.ready;
     await src.flushed();
     src.dispose();
-    this.commit([...this.entries, this.entry(id, "production", name, parentId)]);
+    void this.refreshSummaries();
     return id;
   }
 
@@ -327,7 +339,7 @@ class EntryLibrary implements Library {
   }
 
   private state(): LibraryState {
-    return { label: this.o.label, mode: this.o.mode, me: this.me, entries: this.entries, summaries: { ...this.summaries }, prefs: this.prefs };
+    return { label: this.o.label, mode: this.o.mode, storage: this.o.storage, me: this.me, entries: this.entries, summaries: { ...this.summaries }, prefs: this.prefs };
   }
 
   private emit(): void {
@@ -374,6 +386,7 @@ export function demoLibrary(mock: { open: () => DataSource; summary: ProductionS
   return new EntryLibrary({
     label: "Demo",
     mode: "demo",
+    storage: { kind: "demo" },
     entries: memory([
       at("folder", "f_mareas", "Mareas", null),
       at("folder", "f_mareas_t1", "Temporada 1", "f_mareas"),
@@ -389,9 +402,9 @@ export function demoLibrary(mock: { open: () => DataSource; summary: ProductionS
   });
 }
 
-/** localStorage library: one user per browser profile, one device per window. */
-export function browserLibrary(): Library {
-  const KEYS = { entries: "sweetflow:library", prefs: "sweetflow:prefs", profile: "sweetflow:profile" };
+/** What stays in this browser whatever holds the productions: who I am, my pins and recents, this window's device id. */
+function personal() {
+  const KEYS = { prefs: "sweetflow:prefs", profile: "sweetflow:profile" };
   const remembered = (storage: Storage, key: string) => {
     let v = storage.getItem(key);
     if (!v) storage.setItem(key, (v = crypto.randomUUID().slice(0, 8)));
@@ -411,31 +424,74 @@ export function browserLibrary(): Library {
   const uid = `u_${remembered(localStorage, "sweetflow:uid")}`;
   const defaultMe: Member = { uid, email: "", displayName: `Usuario ${uid.slice(2, 6)}`, role: "owner", magnificConnected: false };
   const profile = json<Member>(KEYS.profile, defaultMe);
-  return new EntryLibrary({
-    label: "Este equipo",
-    mode: "local",
-    entries: {
-      load: () => {
-        try {
-          return JSON.parse(localStorage.getItem(KEYS.entries) ?? "[]") as LibraryEntry[];
-        } catch {
-          return [];
-        }
-      },
-      save: (entries) => localStorage.setItem(KEYS.entries, JSON.stringify(entries)),
-    },
+  return {
+    keys: Object.values(KEYS),
     prefs: json(KEYS.prefs, EMPTY_PREFS),
     // The uid never changes, whatever was saved.
-    profile: { load: () => ({ ...profile.load(), uid, role: "owner" }), save: profile.save },
-    watch: (cb) => {
-      const h = (e: StorageEvent) => (Object.values(KEYS).includes(e.key ?? "") || e.key?.startsWith("sweetflow:prod:")) && cb();
-      window.addEventListener("storage", h);
-      return () => window.removeEventListener("storage", h);
-    },
-    logStoreFor: (id) => new BrowserLogStore(`prod:${id}`),
+    profile: { load: () => ({ ...profile.load(), uid, role: "owner" as const }), save: profile.save },
     // sessionStorage is per window: every window writes its own log file. A
     // popped window inherits its opener's sessionStorage, so it gets a fresh id
     // (it normally borrows the opener's source and writes nothing itself).
     deviceId: location.hash.startsWith("#/ventana/") ? `win-${crypto.randomUUID().slice(0, 8)}` : `win-${remembered(sessionStorage, "sweetflow:device")}`,
+  };
+}
+
+/** localStorage library: one user per browser profile, one device per window. */
+export function browserLibrary(): Library {
+  const ENTRIES = "sweetflow:library";
+  const me = personal();
+  return new EntryLibrary({
+    label: "Este navegador",
+    mode: "local",
+    storage: { kind: "browser" },
+    entries: {
+      load: () => {
+        try {
+          return JSON.parse(localStorage.getItem(ENTRIES) ?? "[]") as LibraryEntry[];
+        } catch {
+          return [];
+        }
+      },
+      save: (entries) => localStorage.setItem(ENTRIES, JSON.stringify(entries)),
+    },
+    prefs: me.prefs,
+    profile: me.profile,
+    watch: (cb) => {
+      const h = (e: StorageEvent) => ([ENTRIES, ...me.keys].includes(e.key ?? "") || e.key?.startsWith("sweetflow:prod:")) && cb();
+      window.addEventListener("storage", h);
+      return () => window.removeEventListener("storage", h);
+    },
+    logStoreFor: (id) => new BrowserLogStore(`prod:${id}`),
+    deviceId: me.deviceId,
+  });
+}
+
+/**
+ * The team folder (docs/ARCHITECTURE.md §5): the dashboard and every
+ * production live in it, as event logs and real folders. Same code for a
+ * folder of this computer now and for Dropbox or Drive next.
+ */
+export async function folderLibrary(fs: FolderFs): Promise<Library> {
+  const me = personal();
+  const entries = new FolderEntries(fs, me.deviceId, () => me.profile.load().uid);
+  await entries.init();
+  return new EntryLibrary({
+    label: fs.label,
+    mode: "local",
+    storage: { kind: "folder", provider: fs.kind, name: fs.label },
+    entries,
+    prefs: me.prefs,
+    profile: me.profile,
+    watch: (cb) => {
+      const off = entries.watch(cb);
+      const h = (e: StorageEvent) => me.keys.includes(e.key ?? "") && cb();
+      window.addEventListener("storage", h);
+      return () => {
+        off();
+        window.removeEventListener("storage", h);
+      };
+    },
+    logStoreFor: (id) => new FolderLogStore(fs, () => entries.pathOf(id)),
+    deviceId: me.deviceId,
   });
 }

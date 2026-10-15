@@ -411,6 +411,34 @@ Reglas para que el mismo nombre funcione en macOS y Windows:
   disco** con un `rename`: Dropbox lo sincroniza como un movimiento y no vuelve
   a subir ni a descargar los archivos.
 
+### 5.4 La carpeta del equipo en el código (`FolderFs`)
+
+Todo lo que se guarda en la carpeta del equipo pasa por una interfaz mínima,
+`FolderFs` (`packages/app/src/data/folder/fs.ts`): listar, leer, escribir,
+crear carpeta, mover y borrar. Encima, escrito una sola vez:
+
+- **`FolderLogStore`:** el registro de una producción (§5.0) dentro de su
+  carpeta. La ruta se calcula en cada operación, porque la carpeta cambia al
+  renombrar o mover la producción.
+- **El dashboard:** también es un registro por dispositivo, en
+  `<carpeta del equipo>/.sweetflow/library/<deviceId>/<AAAA-MM>.jsonl`. Por
+  entrada y campo gana el último que escribe. Cada carpeta del dashboard y cada
+  producción es una carpeta real, con el nombre de `entryFolderNames()`
+  (`safeTitle`, y `-2`, `-3`… si dos hermanas coinciden). Quien renombra o mueve
+  algo mueve su carpeta; la sincronización lo lleva al resto.
+- **Detectar cambios:** se revisan tamaño y fecha de los archivos de registro
+  cada 2,5 s (ni el navegador ni las API avisan de cambios en archivos).
+- **Lo personal** (perfil, fijados, recientes) se queda en el navegador.
+
+Implementaciones:
+
+| `FolderFs` | Estado |
+| --- | --- |
+| Carpeta de este ordenador (API *File System Access* de Chrome y Edge; el permiso se recuerda y a veces el navegador lo vuelve a pedir con un clic) | Hecha |
+| Dropbox (API HTTP, OAuth con PKCE, sin secreto) | Siguiente |
+| Google Drive (API v3) | Después |
+| Memoria (tests) | Hecha |
+
 ## 6. Generación y render
 
 **Etapas A y B: desde la app de escritorio.** Sin servidor, la cola vive en el
@@ -599,6 +627,7 @@ sobre una carpeta compartida de Dropbox.
 | 8 | Orden y códigos | El orden en pantalla es visual y no cambia el código ni la carpeta. Arrastrar a otro padre mueve la carpeta | §3.2, `INTERFAZ.md` §2.1 |
 | 9 | Dashboard | Refleja la carpeta de Dropbox en los dos sentidos: lo que se organiza en la app se aplica en Dropbox y lo que cambia en Dropbox se ve en la app | `INTERFAZ.md` §1 |
 | 10 | Proveedores de almacenamiento | Dropbox o Google Drive, a elegir por equipo, con el mismo formato de carpeta. Primero mediante su cliente de escritorio; después por API (§2.2) | §2.2 |
+| 11 | Conexión con Dropbox y Drive | El objetivo es la **etapa B**: conectar Dropbox (y después Drive) desde Ajustes, por API, sin cliente de escritorio, con copia local opcional. Mientras tanto, «Carpeta de este ordenador» con el mismo formato y el mismo código (`FolderFs`, §5.4) (16 oct 2026) | §2.1, §5.4 |
 
 ### Pendiente de validar
 

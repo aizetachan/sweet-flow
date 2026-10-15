@@ -97,18 +97,33 @@ Anotadas el 15 oct 2026, pendientes de que el usuario elija orden:
 2. ✅ **`LocalSource` con estructura:** árbol, niveles y estados, sobre un
    `LogStore` intercambiable. Se prueba en el navegador con `pnpm dev:local`
    (cada pestaña es un dispositivo); la demo sigue con `MockSource`.
-3. **Carpeta desde Electron:** elegir carpeta (`pickFolder()`), escritura
-   atómica en el utility process e IPC tipado hacia la UI.
-4. **Carpetas en disco:** crear, renombrar y mover carpetas con `folderName()`
-   (§5.3) y reparación al abrir.
-5. **Varias personas:** vigilar la carpeta (`fs.watch`) para ver los cambios
-   que trae Dropbox; probar con dos dispositivos sobre la misma carpeta.
-6. **Producciones:** crear, listar y abrir producciones dentro de la carpeta. El
-   selector ya existe en la UI.
+3. ✅ **Carpeta del equipo:** «Carpeta de este ordenador» en Ajustes (Chrome
+   y Edge), sobre `FolderFs` (`docs/ARCHITECTURE.md` §5.4). El dashboard y las
+   producciones son carpetas reales con su registro; renombrar o mover mueve la
+   carpeta. Se revisan los cambios cada 2,5 s.
+4. **Conectar Dropbox** (etapa B, decisión 11): `FolderFs` sobre la API de
+   Dropbox con OAuth PKCE, desde Ajustes, y copia local opcional. Necesita el
+   *App key* de una app de Dropbox (Scoped access, Full Dropbox, permisos
+   `files.metadata.*` y `files.content.*`, redirección
+   `http://localhost:5180/auth/dropbox`).
+5. **Carpetas de los nodos en disco:** `SQ010_…/SC010_…/SH0010_…` con
+   `folderName()` (§5.3) y reparación al abrir.
+6. **Varias personas:** probar con dos ordenadores sobre la misma carpeta
+   compartida.
+7. **Google Drive:** el mismo `FolderFs` sobre la API v3.
+8. **Escritorio:** probar la carpeta en Electron (o `FolderFs` con Node).
 
 ### Fase 2 · Generación
 
 - **Conexión de Magnific por usuario:** OAuth 2.0 + PKCE desde la app de escritorio; token cifrado con `safeStorage`.
+- **Carpetas en Magnific:** la estructura se refleja en la cuenta de cada
+  usuario **hasta el plano** (proyecto › carpetas del dashboard › SQ › SC ›
+  SH). Se crean en la primera generación de cada plano, no al crearlo.
+  Renombrar en la app renombra en Magnific; borrar en la app no borra en
+  Magnific. Magnific tiene proyectos en la raíz, carpetas anidadas y permite
+  mover lo generado a una carpeta (comprobado con su MCP, 16 oct 2026). Falta
+  confirmar cómo se conecta una app externa: su servidor MCP con el login de
+  cada usuario o su API pública.
 - **Cola en el utility process:** adaptador `GenerationProvider` de Magnific; el resultado se descarga a `_media/` del nodo y se registra el evento.
 - **Vídeo de 30 s:** encadenar extend o concatenate si el modelo no llega.
 - **Lotes y créditos:** estimación antes de lanzar y registro real por usuario, producción y nodo.

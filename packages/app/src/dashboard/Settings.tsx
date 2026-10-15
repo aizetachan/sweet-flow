@@ -5,10 +5,11 @@
  */
 
 import { useEffect, useState, type ReactNode } from "react";
-import { IconBolt, IconBrandDropbox, IconBrandGoogleDrive, IconDeviceDesktop, IconFolders, IconInfoCircle, IconPlugConnected, IconUser } from "@tabler/icons-react";
+import { IconBolt, IconBrandDropbox, IconBrandGoogleDrive, IconDeviceDesktop, IconFolder, IconFolderOpen, IconFolders, IconInfoCircle, IconPlugConnected, IconUser } from "@tabler/icons-react";
 import { Avatar, Button, cx } from "@sweetflow/ui";
 import type { LibraryState } from "../data/library";
-import { isDesktop } from "../platform";
+import { storageStatus } from "../data";
+import { forgetLocalFolder, localFoldersSupported, pickLocalFolder, reconnectLocalFolder } from "../data/folder/browserFs";
 import { useStore, type SettingsTab } from "../state/store";
 
 const TABS: Array<{ id: SettingsTab; label: string; icon: typeof IconUser }> = [
@@ -86,33 +87,82 @@ function Profile({ lib }: { lib: LibraryState }) {
 }
 
 function Storage({ lib }: { lib: LibraryState }) {
-  const where = lib.mode === "demo" ? "En memoria (demo): se pierde al recargar." : lib.mode === "local" ? (isDesktop() ? "En este equipo, dentro de la app." : "En este navegador.") : "Firebase.";
   return (
     <>
-      <Section title="Dónde se guardan las producciones">
-        <div className="scard">
-          <IconDeviceDesktop size={22} stroke={1.5} />
-          <div className="scard__text">
-            <strong>Ahora: {lib.label}</strong>
-            <span className="sf-muted">{where}</span>
-          </div>
-        </div>
-      </Section>
       <Section
-        title="Almacenamiento del equipo"
-        hint="Una carpeta compartida en la nube será el almacenamiento: el dashboard mostrará sus carpetas y cada producción se guardará en ella, ordenada por códigos. Todo el que tenga acceso a esa carpeta verá lo mismo. Cada equipo elige su servicio."
+        title="Carpeta del equipo"
+        hint="Todo se guarda en una carpeta: el dashboard, cada producción y sus carpetas por códigos. Ahora puede ser una carpeta de este ordenador; después, una carpeta de Dropbox o de Google Drive conectada desde aquí."
       >
-        <Connection
-          icon={<IconBrandDropbox size={22} stroke={1.5} />}
-          name="Dropbox"
-          detail={isDesktop() ? "Una carpeta compartida de Dropbox del equipo." : "Una carpeta compartida de Dropbox del equipo. En la app de escritorio."}
-        />
-        <Connection
-          icon={<IconBrandGoogleDrive size={22} stroke={1.5} />}
-          name="Google Drive"
-          detail={isDesktop() ? "Una unidad compartida (o carpeta compartida) de Google Drive." : "Una unidad compartida de Google Drive. En la app de escritorio."}
-        />
+        {lib.mode === "local" ? <LocalFolder lib={lib} /> : (
+          <div className="scard">
+            <IconDeviceDesktop size={22} stroke={1.5} />
+            <div className="scard__text">
+              <strong>{lib.mode === "demo" ? "Demo en memoria" : "Firebase"}</strong>
+              <span className="sf-muted">{lib.mode === "demo" ? "Se pierde al recargar. Para usar una carpeta, arranca la app con pnpm dev:local." : "Los datos están en Firebase."}</span>
+            </div>
+          </div>
+        )}
       </Section>
+      <Section title="En la nube" hint="Conectar el servicio del equipo: Sweet Flow lee y escribe en la carpeta compartida sin instalar nada más, y puede guardar además una copia en este ordenador.">
+        <Connection icon={<IconBrandDropbox size={22} stroke={1.5} />} name="Dropbox" detail="Una carpeta compartida de Dropbox del equipo." />
+        <Connection icon={<IconBrandGoogleDrive size={22} stroke={1.5} />} name="Google Drive" detail="Una unidad compartida (o carpeta compartida) de Google Drive." />
+      </Section>
+    </>
+  );
+}
+
+/** A folder of this computer as the team folder (browser File System Access). */
+function LocalFolder({ lib }: { lib: LibraryState }) {
+  const status = storageStatus();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const supported = localFoldersSupported();
+  const run = (f: () => Promise<boolean | string | null | void>) => async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      if (await f()) location.reload();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const pick = run(() => pickLocalFolder());
+  const title = status.status === "folder" ? `Carpeta «${status.name}»` : status.status === "reconnect" ? `Carpeta «${status.name}» (sin permiso)` : "Este navegador";
+  const detail =
+    status.status === "folder"
+      ? "En este ordenador. Si está dentro de Dropbox o Drive, su app la sincroniza con el equipo."
+      : status.status === "reconnect"
+        ? "El navegador pide permiso otra vez para abrirla. Mientras tanto ves lo guardado en este navegador."
+        : "Solo en este navegador. Elige una carpeta para guardar ahí las producciones.";
+  return (
+    <>
+      <div className="scard">
+        {status.status === "browser" ? <IconDeviceDesktop size={22} stroke={1.5} /> : <IconFolder size={22} stroke={1.5} />}
+        <div className="scard__text">
+          <strong>{title}</strong>
+          <span className="sf-muted">{detail}</span>
+        </div>
+        <span className="scard__spacer" />
+        {!supported ? <span className="sbadge">Usa Chrome o Edge</span> : status.status === "reconnect" ? (
+          <>
+            <Button size="sm" variant="primary" disabled={busy} onClick={run(reconnectLocalFolder)}>Abrir «{status.name}»</Button>
+            <Button size="sm" disabled={busy} onClick={pick}>Elegir otra</Button>
+          </>
+        ) : (
+          <>
+            <Button size="sm" variant={status.status === "browser" ? "primary" : undefined} disabled={busy} onClick={pick}>
+              <IconFolderOpen size={14} /> {status.status === "folder" ? "Cambiar carpeta" : "Elegir carpeta"}
+            </Button>
+            {status.status === "folder" ? <Button size="sm" disabled={busy} onClick={run(async () => (await forgetLocalFolder(), true))}>Dejar de usarla</Button> : null}
+          </>
+        )}
+      </div>
+      {status.status === "browser" && lib.entries.length ? (
+        <p className="sf-faint sf-small">Lo que ya tienes en este navegador no se copia a la carpeta: sigue aquí si dejas de usarla.</p>
+      ) : null}
+      {error ? <p className="sf-small" style={{ color: "var(--bad)" }}>{error}</p> : null}
     </>
   );
 }
@@ -149,7 +199,7 @@ function About({ lib }: { lib: LibraryState }) {
         <dt>Versión</dt>
         <dd>{version ? `${version} (escritorio)` : "Web (desarrollo)"}</dd>
         <dt>Datos</dt>
-        <dd>{lib.mode === "demo" ? "Demo en memoria" : lib.mode === "local" ? `Local · ${lib.label}` : "Firebase"}</dd>
+        <dd>{lib.storage.kind === "folder" ? `Carpeta · ${lib.storage.name}` : lib.mode === "demo" ? "Demo en memoria" : lib.mode === "local" ? "Este navegador" : "Firebase"}</dd>
       </dl>
     </Section>
   );

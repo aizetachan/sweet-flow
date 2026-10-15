@@ -31,8 +31,15 @@ sobre la misma carpeta de Dropbox. Por ahora solo cubre la estructura (árbol,
 niveles, estados, responsables); generar, tomas y comentarios aparecen como
 "Próximamente".
 
+**Carpeta del equipo:** en *Ajustes › Almacenamiento › Elegir carpeta* (Chrome o
+Edge) se elige una carpeta de este ordenador y todo pasa a guardarse ahí, en
+carpetas legibles (`docs/ARCHITECTURE.md` §5.4). Si la carpeta está dentro de
+Dropbox o Drive, su app la sincroniza. Lo que había en el navegador no se copia.
+Al volver a abrir el navegador puede pedir permiso otra vez: sale un aviso con
+el botón «Abrir». «Dejar de usarla» vuelve al almacenamiento del navegador.
+
 La app de escritorio usa este mismo modo (en su propio almacenamiento) hasta
-que llegue la carpeta real de Dropbox (fase 1, paso 3).
+que se pruebe allí la carpeta.
 
 Para empezar de cero, borra las claves `sweetflow:*` del `localStorage` (en las
 herramientas de desarrollo, *Application → Local Storage*).

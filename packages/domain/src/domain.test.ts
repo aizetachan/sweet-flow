@@ -3,6 +3,7 @@ import {
   childrenOf,
   codeFor,
   defaultLevels,
+  entryFolderNames,
   folderName,
   folderPath,
   mediaFileName,
@@ -75,5 +76,17 @@ describe("cuts", () => {
       { inSec: 4.2, outSec: 12 },
       { inSec: 12, outSec: 30 },
     ]);
+  });
+});
+
+describe("entry folder names", () => {
+  it("are safe and unique among siblings, older first", () => {
+    const names = entryFolderNames([
+      { id: "b", name: "Temporada 1", createdAt: 2 },
+      { id: "a", name: "temporada 1", createdAt: 1 },
+      { id: "c", name: "Ñandú: «piloto»", createdAt: 3 },
+      { id: "d", name: "   ", createdAt: 4 },
+    ]);
+    expect(Object.fromEntries(names)).toEqual({ a: "temporada-1", b: "Temporada-1-2", c: "Nandu-piloto", d: "Sin-nombre" });
   });
 });

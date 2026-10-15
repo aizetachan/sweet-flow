@@ -51,3 +51,26 @@ const KIND_TAG = { image: "img", video: "vid", audio: "aud" } as const;
 export function mediaFileName(code: string, kind: keyof typeof KIND_TAG, version: number, ext: string): string {
   return `${code}_${KIND_TAG[kind]}_${versionTag(version)}.${ext.replace(/^\./, "")}`;
 }
+
+/** Max length of a dashboard folder or production folder name on disk. */
+export const ENTRY_NAME_MAX = 64;
+
+/**
+ * Disk names for dashboard entries (folders and productions) under one parent:
+ * `safeTitle` of each name, and a "-2", "-3"… suffix when two names clash
+ * (case-insensitive, as on macOS and Windows). Deterministic: the older entry
+ * (then the smaller id) keeps the plain name, so every device agrees.
+ */
+export function entryFolderNames(siblings: Array<{ id: string; name: string; createdAt: number }>): Map<string, string> {
+  const out = new Map<string, string>();
+  const used = new Set<string>();
+  const sorted = [...siblings].sort((a, b) => a.createdAt - b.createdAt || (a.id < b.id ? -1 : 1));
+  for (const e of sorted) {
+    const base = safeTitle(e.name, ENTRY_NAME_MAX) || "Sin-nombre";
+    let name = base;
+    for (let n = 2; used.has(name.toLowerCase()); n++) name = `${base}-${n}`;
+    used.add(name.toLowerCase());
+    out.set(e.id, name);
+  }
+  return out;
+}
