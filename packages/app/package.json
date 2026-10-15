@@ -12,8 +12,10 @@
   "dependencies": {
     "@fontsource-variable/geist": "^5.2.9",
     "@sweetflow/domain": "workspace:*",
+    "@sweetflow/functions": "workspace:*",
     "@sweetflow/ui": "workspace:*",
     "@tabler/icons-react": "^3.44.0",
+    "firebase": "^12.19.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "zustand": "^5.0.3"

@@ -6,7 +6,7 @@
 import { create } from "zustand";
 import type { Id } from "@sweetflow/domain";
 import type { DataSource, Snapshot } from "../data/source";
-import { MockSource } from "../data/mock/MockSource";
+import { createSource } from "../data";
 
 export type View = "board" | "library" | "team";
 export type CardSize = "s" | "m" | "l";
@@ -44,7 +44,7 @@ interface Store extends UiState {
   toggleCollapsed: (id: Id) => void;
 }
 
-const source: DataSource = new MockSource();
+const source: DataSource = createSource();
 
 export const useStore = create<Store>((set, get) => ({
   source,
