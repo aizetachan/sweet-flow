@@ -299,3 +299,4 @@
   .prodswitch__ws, .prodswitch__sep, .topbar__format { display: none; }
   .board__head, .filters, .board__body { padding-left: 16px; padding-right: 16px; }
 }
+.sf-icon-btn.danger { background: #ec6a6a33; color: var(--bad); }
