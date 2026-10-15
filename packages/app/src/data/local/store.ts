@@ -18,6 +18,8 @@ export interface LogStore {
   append(path: string, text: string): Promise<void>;
   /** Called when files change from elsewhere (another device, via sync). */
   watch(onChange: () => void): () => void;
+  /** Delete every log file (the production is removed for good). */
+  destroy(): Promise<void>;
 }
 
 /** In-memory store; several LocalSources can share one to act as devices. */
@@ -37,6 +39,10 @@ export class MemoryLogStore implements LogStore {
   watch(onChange: () => void): () => void {
     this.listeners.add(onChange);
     return () => this.listeners.delete(onChange);
+  }
+
+  async destroy(): Promise<void> {
+    this.files.clear();
   }
 
   /** Simulates the sync client delivering changes to every watcher. */
@@ -71,6 +77,15 @@ export class BrowserLogStore implements LogStore {
   async append(path: string, text: string): Promise<void> {
     const key = this.prefix + path;
     localStorage.setItem(key, (localStorage.getItem(key) ?? "") + text);
+  }
+
+  async destroy(): Promise<void> {
+    const keys: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key?.startsWith(this.prefix)) keys.push(key);
+    }
+    for (const k of keys) localStorage.removeItem(k);
   }
 
   watch(onChange: () => void): () => void {

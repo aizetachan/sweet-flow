@@ -79,6 +79,7 @@ describe("LocalSource", () => {
       label: store.label,
       readAll: () => store.readAll(),
       watch: (cb) => store.watch(cb),
+      destroy: () => store.destroy(),
       append: async () => {
         throw new Error("disco lleno");
       },

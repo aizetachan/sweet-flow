@@ -27,7 +27,7 @@ export function Rail() {
   const snap = useSnap();
   return (
     <nav className="rail">
-      <button className="rail__logo" title="Volver al inicio" onClick={() => useStore.getState().closeProduction()}>sf</button>
+      <button className="rail__logo" title="Volver al inicio" onClick={() => useStore.getState().requestLeave()}>sf</button>
       {NAV.map((n) => (
         <button key={n.id} className={cx("rail__item", view === n.id && "rail__item--on")} onClick={() => set({ view: n.id })} title={n.label}>
           <n.icon size={19} stroke={1.6} />
@@ -46,7 +46,7 @@ export function Rail() {
 
 export function Topbar() {
   const snap = useSnap();
-  const { source, set, closeProduction, productionId } = useStore.getState();
+  const { source, set, requestLeave, productionId } = useStore.getState();
   const trail = useLibraryTrail(productionId);
   const online = snap.presence.filter((p) => p.uid !== snap.me.uid).map((p) => memberName(snap, p.uid));
   const m = snap.mirror;
@@ -55,11 +55,11 @@ export function Topbar() {
   return (
     <header className="topbar">
       <nav className="crumbs crumbs--top" aria-label="Ubicación">
-        <button className="crumbs__btn" onClick={() => closeProduction(null)} title="Volver al inicio"><IconHome size={14} /> Inicio</button>
+        <button className="crumbs__btn" onClick={() => requestLeave(null)} title="Volver al inicio"><IconHome size={14} /> Inicio</button>
         {trail.map((f) => (
           <span key={f.id} className="crumbs__item">
             <IconChevronRight size={13} className="sf-faint" />
-            <button className="crumbs__btn" onClick={() => closeProduction(f.id)}>{f.name}</button>
+            <button className="crumbs__btn" onClick={() => requestLeave(f.id)}>{f.name}</button>
           </span>
         ))}
         <span className="crumbs__item">

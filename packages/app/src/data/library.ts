@@ -1,7 +1,8 @@
 /**
  * Library — what the dashboard shows (docs/INTERFAZ.md §1): folders and
  * productions, Drive style. A folder groups (a series); a production is a
- * working file that opens as a DataSource.
+ * working file that opens as a DataSource. Also the signed-in user's profile
+ * and personal lists (recent, favourites).
  *
  * Implementations:
  * - demo (memory): the seeded "Mareas" episode plus anything created;
@@ -18,9 +19,9 @@ import {
   isUnit,
   parseLog,
   type Id,
+  type LogState,
   type Member,
   type Millis,
-  type LogState,
 } from "@sweetflow/domain";
 import { LocalSource } from "./local/LocalSource";
 import { BrowserLogStore, MemoryLogStore, type LogStore } from "./local/store";
@@ -35,7 +36,8 @@ export interface LibraryEntry {
   parentId: Id | null;
   createdAt: Millis;
   updatedAt: Millis;
-  archived?: boolean;
+  /** In the trash since then; its contents go with it. */
+  trashedAt?: Millis;
 }
 
 /** What a production card shows without opening it. */
@@ -51,11 +53,24 @@ export interface ProductionSummary {
   thumbUrl?: string;
 }
 
+/** The user's own lists; not shared with the team. */
+export interface UserPrefs {
+  starred: Id[];
+  /** Last time each entry was opened. */
+  opened: Record<Id, Millis>;
+}
+
+export type Profile = Pick<Member, "displayName" | "email">;
+
 export interface LibraryState {
-  /** Where the library lives, for the UI ("Dropbox/Estudio", "navegador"). */
+  /** Where the library lives, for the UI ("Dropbox/Estudio", "Este equipo"). */
   label: string;
+  /** "demo" | "local" | "firebase": what Settings can offer. */
+  mode: "demo" | "local" | "firebase";
+  me: Member;
   entries: LibraryEntry[];
   summaries: Record<Id, ProductionSummary>;
+  prefs: UserPrefs;
 }
 
 export interface Library {
@@ -65,27 +80,53 @@ export interface Library {
   rename(id: Id, name: string): void;
   /** Move entries into a folder (null = root). Ignores moving a folder into itself or its subfolders. */
   move(ids: Id[], parentId: Id | null): void;
-  setArchived(id: Id, archived: boolean): void;
+  trash(ids: Id[]): void;
+  restore(ids: Id[]): void;
+  /** Remove from the trash for good, with everything inside. */
+  deleteForever(ids: Id[]): Promise<void>;
+  setStarred(id: Id, starred: boolean): void;
+  /** Record that the user opened an entry (Recientes). */
+  touch(id: Id): void;
+  setProfile(p: Profile): void;
   /** DataSource of a production. Caller disposes it when leaving. */
   open(id: Id): DataSource;
   /** Whether productions can be opened in other windows and stay in sync. */
   readonly canPopOut: boolean;
 }
 
+/** Entry ids inside `rootIds` (themselves included), at any depth. */
+export function withDescendants(entries: LibraryEntry[], rootIds: Id[]): Set<Id> {
+  const out = new Set(rootIds);
+  let grew = true;
+  while (grew) {
+    grew = false;
+    for (const e of entries) if (e.parentId && out.has(e.parentId) && !out.has(e.id)) (out.add(e.id), (grew = true));
+  }
+  return out;
+}
+
+/** True when the entry or any folder above it is in the trash. */
+export function isInTrash(byId: Map<Id, LibraryEntry>, e: LibraryEntry): boolean {
+  for (let cur: LibraryEntry | undefined = e; cur; cur = cur.parentId ? byId.get(cur.parentId) : undefined) if (cur.trashedAt) return true;
+  return false;
+}
+
 // ---------- shared implementation ----------
 
-interface EntryPersistence {
-  load(): LibraryEntry[];
-  save(entries: LibraryEntry[]): void;
-  /** Changes made elsewhere (another window). */
-  watch(cb: () => void): () => void;
+interface Persisted<T> {
+  load(): T;
+  save(value: T): void;
 }
 
 interface EntryLibraryOptions {
   label: string;
-  persist: EntryPersistence;
+  mode: LibraryState["mode"];
+  entries: Persisted<LibraryEntry[]>;
+  prefs: Persisted<UserPrefs>;
+  profile: Persisted<Member>;
+  /** Changes made elsewhere (another window). */
+  watch: (cb: () => void) => () => void;
   logStoreFor: (productionId: Id) => LogStore;
-  me: Member;
   deviceId: Id;
   canPopOut: boolean;
   /** Productions handled outside the log (the demo episode). */
@@ -97,15 +138,21 @@ const newId = (p: string) => `${p}_${crypto.randomUUID()}`;
 class EntryLibrary implements Library {
   readonly canPopOut: boolean;
   private entries: LibraryEntry[];
+  private prefs: UserPrefs;
+  private me: Member;
   private summaries: Record<Id, ProductionSummary> = {};
   private listeners = new Set<(s: LibraryState) => void>();
 
   constructor(private readonly o: EntryLibraryOptions) {
     this.canPopOut = o.canPopOut;
-    this.entries = o.persist.load();
+    this.entries = o.entries.load();
+    this.prefs = o.prefs.load();
+    this.me = o.profile.load();
     for (const [id, sp] of Object.entries(o.special ?? {})) this.summaries[id] = sp.summary;
-    o.persist.watch(() => {
-      this.entries = o.persist.load();
+    o.watch(() => {
+      this.entries = o.entries.load();
+      this.prefs = o.prefs.load();
+      this.me = o.profile.load();
       void this.refreshSummaries();
     });
     void this.refreshSummaries();
@@ -153,8 +200,50 @@ class EntryLibrary implements Library {
     this.commit(this.entries.map((x) => (ok.has(x.id) ? { ...x, parentId, updatedAt: Date.now() } : x)));
   }
 
-  setArchived(id: Id, archived: boolean): void {
-    this.commit(this.entries.map((x) => (x.id === id ? { ...x, archived, updatedAt: Date.now() } : x)));
+  trash(ids: Id[]): void {
+    const set = new Set(ids);
+    const now = Date.now();
+    this.commit(this.entries.map((x) => (set.has(x.id) ? { ...x, trashedAt: now } : x)));
+  }
+
+  restore(ids: Id[]): void {
+    const set = new Set(ids);
+    // Back where it was; to the root if that folder no longer exists.
+    this.commit(
+      this.entries.map((x) => {
+        if (!set.has(x.id)) return x;
+        const { trashedAt: _t, ...rest } = x;
+        const parentAlive = !x.parentId || this.entries.some((p) => p.id === x.parentId && !p.trashedAt);
+        return { ...rest, parentId: parentAlive ? x.parentId : null, updatedAt: Date.now() };
+      }),
+    );
+  }
+
+  async deleteForever(ids: Id[]): Promise<void> {
+    const gone = withDescendants(this.entries, ids);
+    for (const e of this.entries) {
+      if (gone.has(e.id) && e.kind === "production" && !this.o.special?.[e.id]) await this.o.logStoreFor(e.id).destroy();
+    }
+    for (const id of gone) delete this.summaries[id];
+    this.prefs = { starred: this.prefs.starred.filter((x) => !gone.has(x)), opened: Object.fromEntries(Object.entries(this.prefs.opened).filter(([k]) => !gone.has(k))) };
+    this.o.prefs.save(this.prefs);
+    this.commit(this.entries.filter((x) => !gone.has(x.id)));
+  }
+
+  setStarred(id: Id, starred: boolean): void {
+    const rest = this.prefs.starred.filter((x) => x !== id);
+    this.savePrefs({ ...this.prefs, starred: starred ? [...rest, id] : rest });
+  }
+
+  touch(id: Id): void {
+    this.savePrefs({ ...this.prefs, opened: { ...this.prefs.opened, [id]: Date.now() } });
+  }
+
+  setProfile(p: Profile): void {
+    const displayName = p.displayName.trim() || this.me.displayName;
+    this.me = { ...this.me, displayName, email: p.email.trim() };
+    this.o.profile.save(this.me);
+    this.emit();
   }
 
   open(id: Id): DataSource {
@@ -168,7 +257,7 @@ class EntryLibrary implements Library {
   // ---------- internals ----------
 
   private source(id: Id, create?: ConstructorParameters<typeof LocalSource>[0]["create"]): LocalSource {
-    return new LocalSource({ store: this.o.logStoreFor(id), deviceId: this.o.deviceId, me: this.o.me, create });
+    return new LocalSource({ store: this.o.logStoreFor(id), deviceId: this.o.deviceId, me: this.me, create });
   }
 
   private entry(id: Id, kind: EntryKind, name: string, parentId: Id | null): LibraryEntry {
@@ -176,9 +265,15 @@ class EntryLibrary implements Library {
     return { id, kind, name: name.trim() || (kind === "folder" ? "Carpeta sin nombre" : "Producción sin nombre"), parentId, createdAt: now, updatedAt: now };
   }
 
+  private savePrefs(prefs: UserPrefs): void {
+    this.prefs = prefs;
+    this.o.prefs.save(prefs);
+    this.emit();
+  }
+
   private commit(entries: LibraryEntry[]): void {
     this.entries = entries;
-    this.o.persist.save(entries);
+    this.o.entries.save(entries);
     this.emit();
     void this.refreshSummaries();
   }
@@ -197,7 +292,7 @@ class EntryLibrary implements Library {
   }
 
   private state(): LibraryState {
-    return { label: this.o.label, entries: this.entries, summaries: { ...this.summaries } };
+    return { label: this.o.label, mode: this.o.mode, me: this.me, entries: this.entries, summaries: { ...this.summaries }, prefs: this.prefs };
   }
 
   private emit(): void {
@@ -224,27 +319,31 @@ export function summarize(s: Pick<LogState, "production" | "nodes" | "members">)
 
 // ---------- concrete libraries ----------
 
-const memoryPersistence = (initial: LibraryEntry[]): EntryPersistence => {
-  let entries = initial;
-  return { load: () => entries, save: (e) => void (entries = e), watch: () => () => undefined };
+const memory = <T,>(initial: T): Persisted<T> => {
+  let v = initial;
+  return { load: () => v, save: (x) => void (v = x) };
 };
 
+const EMPTY_PREFS: UserPrefs = { starred: [], opened: {} };
+
 /** In-memory demo: the seeded episode (MockSource) inside "Mareas", plus anything created. */
-export function demoLibrary(mock: { open: () => DataSource; summary: ProductionSummary; name: string }): Library {
+export function demoLibrary(mock: { open: () => DataSource; summary: ProductionSummary; name: string; me: Member }): Library {
   const t = Date.now() - 2 * 24 * 3600_000;
   const at = (kind: EntryKind, id: Id, name: string, parentId: Id | null): LibraryEntry => ({ id, kind, name, parentId, createdAt: t, updatedAt: t });
   const stores = new Map<Id, MemoryLogStore>();
-  const me: Member = { uid: "u_me", email: "tu@estudio.com", displayName: "Tú", role: "owner", magnificConnected: false };
   return new EntryLibrary({
     label: "Demo",
-    persist: memoryPersistence([
+    mode: "demo",
+    entries: memory([
       at("folder", "f_mareas", "Mareas", null),
       at("folder", "f_mareas_t1", "Temporada 1", "f_mareas"),
       at("production", "p_demo", mock.name, "f_mareas_t1"),
       at("folder", "f_spots", "Spots", null),
     ]),
+    prefs: memory<UserPrefs>({ starred: ["p_demo"], opened: { p_demo: t } }),
+    profile: memory(mock.me),
+    watch: () => () => undefined,
     logStoreFor: (id) => stores.get(id) ?? stores.set(id, new MemoryLogStore()).get(id)!,
-    me,
     deviceId: "demo",
     canPopOut: false,
     special: { p_demo: { open: mock.open, summary: mock.summary } },
@@ -253,33 +352,48 @@ export function demoLibrary(mock: { open: () => DataSource; summary: ProductionS
 
 /** localStorage library: one user per browser profile, one device per window. */
 export function browserLibrary(): Library {
-  const KEY = "sweetflow:library";
+  const KEYS = { entries: "sweetflow:library", prefs: "sweetflow:prefs", profile: "sweetflow:profile" };
   const remembered = (storage: Storage, key: string) => {
     let v = storage.getItem(key);
     if (!v) storage.setItem(key, (v = crypto.randomUUID().slice(0, 8)));
     return v;
   };
+  const json = <T,>(key: string, fallback: T): Persisted<T> => ({
+    load: () => {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? { ...fallback, ...(JSON.parse(raw) as T) } : fallback;
+      } catch {
+        return fallback;
+      }
+    },
+    save: (v) => localStorage.setItem(key, JSON.stringify(v)),
+  });
   const uid = `u_${remembered(localStorage, "sweetflow:uid")}`;
-  const me: Member = { uid, email: "", displayName: `Usuario ${uid.slice(2, 6)}`, role: "owner", magnificConnected: false };
+  const defaultMe: Member = { uid, email: "", displayName: `Usuario ${uid.slice(2, 6)}`, role: "owner", magnificConnected: false };
+  const profile = json<Member>(KEYS.profile, defaultMe);
   return new EntryLibrary({
     label: "Este equipo",
-    persist: {
+    mode: "local",
+    entries: {
       load: () => {
         try {
-          return JSON.parse(localStorage.getItem(KEY) ?? "[]") as LibraryEntry[];
+          return JSON.parse(localStorage.getItem(KEYS.entries) ?? "[]") as LibraryEntry[];
         } catch {
           return [];
         }
       },
-      save: (entries) => localStorage.setItem(KEY, JSON.stringify(entries)),
-      watch: (cb) => {
-        const h = (e: StorageEvent) => (e.key === KEY || e.key?.startsWith("sweetflow:prod:")) && cb();
-        window.addEventListener("storage", h);
-        return () => window.removeEventListener("storage", h);
-      },
+      save: (entries) => localStorage.setItem(KEYS.entries, JSON.stringify(entries)),
+    },
+    prefs: json(KEYS.prefs, EMPTY_PREFS),
+    // The uid never changes, whatever was saved.
+    profile: { load: () => ({ ...profile.load(), uid, role: "owner" }), save: profile.save },
+    watch: (cb) => {
+      const h = (e: StorageEvent) => (Object.values(KEYS).includes(e.key ?? "") || e.key?.startsWith("sweetflow:prod:")) && cb();
+      window.addEventListener("storage", h);
+      return () => window.removeEventListener("storage", h);
     },
     logStoreFor: (id) => new BrowserLogStore(`prod:${id}`),
-    me,
     // sessionStorage is per window: every window writes its own log file.
     deviceId: `win-${remembered(sessionStorage, "sweetflow:device")}`,
     canPopOut: true,

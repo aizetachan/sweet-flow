@@ -31,6 +31,7 @@ export function createLibrary(mode = dataMode()): Library {
   const seed = buildSeed();
   return demoLibrary({
     name: seed.production.name,
+    me: seed.me,
     summary: summarize({ production: seed.production, nodes: seed.nodes, members: seed.members }),
     open: () => new MockSource(),
   });
@@ -41,12 +42,16 @@ function singleLibrary(name: string, open: () => DataSource): Library {
   const t = Date.now();
   const state: LibraryState = {
     label: name,
+    mode: "firebase",
+    me: { uid: "", email: "", displayName: "Firebase", role: "viewer", magnificConnected: false },
     entries: [{ id: "p_single", kind: "production", name, parentId: null, createdAt: t, updatedAt: t }],
     summaries: {},
+    prefs: { starred: [], opened: {} },
   };
   const unsupported = () => {
     throw new Error("No disponible con esta fuente de datos.");
   };
+  const ignore = () => undefined;
   return {
     canPopOut: false,
     subscribe: (cb) => (cb(state), () => undefined),
@@ -54,7 +59,12 @@ function singleLibrary(name: string, open: () => DataSource): Library {
     createProduction: unsupported,
     rename: unsupported,
     move: unsupported,
-    setArchived: unsupported,
+    trash: unsupported,
+    restore: unsupported,
+    deleteForever: unsupported,
+    setStarred: ignore,
+    touch: ignore,
+    setProfile: ignore,
     open,
   };
 }

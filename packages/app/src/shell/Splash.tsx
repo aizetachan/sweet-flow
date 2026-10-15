@@ -259,6 +259,23 @@ export function Splash({ ready, onDone }: { ready: boolean; onDone: () => void }
     // First pose right away, so no letter flashes at the corner before the first frame.
     frame(t0);
 
+    // Browsers pause animation frames in hidden windows: settle on time anyway.
+    const safety = window.setTimeout(() => {
+      if (landed) return;
+      cancelAnimationFrame(raf);
+      landed = true;
+      placeAllAtTargets();
+      setSettled(true);
+    }, done + 300);
+
+    // Slots measured before the web font loads are off (letters overlap): re-measure.
+    let alive = true;
+    void document.fonts?.ready.then(() => {
+      if (!alive) return;
+      measure();
+      if (landed) placeAllAtTargets();
+    });
+
     // On resize the slots move: stop travelling and settle in the new layout.
     const onResize = () => {
       measure();
@@ -271,6 +288,8 @@ export function Splash({ ready, onDone }: { ready: boolean; onDone: () => void }
     };
     window.addEventListener("resize", onResize);
     return () => {
+      alive = false;
+      window.clearTimeout(safety);
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", onResize);
     };

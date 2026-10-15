@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Spinner } from "@sweetflow/ui";
+import { Button, Modal, Spinner } from "@sweetflow/ui";
 import { useStore } from "./state/store";
 import { Rail, Topbar } from "./shell/Shell";
 import { Splash } from "./shell/Splash";
@@ -48,8 +48,28 @@ function Production() {
       </div>
       <FloatingInspectors />
       <Notice />
+      <LeaveConfirm />
       <Modals />
     </div>
+  );
+}
+
+/** Leaving the production closes every floating panel and popped window: ask first. */
+function LeaveConfirm() {
+  const ask = useStore((s) => s.leaveAsk);
+  const floating = useStore((s) => s.floating.length);
+  const popped = useStore((s) => s.popped.length);
+  const { set, confirmLeave } = useStore.getState();
+  if (!ask) return null;
+  const n = floating + popped;
+  return (
+    <Modal title="Ventanas emergentes abiertas" onClose={() => set({ leaveAsk: null })} width={420}>
+      <p>Tienes {n === 1 ? "una ventana emergente abierta" : `${n} ventanas emergentes abiertas`}. ¿Estás seguro? Al salir de la producción se cerrarán.</p>
+      <div className="modal-actions">
+        <Button onClick={() => set({ leaveAsk: null })}>No, quedarme</Button>
+        <Button variant="primary" autoFocus onClick={confirmLeave}>Sí, cerrar y salir</Button>
+      </div>
+    </Modal>
   );
 }
 
@@ -61,7 +81,16 @@ function Notice() {
 function PoppedWindow() {
   const snap = useStore((s) => s.snap);
   const nodeId = useStore((s) => s.windowNodeId);
-  if (!snap || !nodeId) return <Loading />;
+  if (!nodeId) {
+    // Its main window left the production (and the browser would not let us close this one).
+    return (
+      <div className="loading loading--col">
+        <strong>Esta ventana ya no está activa</strong>
+        <span className="sf-muted">Se salió de la producción en la ventana principal. Puedes cerrarla.</span>
+      </div>
+    );
+  }
+  if (!snap) return <Loading />;
   const node = snap.nodes.find((n) => n.id === nodeId);
   if (node) document.title = `${node.title || "Sin título"} · ${snap.production.name}`;
   return <WindowInspector nodeId={nodeId} />;

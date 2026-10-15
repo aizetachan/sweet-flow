@@ -10,12 +10,15 @@ import type { Id } from "@sweetflow/domain";
 import type { DataSource, Snapshot } from "../data/source";
 import type { Library, LibraryState } from "../data/library";
 import { createLibrary } from "../data";
+import { closePoppedWindows, joinOwner, trackPoppedWindows, WINDOW_ID, type PoppedWindow } from "./windows";
 
 export type Phase = "dashboard" | "production" | "window";
 export type View = "board" | "library" | "team";
 export type CardSize = "s" | "m" | "l";
 export type PanelTab = "produce" | "cut" | "review" | "activity";
 export type DashLayout = "grid" | "list";
+export type DashSection = "home" | "recent" | "starred" | "trash" | "settings";
+export type SettingsTab = "profile" | "storage" | "integrations" | "about";
 
 export interface Filters {
   query: string;
@@ -40,6 +43,8 @@ interface UiState {
   /** Dashboard folder being browsed (null = root). */
   folderId: Id | null;
   dashLayout: DashLayout;
+  dashSection: DashSection;
+  settingsTab: SettingsTab;
   /** Open production (library entry id). */
   productionId: Id | null;
   /** Node shown by a popped-out window (phase "window"). */
@@ -63,6 +68,10 @@ interface UiState {
   floating: FloatingPanel[];
   /** Short message at the bottom of the screen (e.g. a code changed on move). */
   notice: string | null;
+  /** Windows popped out from this one (own OS/browser windows). */
+  popped: PoppedWindow[];
+  /** Asking to confirm leaving the production with windows open; holds where to go. */
+  leaveAsk: { folderId?: Id | null } | null;
 }
 
 interface Store extends UiState {
@@ -78,6 +87,9 @@ interface Store extends UiState {
   toggleCollapsed: (id: Id) => void;
   openProduction: (id: Id, opts?: { windowNodeId?: Id }) => void;
   closeProduction: (folderId?: Id | null) => void;
+  /** Leave the production, asking first if floating panels or popped windows are open. */
+  requestLeave: (folderId?: Id | null) => void;
+  confirmLeave: () => void;
   floatPanel: (nodeId: Id) => void;
   dockPanel: (key: string) => void;
   closeFloating: (key: string) => void;
@@ -113,6 +125,8 @@ export const useStore = create<Store>((set, get) => ({
   phase: "dashboard",
   folderId: null,
   dashLayout: "grid",
+  dashSection: "home",
+  settingsTab: "profile",
   productionId: null,
   windowNodeId: null,
   view: "board",
@@ -129,6 +143,8 @@ export const useStore = create<Store>((set, get) => ({
   collapsed: {},
   floating: [],
   notice: null,
+  popped: [],
+  leaveAsk: null,
   set: (patch) => set(patch),
   select: (id, tab) => {
     if (id !== get().selectedId) set({ activeMediaId: null, playhead: 0, playing: false });
@@ -146,15 +162,24 @@ export const useStore = create<Store>((set, get) => ({
   openProduction: (id, opts) => {
     get().closeProduction(get().folderId);
     const src = get().library.open(id);
+    get().library.touch(id);
     unsubscribeSource = src.subscribe((snap) => set({ snap }));
     set({ ...PANEL_RESET, source: src, snap: null, productionId: id, phase: opts?.windowNodeId ? "window" : "production", windowNodeId: opts?.windowNodeId ?? null });
   },
   closeProduction: (folderId) => {
+    // Popped windows never outlive the production screen.
+    closePoppedWindows();
     unsubscribeSource();
     unsubscribeSource = () => undefined;
     get().source.dispose?.();
-    set({ ...PANEL_RESET, source: IDLE, snap: null, productionId: null, phase: "dashboard", ...(folderId !== undefined ? { folderId } : {}) });
+    set({ ...PANEL_RESET, source: IDLE, snap: null, productionId: null, phase: "dashboard", popped: [], leaveAsk: null, ...(folderId !== undefined ? { folderId, dashSection: "home" as DashSection } : {}) });
   },
+  requestLeave: (folderId) => {
+    const { floating, popped } = get();
+    if (floating.length || popped.length) set({ leaveAsk: { folderId } });
+    else get().closeProduction(folderId);
+  },
+  confirmLeave: () => get().closeProduction(get().leaveAsk?.folderId),
 
   floatPanel: (nodeId) => {
     const { floating, selectedId } = get();
@@ -185,7 +210,7 @@ export const useStore = create<Store>((set, get) => ({
     const { productionId } = get();
     if (!productionId) return;
     // href without the hash: also right for file:// in the packaged desktop app (origin is "null" there).
-    const url = `${location.href.split("#")[0]}#/ventana/${encodeURIComponent(productionId)}/${encodeURIComponent(nodeId)}`;
+    const url = `${location.href.split("#")[0]}#/ventana/${encodeURIComponent(productionId)}/${encodeURIComponent(nodeId)}/${WINDOW_ID}`;
     // noopener: the new window gets its own sessionStorage, i.e. its own device id.
     window.open(url, "_blank", "noopener,width=560,height=880");
   },
@@ -193,9 +218,19 @@ export const useStore = create<Store>((set, get) => ({
 
 library.subscribe((lib) => useStore.setState({ lib }));
 
-// A popped-out window opens straight on its node (no splash, no dashboard).
-const popped = /^#\/ventana\/([^/]+)\/([^/]+)$/.exec(location.hash);
-if (popped) useStore.getState().openProduction(decodeURIComponent(popped[1]!), { windowNodeId: decodeURIComponent(popped[2]!) });
+// A popped-out window opens straight on its node (no splash, no dashboard) and
+// reports to the window that opened it; any other window tracks its own.
+const popped = /^#\/ventana\/([^/]+)\/([^/]+)\/([^/]+)$/.exec(location.hash);
+if (popped) {
+  const nodeId = decodeURIComponent(popped[2]!);
+  useStore.getState().openProduction(decodeURIComponent(popped[1]!), { windowNodeId: nodeId });
+  joinOwner(popped[3]!, nodeId, () => {
+    useStore.getState().closeProduction();
+    useStore.setState({ phase: "window", windowNodeId: null });
+  });
+} else {
+  trackPoppedWindows((list) => useStore.setState({ popped: list }));
+}
 
 /** Snapshot accessor for components rendered after the first emit. */
 export function useSnap(): Snapshot {

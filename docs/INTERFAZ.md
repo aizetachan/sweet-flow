@@ -34,7 +34,33 @@ Abrir la app ──▶ 0. Pantalla de carga ──▶ 1. Dashboard ──▶ 2. 
 
 ## 1. Dashboard
 
-Organización tipo Drive, como Frame.io: aquí están todos los proyectos.
+Organización tipo Drive, como Frame.io: aquí están todos los proyectos. Es una
+aplicación completa con **menú lateral**:
+
+- **Inicio:** las carpetas y producciones, navegando por carpetas.
+- **Recientes:** lo último que has abierto (es personal, no se comparte).
+- **Favoritos:** lo que marcas con la estrella (personal).
+- **Papelera:** lo que se borra va aquí y desaparece del resto del dashboard,
+  con su contenido. Se puede **restaurar** (vuelve a su carpeta, o a Inicio si
+  esa carpeta ya no está) o **eliminar definitivamente** (doble clic de
+  confirmación). No se vacía sola.
+- **Carpetas:** acceso directo a las carpetas de primer nivel; también se
+  puede soltar encima lo que se arrastra.
+- **Ajustes** y, abajo, **tu avatar** con tu nombre (abre tu perfil).
+
+### 1.1 Ajustes
+
+Se gestionan desde el dashboard:
+
+- **Perfil:** nombre y email (el avatar sale del nombre).
+- **Almacenamiento:** dónde se guardan ahora las producciones y la conexión
+  con la **carpeta de Dropbox** del equipo (próximamente).
+- **Integraciones:** **Magnific**, con la cuenta de cada persona
+  (próximamente).
+- **Acerca de:** versión y origen de los datos.
+
+Lo que aún no funciona se muestra con lo que hará y la etiqueta
+"Próximamente"; nunca como un botón que no hace nada.
 
 - **Carpetas y producciones.** Una carpeta agrupa (p. ej. la serie `Mareas`);
   una **producción** es un archivo de trabajo (p. ej. `Ep01 · La partida`) que
@@ -43,8 +69,8 @@ Organización tipo Drive, como Frame.io: aquí están todos los proyectos.
   salir de carpetas, búsqueda.
 - **Vistas:** cuadrícula (tarjetas) y lista. Cada producción muestra:
   miniatura, progreso por estados, última modificación y quién trabaja en ella.
-- **Acciones:** crear carpeta, crear producción, renombrar, mover arrastrando
-  (también varias a la vez), archivar.
+- **Acciones:** crear carpeta, crear producción, renombrar, marcar como
+  favorito, mover arrastrando (también varias a la vez) y mover a la papelera.
 - **Relación con Dropbox:** la organización del dashboard **es** la de la
   carpeta de Dropbox.
   - Lo que se crea, renombra o mueve en la app se aplica en Dropbox.
@@ -93,6 +119,12 @@ derecha.**
 - Todas muestran el mismo estado: lo que se hace en una se ve en el tablero y en
   las demás al momento.
 - Volver a acoplar una ventana la devuelve al panel lateral.
+- **Solo existen dentro de la producción.** Si hay paneles flotantes o
+  ventanas aparte abiertos y se sale de la producción (migas de pan, logo),
+  se pregunta: «Tienes ventanas emergentes abiertas. ¿Estás seguro?». **Sí**
+  las cierra todas y sale; **No** se queda en la producción. Si una ventana
+  aparte no se puede cerrar (el navegador solo deja cerrar las que abrió la
+  app), deja de mostrar la producción.
 - "Ventana aparte" necesita que las ventanas compartan los datos: funciona en
   modo local y en escritorio, no en la demo.
 
