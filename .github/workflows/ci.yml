@@ -1,0 +1,97 @@
+name: CI
+
+on:
+  push:
+    branches: [main, claude/audiovisual-production-platform-8f9aq1]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Typecheck · test · build
+    runs-on: ubuntu-latest
+    env:
+      # Only the desktop jobs need the Electron binary.
+      ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm --filter @sweetflow/app build
+      - run: pnpm --filter @sweetflow/functions build
+
+  rules:
+    name: Security rules (emulators)
+    runs-on: ubuntu-latest
+    env:
+      ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/firebase/emulators
+          key: firebase-emulators-${{ hashFiles('pnpm-lock.yaml') }}
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:rules
+
+  desktop:
+    name: Desktop (${{ matrix.name }}, unsigned)
+    needs: check
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: macOS
+            os: macos-latest
+            script: dist:mac
+            files: |
+              apps/desktop/release/*.dmg
+              apps/desktop/release/*.blockmap
+              apps/desktop/release/latest-mac.yml
+          - name: Windows
+            os: windows-latest
+            script: dist:win
+            files: |
+              apps/desktop/release/*.exe
+              apps/desktop/release/*.blockmap
+              apps/desktop/release/latest.yml
+    runs-on: ${{ matrix.os }}
+    env:
+      # Unsigned on purpose (docs/ARCHITECTURE.md §7.2): never look for certificates.
+      CSC_IDENTITY_AUTO_DISCOVERY: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm ${{ matrix.script }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sweet-flow-${{ matrix.name }}-${{ github.sha }}
+          path: ${{ matrix.files }}
+          if-no-files-found: error
+          retention-days: 14
