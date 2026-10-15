@@ -15,18 +15,27 @@
 | `FirebaseSource` (mismo contrato `DataSource`; se activa con `VITE_DATA_SOURCE=firebase`) | ✅ esqueleto |
 | Firebase: reglas Firestore/RTDB/Storage por rol (49 tests con emuladores), Functions de estructura | ✅ esqueleto |
 | Electron sin firmar (dmg universal + NSIS), updater que en macOS solo avisa | ✅ sin probar con interfaz gráfica |
-| CI (typecheck, tests, reglas, instaladores Mac/Win) | ✅ primera ejecución pendiente |
+| CI (typecheck, tests, reglas, instaladores Mac/Win) | ✅ en verde |
 
 Demo publicada de la UI: <https://claude.ai/artifact/SnnoThJwwjryYfVoYjAkst>
+
+## Cambio de rumbo: primero local, sobre Dropbox (15 oct 2026)
+
+La prueba de concepto **no usa Firebase**. La producción vive en una carpeta
+(dentro de una carpeta compartida de Dropbox para trabajar en equipo), con un
+registro de eventos por dispositivo. Después llegará la API de Dropbox, y
+Firestore solo cuando haga falta tiempo real. Los archivos se quedan en Dropbox:
+Cloud Storage sale del plan. Detalle en `ARCHITECTURE.md` §2.1 y §5.
+
+El código de Firebase (`FirebaseSource`, reglas, Functions) se mantiene como
+esqueleto para la etapa C, pero no se sigue desarrollando por ahora.
 
 ## Primero, en local
 
 1. `pnpm install && pnpm dev` → revisar la UI en <http://localhost:5173>.
 2. `pnpm dev:desktop` → **abrir la app de escritorio por primera vez** en Mac
    (y en Windows si hay máquina). No se pudo lanzar en la nube.
-3. Revisar el primer run de CI y descargar los instaladores sin firmar.
-4. Crear los proyectos Firebase `sweetflow-dev` / `sweetflow-prod` (Auth con
-   Google, Firestore, Realtime Database, Storage) y rellenar `.env.local`.
+3. Descargar del CI los instaladores sin firmar y probarlos.
 
 ## Decisiones pendientes de validar
 
@@ -45,33 +54,34 @@ Demo publicada de la UI: <https://claude.ai/artifact/SnnoThJwwjryYfVoYjAkst>
 - [ ] CSP en el renderer de Electron.
 - [ ] La UI aún no usa `window.sweetflow` (elegir carpeta, abrir en Finder/Explorador).
 - [ ] Antes de un `firebase deploy` real: quitar la devDependency `workspace:*` de `firebase/functions/package.json`.
-- [ ] `FirebaseSource.linkFolder()` lanza `NotImplemented` (llega con la fase 4).
+- [ ] `FirebaseSource.linkFolder()` lanza `NotImplemented` (etapa C; en local la carpeta la elige `LocalSource`).
 - [ ] Política de almacenamiento para lo archivado — [issue #1](https://github.com/aizetachan/sweet-flow/issues/1).
 - [ ] Referencias de biblioteca entre cuentas de Magnific: validar en la fase 2 (§6).
 
 ## Siguientes fases
 
-### Fase 1 · Estructura en tiempo real
+Se avanza poco a poco: cada paso deja la app funcionando.
 
-- **Login:** con Google (Firebase Auth) y pantalla de bienvenida.
-- **Espacios de trabajo:**
-  - crear un espacio;
-  - invitar por email o enlace con aprobación;
-  - aceptar la invitación;
-  - una Function que copie los roles del espacio a cada producción.
-- **Producciones:** crear, listar y cambiar de producción. El selector ya existe en la UI.
-- **Árbol y tablero sobre Firestore:** crear, insertar, mover, renombrar y borrar con las Functions ya escritas.
-- **Niveles y estados editables:** guardados en Firestore, con historial en `activity`.
-- **Presencia:** en RTDB, con avatares en el tablero y en el plano.
-- **Pruebas:** e2e con dos usuarios en los emuladores, editando a la vez.
+### Fase 1 · Producción en carpeta (etapa A)
+
+1. **Registro de eventos en `packages/domain`:** tipos de evento, reloj lógico
+   híbrido y combinación de registros (puro, con tests: orden estable, último
+   que escribe por campo, choques de numeración).
+2. **`LocalSource` con estructura:** árbol, niveles y estados. Guarda y carga una
+   producción desde una carpeta; la demo del navegador sigue con `MockSource`.
+3. **Carpeta desde Electron:** elegir carpeta (`pickFolder()`), escritura
+   atómica en el utility process e IPC tipado hacia la UI.
+4. **Carpetas en disco:** crear, renombrar y mover carpetas con `folderName()`
+   (§5.3) y reparación al abrir.
+5. **Varias personas:** vigilar la carpeta (`fs.watch`) para ver los cambios
+   que trae Dropbox; probar con dos dispositivos sobre la misma carpeta.
+6. **Producciones:** crear, listar y abrir producciones dentro de la carpeta. El
+   selector ya existe en la UI.
 
 ### Fase 2 · Generación
 
-- **Conexión de Magnific por usuario:** OAuth 2.0 + PKCE, con tokens cifrados en el servidor. Hay stubs `magnificAuthStart` y `magnificAuthCallback`.
-- **Worker en Cloud Run:** recibe la cola de jobs y usa el token de quien lanza.
-  - Adaptador `GenerationProvider` de Magnific.
-  - Copia del resultado a Storage.
-  - `media` pasa a `ready`.
+- **Conexión de Magnific por usuario:** OAuth 2.0 + PKCE desde la app de escritorio; token cifrado con `safeStorage`.
+- **Cola en el utility process:** adaptador `GenerationProvider` de Magnific; el resultado se descarga a `_media/` del nodo y se registra el evento.
 - **Vídeo de 30 s:** encadenar extend o concatenate si el modelo no llega.
 - **Lotes y créditos:** estimación antes de lanzar y registro real por usuario, producción y nodo.
 - **Referencias del desglose:** reparto, props y localizaciones en el prompt y como referencias de biblioteca.
@@ -79,21 +89,14 @@ Demo publicada de la UI: <https://claude.ai/artifact/SnnoThJwwjryYfVoYjAkst>
 ### Fase 3 · Corte y reparto real
 
 - **Tomas sobre vídeo real:** reproducción con entrada y salida.
-- **Render de cortes:** servicio de ffmpeg en Cloud Run.
+- **Render de cortes:** ffmpeg local en el utility process.
 - **Posters y proxies:** fotograma de cada toma y proxies de baja resolución.
 
-### Fase 4 · Espejo local
+### Fase 4 en adelante
 
-- **Motor de espejo:** en el utility process de Electron. Escucha Firestore, descarga de Storage y escribe con escritura atómica.
-- **Rutas en el disco:**
-  - manifest id ↔ ruta;
-  - `rename` al cambiar títulos o códigos;
-  - rutas con `folderName()` (§5.3).
-- **Sincronización selectiva:** por secuencia o escena, con aviso si alguien modifica la réplica.
-
-### Fase 5 en adelante
-
-- **Revisión:** notificaciones y anotación sobre el fotograma.
+- **Revisión:** comentarios con timecode, avisos de cambios y anotación sobre el fotograma.
+- **API de Dropbox (etapa B):** `DropboxSource`, sin necesidad del cliente de Dropbox.
+- **Tiempo real (etapa C):** Firebase Auth, Firestore, presencia y roles en el servidor. Aquí se retoma el esqueleto de Firebase.
 - **Biblioteca:** completa, con creación de assets.
 - **Montaje:** timeline de escena o secuencia y export.
 - **Más adelante:** web de revisión, firma de apps y política de almacenamiento.

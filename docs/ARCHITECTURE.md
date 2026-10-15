@@ -1,7 +1,8 @@
 # Sweet Flow — Arquitectura
 
-> Estado: **borrador para validar**. Nada de esto está implementado todavía.
-> Decisiones tomadas: Firebase como plataforma de partida · app de escritorio
+> Estado: **borrador para validar**. Fase 0 implementada (ver `ROADMAP.md`).
+> Decisiones tomadas: **primero local, sobre una carpeta compartida (Dropbox)**;
+> Firebase solo cuando haga falta tiempo real (§2.1) · app de escritorio
 > (Electron) para **macOS y Windows** · Magnific con la cuenta de cada usuario.
 > Resumen de decisiones en §11.
 
@@ -32,15 +33,48 @@ Principios:
    - Un clip de escena alimenta varios planos, y el corte se puede rehacer sin
      regenerar.
 5. **Cada plano contiene muchas versiones**, con estado, responsable, toma
-   elegida y comentarios. Todo el equipo ve los avances en tiempo real.
-6. **Producción en masa.** La generación corre en el servidor, en cola y en lotes.
-   Lo producido aparece en la app y se guarda **ordenado en la carpeta
-   del escritorio** de cada miembro.
+   elegida y comentarios. Todo el equipo ve los avances: primero con unos
+   segundos de retraso (lo que tarde Dropbox) y, más adelante, en tiempo real.
+6. **Producción en masa.** La generación corre en cola y en lotes (primero
+   desde la app de escritorio, después en el servidor). Lo producido aparece en
+   la app y se guarda **ordenado en la carpeta de la producción**.
 
 Fuera de alcance en v1: escritura de guion, edición final de color/sonido, y
 distribución.
 
 ## 2. Vista general
+
+### 2.1 Etapas de almacenamiento
+
+El almacenamiento se monta por etapas. La UI no cambia entre ellas: solo habla
+con `DataSource` (`packages/app/src/data/source.ts`) y cada etapa es una
+implementación distinta.
+
+| Etapa | Estado de la producción | Archivos (media) | Compartir | `DataSource` |
+| --- | --- | --- | --- | --- |
+| **A. Prueba de concepto** | Registro de eventos en la carpeta de la producción (§5.0) | En la misma carpeta, ordenados por código (§5.2) | La carpeta vive en una **carpeta compartida de Dropbox**; la sincroniza el cliente de escritorio de Dropbox. Los cambios llegan en segundos | `LocalSource` (escritorio) |
+| **B. API de Dropbox** | Igual que A | Igual que A | OAuth de Dropbox por usuario; la app lee y escribe por API y detecta cambios con *long-polling*. No hace falta tener el cliente de Dropbox (web de revisión) | `DropboxSource` |
+| **C. Tiempo real** | Firestore (§3 y §4): presencia, listeners y roles aplicados en el servidor | **Siguen en Dropbox.** Cloud Storage desaparece del plan | Firebase Auth + Dropbox | `FirebaseSource` |
+
+Por qué Dropbox para los archivos:
+
+- El equipo ya comparte un Dropbox. No hay que gestionar cuentas ni reglas de
+  Storage para los archivos.
+- El cliente de Dropbox ya hace descarga, subida, sincronización selectiva y
+  trabajo sin conexión. Eso cubre buena parte del espejo local (§5.2).
+- El vídeo pesa mucho: el almacenamiento y la descarga en la nube cuestan; un
+  plan de Dropbox es un coste fijo.
+- Los archivos siguen siendo del equipo y se abren con cualquier herramienta.
+
+Lo que Dropbox no da, y por eso se aplaza a la etapa C:
+
+- **Tiempo real.** Sin presencia ni avatares en vivo; los cambios llegan con
+  unos segundos de retraso.
+- **Roles.** Dropbox solo distingue lectura y edición por carpeta. En A y B los
+  roles (§8) se muestran en la UI, pero no se pueden imponer: quien edita la
+  carpeta puede cambiarlo todo.
+
+El diagrama siguiente es el de la **etapa C**:
 
 ```
 ┌──────────────────────────── App de escritorio (Electron, macOS + Windows) ───┐
@@ -50,11 +84,10 @@ distribución.
 │  - Firebase JS SDK (tiempo real,      - Auto-update, IPC tipado              │
 │    caché offline)                                                            │
 └───────────────┬─────────────────────────────────────────┬────────────────────┘
-                │ Firestore / RTDB / Storage              │ descarga ordenada
+                │ Firestore / RTDB                        │ archivos
                 ▼                                         ▼
-┌──────────────────────────── Firebase / GCP ──────────────┐   <Carpeta elegida>/
+┌──────────────────────────── Firebase / GCP ──────────────┐   Dropbox (carpeta compartida)
 │ Auth · Firestore (fuente de verdad) · RTDB (presencia)   │     <Producción>/SQ010/SC010/…
-│ Cloud Storage (archivos, por id)                         │
 │ Cloud Functions (triggers, API) · Cloud Tasks (cola)     │
 │ Cloud Run: worker de generación · render ffmpeg          │
 │ Secret Manager (credenciales de proveedores)             │
@@ -69,6 +102,10 @@ local) para que supervisores o clientes vean y comenten sin instalar nada queda
 renderer no depende de Electron.
 
 ## 3. Modelo de datos (Firestore)
+
+> Este modelo es el de la **etapa C** (§2.1). Las entidades (`ProdNode`,
+> `Media`, `Take`…) son las mismas en todas las etapas y viven en
+> `packages/domain`; lo que cambia es dónde se guardan.
 
 Lección de Magnific Studio: un único JSON por proyecto no escala, porque Firestore
 limita cada documento a 1 MB, hay que hacer diff global y gana el último que escribe.
@@ -206,6 +243,11 @@ espejo.
 
 ## 4. Colaboración en tiempo real
 
+> Etapa C (§2.1). En las etapas A y B la colaboración es **casi en tiempo
+> real**: cada miembro escribe en su propio registro de eventos y la app combina
+> los de todos (§5.0). Las escrituras por campo y "gana el último que escribe"
+> funcionan igual; la presencia no existe todavía.
+
 - **Firestore es la fuente de verdad.** Cada cliente escucha los nodos de la
   producción (miles de docs pequeños, asumible) y carga **bajo demanda** media,
   tomas y comentarios de lo visible (la escena abierta, el plano seleccionado).
@@ -221,38 +263,58 @@ espejo.
 - **Actividad**: cada cambio relevante genera un evento (`activity`) para el feed
   y las notificaciones.
 
-## 5. Archivos: nube y espejo local
+## 5. Archivos: la carpeta de la producción
 
-**En la nube, los archivos se guardan por id; en el disco, por código.**
+**La carpeta de la producción es el almacenamiento.** Vive en una carpeta
+compartida de Dropbox (o en cualquier carpeta local, para trabajar solo). Los
+archivos se ordenan por código (§5.2) y el estado de la producción se guarda en
+un registro de eventos dentro de la misma carpeta (§5.0).
 
-Renumerar o mover un plano no mueve objetos en Storage: solo cambia dónde los
-coloca el espejo local.
+### 5.0 Registro de eventos (etapas A y B)
 
-### 5.1 Cloud Storage
+Un único JSON con toda la producción no sirve: si dos personas lo guardan a la
+vez, Dropbox crea una "copia en conflicto" y se pierden cambios. Por eso **cada
+dispositivo escribe solo en sus propios archivos**, y nadie escribe nunca en
+los de otro.
 
 ```
-productions/{prodId}/media/{mediaId}/original.<ext>
-productions/{prodId}/media/{mediaId}/proxy.mp4      (baja resolución para el tablero)
-productions/{prodId}/media/{mediaId}/thumb.jpg
-productions/{prodId}/takes/{takeId}/render.<ext>
+<Produccion>/.sweetflow/
+  production.json                   id, nombre, versión del esquema (se escribe al crearla)
+  log/<deviceId>/<AAAA-MM>.jsonl    eventos de ese dispositivo; solo se añaden líneas
 ```
 
-Las reglas de Storage comprueban la pertenencia a la producción. Proxies y
-miniaturas se generan al subir el archivo (Function + ffmpeg).
+- **Un evento por línea:** `{ id, at, deviceId, userId, type, payload }`. Cada
+  intención de `DataSource` (crear nodo, cambiar estado, comentar…) es un evento.
+- **`at` es un reloj lógico híbrido** (hora + contador), para ordenar los
+  eventos de todos los dispositivos de forma estable aunque sus relojes no
+  coincidan del todo.
+- **Estado = combinar todos los registros** en orden `(at, deviceId)`. Por
+  campo, gana el último que escribe, igual que en §4. Las reglas de la
+  combinación son puras y viven en `packages/domain`, con tests.
+- **Choques estructurales:** si dos personas crean a la vez el mismo número
+  (`SH0020`), la combinación lo resuelve de forma determinista (el segundo pasa
+  al siguiente hueco libre) y los dos ven lo mismo.
+- **Detección de cambios:** en la etapa A, la app vigila la carpeta (`fs.watch`)
+  y vuelve a leer lo que Dropbox haya traído; en la B, *long-polling* de la API.
+- **Caché:** la instantánea combinada se guarda en los datos de la app
+  (fuera de Dropbox) para abrir rápido; se reconstruye desde el registro si falta.
+- **Compactación (más adelante):** cuando los registros crezcan, una instantánea
+  firmada por fecha sustituye a los meses antiguos.
 
-**Descartes: se archivan, no se borran (v1).** Un media descartado se marca
-`archived`: desaparece del tablero (se puede ver con un filtro y recuperar), el
-espejo local no lo descarga, y el archivo se conserva en Storage. Nunca se
-archiva un media que tenga tomas colocadas o sea la toma elegida de un nodo. La
-política para que lo archivado no siga ocupando ni costando (clases de
-almacenamiento frías, borrado definitivo) está pendiente en el
+### 5.1 Descartes
+
+**Se archivan, no se borran (v1).** Un media descartado se marca `archived`:
+desaparece del tablero (se puede ver con un filtro y recuperar) y el archivo se
+conserva en la carpeta. Nunca se archiva un media que tenga tomas colocadas o
+sea la toma elegida de un nodo. La política para que lo archivado no siga
+ocupando (moverlo a otra carpeta, borrado definitivo) está pendiente en el
 [issue #1](https://github.com/aizetachan/sweet-flow/issues/1).
 
-### 5.2 Espejo en el escritorio
+### 5.2 Estructura de carpetas
 
 ```
-<Carpeta>/<Produccion>/
-  .sweetflow/manifest.json             id ↔ ruta local, checksums, versión del esquema
+<Carpeta de Dropbox>/<Produccion>/
+  .sweetflow/                          production.json, log/ (§5.0)
   _assets/cast/<Nombre>/…  _assets/props/…  _assets/locations/…
   SQ010_Apertura/
     SC010_Persecucion-en-el-puerto/
@@ -261,23 +323,28 @@ almacenamiento frías, borrado definitivo) está pendiente en el
       SH0010_Plano-general/
         _media/SH0010_img_v001.png
         _takes/SH0010_tk01.mp4
-        node.json                      título, estado, tomas (EDL), comentarios
 ```
 
 Las carpetas llevan **código + título** (ver §5.3). Los archivos llevan solo el
 código, la versión y el tipo: ya son reconocibles por la carpeta en la que están, y
 así renombrar un título no obliga a renombrar cientos de archivos.
 
-- Lo ejecuta el **utility process** de Electron (Node), sin depender de la
-  ventana. Escucha Firestore, descarga desde Storage y escribe con escritura
-  atómica (temporal + renombrado).
-- **Renombrar, renumerar o mover** un nodo se traduce en mover carpetas en el disco,
-  usando el manifest.
-- **Sincronización selectiva:** cada miembro elige qué secuencias o escenas replica.
-  Una serie puede ocupar cientos de GB.
-- La carpeta es **una réplica**. En v1 es de solo lectura por convención; si
-  alguien modifica un archivo, se detecta y se avisa. Una fase posterior podrá
-  **importar** lo que se deje en una carpeta (subirlo como media).
+- **El árbol de carpetas es una proyección del registro.** Cada media guarda en
+  su evento su id y su nombre de archivo; la ruta sale del estado actual del
+  nodo con `folderName()`.
+- **Escritura atómica** (temporal + renombrado), siempre desde el **utility
+  process** de Electron (Node), sin depender de la ventana.
+- **Renombrar, renumerar o mover** un nodo lo hace el dispositivo que hace el
+  cambio: mueve la carpeta y Dropbox lo propaga al resto.
+- **Reparación al abrir:** si la carpeta no coincide con el registro (dos
+  movimientos a la vez, una copia en conflicto de Dropbox), la app recoloca las
+  carpetas según el registro y avisa de lo que no sabe resolver. El registro
+  manda.
+- **Sincronización selectiva:** la del propio cliente de Dropbox. Una serie
+  puede ocupar cientos de GB; cada miembro elige qué secuencias se descarga.
+- La carpeta es **de solo lectura por convención** fuera de `_media` y
+  `_takes`: los archivos se añaden desde la app. Una fase posterior podrá
+  **importar** lo que se deje en una carpeta (añadirlo como media).
 ### 5.3 Nombres unificados: app ↔ disco
 
 Lo que se ve en la app y lo que hay en el disco salen de **una única función**
@@ -296,13 +363,27 @@ Reglas para que el mismo nombre funcione en macOS y Windows:
 | Mayúsculas y minúsculas (Windows y macOS no las distinguen) | El código ya hace único cada nombre, así que no hay colisiones |
 | Límite de ruta de Windows (260 caracteres, que también afecta al Explorador y a Premiere) | Título recortado a 32 caracteres en la carpeta. Con 4 niveles, la ruta dentro de la producción queda por debajo de unos 170 caracteres. La app avisa si la carpeta raíz elegida es demasiado larga |
 
-- El título completo, con tildes, se conserva en la app y en `node.json`. Solo
+- El título completo, con tildes, se conserva en la app y en el registro. Solo
   la carpeta usa la versión adaptada.
 - **Renombrar un título o renumerar un nodo renombra su carpeta en el
-  disco.** El manifest guarda id ↔ ruta, así que el motor de espejo hace un
-  `rename` y no vuelve a descargar nada.
+  disco** con un `rename`: Dropbox lo sincroniza como un movimiento y no vuelve
+  a subir ni a descargar los archivos.
 
 ## 6. Generación y render
+
+**Etapas A y B: desde la app de escritorio.** Sin servidor, la cola vive en el
+utility process de Electron:
+
+- Cada usuario conecta su cuenta de Magnific (OAuth 2.0 + PKCE). El token se
+  guarda cifrado en su máquina (`safeStorage` de Electron), nunca en la carpeta
+  compartida.
+- La app lanza los jobs, espera el resultado, lo descarga a la carpeta del
+  nodo (`_media/`) y registra el evento. Dropbox lo reparte al equipo.
+- Si se cierra la app, los jobs pendientes se retoman al abrirla (el id del
+  job del proveedor queda en el registro).
+
+**Etapa C: en el servidor**, como describe el diagrama. El resultado se guarda
+en Dropbox, no en Cloud Storage.
 
 ```
 Cliente ──crea──▶ jobs/{id} (queued)
@@ -313,7 +394,7 @@ Cliente ──crea──▶ jobs/{id} (queued)
            Cloud Run worker ──▶ Adaptador de proveedor (Magnific MCP/API)
                       │  polling / webhook
                       ▼
-           Descarga el resultado → Storage → media/{id} = ready
+           Descarga el resultado → Dropbox → media/{id} = ready
                       ▼
            Clientes (tiempo real) + espejo local (descarga)
 ```
@@ -331,11 +412,12 @@ Cliente ──crea──▶ jobs/{id} (queued)
 - **Cuenta de Magnific por usuario, como en Studio.** Cada miembro conecta
   *su* cuenta con OAuth 2.0 + PKCE desde Ajustes, y **cada generación consume los
   créditos de quien la lanza**.
-  - Los tokens (access y refresh) se guardan cifrados en el servidor, nunca en el
-    cliente, y se refrescan solos.
+  - Los tokens (access y refresh) se guardan cifrados y se refrescan solos: en
+    la máquina del usuario en las etapas A y B, y en el servidor en la etapa C.
+    Nunca en la carpeta compartida.
   - El job lleva el `uid` de quien lo lanzó, y el worker usa el token de ese usuario.
 - **Mismo espacio, cuentas distintas.** Lo que cada uno genera se copia a
-  Cloud Storage de la producción, así que todo el equipo ve lo mismo aunque se
+  la carpeta de la producción, así que todo el equipo ve lo mismo aunque se
   haya pagado con cuentas diferentes.
   - Unirse a un espacio de trabajo es independiente de Magnific: invitación por
     email o enlace, con un rol.
@@ -345,11 +427,11 @@ Cliente ──crea──▶ jobs/{id} (queued)
   uno ve sus créditos y la producción ve el total.
 - **Referencias de biblioteca entre cuentas.** Un personaje registrado en la
   biblioteca de Magnific de un usuario no es accesible desde la cuenta de otro.
-  Por eso la imagen de referencia se guarda en nuestro Storage, y la entrada de
+  Por eso la imagen de referencia se guarda en la carpeta (`_assets/`), y la entrada de
   biblioteca se registra bajo demanda en la cuenta de quien genera, cacheando el
   identificador por usuario. Hay que validarlo con Magnific en la fase 2.
 - **Render de cortes:** cuando una toma se aprueba o se exporta, se crea un job de render
-  (Cloud Run con ffmpeg) que genera el archivo físico. En la app, la reproducción
+  (ffmpeg local en el utility process; en la etapa C, Cloud Run) que genera el archivo físico. En la app, la reproducción
   usa el media original con entrada y salida, sin esperar a ese render.
 
 ## 7. App de escritorio
@@ -401,7 +483,11 @@ producción.
 | artist | Generar, cortar y colocar tomas, comentar, mover sus tareas a revisión |
 | viewer (cliente) | Ver y comentar |
 
-- Firestore Rules y Storage Rules aplican estos roles por producción.
+- **Etapas A y B:** los roles se guardan en el registro y la UI los respeta,
+  pero no se pueden imponer: cualquiera con permiso de edición en la carpeta de
+  Dropbox puede cambiarlo todo. Para un equipo de confianza es suficiente; quien
+  solo deba ver, recibe la carpeta compartida como solo lectura.
+- **Etapa C:** las Firestore Rules aplican estos roles por producción.
 - Las operaciones sensibles (renumerar, borrar subárboles, cambiar niveles) solo
   se hacen mediante Functions.
 - Las reglas se testean con el Emulator Suite.
@@ -418,7 +504,7 @@ packages/
   app/              React: tablero, árbol, panel, cortador, revisión
   ui/               design system (tokens, componentes)
   domain/           modelo y reglas puras (códigos, numeración, cortes, permisos) + tests
-  data/             acceso a Firebase: repositorios, conversores, hooks de suscripción
+  data/             implementaciones de DataSource (local, Dropbox, Firebase)
   providers/        adaptadores de generación (magnific, …)
   mirror/           motor de espejo local (Node)
 firebase/
@@ -443,17 +529,19 @@ docs/
 
 | Fase | Contenido | Resultado |
 | --- | --- | --- |
-| 0. Cimientos | Monorepo, Firebase dev/prod, Auth, reglas + emuladores, CI, shell de Electron sin firmar para Mac/Win | La app se instala y permite iniciar sesión |
-| 1. Estructura | Espacios de trabajo e invitaciones, producciones, niveles, estados configurables, árbol y tablero en tiempo real, presencia | El equipo construye la estructura a la vez |
-| 2. Generación | OAuth de Magnific por usuario, cola de jobs, versiones, lotes, créditos por usuario | Cada uno genera con su cuenta en escenas y planos |
-| 3. Corte y reparto | Cortador, tomas, render ffmpeg | Un clip de 30 s de escena se reparte a sus planos |
-| 4. Espejo local | Motor de espejo, manifest, sincronización selectiva | La carpeta del escritorio refleja la producción |
-| 5. Revisión | Estados, comentarios con timecode, asignaciones, notificaciones | Flujo de validación del equipo |
-| 6. Desglose | Reparto, props y localizaciones como referencias de generación | Consistencia visual a escala |
-| 7. Montaje | Timeline de escena y secuencia desde las tomas elegidas, export | Montajes de referencia |
+| 0. Cimientos | Monorepo, dominio, UI con datos de demo, esqueleto de Firebase, CI, shell de Electron sin firmar para Mac/Win | La app se instala y se ve la UI |
+| 1. Producción en carpeta (etapa A) | `LocalSource`: elegir carpeta, crear y abrir producciones, registro de eventos y combinación, niveles y estados, árbol y tablero, carpetas en disco con `folderName()`, reparación al abrir | Varias personas trabajan sobre la misma carpeta de Dropbox |
+| 2. Generación | OAuth de Magnific por usuario, cola en el escritorio, versiones, lotes, créditos por usuario | Cada uno genera con su cuenta en escenas y planos |
+| 3. Corte y reparto | Cortador, tomas, render con ffmpeg local | Un clip de 30 s de escena se reparte a sus planos |
+| 4. Revisión | Comentarios con timecode, asignaciones, avisos de cambios | Flujo de validación del equipo |
+| 5. API de Dropbox (etapa B) | `DropboxSource`, OAuth de Dropbox, *long-polling* | Funciona sin el cliente de Dropbox; base para la web de revisión |
+| 6. Tiempo real (etapa C) | Firebase Auth, Firestore, presencia, roles en el servidor, worker de generación | El equipo ve los cambios al instante |
+| 7. Desglose | Reparto, props y localizaciones como referencias de generación | Consistencia visual a escala |
+| 8. Montaje | Timeline de escena y secuencia desde las tomas elegidas, export | Montajes de referencia |
 | Posterior | Web de revisión · firma de apps · política de almacenamiento (issue #1) | — |
 
-**Primera versión utilizable (MVP): fases 0 a 4, más comentarios básicos.**
+**Primera versión utilizable (MVP): fases 0 a 3, más comentarios básicos**, todo
+sobre una carpeta compartida de Dropbox.
 
 ## 11. Decisiones
 
@@ -462,9 +550,10 @@ docs/
 | 1 | Cuenta de Magnific | Por usuario (OAuth, como en Studio). Cada uno gasta sus créditos; el equipo comparte el espacio de trabajo y ve lo mismo | §6 |
 | 2 | Flujo de estados | Configurable por producción, en vivo. Se puede pasar de cualquier estado a cualquier otro (también volver atrás) y queda el historial | §3.1.b |
 | 3 | Web de revisión | Anotada para después. Prioridad: escritorio y trabajo simultáneo del equipo | §2, §10 |
-| 4 | Descartes en Storage | Se archivan (ocultos, no se replican, no se borran). Política de coste y borrado pendiente | §5.1, [issue #1](https://github.com/aizetachan/sweet-flow/issues/1) |
+| 4 | Descartes | Se archivan (ocultos, no se borran). Política de espacio y borrado pendiente | §5.1, [issue #1](https://github.com/aizetachan/sweet-flow/issues/1) |
 | 5 | Firma de apps | Sin firma durante la validación (instalación como app no verificada). Se integra cuando la app esté validada | §7.2 |
 | 6 | Nombres de carpeta | Código + título adaptado (`SC010_Persecucion-en-el-puerto`), generado por la misma función que usa la app y compatible con macOS y Windows | §5.3 |
+| 7 | Almacenamiento | Primero local, sobre una carpeta compartida de Dropbox, con registro de eventos por dispositivo. Después, API de Dropbox. Firestore solo para el tiempo real, más adelante. Los archivos se quedan en Dropbox; no se usa Cloud Storage (15 oct 2026) | §2.1, §5 |
 
 ### Pendiente de validar
 

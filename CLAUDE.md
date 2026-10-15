@@ -11,7 +11,8 @@ Reglas de trabajo:
 - **Idioma:** la UI y la documentación van en español; el código y sus comentarios, en inglés.
 - **Dominio:** las reglas de dominio (códigos, nombres de carpeta, numeración, cortes, roles) viven en `packages/domain`. Son puras y con tests. No dupliques esa lógica en la app ni en las Functions.
 - **Datos:** la UI solo habla con `DataSource` (`packages/app/src/data/source.ts`).
-  - Cualquier intención nueva se añade al contrato y a las dos implementaciones (`MockSource` y `FirebaseSource`).
+  - Cualquier intención nueva se añade al contrato y a todas sus implementaciones (`MockSource`, `LocalSource` cuando exista, `FirebaseSource`).
+- **Almacenamiento:** primero local, sobre una carpeta compartida de Dropbox con registro de eventos por dispositivo (`docs/ARCHITECTURE.md` §2.1 y §5). El tiempo real (Firebase) queda para más adelante: no añadas dependencias nuevas de Firebase en la ruta local.
   - `MockSource` es la fuente por defecto: la demo debe seguir funcionando sin configuración.
 - **Nombres en disco:** los nombres de carpeta en disco salen siempre de `folderName()`.
 - **Comprobaciones:** antes de hacer commit, ejecuta `pnpm -r typecheck`, `pnpm test` y `pnpm --filter @sweetflow/app build`.
