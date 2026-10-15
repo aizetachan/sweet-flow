@@ -197,6 +197,10 @@ interface Node {
 
 - `code`, `path`, `sortKey` y `ancestorIds` se recalculan en el servidor al
   renumerar, mover o renombrar niveles.
+- **El orden en pantalla es independiente del código** (decisión del 15 oct
+  2026, ver `INTERFAZ.md` §2.1). Reordenar arrastrando cambia solo un campo de
+  orden visual; el código y la carpeta no cambian. Mover a otro padre sí mueve
+  la carpeta, y si el código ya existe allí se asigna el siguiente libre.
 - Las renumeraciones van en **lote transaccional**: el cliente nunca reescribe
   cientos de documentos por su cuenta.
 
@@ -554,6 +558,8 @@ sobre una carpeta compartida de Dropbox.
 | 5 | Firma de apps | Sin firma durante la validación (instalación como app no verificada). Se integra cuando la app esté validada | §7.2 |
 | 6 | Nombres de carpeta | Código + título adaptado (`SC010_Persecucion-en-el-puerto`), generado por la misma función que usa la app y compatible con macOS y Windows | §5.3 |
 | 7 | Almacenamiento | Primero local, sobre una carpeta compartida de Dropbox, con registro de eventos por dispositivo. Después, API de Dropbox. Firestore solo para el tiempo real, más adelante. Los archivos se quedan en Dropbox; no se usa Cloud Storage (15 oct 2026) | §2.1, §5 |
+| 8 | Orden y códigos | El orden en pantalla es visual y no cambia el código ni la carpeta. Arrastrar a otro padre mueve la carpeta | §3.2, `INTERFAZ.md` §2.1 |
+| 9 | Dashboard | Refleja la carpeta de Dropbox en los dos sentidos: lo que se organiza en la app se aplica en Dropbox y lo que cambia en Dropbox se ve en la app | `INTERFAZ.md` §1 |
 
 ### Pendiente de validar
 

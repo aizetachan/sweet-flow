@@ -62,6 +62,12 @@ esqueleto para la etapa C, pero no se sigue desarrollando por ahora.
 
 Se avanza poco a poco: cada paso deja la app funcionando.
 
+### Interfaz (en definición)
+
+Ver [`INTERFAZ.md`](INTERFAZ.md): pantalla de carga, dashboard tipo Frame.io
+sobre la carpeta de Dropbox, ventanas flotantes y reordenar arrastrando. Se
+cierra la definición antes de implementar.
+
 ### Fase 1 · Producción en carpeta (etapa A)
 
 1. ✅ **Registro de eventos en `packages/domain`:** tipos de evento, reloj lógico

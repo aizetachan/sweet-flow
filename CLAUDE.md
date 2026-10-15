@@ -5,6 +5,7 @@ Herramienta de producción audiovisual con IA para piezas largas. Lee primero:
 - `docs/ARCHITECTURE.md`: arquitectura y decisiones acordadas. No contradecirlas sin consultar.
 - `docs/ROADMAP.md`: estado actual, decisiones pendientes y siguientes fases.
 - `docs/DEVELOPMENT.md`: cómo arrancar, emuladores e instaladores.
+- `docs/INTERFAZ.md`: definición de la interfaz (pantallas, recorrido, decisiones de UX). Se define antes de implementar.
 
 Reglas de trabajo:
 
