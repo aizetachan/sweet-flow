@@ -8,6 +8,7 @@ import {
   levelIndex,
   levelOf,
   roleOf,
+  type Id,
   type ProdNode,
 } from "@sweetflow/domain";
 import { AvatarStack, Button, cx, Pill, Segmented } from "@sweetflow/ui";
@@ -18,7 +19,7 @@ import { nodeDragProps, useEndDrop, useNodeDrop } from "./dnd";
 
 export function Board() {
   const snap = useSnap();
-  const { scopeId, cardSize, set } = useStore();
+  const { scopeId, cardSize, filters, set } = useStore();
   const p = snap.production;
   const scope = scopeId ? snap.nodes.find((n) => n.id === scopeId) : undefined;
   const roots = scope ? [scope] : childrenOf(snap.nodes, null);
@@ -51,8 +52,8 @@ export function Board() {
       <div className={cx("board__body", `cards-${cardSize}`)}>
         {p.levels.length === 1 ? (
           <div className="lane"><div className="lane__cards">{childrenOf(snap.nodes, null).map((n) => <UnitCard key={n.id} node={n} />)}</div></div>
-        ) : roots.map((r) => <Group key={r.id} node={r} />)}
-        {!roots.length ? <p className="empty">Crea tu primera {p.levels[0]!.name.toLowerCase()} en el panel de estructura.</p> : null}
+        ) : <Siblings nodes={roots} />}
+        {!scope && !filtersActive(filters) ? <AddBar parentId={null} big={!roots.length} /> : null}
       </div>
     </main>
   );
@@ -66,6 +67,7 @@ function Group({ node }: { node: ProdNode }) {
   const p = snap.production;
   const rowLevel = p.levels.length - 2;
   const li = levelIndex(p, node);
+  const filters = useStore((s) => s.filters);
   if (li === rowLevel) return <Lane row={node} />;
   const kids = childrenOf(snap.nodes, node.id);
   const prog = progressOf(snap, node);
@@ -76,8 +78,57 @@ function Group({ node }: { node: ProdNode }) {
         <span className="group__title">{node.title}</span>
         <span className="sf-faint sf-small">{levelOf(p, node).name} · {prog.done}/{prog.total} aprobados · {fmtDur(durationOf(snap, node))}</span>
       </GroupHead>
-      {kids.map((k) => <Group key={k.id} node={k} />)}
+      <Siblings nodes={kids} />
+      {!filtersActive(filters) ? <AddBar parentId={node.id} /> : null}
     </section>
+  );
+}
+
+/** Sibling groups or lanes, with a "+ below" gap between each pair. */
+function Siblings({ nodes }: { nodes: ProdNode[] }) {
+  const active = filtersActive(useStore((s) => s.filters));
+  return (
+    <>
+      {nodes.map((n, i) => (
+        <div key={n.id}>
+          <Group node={n} />
+          {i < nodes.length - 1 && !active ? <InsertGap after={n} /> : null}
+        </div>
+      ))}
+    </>
+  );
+}
+
+/** Thin gap under a scene (or sequence): on hover, "+ Escena debajo" inserts a sibling right there. */
+function InsertGap({ after }: { after: ProdNode }) {
+  const snap = useSnap();
+  const { source, select } = useStore();
+  const level = levelOf(snap.production, after);
+  return (
+    <div className="gap">
+      <button className="gap__btn" onClick={() => select(source.insertAfter(after.id))}>
+        <IconPlus size={13} /> {level.name} debajo
+      </button>
+    </div>
+  );
+}
+
+/** Dashed "+" at the end of a group (or of the board): a new child at the end; the only way in when it is empty. */
+function AddBar({ parentId, big }: { parentId: Id | null; big?: boolean }) {
+  const snap = useSnap();
+  const { source, select } = useStore();
+  const p = snap.production;
+  const parent = parentId ? snap.nodes.find((n) => n.id === parentId) : undefined;
+  const level = p.levels[parent ? levelIndex(p, parent) + 1 : 0];
+  if (!level) return null;
+  const name = level.name.toLowerCase();
+  return (
+    <div className={cx("addbar", big && "addbar--big")}>
+      {big ? <p className="sf-muted">La producción está vacía. Empieza por la primera {name}: dentro irán sus {p.levels[1]?.name.toLowerCase() ?? "elementos"}s.</p> : null}
+      <button className="addbar__btn" onClick={() => select(source.createNode(parentId, ""))}>
+        <IconPlus size={14} /> {big ? `Crear la primera ${name}` : `Nueva ${name}${parent ? ` en ${codeOf(p, parent)}` : ""}`}
+      </button>
+    </div>
   );
 }
 

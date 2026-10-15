@@ -70,6 +70,25 @@ aparte, reordenar y mover arrastrando, número del código editable. Pendiente: 
 siguiente ronda de ajustes visuales y conectar el dashboard a la carpeta real
 (paso 3).
 
+### Mejoras de interfaz propuestas (sin priorizar)
+
+Anotadas el 15 oct 2026, pendientes de que el usuario elija orden:
+
+1. **Fijados dentro de la producción:** desplegable en la barra superior para
+   saltar entre planos fijados sin volver al inicio.
+2. **Buscador rápido (⌘K):** escribir un código o parte de un título y saltar a
+   ese plano, escena, carpeta o producción.
+3. **Atajos en el tablero:** flechas entre tarjetas, Intro abre el panel, Esc lo
+   cierra, 1–6 cambian el estado, P fija.
+4. **Continuar donde lo dejaste:** al abrir una producción, volver al último
+   plano seleccionado.
+5. **Menú de clic derecho** en tarjetas, árbol y dashboard: fijar, ventana
+   aparte, estado, duplicar, papelera.
+6. **Cambios en bloque:** estado o responsable para toda la selección múltiple.
+7. **Filtro «Míos»:** solo lo asignado a mí.
+8. **Estados vacíos con guía** en el resto de pantallas (el tablero ya la tiene).
+9. **Progreso por escena** (3/6 aprobados) en la cabecera de cada fila.
+
 ### Fase 1 · Producción en carpeta (etapa A)
 
 1. ✅ **Registro de eventos en `packages/domain`:** tipos de evento, reloj lógico

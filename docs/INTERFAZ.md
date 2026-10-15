@@ -110,6 +110,15 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
 - **"+" al final de cada fila:** del mismo tamaño que las tarjetas, sin texto.
   Al pulsarlo se elige **plano** (un vídeo corto, en esa escena) o **escena**
   (un vídeo largo del que extraer planos; se crea justo después).
+- **Añadir escenas y secuencias en el tablero:**
+  - Entre dos escenas (o secuencias), al pasar el ratón aparece una línea con
+    **"+ Escena debajo"**: crea una justo ahí, con el primer código libre.
+  - Al final de cada secuencia, **"+ Nueva escena en SQ010"**; es la forma de
+    llenar una secuencia vacía.
+  - Al final del tablero, **"+ Nueva secuencia"**. Con la producción vacía, un
+    botón grande **"Crear la primera secuencia"**.
+  - Lo creado se abre en el panel y empieza en Pendiente. Con filtros activos no
+    se muestran (no se sabría dónde cae).
 - El **panel de trabajo** aparece al seleccionar un plano o una escena y es donde
   se trabaja (Producir · Cortar y repartir · Revisión · Actividad).
 - Volver al dashboard desde la barra superior (las migas de pan sustituyen al
