@@ -62,11 +62,13 @@ esqueleto para la etapa C, pero no se sigue desarrollando por ahora.
 
 Se avanza poco a poco: cada paso deja la app funcionando.
 
-### Interfaz (en definición)
+### Interfaz — primera versión ✅
 
-Ver [`INTERFAZ.md`](INTERFAZ.md): pantalla de carga, dashboard tipo Frame.io
-sobre la carpeta de Dropbox, ventanas flotantes y reordenar arrastrando. Se
-cierra la definición antes de implementar.
+Ver [`INTERFAZ.md`](INTERFAZ.md): pantalla de carga, dashboard tipo Frame.io,
+panel de trabajo a la izquierda y estructura a la derecha, ventanas flotantes y
+aparte, reordenar y mover arrastrando, número del código editable. Pendiente: la
+siguiente ronda de ajustes visuales y conectar el dashboard a la carpeta real
+(paso 3).
 
 ### Fase 1 · Producción en carpeta (etapa A)
 

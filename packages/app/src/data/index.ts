@@ -1,49 +1,62 @@
 /**
- * Picks the DataSource implementation (see docs/DEVELOPMENT.md):
- * - default: in-memory demo, so the UI runs with zero configuration;
- * - VITE_DATA_SOURCE=local, or `vite --mode local` (`pnpm dev:local`): event
- *   log in the browser's localStorage (each tab acts as a device);
- * - VITE_DATA_SOURCE=firebase: Firebase. Its SDK is loaded lazily, so the
- *   other builds don't ship it.
+ * Picks the Library (dashboard) and therefore the DataSource of each
+ * production (see docs/DEVELOPMENT.md):
+ * - default (`pnpm dev`): in-memory demo with the seeded episode;
+ * - local (`pnpm dev:local` (vite --mode localdata), VITE_DATA_SOURCE=local, and the desktop app):
+ *   productions as event logs in localStorage, shared between windows. The
+ *   desktop app moves to real folders (Dropbox) in phase 1, step 3;
+ * - VITE_DATA_SOURCE=firebase: a single production from Firebase. Its SDK is
+ *   loaded lazily, so the other builds don't ship it.
  */
 
-import { defaultLevels, defaultStatuses, type Member } from "@sweetflow/domain";
-import { LocalSource } from "./local/LocalSource";
-import { BrowserLogStore } from "./local/store";
+import { isDesktop } from "../platform";
+import { buildSeed } from "./mock/seed";
 import { MockSource } from "./mock/MockSource";
+import { browserLibrary, demoLibrary, summarize, type Library, type LibraryState } from "./library";
 import type { DataSource, Snapshot } from "./source";
 
-export function createSource(): DataSource {
-  const kind = import.meta.env.VITE_DATA_SOURCE || (import.meta.env.MODE === "local" ? "local" : "");
-  switch (kind) {
-    case "firebase":
-      return deferred(() => import("./firebase/FirebaseSource").then((m) => new m.FirebaseSource()));
-    case "local":
-      return browserLocalSource();
-    default:
-      return new MockSource();
-  }
+export type DataMode = "demo" | "local" | "firebase";
+
+export function dataMode(): DataMode {
+  const env = import.meta.env.VITE_DATA_SOURCE || (import.meta.env.MODE === "localdata" ? "local" : "");
+  if (env === "firebase" || env === "local") return env;
+  return isDesktop() ? "local" : "demo";
 }
 
-/** LocalSource on localStorage: one user per browser, one device per tab. */
-function browserLocalSource(): DataSource {
-  const remembered = (storage: Storage, key: string) => {
-    let v = storage.getItem(key);
-    if (!v) storage.setItem(key, (v = crypto.randomUUID().slice(0, 8)));
-    return v;
-  };
-  const uid = `u_${remembered(localStorage, "sweetflow:uid")}`;
-  const deviceId = `tab-${remembered(sessionStorage, "sweetflow:device")}`;
-  const me: Member = { uid, email: "", displayName: `Usuario ${uid.slice(2, 6)}`, role: "owner", magnificConnected: false };
-  const newId = (p: string) => `${p}_${crypto.randomUUID()}`;
-  const src = new LocalSource({
-    store: new BrowserLogStore("prueba"),
-    deviceId,
-    me,
-    create: { id: newId("p"), name: "Producción de prueba", levels: defaultLevels(newId), statuses: defaultStatuses(newId) },
+export function createLibrary(mode = dataMode()): Library {
+  if (mode === "local") return browserLibrary();
+  if (mode === "firebase") {
+    return singleLibrary("Firebase", () => deferred(() => import("./firebase/FirebaseSource").then((m) => new m.FirebaseSource())));
+  }
+  const seed = buildSeed();
+  return demoLibrary({
+    name: seed.production.name,
+    summary: summarize({ production: seed.production, nodes: seed.nodes, members: seed.members }),
+    open: () => new MockSource(),
   });
-  src.ready.catch((err) => console.error("[data] no se pudo abrir la producción local", err));
-  return src;
+}
+
+/** A library with one production and nothing else (Firebase until stage C brings its own). */
+function singleLibrary(name: string, open: () => DataSource): Library {
+  const t = Date.now();
+  const state: LibraryState = {
+    label: name,
+    entries: [{ id: "p_single", kind: "production", name, parentId: null, createdAt: t, updatedAt: t }],
+    summaries: {},
+  };
+  const unsupported = () => {
+    throw new Error("No disponible con esta fuente de datos.");
+  };
+  return {
+    canPopOut: false,
+    subscribe: (cb) => (cb(state), () => undefined),
+    createFolder: unsupported,
+    createProduction: unsupported,
+    rename: unsupported,
+    move: unsupported,
+    setArchived: unsupported,
+    open,
+  };
 }
 
 /**
@@ -73,6 +86,7 @@ function deferred(load: () => Promise<DataSource>): DataSource {
   return new Proxy({ subscribe } as DataSource, {
     get(target, prop: keyof DataSource) {
       if (prop === "subscribe") return target.subscribe;
+      if (prop === "dispose") return () => inner?.dispose?.();
       return (...args: unknown[]) => {
         if (!inner) throw new Error("La fuente de datos aún se está cargando.");
         return (inner[prop] as (...a: unknown[]) => unknown).apply(inner, args);

@@ -41,7 +41,22 @@ export interface Snapshot {
   presence: Presence[];
   /** Linked desktop folder (mirror) state. */
   mirror: MirrorState;
+  /** What this backend supports; the UI shows the rest as "Próximamente". */
+  features: Features;
 }
+
+export interface Features {
+  /** Generate, archive versions, cut and place takes. */
+  generation: boolean;
+  /** Comments and their resolution. */
+  review: boolean;
+  /** Live presence of teammates. */
+  presence: boolean;
+  /** Invite people and link provider accounts. */
+  team: boolean;
+}
+
+export const ALL_FEATURES: Features = { generation: true, review: true, presence: true, team: true };
 
 export interface MirrorState {
   status: "unlinked" | "syncing" | "synced" | "offline";
@@ -66,11 +81,18 @@ export interface Placement {
 
 export interface DataSource {
   subscribe(cb: (s: Snapshot) => void): () => void;
+  /** Stop listeners and timers when the production is closed. */
+  dispose?(): void;
 
   // structure
   createNode(parentId: Id | null, title?: string): Id;
   insertAfter(nodeId: Id): Id;
+  /** Swap with the previous/next sibling. Visual only: codes do not change. */
   moveNode(nodeId: Id, dir: -1 | 1): void;
+  /** Drag and drop: move `ids` under `parentId`, before `beforeId` (null = at the end). */
+  moveNodes(ids: Id[], parentId: Id | null, beforeId: Id | null): void;
+  /** Change the number of a node's code by hand. Throws with a UI message if invalid or taken. */
+  setNodeNumber(nodeId: Id, number: number): void;
   deleteNode(nodeId: Id): void;
   updateNode(nodeId: Id, patch: Partial<Pick<ProdNode, "title" | "notes" | "statusId" | "assigneeIds" | "assetIds">>): void;
 

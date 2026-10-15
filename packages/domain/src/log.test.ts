@@ -222,6 +222,29 @@ describe("foldLog", () => {
     expect(new Set(Object.values(numbers)).size).toBe(4);
   });
 
+  it("separates two nodes moved into the same parent with the same code at once", () => {
+    const a = device("a");
+    const b = device("b");
+    const base = [
+      a.emit(created()),
+      a.emit(node("sq", null, SQ, 10)),
+      a.emit(node("sc1", "sq", SC, 10)),
+      a.emit(node("sc2", "sq", SC, 20)),
+      a.emit(node("sc3", "sq", SC, 30)),
+      a.emit(node("x", "sc1", SH, 10)),
+      a.emit(node("y", "sc2", SH, 10)),
+    ];
+    b.see(base);
+    const s = foldLog([
+      ...base,
+      a.emit({ type: "node.moved", id: "x", parentId: "sc3", order: 5 }),
+      b.emit({ type: "node.moved", id: "y", parentId: "sc3", order: 6 }),
+    ]);
+    const inSc3 = s.nodes.filter((n) => n.parentId === "sc3").map((n) => n.number).sort();
+    expect(inSc3).toEqual([10, 20]);
+    expect(s.conflicts).toHaveLength(1);
+  });
+
   it("applies configuration changes and ignores duplicate events", () => {
     const a = device("a");
     const e1 = a.emit(created());

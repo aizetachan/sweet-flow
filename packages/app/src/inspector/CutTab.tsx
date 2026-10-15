@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { IconCut, IconCornerDownRight, IconPlayerPlay } from "@tabler/icons-react";
 import {
   ancestorsOf,
@@ -16,6 +16,7 @@ import {
 import { Button, cx, IconButton, Spinner } from "@sweetflow/ui";
 import type { Placement } from "../data/source";
 import { useSnap, useStore } from "../state/store";
+import { usePanel } from "./panel";
 import { Player } from "../components/media";
 
 const KEEP = "__keep__";
@@ -28,7 +29,10 @@ const NEW = "__new__";
  */
 export function CutTab({ node }: { node: ProdNode }) {
   const snap = useSnap();
-  const { activeMediaId, playhead, playing, set, source } = useStore();
+  const { source } = useStore();
+  const { activeMediaId, playhead, playing, setPanel, mode } = usePanel();
+  const live = useRef({ playhead, playing });
+  live.current = { playhead, playing };
   const p = snap.production;
   const lineage = new Set(ancestorsOf(snap.nodes, node).map((a) => a.id));
   const clips = snap.media
@@ -49,16 +53,17 @@ export function CutTab({ node }: { node: ProdNode }) {
   const segments = useMemo(() => segmentsFromCuts(dur, cuts), [dur, cuts]);
   const placed = media ? snap.takes.filter((t) => t.mediaId === media.id) : [];
 
-  // Space = play/pause, C = cut at playhead.
+  // Space = play/pause, C = cut at playhead. Floating panels leave shortcuts to the main panel.
   useEffect(() => {
+    if (mode === "floating") return;
     const k = (e: KeyboardEvent) => {
       if ((e.target as HTMLElement).closest("input, textarea, select")) return;
-      if (e.key === "c" || e.key === "C") setCuts((c) => [...c, round1(useStore.getState().playhead)]);
-      if (e.key === " ") { e.preventDefault(); set({ playing: !useStore.getState().playing }); }
+      if (e.key === "c" || e.key === "C") setCuts((c) => [...c, round1(live.current.playhead)]);
+      if (e.key === " ") { e.preventDefault(); setPanel({ playing: !live.current.playing }); }
     };
     window.addEventListener("keydown", k);
     return () => window.removeEventListener("keydown", k);
-  }, [set]);
+  }, [mode, setPanel]);
 
   if (!media) return <div className="tab"><p className="note">No hay clips de vídeo listos en esta rama.</p></div>;
 
@@ -82,12 +87,12 @@ export function CutTab({ node }: { node: ProdNode }) {
     setTimeout(() => setDone(false), 2500);
   };
 
-  const seek = (t: number) => set({ playhead: Math.max(0, Math.min(dur, t)), playing: false });
+  const seek = (t: number) => setPanel({ playhead: Math.max(0, Math.min(dur, t)), playing: false });
 
   return (
     <div className="tab">
       <div className="cut__source">
-        <select className="sf-select" value={media.id} onChange={(e) => set({ activeMediaId: e.target.value, playhead: 0, playing: false })}>
+        <select className="sf-select" value={media.id} onChange={(e) => setPanel({ activeMediaId: e.target.value, playhead: 0, playing: false })}>
           {clips.map((m) => {
             const n = snap.nodes.find((x) => x.id === m.nodeId)!;
             return <option key={m.id} value={m.id}>{codeOf(p, n)} · {versionTag(m.version)} · {m.durationSec}s</option>;
@@ -96,7 +101,7 @@ export function CutTab({ node }: { node: ProdNode }) {
         {owner.id !== node.id ? <span className="sf-small sf-muted"><IconCornerDownRight size={12} /> clip de {codeOf(p, owner)}</span> : null}
       </div>
 
-      <Player media={media} time={playhead} playing={playing} onTime={(t) => set({ playhead: t })} onPlaying={(v) => set({ playing: v })} />
+      <Player media={media} time={playhead} playing={playing} onTime={(t) => setPanel({ playhead: t })} onPlaying={(v) => setPanel({ playing: v })} />
 
       <div className="tl">
         <div className="tl__ruler">
@@ -149,7 +154,7 @@ export function CutTab({ node }: { node: ProdNode }) {
         {segments.map((s, i) => (
           <div key={`${s.inSec}-${s.outSec}`} className="segrow">
             <span className={`segrow__n seg-c${i % 6}`}>{i + 1}</span>
-            <IconButton size="sm" label="Ver tramo" onClick={() => set({ playhead: s.inSec, playing: true })}><IconPlayerPlay size={12} /></IconButton>
+            <IconButton size="sm" label="Ver tramo" onClick={() => setPanel({ playhead: s.inSec, playing: true })}><IconPlayerPlay size={12} /></IconButton>
             <span className="sf-mono segrow__tc">{formatTc(s.inSec)}–{formatTc(s.outSec)} <span className="sf-faint">{round1(s.outSec - s.inSec)}s</span></span>
             <select className="sf-select" value={destOf(i)} onChange={(e) => setDest({ ...dest, [i]: e.target.value })}>
               <option value={KEEP}>{isUnit(p, owner) ? `Toma de ${codeOf(p, owner)}` : `Mantener en ${codeOf(p, owner)}`}</option>

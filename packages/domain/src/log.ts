@@ -31,11 +31,16 @@ export type LogEventBody =
   | { type: "statuses.set"; statuses: StatusDef[] }
   | {
       type: "node.created";
-      node: Pick<ProdNode, "id" | "parentId" | "levelId" | "number" | "title" | "statusId">;
+      node: Pick<ProdNode, "id" | "parentId" | "levelId" | "number" | "title" | "statusId"> & { order?: number };
     }
   | { type: "node.updated"; id: Id; patch: NodePatch }
-  /** New numbers for existing nodes: moves, and making room before an insert. */
+  /** New numbers (codes) for existing nodes: making room before an insert. */
   | { type: "node.renumbered"; numbers: Record<Id, number> }
+  /**
+   * Visual reorder and/or change of parent. `number` is set when the code
+   * changes too (edited by hand, or taken in the new parent).
+   */
+  | { type: "node.moved"; id: Id; parentId: Id | null; order: number; number?: number }
   /** Removes the node and its whole subtree. */
   | { type: "node.deleted"; id: Id };
 
@@ -115,6 +120,7 @@ const TYPES = new Set<string>([
   "node.created",
   "node.updated",
   "node.renumbered",
+  "node.moved",
   "node.deleted",
 ]);
 
@@ -207,6 +213,15 @@ export function foldLog(events: LogEvent[]): LogState {
           numberAt.set(id, e.at);
         }
         break;
+      case "node.moved": {
+        const n = nodes.get(e.id);
+        if (!n) break;
+        const reparented = n.parentId !== e.parentId;
+        nodes.set(e.id, { ...n, parentId: e.parentId, order: e.order, number: e.number ?? n.number, updatedAt: at, updatedBy: e.userId });
+        // A node arriving in a new parent yields its number to the ones already there.
+        if (reparented || e.number !== undefined) numberAt.set(e.id, e.at);
+        break;
+      }
       case "node.deleted":
         deleted.add(e.id);
         nodes.delete(e.id);

@@ -33,8 +33,16 @@ export function byNumber(a: ProdNode, b: ProdNode): number {
   return a.number - b.number;
 }
 
+/** Visual position: the hand-set order, or the number for nodes never reordered. */
+export const sortValue = (n: ProdNode) => n.order ?? n.number;
+
+/** Display order among siblings (ties: code, then id, so every device agrees). */
+export function byPosition(a: ProdNode, b: ProdNode): number {
+  return sortValue(a) - sortValue(b) || a.number - b.number || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+}
+
 export function childrenOf(nodes: ProdNode[], parentId: Id | null): ProdNode[] {
-  return nodes.filter((n) => n.parentId === parentId).sort(byNumber);
+  return nodes.filter((n) => n.parentId === parentId).sort(byPosition);
 }
 
 export function ancestorsOf(nodes: ProdNode[], n: ProdNode): ProdNode[] {

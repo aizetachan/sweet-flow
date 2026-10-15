@@ -65,7 +65,7 @@ import {
 } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
 import { getDownloadURL, ref as storageRef } from "firebase/storage";
-import type { DataSource, GenerateArgs, MirrorState, Placement, Snapshot } from "../source";
+import { ALL_FEATURES, type DataSource, type GenerateArgs, type MirrorState, type Placement, type Snapshot } from "../source";
 import { createClient, type FirebaseClient } from "./client";
 import { readFirebaseConfig } from "./config";
 import { NotImplemented } from "./errors";
@@ -188,6 +188,7 @@ export class FirebaseSource implements DataSource {
       presence: l.presence,
       // The mirror engine lands in phase 4 (apps/desktop utility process).
       mirror: UNLINKED,
+      features: ALL_FEATURES,
     };
   }
 
@@ -313,6 +314,14 @@ export class FirebaseSource implements DataSource {
     const id = this.newId("nodes");
     this.call<CreateNodeRequest>(CALLABLES.createNode, { productionId: this.prodId(), nodeId: id, parentId: after.parentId, afterId: nodeId });
     return id;
+  }
+
+  moveNodes(_ids: Id[], _parentId: Id | null, _beforeId: Id | null): void {
+    throw new NotImplemented("Reordenar arrastrando", "etapa C");
+  }
+
+  setNodeNumber(_nodeId: Id, _number: number): void {
+    throw new NotImplemented("Cambiar el número del código", "etapa C");
   }
 
   moveNode(nodeId: Id, dir: -1 | 1): void {

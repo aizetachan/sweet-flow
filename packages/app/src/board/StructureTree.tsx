@@ -4,12 +4,14 @@ import { childrenOf, codeOf, isUnit, levelIndex, type ProdNode } from "@sweetflo
 import { cx, IconButton } from "@sweetflow/ui";
 import { useSnap, useStore } from "../state/store";
 import { progressOf, statusOf } from "../state/selectors";
+import { nodeDragProps, useEndDrop, useNodeDrop } from "./dnd";
 
 export function StructureTree() {
   const snap = useSnap();
   const { scopeId, set, select, source } = useStore();
   const top = snap.production.levels[0]!;
   const roots = childrenOf(snap.nodes, null);
+  const rootDrop = useEndDrop(null);
   return (
     <aside className="tree">
       <div className="tree__head">
@@ -24,9 +26,10 @@ export function StructureTree() {
         <IconLayoutList size={14} /> Toda la producción
         <span className="tree__count">{snap.nodes.filter((n) => isUnit(snap.production, n)).length}</span>
       </button>
-      <div className="tree__list">
+      <div className={cx("tree__list", rootDrop.over && "dnd-end")} {...rootDrop.props}>
         {roots.map((n) => <TreeRow key={n.id} node={n} depth={0} />)}
       </div>
+      <div className="tree__hint sf-faint sf-small">Arrastra para reordenar o mover · ⌘ clic para seleccionar varios</div>
       <div className="tree__levels sf-faint sf-small">
         {snap.production.levels.map((l) => l.name).join(" › ")}
         <button className="link" onClick={() => set({ modal: "levels" })}>Editar</button>
@@ -37,7 +40,7 @@ export function StructureTree() {
 
 function TreeRow({ node, depth }: { node: ProdNode; depth: number }) {
   const snap = useSnap();
-  const { selectedId, scopeId, collapsed, toggleCollapsed, select, set, source } = useStore();
+  const { selectedId, multi, scopeId, collapsed, toggleCollapsed, toggleMulti, select, set, source } = useStore();
   const p = snap.production;
   const kids = childrenOf(snap.nodes, node.id);
   const unit = isUnit(p, node);
@@ -46,6 +49,7 @@ function TreeRow({ node, depth }: { node: ProdNode; depth: number }) {
   const prog = progressOf(snap, node);
   const open = !collapsed[node.id];
   const isScope = depth === 0 && scopeId === node.id;
+  const drop = useNodeDrop(node, "y", !unit);
   // Two-step delete (no native confirm dialogs: they are blocked in some hosts).
   const [armed, setArmed] = useState(false);
   useEffect(() => {
@@ -57,9 +61,12 @@ function TreeRow({ node, depth }: { node: ProdNode; depth: number }) {
   return (
     <>
       <div
-        className={cx("trow", selectedId === node.id && "trow--on", isScope && "trow--scope")}
+        className={cx("trow", selectedId === node.id && "trow--on", multi.includes(node.id) && "trow--multi", isScope && "trow--scope", drop.zone && `dnd-${drop.zone}`)}
         style={{ paddingLeft: 6 + depth * 14 }}
-        onClick={() => {
+        {...nodeDragProps(node.id)}
+        {...drop.props}
+        onClick={(e) => {
+          if (e.metaKey || e.ctrlKey || e.shiftKey) return toggleMulti(node.id);
           if (depth === 0 && !unit) set({ scopeId: node.id });
           select(node.id);
         }}

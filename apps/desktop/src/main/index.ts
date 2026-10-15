@@ -40,12 +40,30 @@ function createWindow(): BrowserWindow {
   return win;
 }
 
-/** The window only ever shows our renderer; links open in the system browser. */
+/**
+ * Windows only ever show our renderer; links open in the system browser. The
+ * renderer may open itself in another window (a node popped out to another
+ * monitor, docs/INTERFAZ.md §3); it gets the same hardened preferences.
+ */
 function lockNavigation(win: BrowserWindow): void {
   win.webContents.setWindowOpenHandler(({ url }) => {
+    if (isAppUrl(url)) {
+      return {
+        action: "allow",
+        overrideBrowserWindowOptions: {
+          width: 560,
+          height: 880,
+          minWidth: 380,
+          minHeight: 480,
+          backgroundColor: "#0b0b0c",
+          titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "default",
+        },
+      };
+    }
     if (/^https?:\/\//.test(url)) void shell.openExternal(url);
     return { action: "deny" };
   });
+  win.webContents.on("did-create-window", (child) => lockNavigation(child));
   win.webContents.on("will-navigate", (e, url) => {
     if (!isAppUrl(url)) e.preventDefault();
   });

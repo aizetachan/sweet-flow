@@ -1,8 +1,7 @@
-import { useState } from "react";
 import {
   IconBolt,
-  IconCheck,
-  IconChevronDown,
+  IconChevronRight,
+  IconHome,
   IconCloudUpload,
   IconFolder,
   IconFolderOff,
@@ -14,6 +13,7 @@ import {
 import { Avatar, AvatarStack, cx, IconButton, Spinner } from "@sweetflow/ui";
 import { useSnap, useStore, type View } from "../state/store";
 import { memberName } from "../state/selectors";
+import { useLibraryTrail } from "../dashboard/Dashboard";
 
 const NAV: Array<{ id: View; label: string; icon: typeof IconLayoutBoard }> = [
   { id: "board", label: "Producción", icon: IconLayoutBoard },
@@ -27,7 +27,7 @@ export function Rail() {
   const snap = useSnap();
   return (
     <nav className="rail">
-      <div className="rail__logo" title={snap.workspace.name}>sf</div>
+      <button className="rail__logo" title="Volver al inicio" onClick={() => useStore.getState().closeProduction()}>sf</button>
       {NAV.map((n) => (
         <button key={n.id} className={cx("rail__item", view === n.id && "rail__item--on")} onClick={() => set({ view: n.id })} title={n.label}>
           <n.icon size={19} stroke={1.6} />
@@ -46,34 +46,28 @@ export function Rail() {
 
 export function Topbar() {
   const snap = useSnap();
-  const { source, set } = useStore.getState();
-  const [open, setOpen] = useState(false);
+  const { source, set, closeProduction, productionId } = useStore.getState();
+  const trail = useLibraryTrail(productionId);
   const online = snap.presence.filter((p) => p.uid !== snap.me.uid).map((p) => memberName(snap, p.uid));
   const m = snap.mirror;
+  const team = snap.features.team;
 
   return (
     <header className="topbar">
-      <div className="prodswitch">
-        <button className="prodswitch__btn" onClick={() => setOpen(!open)}>
-          <span className="prodswitch__ws">{snap.workspace.name}</span>
-          <span className="prodswitch__sep">/</span>
-          <span className="prodswitch__name">{snap.production.name}</span>
-          <IconChevronDown size={14} />
-        </button>
-        {open ? (
-          <div className="menu menu--wide" onMouseLeave={() => setOpen(false)}>
-            <div className="menu__title">Producciones de {snap.workspace.name}</div>
-            {snap.productions.map((p) => (
-              <button key={p.id} className="menu__item" onClick={() => { source.openProduction(p.id); setOpen(false); }}>
-                <span className="menu__label">{p.name}</span>
-                <span className="sf-faint sf-small">{p.format}</span>
-                {p.id === snap.production.id ? <IconCheck size={13} /> : null}
-              </button>
-            ))}
-          </div>
-        ) : null}
+      <nav className="crumbs crumbs--top" aria-label="Ubicación">
+        <button className="crumbs__btn" onClick={() => closeProduction(null)} title="Volver al inicio"><IconHome size={14} /> Inicio</button>
+        {trail.map((f) => (
+          <span key={f.id} className="crumbs__item">
+            <IconChevronRight size={13} className="sf-faint" />
+            <button className="crumbs__btn" onClick={() => closeProduction(f.id)}>{f.name}</button>
+          </span>
+        ))}
+        <span className="crumbs__item">
+          <IconChevronRight size={13} className="sf-faint" />
+          <span className="crumbs__here">{snap.production.name}</span>
+        </span>
         {snap.production.format ? <span className="topbar__format">{snap.production.format}</span> : null}
-      </div>
+      </nav>
 
       <div className="topbar__spacer" />
 
@@ -90,12 +84,17 @@ export function Topbar() {
         {m.status === "synced" ? <IconCloudUpload size={13} className="sf-faint" /> : null}
       </button>
 
-      <button className="chip" title={snap.me.magnificConnected ? "Tu cuenta de Magnific: tus generaciones usan tus créditos" : "Conecta tu cuenta de Magnific para generar"} onClick={() => set({ view: "team" })}>
+      <button
+        className="chip"
+        disabled={!team}
+        title={!team ? "Conectar Magnific: próximamente en modo local" : snap.me.magnificConnected ? "Tu cuenta de Magnific: tus generaciones usan tus créditos" : "Conecta tu cuenta de Magnific para generar"}
+        onClick={() => set({ view: "team" })}
+      >
         <IconBolt size={14} className={snap.me.magnificConnected ? "accent" : ""} />
-        {snap.me.magnificConnected ? `${(snap.me.magnificCredits ?? 0).toLocaleString("es-ES")} créditos` : "Conectar Magnific"}
+        {!team ? "Magnific · próximamente" : snap.me.magnificConnected ? `${(snap.me.magnificCredits ?? 0).toLocaleString("es-ES")} créditos` : "Conectar Magnific"}
       </button>
 
-      <IconButton label="Invitar al equipo" onClick={() => set({ modal: "invite" })}><IconUsers size={16} /></IconButton>
+      <IconButton label={team ? "Invitar al equipo" : "Invitar: próximamente en modo local"} disabled={!team} onClick={() => set({ modal: "invite" })}><IconUsers size={16} /></IconButton>
     </header>
   );
 }

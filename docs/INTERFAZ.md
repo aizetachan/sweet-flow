@@ -1,7 +1,9 @@
 # Sweet Flow — Interfaz
 
-> Estado: **en definición** (15 oct 2026). Documento vivo: se completa con cada
-> ronda de ajustes antes de implementar. Arquitectura en
+> Estado: **primera versión implementada** (15 oct 2026): pantalla de carga,
+> dashboard, panel a la izquierda y estructura a la derecha, ventanas flotantes,
+> arrastrar y editar el número del código. Documento vivo: se completa con cada
+> ronda de ajustes. Arquitectura en
 > [`ARCHITECTURE.md`](ARCHITECTURE.md).
 
 ## Recorrido
@@ -54,12 +56,12 @@ Organización tipo Drive, como Frame.io: aquí están todos los proyectos.
 
 ## 2. Producción
 
-Es la pantalla que ya existe: árbol de estructura a la izquierda, tablero en el
-centro y panel de trabajo a la derecha.
+**Panel de trabajo a la izquierda, tablero en el centro y estructura a la
+derecha.**
 
 - El **tablero** es la vista general: se va actualizando solo mientras se genera
   y mientras el equipo trabaja.
-- El **panel derecho** aparece al seleccionar un plano o una escena y es donde
+- El **panel de trabajo** aparece al seleccionar un plano o una escena y es donde
   se trabaja (Producir · Cortar y repartir · Revisión · Actividad).
 - Volver al dashboard desde la barra superior (las migas de pan sustituyen al
   selector de producción actual).
@@ -75,12 +77,14 @@ centro y panel de trabajo a la derecha.
   a otra secuencia. Su carpeta se mueve en el disco con todo su contenido.
   - Si en el destino ya existe ese código, se le asigna el siguiente libre y se
     avisa (no puede haber dos carpetas con el mismo nombre).
-- El usuario podrá **cambiar el código** de un elemento a mano (pendiente de
-  concretar, ver abajo).
+- Se puede **cambiar el número del código** a mano, desde la cabecera del panel
+  (clic en el código). **El prefijo del nivel no cambia** (`SH`, `SC`…), para que
+  siempre se sepa qué es cada cosa. Si el número ya existe en ese padre, se
+  avisa y no se cambia.
 
 ## 3. Ventanas flotantes
 
-- El panel derecho se puede **soltar como ventana flotante**, y se pueden tener
+- El panel de trabajo se puede **soltar como ventana flotante**, y se pueden tener
   varias abiertas a la vez (varios planos o escenas en paralelo).
 - **Dentro de la app:** paneles flotantes que se mueven y redimensionan sobre el
   tablero.
@@ -88,7 +92,9 @@ centro y panel de trabajo a la derecha.
   sistema que se puede llevar a otro monitor.
 - Todas muestran el mismo estado: lo que se hace en una se ve en el tablero y en
   las demás al momento.
-- Volver a acoplar una ventana la devuelve al panel derecho.
+- Volver a acoplar una ventana la devuelve al panel lateral.
+- "Ventana aparte" necesita que las ventanas compartan los datos: funciona en
+  modo local y en escritorio, no en la demo.
 
 ## Mientras estamos en modo local
 
@@ -98,8 +104,7 @@ proveedor o sin tiempo real. Hasta que lleguen, esos controles se muestran
 
 ## Pendiente de concretar
 
-- [ ] **Cambiar el código a mano:** ¿solo el número (`SH0030` → `SH0035`) o
-      también el prefijo? ¿Qué pasa si choca con otro?
+- [x] **Cambiar el código a mano:** solo el número; el prefijo es fijo.
 - [ ] **Resto de ajustes de interfaz** que estén en la lista (tablero, tarjetas,
       panel, densidad, ajustes, biblioteca, equipo…).
 - [ ] Diseño visual del dashboard (referencia: Frame.io).

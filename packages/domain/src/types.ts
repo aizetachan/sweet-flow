@@ -73,8 +73,13 @@ export interface ProdNode {
   productionId: Id;
   parentId: Id | null;
   levelId: Id;
-  /** Stable number used in the code (10, 15, 20…). */
+  /** Stable number used in the code (10, 15, 20…). Only changes when edited by hand. */
   number: number;
+  /**
+   * Visual position among siblings (docs/INTERFAZ.md §2.1). Independent of the
+   * code; nodes never reordered by hand sort by `number`.
+   */
+  order?: number;
   title: string;
   notes: string;
   statusId: Id;

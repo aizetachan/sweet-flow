@@ -11,16 +11,20 @@ import {
   descendantsOf,
   levelIndex,
   nextNumber,
-  numberBetween,
-  renumbered,
+  planCreateNode,
+  planInsertAfter,
+  planMoveNode,
+  planMoveNodes,
+  planSetNumber,
   type Activity,
   type Id,
   type LevelDef,
   type Media,
+  type Plan,
   type ProdNode,
   type StatusDef,
 } from "@sweetflow/domain";
-import type { DataSource, GenerateArgs, Placement, Snapshot } from "../source";
+import { ALL_FEATURES, type DataSource, type GenerateArgs, type Placement, type Snapshot } from "../source";
 import { frame, type Mood } from "./frames";
 import { buildSeed, newId } from "./seed";
 
@@ -30,6 +34,7 @@ export class MockSource implements DataSource {
   private s: Snapshot;
   private listeners = new Set<(s: Snapshot) => void>();
   private moods: Record<Id, Mood>;
+  private teamTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor() {
     const { moods, ...seed } = buildSeed();
@@ -41,10 +46,16 @@ export class MockSource implements DataSource {
         { uid: "u_marc", nodeId: seed.nodes.find((n) => n.title === "Mar abierto")?.id, at: Date.now() },
       ],
       mirror: { status: "synced", rootPath: "~/Producciones/Mareas-Ep01-La-partida", pending: 0 },
+      features: ALL_FEATURES,
     };
     // Resume the seeded in-flight render.
     for (const m of this.s.media) if (m.status === "rendering") this.runJob(m.id, 6000);
     this.simulateTeam();
+  }
+
+  dispose(): void {
+    if (this.teamTimer) clearInterval(this.teamTimer);
+    this.listeners.clear();
   }
 
   subscribe(cb: (s: Snapshot) => void): () => void {
@@ -82,56 +93,45 @@ export class MockSource implements DataSource {
   // ---------- structure ----------
 
   createNode(parentId: Id | null, title = ""): Id {
-    const { production, nodes } = this.s;
-    const parent = parentId ? nodes.find((n) => n.id === parentId) : undefined;
-    const li = parent ? levelIndex(production, parent) + 1 : 0;
-    const level = production.levels[li];
-    if (!level) throw new Error("El último nivel no admite hijos");
-    const n: ProdNode = {
-      id: newId("n"),
-      productionId: production.id,
-      parentId,
-      levelId: level.id,
-      number: nextNumber(childrenOf(nodes, parentId), level.step),
-      title,
-      notes: "",
-      statusId: production.statuses[0]!.id,
-      assigneeIds: [],
-      assetIds: [],
-      updatedAt: Date.now(),
-      updatedBy: this.s.me.uid,
-    };
-    this.commit({ nodes: [...nodes, n], activity: [this.log("structure", `creó ${level.name.toLowerCase()}`, n.id), ...this.s.activity] }, true);
-    return n.id;
+    const id = this.applyPlan(planCreateNode(this.s.production, this.s.nodes, parentId, newId("n"), title))!;
+    const n = this.s.nodes.find((x) => x.id === id)!;
+    const level = this.s.production.levels.find((l) => l.id === n.levelId)!;
+    this.commit({ activity: [this.log("structure", `creó ${level.name.toLowerCase()}`, id), ...this.s.activity] });
+    return id;
   }
 
   insertAfter(nodeId: Id): Id {
-    const { production } = this.s;
-    let nodes = this.s.nodes;
-    const after = nodes.find((n) => n.id === nodeId)!;
-    const level = production.levels[levelIndex(production, after)]!;
-    let siblings = childrenOf(nodes, after.parentId);
-    let num = numberBetween(after, siblings[siblings.findIndex((s) => s.id === nodeId) + 1], level.step);
-    if (num === null) {
-      const nums = renumbered(siblings, level.step);
-      nodes = nodes.map((n) => (nums.has(n.id) ? { ...n, number: nums.get(n.id)! } : n));
-      const a2 = nodes.find((n) => n.id === nodeId)!;
-      siblings = childrenOf(nodes, after.parentId);
-      num = numberBetween(a2, siblings[siblings.findIndex((s) => s.id === nodeId) + 1], level.step)!;
-    }
-    const n: ProdNode = { ...after, id: newId("n"), number: num, title: "", notes: "", statusId: production.statuses[0]!.id, assigneeIds: [], assetIds: [], selectedTakeId: undefined, updatedAt: Date.now(), updatedBy: this.s.me.uid };
-    this.commit({ nodes: [...nodes, n] }, true);
-    return n.id;
+    return this.applyPlan(planInsertAfter(this.s.production, this.s.nodes, nodeId, newId("n")))!;
   }
 
   moveNode(nodeId: Id, dir: -1 | 1): void {
-    const n = this.s.nodes.find((x) => x.id === nodeId);
-    if (!n) return;
-    const sib = childrenOf(this.s.nodes, n.parentId);
-    const i = sib.findIndex((x) => x.id === nodeId);
-    const other = sib[i + dir];
-    if (!other) return;
-    this.commit({ nodes: this.patchNodes((x) => (x.id === n.id ? { ...x, number: other.number } : x.id === other.id ? { ...x, number: n.number } : x)) }, true);
+    this.applyPlan(planMoveNode(this.s.production, this.s.nodes, nodeId, dir));
+  }
+
+  moveNodes(ids: Id[], parentId: Id | null, beforeId: Id | null): void {
+    this.applyPlan(planMoveNodes(this.s.production, this.s.nodes, ids, parentId, beforeId));
+  }
+
+  setNodeNumber(nodeId: Id, number: number): void {
+    this.applyPlan(planSetNumber(this.s.production, this.s.nodes, nodeId, number));
+  }
+
+  /** Applies the structural events a domain planner returns (the demo keeps no log). */
+  private applyPlan(plan: Plan): Id | undefined {
+    if (!plan.events.length) return plan.nodeId;
+    let nodes = this.s.nodes;
+    const stamp = { updatedAt: Date.now(), updatedBy: this.s.me.uid };
+    for (const e of plan.events) {
+      if (e.type === "node.created") {
+        nodes = [...nodes, { ...e.node, productionId: this.s.production.id, notes: "", assigneeIds: [], assetIds: [], ...stamp }];
+      } else if (e.type === "node.moved") {
+        nodes = nodes.map((n) => (n.id === e.id ? { ...n, parentId: e.parentId, order: e.order, number: e.number ?? n.number, ...stamp } : n));
+      } else if (e.type === "node.renumbered") {
+        nodes = nodes.map((n) => (e.numbers[n.id] === undefined ? n : { ...n, number: e.numbers[n.id]!, ...stamp }));
+      }
+    }
+    this.commit({ nodes }, true);
+    return plan.nodeId;
   }
 
   deleteNode(nodeId: Id): void {
@@ -303,7 +303,7 @@ export class MockSource implements DataSource {
 
   /** Teammates wander between nodes so presence is visible in the demo. */
   private simulateTeam(): void {
-    setInterval(() => {
+    this.teamTimer = setInterval(() => {
       const units = this.s.nodes.filter((n) => ancestorsOf(this.s.nodes, n).length === this.s.production.levels.length);
       if (!units.length) return;
       const who = Math.random() < 0.5 ? "u_laura" : "u_marc";

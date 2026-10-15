@@ -11,6 +11,8 @@ import {
   planDeleteNode,
   planInsertAfter,
   planMoveNode,
+  planMoveNodes,
+  planSetNumber,
   planUpdateNode,
   ZERO_HLC,
   type Hlc,
@@ -65,25 +67,70 @@ describe("structure intents", () => {
     expect(() => run((s) => planCreateNode(s.production!, s.nodes, sh, "d"))).toThrow();
   });
 
-  it("inserts in the gap, renumbering siblings when it is full", () => {
+  it("inserts right after a node without changing any existing code", () => {
     const { run, titles } = session();
     run((s) => planCreateNode(s.production!, s.nodes, null, "a", "A"));
     run((s) => planCreateNode(s.production!, s.nodes, null, "b", "B"));
     run((s) => planInsertAfter(s.production!, s.nodes, "a", "x"));
     expect(titles(null)).toEqual(["10:A", "15:", "20:B"]);
     for (const nid of ["y", "z", "w"]) run((s) => planInsertAfter(s.production!, s.nodes, "a", nid));
-    // After a: 15, then 12, then 11; no gap left between 10 and 11, so the
-    // siblings renumber to 10…50 and the new one lands at 15.
-    expect(titles(null).map((t) => t.split(":")[0])).toEqual(["10", "15", "20", "30", "40", "50"]);
+    // Each lands right after A; codes take the gap (12, 11) and, when it is
+    // full, the next free number at the end (30). A and B keep 10 and 20.
+    expect(titles(null).map((t) => t.split(":")[0])).toEqual(["10", "30", "11", "12", "15", "20"]);
   });
 
-  it("swaps with a neighbour and ignores moves past the ends", () => {
+  it("swaps with a neighbour without touching codes, and ignores moves past the ends", () => {
     const { run, titles } = session();
     run((s) => planCreateNode(s.production!, s.nodes, null, "a", "A"));
     run((s) => planCreateNode(s.production!, s.nodes, null, "b", "B"));
-    run((s) => planMoveNode(s.nodes, "b", -1));
-    expect(titles(null)).toEqual(["10:B", "20:A"]);
-    expect(run((s) => planMoveNode(s.nodes, "b", -1)).events).toEqual([]);
+    run((s) => planMoveNode(s.production!, s.nodes, "b", -1));
+    expect(titles(null)).toEqual(["20:B", "10:A"]);
+    expect(run((s) => planMoveNode(s.production!, s.nodes, "b", -1)).events).toEqual([]);
+    run((s) => planCreateNode(s.production!, s.nodes, null, "c", "C"));
+    expect(titles(null)).toEqual(["20:B", "10:A", "30:C"]);
+  });
+
+  it("drags several nodes to a position, keeping their codes", () => {
+    const { run, titles } = session();
+    for (const [nid, t] of [["a", "A"], ["b", "B"], ["c", "C"], ["d", "D"]] as const) run((s) => planCreateNode(s.production!, s.nodes, null, nid, t));
+    run((s) => planMoveNodes(s.production!, s.nodes, ["d", "c"], null, "a"));
+    expect(titles(null)).toEqual(["40:D", "30:C", "10:A", "20:B"]);
+    run((s) => planMoveNodes(s.production!, s.nodes, ["d"], null, null));
+    expect(titles(null)).toEqual(["30:C", "10:A", "20:B", "40:D"]);
+  });
+
+  it("moves a node to another parent, renumbering only if its code is taken there", () => {
+    const { run, titles } = session();
+    run((s) => planCreateNode(s.production!, s.nodes, null, "sq", "SQ"));
+    run((s) => planCreateNode(s.production!, s.nodes, "sq", "sc1", "Uno"));
+    run((s) => planCreateNode(s.production!, s.nodes, "sq", "sc2", "Dos"));
+    run((s) => planCreateNode(s.production!, s.nodes, "sc1", "x", "X")); // SH0010 in sc1
+    run((s) => planCreateNode(s.production!, s.nodes, "sc1", "y", "Y")); // SH0020 in sc1
+    run((s) => planCreateNode(s.production!, s.nodes, "sc2", "z", "Z")); // SH0010 in sc2
+    run((s) => planMoveNodes(s.production!, s.nodes, ["x", "y"], "sc2", "z"));
+    // x: 10 is taken in sc2 → 20; y: 20 is then taken → 30.
+    expect(titles("sc2")).toEqual(["20:X", "30:Y", "10:Z"]);
+    expect(titles("sc1")).toEqual([]);
+  });
+
+  it("refuses moves to the wrong level or into the node's own subtree", () => {
+    const { run } = session();
+    run((s) => planCreateNode(s.production!, s.nodes, null, "sq", "SQ"));
+    run((s) => planCreateNode(s.production!, s.nodes, "sq", "sc", "SC"));
+    run((s) => planCreateNode(s.production!, s.nodes, "sc", "sh", "SH"));
+    expect(run((s) => planMoveNodes(s.production!, s.nodes, ["sh"], "sq", null)).events).toEqual([]);
+    expect(run((s) => planMoveNodes(s.production!, s.nodes, ["sq"], "sc", null)).events).toEqual([]);
+  });
+
+  it("edits the number of a code by hand and rejects clashes", () => {
+    const { run, titles } = session();
+    run((s) => planCreateNode(s.production!, s.nodes, null, "a", "A"));
+    run((s) => planCreateNode(s.production!, s.nodes, null, "b", "B"));
+    run((s) => planSetNumber(s.production!, s.nodes, "a", 35));
+    expect(titles(null)).toEqual(["35:A", "20:B"]); // keeps its place on screen
+    expect(() => run((s) => planSetNumber(s.production!, s.nodes, "a", 20))).toThrow("SQ020 ya existe aquí.");
+    expect(() => run((s) => planSetNumber(s.production!, s.nodes, "a", 1000))).toThrow("entre 1 y 999");
+    expect(() => run((s) => planSetNumber(s.production!, s.nodes, "a", 2.5))).toThrow();
   });
 
   it("writes only the fields that change", () => {

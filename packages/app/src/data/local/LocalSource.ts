@@ -23,6 +23,8 @@ import {
   planDeleteNode,
   planInsertAfter,
   planMoveNode,
+  planMoveNodes,
+  planSetNumber,
   planUpdateNode,
   serializeEvent,
   ZERO_HLC,
@@ -203,6 +205,7 @@ export class LocalSource implements DataSource {
       activity: [],
       presence: [],
       mirror: { status: this.saveError ? "offline" : pending ? "syncing" : "synced", rootPath: this.store.label, pending },
+      features: { generation: false, review: false, presence: false, team: false },
     };
     for (const l of this.listeners) l(this.snapshot);
   }
@@ -220,7 +223,18 @@ export class LocalSource implements DataSource {
   }
 
   moveNode(nodeId: Id, dir: -1 | 1): void {
-    this.apply(planMoveNode(this.loaded().nodes, nodeId, dir));
+    const s = this.loaded();
+    this.apply(planMoveNode(s.production, s.nodes, nodeId, dir));
+  }
+
+  moveNodes(ids: Id[], parentId: Id | null, beforeId: Id | null): void {
+    const s = this.loaded();
+    this.apply(planMoveNodes(s.production, s.nodes, ids, parentId, beforeId));
+  }
+
+  setNodeNumber(nodeId: Id, number: number): void {
+    const s = this.loaded();
+    this.apply(planSetNumber(s.production, s.nodes, nodeId, number));
   }
 
   deleteNode(nodeId: Id): void {
@@ -229,6 +243,12 @@ export class LocalSource implements DataSource {
 
   updateNode(nodeId: Id, patch: Partial<Pick<ProdNode, "title" | "notes" | "statusId" | "assigneeIds" | "assetIds">>): void {
     this.apply(planUpdateNode(this.loaded().nodes, nodeId, patch as NodePatch));
+  }
+
+  /** Rename the production itself (used by the dashboard). */
+  renameProduction(name: string): void {
+    this.loaded();
+    this.write([{ type: "production.updated", patch: { name } }]);
   }
 
   // ---------- configuration ----------

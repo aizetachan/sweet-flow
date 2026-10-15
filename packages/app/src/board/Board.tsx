@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { IconMessageCircle, IconPlus, IconSearch, IconStack2, IconWand, IconX } from "@tabler/icons-react";
 import {
   childrenOf,
@@ -13,6 +14,7 @@ import { AvatarStack, Button, cx, Pill, Segmented } from "@sweetflow/ui";
 import { useSnap, useStore, type CardSize } from "../state/store";
 import { countsOf, coverOf, durationOf, filtersActive, matches, memberName, presenceAt, progressOf, statusOf } from "../state/selectors";
 import { Thumb } from "../components/media";
+import { nodeDragProps, useEndDrop, useNodeDrop } from "./dnd";
 
 export function Board() {
   const snap = useSnap();
@@ -69,14 +71,19 @@ function Group({ node }: { node: ProdNode }) {
   const prog = progressOf(snap, node);
   return (
     <section className="group">
-      <div className="group__head">
+      <GroupHead node={node}>
         <span className="group__code">{codeOf(p, node)}</span>
         <span className="group__title">{node.title}</span>
         <span className="sf-faint sf-small">{levelOf(p, node).name} · {prog.done}/{prog.total} aprobados · {fmtDur(durationOf(snap, node))}</span>
-      </div>
+      </GroupHead>
       {kids.map((k) => <Group key={k.id} node={k} />)}
     </section>
   );
+}
+
+function GroupHead({ node, children }: { node: ProdNode; children: ReactNode }) {
+  const drop = useNodeDrop(node, "y", true);
+  return <div className={cx("group__head", drop.zone && `dnd-${drop.zone}`)} {...nodeDragProps(node.id)} {...drop.props}>{children}</div>;
 }
 
 function Lane({ row }: { row: ProdNode }) {
@@ -91,10 +98,12 @@ function Lane({ row }: { row: ProdNode }) {
   const empty = all.filter((u) => !snap.media.some((m) => m.nodeId === u.id) && !snap.takes.some((t) => t.nodeId === u.id));
   const st = statusOf(snap, row);
   const viewers = presenceAt(snap, row.id);
+  const headDrop = useNodeDrop(row, "y");
+  const endDrop = useEndDrop(row.id);
 
   return (
     <section className="lane">
-      <div className="lane__head">
+      <div className={cx("lane__head", headDrop.zone && `dnd-${headDrop.zone}`)} {...nodeDragProps(row.id)} {...headDrop.props}>
         <span className="lane__code">{codeOf(p, row)}</span>
         <span className="lane__title">{row.title}</span>
         <Pill color={st.color}>{st.name}</Pill>
@@ -111,7 +120,7 @@ function Lane({ row }: { row: ProdNode }) {
           </Button>
         ) : null}
       </div>
-      <div className="lane__cards">
+      <div className={cx("lane__cards", endDrop.over && "dnd-end")} {...endDrop.props}>
         <SceneCard node={row} />
         {units.map((u) => <UnitCard key={u.id} node={u} />)}
         {!active ? (
@@ -163,7 +172,8 @@ function SceneCard({ node }: { node: ProdNode }) {
 
 function UnitCard({ node }: { node: ProdNode }) {
   const snap = useSnap();
-  const { selectedId, select } = useStore();
+  const { selectedId, multi, select, toggleMulti } = useStore();
+  const drop = useNodeDrop(node, "x");
   const p = snap.production;
   const st = statusOf(snap, node);
   const c = countsOf(snap, node);
@@ -173,7 +183,12 @@ function UnitCard({ node }: { node: ProdNode }) {
   const idx = kids.findIndex((k) => k.id === node.id);
 
   return (
-    <div className={cx("card", selectedId === node.id && "card--on", viewers.length > 0 && "card--watched")} onClick={() => select(node.id)}>
+    <div
+      className={cx("card", selectedId === node.id && "card--on", multi.includes(node.id) && "card--multi", viewers.length > 0 && "card--watched", drop.zone && `dnd-${drop.zone}`)}
+      {...nodeDragProps(node.id)}
+      {...drop.props}
+      onClick={(e) => (e.metaKey || e.ctrlKey || e.shiftKey ? toggleMulti(node.id) : select(node.id))}
+    >
       <Thumb {...cover} />
       <span className={`card__swatch seg-c${(idx < 0 ? 0 : idx) % 6}`} />
       <div className="card__meta">

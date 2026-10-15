@@ -13,7 +13,9 @@ pnpm install
 pnpm dev          # http://localhost:5173
 ```
 
-Usa `MockSource`, en memoria. No necesita configuración ni red.
+Demo en memoria: el dashboard trae la carpeta `Mareas › Temporada 1` con el
+episodio de ejemplo (`MockSource`). Lo que se crea se pierde al recargar. No
+necesita configuración ni red.
 
 ## Modo local en el navegador (registro de eventos)
 
@@ -21,12 +23,16 @@ Usa `MockSource`, en memoria. No necesita configuración ni red.
 pnpm dev:local    # http://localhost:5173
 ```
 
-Usa `LocalSource` (`docs/ARCHITECTURE.md` §5.0) con el registro guardado en el
-`localStorage` del navegador. Arranca con una producción vacía que se conserva
-al recargar. **Cada pestaña es un dispositivo:** abre dos para ver cómo se
-combinan los cambios, igual que harán dos personas sobre la misma carpeta de
-Dropbox. Por ahora solo cubre la estructura (árbol, niveles y estados); generar,
-tomas y comentarios avisan en la consola de que aún no están disponibles.
+El dashboard y cada producción se guardan en el `localStorage` del navegador
+con `LocalSource` (`docs/ARCHITECTURE.md` §5.0), y se conservan al recargar.
+**Cada ventana es un dispositivo:** abre dos, o saca un plano a una ventana
+aparte, para ver cómo se combinan los cambios, igual que harán dos personas
+sobre la misma carpeta de Dropbox. Por ahora solo cubre la estructura (árbol,
+niveles, estados, responsables); generar, tomas y comentarios aparecen como
+"Próximamente".
+
+La app de escritorio usa este mismo modo (en su propio almacenamiento) hasta
+que llegue la carpeta real de Dropbox (fase 1, paso 3).
 
 Para empezar de cero, borra las claves `sweetflow:*` del `localStorage` (en las
 herramientas de desarrollo, *Application → Local Storage*).

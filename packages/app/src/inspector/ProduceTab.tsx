@@ -14,6 +14,7 @@ import {
 } from "@sweetflow/domain";
 import { Avatar, Button, cx, IconButton, Segmented } from "@sweetflow/ui";
 import { useSnap, useStore } from "../state/store";
+import { usePanel } from "./panel";
 import { memberName } from "../state/selectors";
 import { Player, Thumb } from "../components/media";
 
@@ -24,7 +25,7 @@ const MODELS: Record<"image" | "video", string[]> = {
 
 export function ProduceTab({ node }: { node: ProdNode }) {
   const snap = useSnap();
-  const { activeMediaId, set, playhead, playing } = useStore();
+  const { activeMediaId, setPanel, playhead, playing } = usePanel();
   const [showArchived, setShowArchived] = useState(false);
   const all = snap.media.filter((m) => m.nodeId === node.id).sort((a, b) => b.createdAt - a.createdAt);
   const own = all.filter((m) => showArchived || !m.archived);
@@ -40,7 +41,7 @@ export function ProduceTab({ node }: { node: ProdNode }) {
 
       {active ? (
         <section className="sec">
-          <Player media={active} time={playhead} playing={playing} onTime={(t) => set({ playhead: t })} onPlaying={(v) => set({ playing: v })} />
+          <Player media={active} time={playhead} playing={playing} onTime={(t) => setPanel({ playhead: t })} onPlaying={(v) => setPanel({ playing: v })} />
           <MediaMeta media={active} node={node} />
         </section>
       ) : null}
@@ -57,7 +58,7 @@ export function ProduceTab({ node }: { node: ProdNode }) {
           </div>
           <div className="versions">
             {own.map((m) => (
-              <button key={m.id} className={cx("version", m.id === active?.id && "version--on", m.archived && "version--archived")} onClick={() => set({ activeMediaId: m.id, playhead: 0, playing: false })}>
+              <button key={m.id} className={cx("version", m.id === active?.id && "version--on", m.archived && "version--archived")} onClick={() => setPanel({ activeMediaId: m.id, playhead: 0, playing: false })}>
                 <Thumb media={m.status === "ready" ? m : undefined} pending={m.status === "queued" || m.status === "rendering" ? m : undefined} />
                 <span className="version__tag">
                   {m.kind === "video" ? <IconVideo size={11} /> : <IconPhoto size={11} />} {versionTag(m.version)}
@@ -76,7 +77,8 @@ export function ProduceTab({ node }: { node: ProdNode }) {
 
 function MediaMeta({ media, node }: { media: Media; node: ProdNode }) {
   const snap = useSnap();
-  const { source, set } = useStore();
+  const { source } = useStore();
+  const { setPanel } = usePanel();
   const inUse = snap.takes.some((t) => t.mediaId === media.id);
   const unit = isUnit(snap.production, node);
   const g = media.generation;
@@ -88,7 +90,7 @@ function MediaMeta({ media, node }: { media: Media; node: ProdNode }) {
         {g?.credits ? <span className="sf-faint sf-small" title={`Créditos de ${memberName(snap, g.launchedBy)}`}><IconBolt size={11} /> {g.credits}</span> : null}
         <span className="mmeta__spacer" />
         {media.status === "ready" && media.kind === "video" ? (
-          <Button size="sm" onClick={() => set({ panelTab: "cut", activeMediaId: media.id })}><IconCut size={13} /> Cortar</Button>
+          <Button size="sm" onClick={() => setPanel({ tab: "cut", activeMediaId: media.id })}><IconCut size={13} /> Cortar</Button>
         ) : null}
         {media.status === "ready" && (unit || media.kind === "image") ? (
           <Button size="sm" variant="primary" onClick={() => source.placeTakes(media.id, [{ segment: { inSec: 0, outSec: media.durationSec ?? 0 }, target: { nodeId: node.id } }])}>
@@ -110,7 +112,8 @@ function MediaMeta({ media, node }: { media: Media; node: ProdNode }) {
 
 function GenerateBox({ node }: { node: ProdNode }) {
   const snap = useSnap();
-  const { source, set } = useStore();
+  const { source } = useStore();
+  const { setPanel } = usePanel();
   const level = levelOf(snap.production, node);
   const unit = isUnit(snap.production, node);
   const [kind, setKind] = useState<MediaKind>(unit ? "image" : "video");
@@ -126,7 +129,7 @@ function GenerateBox({ node }: { node: ProdNode }) {
     return (
       <div className="note note--cta">
         <IconBolt size={16} /> Conecta tu cuenta de Magnific para generar con tus créditos.
-        <Button size="sm" variant="primary" onClick={() => set({ view: "team" })}>Conectar</Button>
+        <Button size="sm" variant="primary" onClick={() => useStore.getState().set({ view: "team" })}>Conectar</Button>
       </div>
     );
   }
@@ -166,7 +169,7 @@ function GenerateBox({ node }: { node: ProdNode }) {
         const p = prompt.trim() || fallback;
         if (!p) return;
         source.generate({ nodeId: node.id, kind, prompt: p, model, durationSec: kind === "video" ? dur : undefined, sourceMediaId: from || undefined });
-        set({ activeMediaId: null, playhead: 0 });
+        setPanel({ activeMediaId: null, playhead: 0 });
         setPrompt("");
       }}>
         <IconWand size={15} /> Generar {kind === "video" ? `${dur}s de vídeo` : "imagen"}
@@ -178,7 +181,8 @@ function GenerateBox({ node }: { node: ProdNode }) {
 
 function TakesHere({ node }: { node: ProdNode }) {
   const snap = useSnap();
-  const { source, set } = useStore();
+  const { source } = useStore();
+  const { setPanel } = usePanel();
   const takes = snap.takes.filter((t) => t.nodeId === node.id).sort((a, b) => b.createdAt - a.createdAt);
   if (!takes.length) return null;
   return (
@@ -190,7 +194,7 @@ function TakesHere({ node }: { node: ProdNode }) {
         const on = node.selectedTakeId === t.id;
         return (
           <div key={t.id} className={cx("take", on && "take--on")}>
-            <button className="take__thumb" onClick={() => m && set({ activeMediaId: m.nodeId === node.id ? m.id : null, playhead: t.inSec })}>
+            <button className="take__thumb" onClick={() => m && setPanel({ activeMediaId: m.nodeId === node.id ? m.id : null, playhead: t.inSec })}>
               <Thumb media={m} take={t} />
             </button>
             <div className="take__meta">

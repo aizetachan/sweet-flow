@@ -3,11 +3,13 @@ import { IconCheck, IconClock, IconSend } from "@tabler/icons-react";
 import { formatTc, versionTag, type ProdNode } from "@sweetflow/domain";
 import { Avatar, Button, cx, IconButton } from "@sweetflow/ui";
 import { useSnap, useStore } from "../state/store";
+import { usePanel } from "./panel";
 import { memberName } from "../state/selectors";
 
 export function ReviewTab({ node }: { node: ProdNode }) {
   const snap = useSnap();
-  const { source, set, playhead, activeMediaId } = useStore();
+  const { source } = useStore();
+  const { setPanel, playhead, activeMediaId } = usePanel();
   const [text, setText] = useState("");
   const [atTime, setAtTime] = useState(true);
   const [showResolved, setShowResolved] = useState(false);
@@ -38,7 +40,7 @@ export function ReviewTab({ node }: { node: ProdNode }) {
                   <span className="sf-faint sf-small">{new Date(c.createdAt).toLocaleString("es-ES", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
                   {m ? <span className="sf-faint sf-small">· {versionTag(m.version)}</span> : null}
                   {c.atSec !== undefined ? (
-                    <button className="tc" onClick={() => set({ panelTab: "cut", activeMediaId: c.mediaId ?? null, playhead: c.atSec!, playing: false })}>
+                    <button className="tc" onClick={() => setPanel({ tab: "cut", activeMediaId: c.mediaId ?? null, playhead: c.atSec!, playing: false })}>
                       <IconClock size={11} /> {formatTc(c.atSec)}
                     </button>
                   ) : null}

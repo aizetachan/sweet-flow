@@ -1,0 +1,48 @@
+/* Loading splash (docs/INTERFAZ.md §0). Component: shell/Splash.tsx. */
+
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  overflow: hidden;
+  background: var(--bg-0);
+  cursor: default;
+  user-select: none;
+  opacity: 1;
+  transition-property: opacity;
+  transition-timing-function: ease;
+}
+.splash--out { opacity: 0; pointer-events: none; }
+
+.splash__measure,
+.splash__letter {
+  font-family: var(--font);
+  font-size: clamp(48px, 9vw, 120px);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1;
+  white-space: pre;
+}
+
+/* Invisible copy of the word, centred: gives each letter its final slot. */
+.splash__measure {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  visibility: hidden;
+}
+
+.splash__letter {
+  position: absolute;
+  top: 0;
+  left: 0;
+  color: var(--fg-0);
+  transform-origin: 50% 60%;
+  will-change: transform;
+}
+
+/* Reduced motion: letters sit in place and fade in. */
+.splash--still .splash__letter { animation: splash-in 0.4s ease both; }
+@keyframes splash-in { from { opacity: 0; } to { opacity: 1; } }
