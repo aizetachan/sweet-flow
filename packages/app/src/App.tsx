@@ -117,5 +117,16 @@ function PoppedWindow() {
   if (!snap) return <Loading />;
   const node = snap.nodes.find((n) => n.id === nodeId);
   if (node) document.title = `${node.title || "Sin título"} · ${snap.production.name}`;
-  return <WindowInspector nodeId={nodeId} />;
+  return (
+    <>
+      <WindowInspector nodeId={nodeId} />
+      <FlashFrame />
+    </>
+  );
+}
+
+/** Glowing frame when the main window points at this one ("Ir a la ventana"). */
+function FlashFrame() {
+  const flash = useStore((s) => s.flash);
+  return flash ? <div key={flash} className="flashframe" aria-hidden /> : null;
 }

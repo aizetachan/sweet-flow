@@ -10,7 +10,7 @@ import type { Id } from "@sweetflow/domain";
 import type { DataSource, Snapshot } from "../data/source";
 import type { Library, LibraryState } from "../data/library";
 import { createLibrary } from "../data";
-import { closePoppedWindows, hostWindows, openerShare, popOutWindow, watchOpener, type PoppedWindow } from "./windows";
+import { closePoppedWindow, closePoppedWindows, focusPoppedWindow, hostWindows, onFlashRequest, openerShare, popOutWindow, watchOpener, type PoppedWindow } from "./windows";
 
 export type Phase = "dashboard" | "production" | "window";
 export type View = "board" | "library" | "team";
@@ -71,6 +71,8 @@ interface UiState {
   floating: FloatingPanel[];
   /** Short message at the bottom of the screen (e.g. a code changed on move). */
   notice: string | null;
+  /** Popped window: glowing frame while the main window points at it. */
+  flash: number;
   /** Windows popped out from this one (own OS/browser windows). */
   popped: PoppedWindow[];
   /** Asking to confirm leaving the production with windows open; holds where to go. */
@@ -100,6 +102,10 @@ interface Store extends UiState {
   updateFloating: (key: string, patch: Partial<Omit<FloatingPanel, "key">>) => void;
   /** Opens a node in its own OS window (desktop) or browser window. */
   popOut: (nodeId: Id) => void;
+  /** Bring a node's popped window to the front, glowing. */
+  focusPopped: (nodeId: Id) => void;
+  /** Close a node's popped window and show it in the side panel again. */
+  bringBack: (nodeId: Id) => void;
   notify: (text: string) => void;
 }
 
@@ -149,6 +155,7 @@ export const useStore = create<Store>((set, get) => ({
   collapsed: {},
   floating: [],
   notice: null,
+  flash: 0,
   popped: [],
   leaveAsk: null,
   sideTab: "work",
@@ -215,6 +222,11 @@ export const useStore = create<Store>((set, get) => ({
     set({ notice: text });
     noticeTimer = setTimeout(() => set({ notice: null }), 5000);
   },
+  focusPopped: (nodeId) => focusPoppedWindow(nodeId),
+  bringBack: (nodeId) => {
+    closePoppedWindow(nodeId);
+    get().select(nodeId);
+  },
   popOut: (nodeId) => {
     const { productionId } = get();
     if (!productionId) return;
@@ -234,6 +246,7 @@ if (popped) {
   const nodeId = decodeURIComponent(popped[2]!);
   const share = openerShare(productionId);
   useStore.getState().openProduction(productionId, { windowNodeId: nodeId, source: share?.source() });
+  onFlashRequest(() => useStore.setState({ flash: Date.now() }));
   if (share) {
     // Stop listening before this window goes, and go quiet if the opener leaves.
     window.addEventListener("pagehide", () => unsubscribeSource());

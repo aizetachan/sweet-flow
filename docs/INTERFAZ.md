@@ -92,6 +92,10 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
 
 - El **tablero** es la vista general: se va actualizando solo mientras se genera
   y mientras el equipo trabaja.
+- **Cabecera del panel:** primera fila con el código (número editable), el
+  título y cerrar; debajo, la ubicación (`SQ010 / SC010 / SH0040 · Plano`), el
+  botón de ventana aparte, copiar la ruta de la carpeta y, pegado a la derecha,
+  el estado.
 - El **panel de trabajo** aparece al seleccionar un plano o una escena y es donde
   se trabaja (Producir · Cortar y repartir · Revisión · Actividad).
 - Volver al dashboard desde la barra superior (las migas de pan sustituyen al
@@ -123,6 +127,12 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
   que se hace en una se ve en el tablero y en las demás al momento.
 - Volver a abrir el mismo plano trae su ventana al frente en lugar de abrir
   otra.
+- **Sin duplicados:** si lo seleccionado está abierto en una ventana aparte, la
+  pestaña Producción no repite el editor: indica que está abierto aparte, con
+  **Ir a la ventana** (la trae al frente y se ilumina con un borde difuminado
+  para que se vea cuál es) y **Traer aquí** (cierra esa ventana y lo muestra en
+  el panel). Las tarjetas y las filas del árbol abiertas aparte llevan un icono
+  que también lleva a su ventana.
 - **Solo existen dentro de la producción.** Si hay ventanas aparte abiertas y
   se sale de la producción (migas de pan, logo), se pregunta: «Tienes ventanas
   emergentes abiertas. ¿Estás seguro?». **Sí** las cierra todas y sale; **No**

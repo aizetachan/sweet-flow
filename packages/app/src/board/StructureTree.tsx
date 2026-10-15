@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { IconArrowDown, IconArrowUp, IconChevronRight, IconFolderPlus, IconLayoutList, IconPlus, IconTrash } from "@tabler/icons-react";
+import { IconExternalLink, IconArrowDown, IconArrowUp, IconChevronRight, IconFolderPlus, IconLayoutList, IconPlus, IconTrash } from "@tabler/icons-react";
 import { childrenOf, codeOf, isUnit, levelIndex, type ProdNode } from "@sweetflow/domain";
 import { cx, IconButton } from "@sweetflow/ui";
 import { useSnap, useStore } from "../state/store";
@@ -40,7 +40,8 @@ export function StructureTree() {
 
 function TreeRow({ node, depth }: { node: ProdNode; depth: number }) {
   const snap = useSnap();
-  const { selectedId, multi, scopeId, collapsed, toggleCollapsed, toggleMulti, select, set, source } = useStore();
+  const { selectedId, multi, scopeId, collapsed, toggleCollapsed, toggleMulti, select, set, source, focusPopped } = useStore();
+  const apart = useStore((s) => s.popped.some((w) => w.nodeId === node.id));
   const p = snap.production;
   const kids = childrenOf(snap.nodes, node.id);
   const unit = isUnit(p, node);
@@ -81,6 +82,11 @@ function TreeRow({ node, depth }: { node: ProdNode; depth: number }) {
         <span className="trow__dot" style={{ background: st.color }} title={st.name} />
         <span className="trow__code">{codeOf(p, node)}</span>
         <span className="trow__title">{node.title || <i className="sf-faint">Sin título</i>}</span>
+        {apart ? (
+          <button className="apart" title="Abierto en una ventana aparte: ir a la ventana" onClick={(e) => { e.stopPropagation(); focusPopped(node.id); }}>
+            <IconExternalLink size={12} />
+          </button>
+        ) : null}
         {!unit && prog.total ? <span className="trow__prog">{prog.done}/{prog.total}</span> : null}
         <span className="trow__acts" onClick={(e) => e.stopPropagation()}>
           {childLevel ? (

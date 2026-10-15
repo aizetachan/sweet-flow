@@ -159,9 +159,6 @@
 .nhead__code { font-weight: 750; font-size: 16px; font-variant-numeric: tabular-nums; color: var(--fg-2); }
 .nhead__title { flex: 1; font-size: 16px; font-weight: 600; padding: 0 6px; height: 32px; }
 .nhead__notes { min-height: 54px; font-size: 12.5px; }
-.folderchip { align-self: flex-start; max-width: 100%; display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: var(--r-sm); border: 1px solid var(--line-0); background: var(--bg-2); color: var(--fg-3); font-family: var(--mono); font-size: 10.5px; }
-.folderchip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.folderchip:hover { color: var(--fg-1); }
 .assignees { display: flex; gap: 2px; }
 .assignee { padding: 1px; border: 0; border-radius: 50%; background: none; opacity: .35; filter: grayscale(1); transition: opacity .12s; }
 .assignee:hover { opacity: .8; }
@@ -368,8 +365,8 @@ button.rail__logo { border: 0; padding: 0; cursor: pointer; }
 /* ---------- work panel: floating, own window, coming soon, code ---------- */
 .floatwin { position: fixed; display: flex; flex-direction: column; min-width: 360px; min-height: 260px; max-width: 95vw; max-height: 95vh; resize: both; overflow: hidden; border-radius: var(--r-lg); background: var(--bg-1); box-shadow: var(--shadow-pop), 0 30px 80px #000c; animation: sf-fade .12s; }
 .floatwin .insp__body { flex: 1; overflow: auto; }
-.insp__crumbs--drag { cursor: grab; user-select: none; margin: -12px -16px 0; padding: 12px 16px 6px; }
-.insp__crumbs--drag:active { cursor: grabbing; }
+.insp__drag { cursor: grab; user-select: none; }
+.insp__drag:active { cursor: grabbing; }
 .insp--window { height: 100%; border: 0; }
 .insp__gone { padding: 30px; display: flex; flex-direction: column; gap: 8px; }
 .soon { display: flex; gap: 12px; padding: 14px; border-radius: var(--r-lg); border: 1px dashed var(--line-2); color: var(--accent); }
@@ -463,3 +460,19 @@ button.rail__logo { border: 0; padding: 0; cursor: pointer; }
   .settings__nav { flex-direction: row; flex-wrap: wrap; }
 }
 .loading--col { flex-direction: column; gap: 6px; text-align: center; }
+
+/* ---------- work panel header: title row, then location + actions + status ---------- */
+.nhead__row--title { display: flex; align-items: center; gap: 8px; }
+.nhead__row--title .nhead__title { flex: 1; min-width: 0; }
+.insp__meta { display: flex; align-items: center; gap: 2px; margin: 4px 0 10px; min-height: 28px; }
+.insp__meta .insp__crumbs { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; margin-right: 4px; }
+.insp--elsewhere h3 { margin: 10px 0 6px; }
+.insp__elsewhere-acts { display: flex; justify-content: center; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+
+/* Opened apart: small shortcut on cards and tree rows. */
+.apart { display: inline-grid; place-items: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: var(--r-sm); background: var(--primary-soft); color: var(--fg-0); }
+.apart:hover { background: var(--primary); }
+
+/* Popped window: glow when the main window points at it. */
+.flashframe { position: fixed; inset: 0; z-index: 200; pointer-events: none; border-radius: 6px; box-shadow: inset 0 0 0 2px var(--primary), inset 0 0 60px 6px #5b72f5aa; animation: flashframe 1.8s ease-out forwards; }
+@keyframes flashframe { 0%, 35% { opacity: 1; } 100% { opacity: 0; } }

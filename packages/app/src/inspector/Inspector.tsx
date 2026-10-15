@@ -2,14 +2,13 @@ import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } f
 import {
   IconCopy,
   IconExternalLink,
-  IconFolder,
   IconLayoutSidebarLeftExpand,
   IconPlus,
   IconSparkles,
   IconX,
 } from "@tabler/icons-react";
 import { ancestorsOf, codeOf, folderPath, levelOf, roleOf, type ProdNode } from "@sweetflow/domain";
-import { Avatar, cx, IconButton, Tabs } from "@sweetflow/ui";
+import { Avatar, Button, cx, IconButton, Tabs } from "@sweetflow/ui";
 import { useSnap, useStore, type FloatingPanel, type PanelTab } from "../state/store";
 import { presenceAt } from "../state/selectors";
 import { StatusPicker } from "../components/StatusPicker";
@@ -25,6 +24,7 @@ const ASSET_LABEL = { cast: "Reparto", prop: "Prop", location: "Localización", 
 export function DockedInspector() {
   const snap = useSnap();
   const selectedId = useStore((s) => s.selectedId);
+  const popped = useStore((s) => s.popped);
   const node = snap.nodes.find((n) => n.id === selectedId);
   if (!node) {
     return (
@@ -36,9 +36,29 @@ export function DockedInspector() {
       </div>
     );
   }
+  if (popped.some((w) => w.nodeId === node.id)) return <OpenElsewhere node={node} />;
   return (
     <div className="insp">
       <DockedPanel nodeId={node.id}><InspectorBody /></DockedPanel>
+    </div>
+  );
+}
+
+/** The selected node is open in a popped window: point there instead of showing it twice. */
+function OpenElsewhere({ node }: { node: ProdNode }) {
+  const snap = useSnap();
+  const { focusPopped, bringBack } = useStore();
+  return (
+    <div className="insp insp--empty insp--elsewhere">
+      <div>
+        <IconExternalLink size={26} stroke={1.5} className="accent" />
+        <h3>{codeOf(snap.production, node)} {node.title ? `· ${node.title}` : ""}</h3>
+        <p className="sf-muted">Está abierto en una ventana aparte. Trabaja en esa ventana, o tráelo aquí para cerrarla.</p>
+        <div className="insp__elsewhere-acts">
+          <Button variant="primary" onClick={() => focusPopped(node.id)}><IconExternalLink size={14} /> Ir a la ventana</Button>
+          <Button onClick={() => bringBack(node.id)}><IconLayoutSidebarLeftExpand size={14} /> Traer aquí</Button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -106,7 +126,7 @@ export function WindowInspector({ nodeId }: { nodeId: string }) {
 function InspectorBody({ floatKey, onDragHandle }: { floatKey?: string; onDragHandle?: (e: ReactPointerEvent) => void }) {
   const snap = useSnap();
   const panel = usePanel();
-  const { select, dockPanel, closeFloating, popOut } = useStore();
+  const { select, dockPanel, closeFloating, popOut, source, set } = useStore();
   const node = snap.nodes.find((n) => n.id === panel.nodeId);
   const p = snap.production;
 
@@ -123,22 +143,40 @@ function InspectorBody({ floatKey, onDragHandle }: { floatKey?: string; onDragHa
   const hasVideo = snap.media.some((m) => m.kind === "video" && m.status === "ready" && !m.archived && ancestorsOf(snap.nodes, node).some((a) => a.id === m.nodeId));
   const { features } = snap;
   const tab: PanelTab = panel.tab === "cut" && !hasVideo ? "produce" : panel.tab;
+  const path = folderPath(p, snap.nodes, node);
 
   return (
     <>
       <div className="insp__top">
-        <div className={cx("insp__crumbs", onDragHandle && "insp__crumbs--drag")} onPointerDown={onDragHandle}>
-          {ancestorsOf(snap.nodes, node).map((a, i, arr) => (
-            <span key={a.id}>
-              <button className="link" onClick={() => panel.setPanel({ nodeId: a.id })}>{codeOf(p, a)}</button>
-              {i < arr.length - 1 ? <span className="sf-faint"> / </span> : null}
-            </span>
-          ))}
-          <span className="sf-faint"> · {levelOf(p, node).name}{roleOf(p, node) === "production" ? " · punto de producción" : roleOf(p, node) === "group" ? " · montaje" : ""}</span>
-          <span className="insp__spacer" />
+        {/* Row 1: code + title, close on the right. */}
+        <div className={cx("nhead__row nhead__row--title", onDragHandle && "insp__drag")} onPointerDown={onDragHandle}>
+          <CodeEditor node={node} />
+          <input
+            className="sf-input sf-input--bare nhead__title"
+            value={node.title}
+            placeholder={`Título del ${levelOf(p, node).name.toLowerCase()}`}
+            onChange={(e) => source.updateNode(node.id, { title: e.target.value })}
+          />
           {panel.mode === "floating" && floatKey ? (
             <IconButton label="Acoplar al panel lateral" size="sm" onClick={() => dockPanel(floatKey)}><IconLayoutSidebarLeftExpand size={14} /></IconButton>
           ) : null}
+          <IconButton
+            label={panel.mode === "window" ? "Cerrar ventana" : "Cerrar panel"}
+            size="sm"
+            onClick={() => (panel.mode === "window" ? window.close() : floatKey ? closeFloating(floatKey) : select(null))}
+          ><IconX size={14} /></IconButton>
+        </div>
+        {/* Row 2: where it is, open apart, copy folder path; status on the right. */}
+        <div className="insp__meta">
+          <span className="insp__crumbs">
+            {ancestorsOf(snap.nodes, node).map((a, i, arr) => (
+              <span key={a.id}>
+                <button className="link" onClick={() => panel.setPanel({ nodeId: a.id })}>{codeOf(p, a)}</button>
+                {i < arr.length - 1 ? <span className="sf-faint"> / </span> : null}
+              </span>
+            ))}
+            <span className="sf-faint"> · {levelOf(p, node).name}{roleOf(p, node) === "production" ? " · punto de producción" : roleOf(p, node) === "group" ? " · montaje" : ""}</span>
+          </span>
           {panel.mode !== "window" ? (
             <IconButton
               label="Abrir en una ventana aparte (puedes llevarla a otro monitor)"
@@ -149,11 +187,9 @@ function InspectorBody({ floatKey, onDragHandle }: { floatKey?: string; onDragHa
               }}
             ><IconExternalLink size={14} /></IconButton>
           ) : null}
-          <IconButton
-            label={panel.mode === "window" ? "Cerrar ventana" : "Cerrar panel"}
-            size="sm"
-            onClick={() => (panel.mode === "window" ? window.close() : floatKey ? closeFloating(floatKey) : select(null))}
-          ><IconX size={14} /></IconButton>
+          <IconButton label={`Copiar la ruta de la carpeta: ${path}`} size="sm" onClick={() => void navigator.clipboard?.writeText(path)}><IconCopy size={14} /></IconButton>
+          <span className="insp__spacer" />
+          <StatusPicker statuses={p.statuses} value={node.statusId} onChange={(id) => source.updateNode(node.id, { statusId: id })} onEdit={() => set({ modal: "statuses" })} />
         </div>
         <NodeHeader node={node} />
       </div>
@@ -248,30 +284,15 @@ function CodeEditor({ node }: { node: ProdNode }) {
 
 function NodeHeader({ node }: { node: ProdNode }) {
   const snap = useSnap();
-  const { source, set } = useStore();
+  const source = useStore((s) => s.source);
   const [adding, setAdding] = useState(false);
-  const p = snap.production;
-  const path = folderPath(p, snap.nodes, node);
   const viewers = presenceAt(snap, node.id);
   const assets = node.assetIds.map((id) => snap.assets.find((a) => a.id === id)).filter(Boolean);
   const team = snap.members.filter((m) => m.role !== "viewer");
 
   return (
     <div className="nhead">
-      <div className="nhead__row">
-        <CodeEditor node={node} />
-        <input
-          className="sf-input sf-input--bare nhead__title"
-          value={node.title}
-          placeholder={`Título del ${levelOf(p, node).name.toLowerCase()}`}
-          onChange={(e) => source.updateNode(node.id, { title: e.target.value })}
-        />
-      </div>
-      <button className="folderchip" title="Ruta de la carpeta en el escritorio (copiar)" onClick={() => void navigator.clipboard?.writeText(path)}>
-        <IconFolder size={12} /> <span>{path}</span> <IconCopy size={11} />
-      </button>
       <div className="nhead__row nhead__row--wrap">
-        <StatusPicker statuses={p.statuses} value={node.statusId} onChange={(id) => source.updateNode(node.id, { statusId: id })} onEdit={() => set({ modal: "statuses" })} />
         <div className="assignees">
           {team.map((m) => {
             const on = node.assigneeIds.includes(m.uid);

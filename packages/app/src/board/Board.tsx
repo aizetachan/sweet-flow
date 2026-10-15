@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { IconMessageCircle, IconPlus, IconSearch, IconStack2, IconWand, IconX } from "@tabler/icons-react";
+import { IconExternalLink, IconMessageCircle, IconPlus, IconSearch, IconStack2, IconWand, IconX } from "@tabler/icons-react";
 import {
   childrenOf,
   codeOf,
@@ -170,7 +170,8 @@ function SceneCard({ node }: { node: ProdNode }) {
 
 function UnitCard({ node }: { node: ProdNode }) {
   const snap = useSnap();
-  const { selectedId, multi, select, toggleMulti } = useStore();
+  const { selectedId, multi, select, toggleMulti, focusPopped } = useStore();
+  const apart = useStore((s) => s.popped.some((w) => w.nodeId === node.id));
   const drop = useNodeDrop(node, "x");
   const p = snap.production;
   const st = statusOf(snap, node);
@@ -197,6 +198,11 @@ function UnitCard({ node }: { node: ProdNode }) {
         <span title="Versiones generadas en este plano">{c.media}v</span>
         {c.comments ? <span className="card__comments"><IconMessageCircle size={12} /> {c.comments}</span> : null}
         <span className="card__spacer" />
+        {apart ? (
+          <button className="apart" title="Abierto en una ventana aparte: ir a la ventana" onClick={(e) => { e.stopPropagation(); focusPopped(node.id); }}>
+            <IconExternalLink size={12} />
+          </button>
+        ) : null}
         {viewers.length ? <span className="card__live" title={`${viewers.join(", ")} está aquí`}><AvatarStack names={viewers} size={16} /></span> : null}
         {node.assigneeIds.length ? <AvatarStack names={node.assigneeIds.map((u) => memberName(snap, u))} size={16} max={2} /> : null}
       </div>

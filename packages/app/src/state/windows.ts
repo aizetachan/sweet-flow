@@ -16,6 +16,8 @@ export interface WindowShare {
 }
 
 const SHARE_KEY = "__sweetflowShare";
+/** Message from the main window: "show yourself" (focus + glow). */
+const FLASH = "sf-flash";
 
 export interface PoppedWindow {
   name: string;
@@ -48,6 +50,32 @@ export function popOutWindow(url: string, productionId: Id, nodeId: Id): void {
   win.focus();
   children.set(name, { win, nodeId });
   report();
+}
+
+/** Main window: bring a node's window to the front and make it glow so it is easy to spot. */
+export function focusPoppedWindow(nodeId: Id): void {
+  for (const c of children.values()) {
+    if (c.nodeId !== nodeId || c.win.closed) continue;
+    c.win.focus();
+    c.win.postMessage({ type: FLASH }, "*");
+  }
+}
+
+/** Main window: close the window of one node (e.g. to work on it in the side panel again). */
+export function closePoppedWindow(nodeId: Id): void {
+  for (const [name, c] of children) {
+    if (c.nodeId !== nodeId) continue;
+    c.win.close();
+    children.delete(name);
+  }
+  report();
+}
+
+/** Popped window: run `onFlash` when the main window asks it to show itself. */
+export function onFlashRequest(onFlash: () => void): void {
+  window.addEventListener("message", (e: MessageEvent<{ type?: string }>) => {
+    if (e.source === window.opener && e.data?.type === FLASH) onFlash();
+  });
 }
 
 /** Main window: close every popped window. */
