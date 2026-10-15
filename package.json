@@ -21,11 +21,5 @@
   },
   "devDependencies": {
     "concurrently": "^9.2.5"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "electron"
-    ]
   }
 }

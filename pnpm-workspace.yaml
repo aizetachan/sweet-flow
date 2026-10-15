@@ -3,3 +3,18 @@ packages:
   - "packages/*"
   - "firebase/functions"
   - "firebase/tests"
+
+# Build scripts of dependencies (pnpm >= 10.26 and 11). Settings in
+# package.json are no longer read. Every dependency with an install script
+# must be listed here; strictDepBuilds makes `pnpm install` fail on any new
+# one, so a missing binary never goes unnoticed.
+strictDepBuilds: true
+
+# Electron needs no entry: since v40 it has no install script and downloads its
+# binary on first launch (dev:desktop); electron-builder fetches its own.
+allowBuilds:
+  esbuild: true # platform binary for Vite and the Functions/desktop bundles
+  "@firebase/util": false # optional autoinit defaults; we configure Firebase explicitly
+  electron-winstaller: false # Squirrel installers; we build NSIS on Windows
+  protobufjs: false # postinstall only prints a version warning
+  re2: false # optional native regex for the Hosting emulator (unused)
