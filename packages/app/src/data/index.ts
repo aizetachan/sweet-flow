@@ -23,6 +23,8 @@ export function dataMode(): DataMode {
   return isDesktop() ? "local" : "demo";
 }
 
+let demo: MockSource | undefined;
+
 export function createLibrary(mode = dataMode()): Library {
   if (mode === "local") return browserLibrary();
   if (mode === "firebase") {
@@ -33,7 +35,14 @@ export function createLibrary(mode = dataMode()): Library {
     name: seed.production.name,
     me: seed.me,
     summary: summarize({ production: seed.production, nodes: seed.nodes, members: seed.members }),
-    open: () => new MockSource(),
+    open: () => {
+      // One demo episode per session: leaving and reopening it keeps its edits and node ids (pins rely on them).
+      demo ??= new MockSource();
+      const kept = demo;
+      return new Proxy(kept, {
+        get: (t, prop: keyof MockSource) => (prop === "dispose" ? () => undefined : typeof t[prop] === "function" ? (t[prop] as (...a: unknown[]) => unknown).bind(t) : t[prop]),
+      });
+    },
   });
 }
 
@@ -46,7 +55,7 @@ function singleLibrary(name: string, open: () => DataSource): Library {
     me: { uid: "", email: "", displayName: "Firebase", role: "viewer", magnificConnected: false },
     entries: [{ id: "p_single", kind: "production", name, parentId: null, createdAt: t, updatedAt: t }],
     summaries: {},
-    prefs: { starred: [], opened: {} },
+    prefs: { pins: [], opened: {} },
   };
   const unsupported = () => {
     throw new Error("No disponible con esta fuente de datos.");
@@ -61,7 +70,8 @@ function singleLibrary(name: string, open: () => DataSource): Library {
     trash: unsupported,
     restore: unsupported,
     deleteForever: unsupported,
-    setStarred: ignore,
+    setPinned: ignore,
+    movePin: ignore,
     touch: ignore,
     setProfile: ignore,
     open,

@@ -3,6 +3,8 @@ import {
   IconCopy,
   IconExternalLink,
   IconLayoutSidebarLeftExpand,
+  IconPin,
+  IconPinFilled,
   IconPlus,
   IconSparkles,
   IconX,
@@ -19,6 +21,24 @@ import { ReviewTab } from "./ReviewTab";
 import { ActivityTab } from "./ActivityTab";
 
 const ASSET_LABEL = { cast: "Reparto", prop: "Prop", location: "Localización", style: "Estilo" } as const;
+
+/** Pin a scene or shot to the dashboard's side menu; keeps the pinned code and title current. */
+function PinButton({ node }: { node: ProdNode }) {
+  const snap = useSnap();
+  const { library, productionId } = useStore();
+  const pins = useStore((s) => s.lib?.prefs.pins);
+  const pin = productionId ? { entryId: productionId, nodeId: node.id, code: codeOf(snap.production, node), title: node.title, level: levelOf(snap.production, node).name } : null;
+  const pinned = !!pin && !!pins?.some((x) => x.entryId === pin.entryId && x.nodeId === pin.nodeId);
+  useEffect(() => {
+    if (pin && pinned) library.setPinned(pin, true);
+  }, [pinned, pin?.code, pin?.title, pin?.level]); // eslint-disable-line react-hooks/exhaustive-deps
+  if (!pin) return null;
+  return (
+    <IconButton label={pinned ? "Quitar de Fijados" : "Fijar en el menú lateral del inicio"} size="sm" onClick={() => library.setPinned(pin, !pinned)}>
+      {pinned ? <IconPinFilled size={14} className="accent" /> : <IconPin size={14} />}
+    </IconButton>
+  );
+}
 
 /** The work panel in its column, bound to the selection. */
 export function DockedInspector() {
@@ -160,6 +180,7 @@ function InspectorBody({ floatKey, onDragHandle }: { floatKey?: string; onDragHa
           {panel.mode === "floating" && floatKey ? (
             <IconButton label="Acoplar al panel lateral" size="sm" onClick={() => dockPanel(floatKey)}><IconLayoutSidebarLeftExpand size={14} /></IconButton>
           ) : null}
+          {panel.mode !== "window" ? <PinButton node={node} /> : null}
           {panel.mode !== "window" ? (
             <IconButton
               label="Abrir en una ventana aparte (puedes llevarla a otro monitor)"

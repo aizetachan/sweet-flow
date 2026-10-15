@@ -1,6 +1,6 @@
 /**
  * Dashboard sections that list entries: Inicio (browse folders), Recientes,
- * Favoritos and Papelera. Click selects (⌘/Ctrl adds), double click opens,
+ * and Papelera. Click selects (⌘/Ctrl adds), double click opens,
  * drag onto a folder, a breadcrumb or a side-menu folder moves.
  */
 
@@ -16,10 +16,10 @@ import {
   IconList,
   IconMovie,
   IconPencil,
+  IconPin,
+  IconPinFilled,
   IconPlus,
   IconSearch,
-  IconStar,
-  IconStarFilled,
   IconTrash,
   IconTrashX,
 } from "@tabler/icons-react";
@@ -28,11 +28,10 @@ import { AvatarStack, Button, cx, IconButton, Segmented } from "@sweetflow/ui";
 import { isInTrash, type LibraryEntry, type LibraryState, type ProductionSummary } from "../data/library";
 import { useStore, type DashLayout, type DashSection } from "../state/store";
 
-const DRAG_TYPE = "application/x-sweetflow-entries";
+export const DRAG_TYPE = "application/x-sweetflow-entries";
 
 const TITLES: Record<Exclude<DashSection, "settings" | "home">, { title: string; empty: string; icon: typeof IconClock }> = {
   recent: { title: "Recientes", empty: "Aquí aparecerán las producciones y carpetas que abras.", icon: IconClock },
-  starred: { title: "Favoritos", empty: "Marca con la estrella lo que uses a menudo para tenerlo a mano.", icon: IconStar },
   trash: { title: "Papelera", empty: "La papelera está vacía.", icon: IconTrash },
 };
 
@@ -64,8 +63,6 @@ export function Browse({ lib, section }: { lib: LibraryState; section: Exclude<D
       .map(([id]) => byId.get(id))
       .filter((e): e is LibraryEntry => !!e && alive(e))
       .slice(0, 30);
-  } else if (section === "starred") {
-    visible = lib.prefs.starred.map((id) => byId.get(id)).filter((e): e is LibraryEntry => !!e && alive(e)).sort(byName);
   } else {
     visible = lib.entries.filter((e) => e.parentId === folderId && !e.trashedAt).sort(byName);
   }
@@ -145,7 +142,7 @@ export function Browse({ lib, section }: { lib: LibraryState; section: Exclude<D
               items={lib.entries.filter((c) => c.parentId === e.id && !c.trashedAt).length}
               place={showPlace ? pathTo(byId, e.parentId).map((f) => f.name).join(" / ") || "Inicio" : undefined}
               when={section === "trash" ? e.trashedAt! : section === "recent" ? lib.prefs.opened[e.id] ?? e.updatedAt : lib.summaries[e.id]?.updatedAt ?? e.updatedAt}
-              starred={lib.prefs.starred.includes(e.id)}
+              pinned={lib.prefs.pins.some((x) => x.entryId === e.id && !x.nodeId)}
               picked={picked.includes(e.id)}
               dragIds={picked.includes(e.id) ? picked : [e.id]}
               renaming={renaming === e.id}
@@ -238,7 +235,7 @@ interface EntryItemProps {
   items: number;
   place?: string;
   when: number;
-  starred: boolean;
+  pinned: boolean;
   picked: boolean;
   dragIds: Id[];
   renaming: boolean;
@@ -286,14 +283,14 @@ function EntryItem(p: EntryItemProps) {
     </span>
   ) : (
     <span className="dentry__acts" onClick={(e) => e.stopPropagation()}>
-      <IconButton size="sm" label={p.starred ? "Quitar de favoritos" : "Añadir a favoritos"} onClick={() => library.setStarred(p.entry.id, !p.starred)}>
-        {p.starred ? <IconStarFilled size={13} className="dentry__star" /> : <IconStar size={13} />}
+      <IconButton size="sm" label={p.pinned ? "Quitar de Fijados" : "Fijar en el menú lateral"} onClick={() => library.setPinned({ entryId: p.entry.id }, !p.pinned)}>
+        {p.pinned ? <IconPinFilled size={13} className="dentry__star" /> : <IconPin size={13} />}
       </IconButton>
       <IconButton size="sm" label="Renombrar (F2)" onClick={p.onStartRename}><IconPencil size={13} /></IconButton>
       <IconButton size="sm" label="Mover a la papelera" onClick={() => library.trash(p.dragIds)}><IconTrash size={13} /></IconButton>
     </span>
   );
-  const star = p.starred && !inTrash ? <IconStarFilled size={12} className="dentry__star dentry__star--badge" /> : null;
+  const star = p.pinned && !inTrash ? <IconPinFilled size={12} className="dentry__star dentry__star--badge" /> : null;
 
   if (p.layout === "list") {
     return (

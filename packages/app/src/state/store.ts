@@ -8,7 +8,7 @@
 import { create } from "zustand";
 import type { Id } from "@sweetflow/domain";
 import type { DataSource, Snapshot } from "../data/source";
-import type { Library, LibraryState } from "../data/library";
+import type { Library, LibraryState, Pin } from "../data/library";
 import { createLibrary } from "../data";
 import { closePoppedWindow, closePoppedWindows, focusPoppedWindow, hostWindows, onFlashRequest, openerShare, popOutWindow, watchOpener, type PoppedWindow } from "./windows";
 
@@ -17,7 +17,7 @@ export type View = "board" | "library" | "team";
 export type CardSize = "s" | "m" | "l";
 export type PanelTab = "produce" | "cut" | "review" | "activity";
 export type DashLayout = "grid" | "list";
-export type DashSection = "home" | "recent" | "starred" | "trash" | "settings";
+export type DashSection = "home" | "recent" | "trash" | "settings";
 export type SettingsTab = "profile" | "storage" | "integrations" | "about";
 /** Left column of the production screen: the work panel or the structure tree. */
 export type SideTab = "work" | "structure";
@@ -91,7 +91,10 @@ interface Store extends UiState {
   toggleMulti: (id: Id) => void;
   setFilters: (patch: Partial<Filters>) => void;
   toggleCollapsed: (id: Id) => void;
-  openProduction: (id: Id, opts?: { windowNodeId?: Id; source?: DataSource }) => void;
+  /** `nodeId`: select that node once the production has loaded. */
+  openProduction: (id: Id, opts?: { windowNodeId?: Id; source?: DataSource; nodeId?: Id }) => void;
+  /** Go to a pinned folder, production, scene or shot. */
+  openPin: (pin: Pin) => void;
   closeProduction: (folderId?: Id | null) => void;
   /** Leave the production, asking first if floating panels or popped windows are open. */
   requestLeave: (folderId?: Id | null) => void;
@@ -178,8 +181,34 @@ export const useStore = create<Store>((set, get) => ({
     const src = opts?.source ?? get().library.open(id);
     sourceIsShared = !!opts?.source;
     if (!opts?.windowNodeId) get().library.touch(id);
-    unsubscribeSource = src.subscribe((snap) => set({ snap }));
+    let pending = opts?.nodeId;
+    unsubscribeSource = src.subscribe((snap) => {
+      set({ snap });
+      if (!pending) return;
+      const nodeId = pending;
+      pending = undefined;
+      // After openProduction has reset the panel (the first emit can be synchronous).
+      queueMicrotask(() => {
+        if (snap.nodes.some((n) => n.id === nodeId)) {
+          get().select(nodeId);
+        } else {
+          get().library.setPinned({ entryId: id, nodeId }, false);
+          get().notify("Ese elemento ya no existe en la producción: lo he quitado de Fijados.");
+        }
+      });
+    });
     set({ ...PANEL_RESET, source: src, snap: null, productionId: id, phase: opts?.windowNodeId ? "window" : "production", windowNodeId: opts?.windowNodeId ?? null });
+  },
+  openPin: (pin) => {
+    const entry = get().lib?.entries.find((e) => e.id === pin.entryId);
+    if (!entry) return;
+    if (entry.kind === "folder") {
+      get().library.touch(entry.id);
+      return set({ dashSection: "home", folderId: entry.id });
+    }
+    // Already in that production: just select.
+    if (get().phase === "production" && get().productionId === entry.id) return pin.nodeId ? get().select(pin.nodeId) : undefined;
+    get().openProduction(entry.id, { nodeId: pin.nodeId });
   },
   closeProduction: (folderId) => {
     // Popped windows never outlive the production screen.

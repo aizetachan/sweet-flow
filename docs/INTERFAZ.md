@@ -39,13 +39,18 @@ aplicación completa con **menú lateral**:
 
 - **Inicio:** las carpetas y producciones, navegando por carpetas.
 - **Recientes:** lo último que has abierto (es personal, no se comparte).
-- **Favoritos:** lo que marcas con la estrella (personal).
 - **Papelera:** lo que se borra va aquí y desaparece del resto del dashboard,
   con su contenido. Se puede **restaurar** (vuelve a su carpeta, o a Inicio si
   esa carpeta ya no está) o **eliminar definitivamente** (doble clic de
   confirmación). No se vacía sola.
-- **Carpetas:** acceso directo a las carpetas de primer nivel; también se
-  puede soltar encima lo que se arrastra.
+- **Fijados:** acceso rápido a lo que más usas, sin entrar en las carpetas.
+  Se puede fijar una carpeta, una producción (con la chincheta de su tarjeta o
+  arrastrándola a la sección) o una escena o un plano (con la chincheta junto
+  al título en su panel). Un clic abre la carpeta, la producción, o la
+  producción con esa escena o ese plano ya seleccionado. Es personal (no se
+  comparte), se reordena arrastrando y se quita con la chincheta tachada al
+  pasar el ratón. Una carpeta fijada sigue aceptando lo que se suelta encima.
+  Si lo fijado se ha borrado, desaparece de la lista y se avisa.
 - **Ajustes** y, abajo, **tu avatar** con tu nombre (abre tu perfil).
 
 ### 1.1 Ajustes

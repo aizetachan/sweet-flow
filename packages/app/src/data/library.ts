@@ -53,9 +53,25 @@ export interface ProductionSummary {
   thumbUrl?: string;
 }
 
+/**
+ * Something the user keeps at hand in the side menu: a folder, a production,
+ * or a scene/shot inside a production (docs/INTERFAZ.md §1).
+ */
+export interface Pin {
+  entryId: Id;
+  nodeId?: Id;
+  /** Last seen code, title and level of the node: the menu shows them without opening the production. */
+  code?: string;
+  title?: string;
+  level?: string;
+}
+
+export const pinKey = (p: Pick<Pin, "entryId" | "nodeId">): string => (p.nodeId ? `${p.entryId}/${p.nodeId}` : p.entryId);
+
 /** The user's own lists; not shared with the team. */
 export interface UserPrefs {
-  starred: Id[];
+  /** In the order shown in the side menu. */
+  pins: Pin[];
   /** Last time each entry was opened. */
   opened: Record<Id, Millis>;
 }
@@ -84,7 +100,10 @@ export interface Library {
   restore(ids: Id[]): void;
   /** Remove from the trash for good, with everything inside. */
   deleteForever(ids: Id[]): Promise<void>;
-  setStarred(id: Id, starred: boolean): void;
+  /** Pin or unpin; pinning something already pinned refreshes its labels in place. */
+  setPinned(pin: Pin, pinned: boolean): void;
+  /** Move a pin to another position of the side menu. */
+  movePin(key: string, toIndex: number): void;
   /** Record that the user opened an entry (Recientes). */
   touch(id: Id): void;
   setProfile(p: Profile): void;
@@ -141,12 +160,12 @@ class EntryLibrary implements Library {
 
   constructor(private readonly o: EntryLibraryOptions) {
     this.entries = o.entries.load();
-    this.prefs = o.prefs.load();
+    this.prefs = normalizePrefs(o.prefs.load());
     this.me = o.profile.load();
     for (const [id, sp] of Object.entries(o.special ?? {})) this.summaries[id] = sp.summary;
     o.watch(() => {
       this.entries = o.entries.load();
-      this.prefs = o.prefs.load();
+      this.prefs = normalizePrefs(o.prefs.load());
       this.me = o.profile.load();
       void this.refreshSummaries();
     });
@@ -220,14 +239,35 @@ class EntryLibrary implements Library {
       if (gone.has(e.id) && e.kind === "production" && !this.o.special?.[e.id]) await this.o.logStoreFor(e.id).destroy();
     }
     for (const id of gone) delete this.summaries[id];
-    this.prefs = { starred: this.prefs.starred.filter((x) => !gone.has(x)), opened: Object.fromEntries(Object.entries(this.prefs.opened).filter(([k]) => !gone.has(k))) };
+    this.prefs = { pins: this.prefs.pins.filter((x) => !gone.has(x.entryId)), opened: Object.fromEntries(Object.entries(this.prefs.opened).filter(([k]) => !gone.has(k))) };
     this.o.prefs.save(this.prefs);
     this.commit(this.entries.filter((x) => !gone.has(x.id)));
   }
 
-  setStarred(id: Id, starred: boolean): void {
-    const rest = this.prefs.starred.filter((x) => x !== id);
-    this.savePrefs({ ...this.prefs, starred: starred ? [...rest, id] : rest });
+  setPinned(pin: Pin, pinned: boolean): void {
+    const key = pinKey(pin);
+    const at = this.prefs.pins.findIndex((x) => pinKey(x) === key);
+    const pins = [...this.prefs.pins];
+    if (!pinned) {
+      if (at < 0) return;
+      pins.splice(at, 1);
+    } else if (at < 0) {
+      pins.push(pin);
+    } else {
+      const old = pins[at]!;
+      if (old.code === pin.code && old.title === pin.title && old.level === pin.level) return;
+      pins[at] = pin;
+    }
+    this.savePrefs({ ...this.prefs, pins });
+  }
+
+  movePin(key: string, toIndex: number): void {
+    const pins = [...this.prefs.pins];
+    const from = pins.findIndex((x) => pinKey(x) === key);
+    if (from < 0) return;
+    const [moved] = pins.splice(from, 1);
+    pins.splice(Math.max(0, Math.min(toIndex > from ? toIndex - 1 : toIndex, pins.length)), 0, moved!);
+    this.savePrefs({ ...this.prefs, pins });
   }
 
   touch(id: Id): void {
@@ -319,7 +359,12 @@ const memory = <T,>(initial: T): Persisted<T> => {
   return { load: () => v, save: (x) => void (v = x) };
 };
 
-const EMPTY_PREFS: UserPrefs = { starred: [], opened: {} };
+const EMPTY_PREFS: UserPrefs = { pins: [], opened: {} };
+
+/** Prefs saved before pins existed had "starred" entry ids: they become pins. */
+function normalizePrefs(raw: UserPrefs & { starred?: Id[] }): UserPrefs {
+  return { pins: raw.pins?.length || !raw.starred ? raw.pins ?? [] : raw.starred.map((entryId) => ({ entryId })), opened: raw.opened ?? {} };
+}
 
 /** In-memory demo: the seeded episode (MockSource) inside "Mareas", plus anything created. */
 export function demoLibrary(mock: { open: () => DataSource; summary: ProductionSummary; name: string; me: Member }): Library {
@@ -335,7 +380,7 @@ export function demoLibrary(mock: { open: () => DataSource; summary: ProductionS
       at("production", "p_demo", mock.name, "f_mareas_t1"),
       at("folder", "f_spots", "Spots", null),
     ]),
-    prefs: memory<UserPrefs>({ starred: ["p_demo"], opened: { p_demo: t } }),
+    prefs: memory<UserPrefs>({ pins: [{ entryId: "f_mareas" }, { entryId: "p_demo" }], opened: { p_demo: t } }),
     profile: memory(mock.me),
     watch: () => () => undefined,
     logStoreFor: (id) => stores.get(id) ?? stores.set(id, new MemoryLogStore()).get(id)!,

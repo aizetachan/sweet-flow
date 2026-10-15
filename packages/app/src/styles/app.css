@@ -449,7 +449,7 @@ button.tree__hint { padding: 0 14px 8px; }
 
 @media (max-width: 860px) {
   .dapp { grid-template-columns: 64px minmax(0, 1fr); }
-  .dside__name, .dside__label, .dside__count, .dside__title, .dside__who, .dside__nav--folders { display: none; }
+  .dside__name, .dside__label, .dside__count, .dside__title, .dside__who, .dpin__text, .dpins__empty, .dpin__off { display: none !important; }
   .dside__item, .dside__me { justify-content: center; padding: 0; }
   .dside__me { padding: 8px 0; }
   .settings__layout { grid-template-columns: 1fr; }
@@ -486,3 +486,18 @@ button.tree__hint { padding: 0 14px 8px; }
 @media (max-width: 720px) {
   .dock__item span { display: none; }
 }
+
+/* Fijados (dashboard side menu) */
+.dpins { display: flex; flex-direction: column; border-radius: var(--r-md); }
+.dpins--over { background: var(--primary-soft); }
+.dpins__empty { margin: 0; padding: 2px 10px 8px; font-size: 12px; line-height: 1.45; color: var(--fg-4); }
+.dpins__empty svg { vertical-align: -2px; }
+.dpin { position: relative; }
+.dpin--before::before { content: ""; position: absolute; left: 8px; right: 8px; top: -1px; height: 2px; border-radius: 2px; background: var(--primary); }
+.dpin__btn { width: 100%; padding-right: 30px; }
+.dpin__text { display: flex; flex-direction: column; flex: 1; min-width: 0; line-height: 1.15; }
+.dpin__sub { font-size: 11px; color: var(--fg-4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dpin__code { flex: none; min-width: 16px; padding: 1px 5px; border-radius: 5px; font: 600 10px/1.5 var(--mono, ui-monospace, monospace); color: var(--fg-1); background: var(--bg-4); }
+.dpin__off { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); display: none; place-items: center; width: 22px; height: 22px; border: 0; border-radius: 6px; background: none; color: var(--fg-4); }
+.dpin:hover .dpin__off { display: grid; }
+.dpin__off:hover { background: var(--ghost); color: var(--fg-0); }
