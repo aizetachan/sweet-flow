@@ -64,11 +64,12 @@ Se avanza poco a poco: cada paso deja la app funcionando.
 
 ### Fase 1 · Producción en carpeta (etapa A)
 
-1. **Registro de eventos en `packages/domain`:** tipos de evento, reloj lógico
+1. ✅ **Registro de eventos en `packages/domain`:** tipos de evento, reloj lógico
    híbrido y combinación de registros (puro, con tests: orden estable, último
    que escribe por campo, choques de numeración).
-2. **`LocalSource` con estructura:** árbol, niveles y estados. Guarda y carga una
-   producción desde una carpeta; la demo del navegador sigue con `MockSource`.
+2. ✅ **`LocalSource` con estructura:** árbol, niveles y estados, sobre un
+   `LogStore` intercambiable. Se prueba en el navegador con `pnpm dev:local`
+   (cada pestaña es un dispositivo); la demo sigue con `MockSource`.
 3. **Carpeta desde Electron:** elegir carpeta (`pickFolder()`), escritura
    atómica en el utility process e IPC tipado hacia la UI.
 4. **Carpetas en disco:** crear, renombrar y mover carpetas con `folderName()`

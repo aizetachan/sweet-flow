@@ -5,13 +5,13 @@
  * production state is the fold of every device's log in stamp order.
  *
  * This module covers structure: the production itself, its levels and
- * statuses, and the node tree. Media, takes and comments come as new event
- * types in later steps.
+ * statuses, the node tree and who works on it. Media, takes and comments come
+ * as new event types in later steps.
  */
 
 import { parseStamp, type Stamp } from "./clock";
 import { byNumber } from "./tree";
-import type { Id, LevelDef, Millis, ProdNode, Production, StatusDef } from "./types";
+import type { Id, LevelDef, Member, Millis, ProdNode, Production, StatusDef } from "./types";
 
 /** Bump when an event's shape changes incompatibly. */
 export const LOG_VERSION = 1;
@@ -25,6 +25,8 @@ export type LogEventBody =
       production: Pick<Production, "id" | "workspaceId" | "name" | "format" | "levels" | "statuses">;
     }
   | { type: "production.updated"; patch: Partial<Pick<Production, "name" | "format">> }
+  /** Who is working on the production; written by each user on first open, and on profile changes. */
+  | { type: "member.joined"; member: Pick<Member, "uid" | "displayName" | "email" | "role"> }
   | { type: "levels.set"; levels: LevelDef[] }
   | { type: "statuses.set"; statuses: StatusDef[] }
   | {
@@ -59,12 +61,23 @@ export interface LogState {
   /** null until a `production.created` event is seen. */
   production: Production | null;
   nodes: ProdNode[];
+  members: Member[];
   conflicts: NumberConflict[];
   /** Highest stamp folded; feed it to `hlcObserve` before writing new events. */
   lastStamp: Stamp | null;
 }
 
 // ---------- serialization ----------
+
+/**
+ * Where a device appends its events, relative to the production folder. One
+ * file per device and month keeps files small and never shared between writers.
+ */
+export function logFilePath(deviceId: Id, at: Millis): string {
+  const d = new Date(at);
+  const month = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+  return `.sweetflow/log/${deviceId}/${month}.jsonl`;
+}
 
 export function serializeEvent(e: LogEvent): string {
   return JSON.stringify(e);
@@ -96,6 +109,7 @@ export function parseLog(text: string): ParseResult {
 const TYPES = new Set<string>([
   "production.created",
   "production.updated",
+  "member.joined",
   "levels.set",
   "statuses.set",
   "node.created",
@@ -144,6 +158,7 @@ export function foldLog(events: LogEvent[]): LogState {
   /** Stamp of the last number assignment, to decide who keeps a clashing number. */
   const numberAt = new Map<Id, Stamp>();
   const deleted = new Set<Id>();
+  const members = new Map<Id, Member>();
 
   for (const e of sorted) {
     const at = wallOf(e.at);
@@ -155,6 +170,9 @@ export function foldLog(events: LogEvent[]): LogState {
         break;
       case "production.updated":
         if (production) production = { ...production, ...e.patch, updatedAt: at };
+        break;
+      case "member.joined":
+        members.set(e.member.uid, { ...members.get(e.member.uid), ...e.member, magnificConnected: false });
         break;
       case "levels.set":
         if (production) production = { ...production, levels: e.levels, updatedAt: at };
@@ -200,7 +218,7 @@ export function foldLog(events: LogEvent[]): LogState {
   const live = pruneOrphans([...nodes.values()].map((n) => ({ ...n, productionId })));
   const conflicts = production ? separateClashes(production, live, numberAt) : [];
 
-  return { production, nodes: live, conflicts, lastStamp: sorted.at(-1)?.at ?? null };
+  return { production, nodes: live, members: [...members.values()], conflicts, lastStamp: sorted.at(-1)?.at ?? null };
 }
 
 /** Drop nodes whose parent is missing (deleted, or never synced). */

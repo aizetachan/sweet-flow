@@ -7,6 +7,7 @@ import {
   hlcObserve,
   hlcTick,
   LOG_VERSION,
+  logFilePath,
   parseLog,
   parseStamp,
   serializeEvent,
@@ -83,6 +84,10 @@ describe("hybrid logical clock", () => {
 });
 
 describe("log files", () => {
+  it("writes one file per device and month", () => {
+    expect(logFilePath("mac-ana", Date.UTC(2026, 9, 15))).toBe(".sweetflow/log/mac-ana/2026-10.jsonl");
+  });
+
   it("round-trips events and skips unreadable lines", () => {
     const d = device("a");
     const e1 = d.emit(created());
@@ -227,7 +232,14 @@ describe("foldLog", () => {
     expect(s.lastStamp).toBe(e3.at);
   });
 
+  it("keeps the latest profile of each member", () => {
+    const a = device("a");
+    const join = (displayName: string): LogEventBody => ({ type: "member.joined", member: { uid: "u_a", displayName, email: "a@x", role: "admin" } });
+    const s = foldLog([a.emit(created()), a.emit(join("Ana")), a.emit(join("Ana G."))]);
+    expect(s.members).toEqual([{ uid: "u_a", displayName: "Ana G.", email: "a@x", role: "admin", magnificConnected: false }]);
+  });
+
   it("starts empty without a production", () => {
-    expect(foldLog([])).toEqual({ production: null, nodes: [], conflicts: [], lastStamp: null });
+    expect(foldLog([])).toEqual({ production: null, nodes: [], members: [], conflicts: [], lastStamp: null });
   });
 });

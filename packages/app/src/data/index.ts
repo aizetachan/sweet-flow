@@ -1,16 +1,49 @@
 /**
- * Picks the DataSource implementation. The in-memory demo is the default so
- * the UI runs with zero configuration; VITE_DATA_SOURCE=firebase switches to
- * Firebase (see docs/DEVELOPMENT.md). The Firebase SDK is loaded lazily, so
- * the demo build doesn't ship it.
+ * Picks the DataSource implementation (see docs/DEVELOPMENT.md):
+ * - default: in-memory demo, so the UI runs with zero configuration;
+ * - VITE_DATA_SOURCE=local, or `vite --mode local` (`pnpm dev:local`): event
+ *   log in the browser's localStorage (each tab acts as a device);
+ * - VITE_DATA_SOURCE=firebase: Firebase. Its SDK is loaded lazily, so the
+ *   other builds don't ship it.
  */
 
+import { defaultLevels, defaultStatuses, type Member } from "@sweetflow/domain";
+import { LocalSource } from "./local/LocalSource";
+import { BrowserLogStore } from "./local/store";
 import { MockSource } from "./mock/MockSource";
 import type { DataSource, Snapshot } from "./source";
 
 export function createSource(): DataSource {
-  if (import.meta.env.VITE_DATA_SOURCE !== "firebase") return new MockSource();
-  return deferred(() => import("./firebase/FirebaseSource").then((m) => new m.FirebaseSource()));
+  const kind = import.meta.env.VITE_DATA_SOURCE || (import.meta.env.MODE === "local" ? "local" : "");
+  switch (kind) {
+    case "firebase":
+      return deferred(() => import("./firebase/FirebaseSource").then((m) => new m.FirebaseSource()));
+    case "local":
+      return browserLocalSource();
+    default:
+      return new MockSource();
+  }
+}
+
+/** LocalSource on localStorage: one user per browser, one device per tab. */
+function browserLocalSource(): DataSource {
+  const remembered = (storage: Storage, key: string) => {
+    let v = storage.getItem(key);
+    if (!v) storage.setItem(key, (v = crypto.randomUUID().slice(0, 8)));
+    return v;
+  };
+  const uid = `u_${remembered(localStorage, "sweetflow:uid")}`;
+  const deviceId = `tab-${remembered(sessionStorage, "sweetflow:device")}`;
+  const me: Member = { uid, email: "", displayName: `Usuario ${uid.slice(2, 6)}`, role: "owner", magnificConnected: false };
+  const newId = (p: string) => `${p}_${crypto.randomUUID()}`;
+  const src = new LocalSource({
+    store: new BrowserLogStore("prueba"),
+    deviceId,
+    me,
+    create: { id: newId("p"), name: "Producción de prueba", levels: defaultLevels(newId), statuses: defaultStatuses(newId) },
+  });
+  src.ready.catch((err) => console.error("[data] no se pudo abrir la producción local", err));
+  return src;
 }
 
 /**

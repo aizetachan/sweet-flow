@@ -15,6 +15,22 @@ pnpm dev          # http://localhost:5173
 
 Usa `MockSource`, en memoria. No necesita configuración ni red.
 
+## Modo local en el navegador (registro de eventos)
+
+```bash
+pnpm dev:local    # http://localhost:5173
+```
+
+Usa `LocalSource` (`docs/ARCHITECTURE.md` §5.0) con el registro guardado en el
+`localStorage` del navegador. Arranca con una producción vacía que se conserva
+al recargar. **Cada pestaña es un dispositivo:** abre dos para ver cómo se
+combinan los cambios, igual que harán dos personas sobre la misma carpeta de
+Dropbox. Por ahora solo cubre la estructura (árbol, niveles y estados); generar,
+tomas y comentarios avisan en la consola de que aún no están disponibles.
+
+Para empezar de cero, borra las claves `sweetflow:*` del `localStorage` (en las
+herramientas de desarrollo, *Application → Local Storage*).
+
 ## App de escritorio en desarrollo
 
 ```bash
