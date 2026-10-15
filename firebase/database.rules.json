@@ -1,0 +1,26 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "access": {
+      "$prodId": {
+        "$uid": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": false
+        }
+      }
+    },
+    "presence": {
+      "$prodId": {
+        ".read": "auth != null && root.child('access').child($prodId).child(auth.uid).exists()",
+        "$uid": {
+          ".write": "auth != null && auth.uid === $uid && root.child('access').child($prodId).child(auth.uid).exists()",
+          ".validate": "newData.hasChildren(['at'])",
+          "at": { ".validate": "newData.isNumber()" },
+          "nodeId": { ".validate": "newData.isString() && newData.val().length <= 128" },
+          "$other": { ".validate": false }
+        }
+      }
+    }
+  }
+}

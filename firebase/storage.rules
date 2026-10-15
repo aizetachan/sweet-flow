@@ -1,0 +1,40 @@
+rules_version = '2';
+
+// Sweet Flow — Cloud Storage rules (docs/ARCHITECTURE.md §5.1 and §8).
+// Files live by id under productions/{prodId}/…; access follows membership
+// of that production in Firestore. Generated media, proxies, thumbnails and
+// renders are written by the server (Admin SDK). Clients only upload into
+// their own staging area, which a Function turns into a media document.
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function rankOf(role) {
+      return { 'viewer': 0, 'artist': 1, 'supervisor': 2, 'admin': 3, 'owner': 4 }.get(role, -1);
+    }
+
+    function memberPath(prodId) {
+      return /databases/(default)/documents/productions/$(prodId)/members/$(request.auth.uid);
+    }
+
+    function atLeast(prodId, role) {
+      return request.auth != null
+        && firestore.exists(memberPath(prodId))
+        && rankOf(firestore.get(memberPath(prodId)).data.role) >= rankOf(role);
+    }
+
+    match /productions/{prodId}/{allPaths=**} {
+      allow read: if atLeast(prodId, 'viewer');
+      allow write: if false;
+    }
+
+    // Manual uploads (origin "uploaded"), up to 10 GB per file.
+    match /productions/{prodId}/uploads/{uid}/{fileName} {
+      allow read: if atLeast(prodId, 'viewer');
+      allow create: if request.auth != null && request.auth.uid == uid
+        && atLeast(prodId, 'artist')
+        && request.resource.size < 10 * 1024 * 1024 * 1024;
+      allow update, delete: if false;
+    }
+  }
+}

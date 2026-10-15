@@ -1,0 +1,20 @@
+{
+  "name": "@sweetflow/firebase-tests",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Security rules tests (Firestore, RTDB, Storage) against the Emulator Suite",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test:rules": "firebase emulators:exec --config ../firebase.json --project demo-sweetflow --only firestore,database,storage \"vitest run\"",
+    "emulators": "firebase emulators:start --config ../firebase.json --project demo-sweetflow"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.2",
+    "@types/node": "^22.20.5",
+    "firebase": "^12.19.0",
+    "firebase-tools": "^15.34.0",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.8"
+  }
+}

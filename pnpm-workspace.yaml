@@ -1,3 +1,5 @@
 packages:
   - "apps/*"
   - "packages/*"
+  - "firebase/functions"
+  - "firebase/tests"

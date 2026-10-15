@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "default": "sweetflow-dev",
+    "dev": "sweetflow-dev",
+    "prod": "sweetflow-prod"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "name": "@sweetflow/functions",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Sweet Flow \u2014 Cloud Functions (callable API, triggers, OAuth)",
+  "main": "lib/index.js",
+  "engines": {
+    "node": "22"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "node build.mjs"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.10.0",
+    "firebase-functions": "^7.4.0"
+  },
+  "devDependencies": {
+    "@sweetflow/domain": "workspace:*",
+    "@types/node": "^22.20.5",
+    "esbuild": "^0.25.12",
+    "typescript": "^5.6.3"
+  },
+  "exports": {
+    ".": "./lib/index.js",
+    "./api": "./src/api.ts"
+  }
+}

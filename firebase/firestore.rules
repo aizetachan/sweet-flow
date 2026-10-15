@@ -1,0 +1,229 @@
+rules_version = '2';
+
+// Sweet Flow — Firestore rules (docs/ARCHITECTURE.md §3 and §8).
+//
+// Access to a production is decided ONLY by productions/{prodId}/members/{uid}.
+// Workspace roles are the default and are materialized into each production's
+// members by Cloud Functions (and can be adjusted per production there), so a
+// rule never needs more than one lookup.
+//
+// Structural operations (creating/numbering nodes, moving, renumbering,
+// deleting subtrees, changing levels, allocating media versions) are done by
+// Cloud Functions with the Admin SDK, which bypasses these rules. Clients only
+// get field-level updates on documents that already exist.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- helpers ----------
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function me() {
+      return request.auth.uid;
+    }
+
+    function rankOf(role) {
+      return { 'viewer': 0, 'artist': 1, 'supervisor': 2, 'admin': 3, 'owner': 4 }.get(role, -1);
+    }
+
+    function isRole(role) {
+      return rankOf(role) >= 0;
+    }
+
+    function changedKeys() {
+      return request.resource.data.diff(resource.data).affectedKeys();
+    }
+
+    function onlyChanges(keys) {
+      return changedKeys().hasOnly(keys);
+    }
+
+    function data() {
+      return request.resource.data;
+    }
+
+    // ---------- workspaces ----------
+
+    function wsMember(wsId) {
+      return /databases/$(database)/documents/workspaces/$(wsId)/members/$(me());
+    }
+
+    function wsRank(wsId) {
+      return signedIn() && exists(wsMember(wsId)) ? rankOf(get(wsMember(wsId)).data.role) : -1;
+    }
+
+    // Workspaces are created (with their owner) by a Function.
+    match /workspaces/{wsId} {
+      allow read: if wsRank(wsId) >= rankOf('viewer');
+      allow update: if wsRank(wsId) >= rankOf('admin') && onlyChanges(['name', 'updatedAt']);
+      allow create, delete: if false;
+
+      match /members/{uid} {
+        allow read: if wsRank(wsId) >= rankOf('viewer');
+        // Admins manage members; only an owner can grant or revoke "owner".
+        allow create: if wsRank(wsId) >= rankOf('admin') && memberDocOk(uid)
+          && (data().role != 'owner' || wsRank(wsId) == rankOf('owner'));
+        allow update: if (wsRank(wsId) >= rankOf('admin') && memberDocOk(uid)
+            && ((data().role != 'owner' && resource.data.role != 'owner') || wsRank(wsId) == rankOf('owner'))
+            && !changedKeys().hasAny(['magnificConnected', 'magnificCredits']))
+          || (uid == me() && onlyChanges(['displayName', 'photoUrl']));
+        allow delete: if wsRank(wsId) >= rankOf('admin')
+          && (resource.data.role != 'owner' || wsRank(wsId) == rankOf('owner'));
+      }
+
+      // Accepting an invite is done by a Function (it creates the member).
+      match /invites/{inviteId} {
+        allow read, write: if wsRank(wsId) >= rankOf('admin');
+      }
+    }
+
+    function memberDocOk(uid) {
+      return data().uid == uid && isRole(data().role);
+    }
+
+    // Lets a user find the productions they belong to with a collection-group
+    // query on "members" filtered by uid == their own uid.
+    match /{path=**}/members/{uid} {
+      allow read: if signedIn() && resource.data.uid == me();
+    }
+
+    // ---------- productions ----------
+
+    function prodMember(prodId) {
+      return /databases/$(database)/documents/productions/$(prodId)/members/$(me());
+    }
+
+    function rank(prodId) {
+      return signedIn() && exists(prodMember(prodId)) ? rankOf(get(prodMember(prodId)).data.role) : -1;
+    }
+
+    function atLeast(prodId, role) {
+      return rank(prodId) >= rankOf(role);
+    }
+
+    /** New documents must belong to the production of their path. */
+    function inProduction(prodId) {
+      return data().productionId == prodId;
+    }
+
+    match /productions/{prodId} {
+      allow read: if atLeast(prodId, 'viewer');
+      // Admins edit name/format/statuses/settings. `levels` change the codes
+      // and folders of every node, so they go through the updateLevels
+      // Function. Statuses are archived, never deleted (§3.1.b).
+      allow update: if atLeast(prodId, 'admin')
+        && onlyChanges(['name', 'format', 'statuses', 'settings', 'updatedAt'])
+        && data().statuses.size() >= resource.data.statuses.size();
+      allow create, delete: if false;
+
+      match /members/{uid} {
+        allow read: if atLeast(prodId, 'viewer');
+        allow create: if atLeast(prodId, 'admin') && memberDocOk(uid)
+          && (data().role != 'owner' || atLeast(prodId, 'owner'));
+        allow update: if atLeast(prodId, 'admin') && memberDocOk(uid)
+          && ((data().role != 'owner' && resource.data.role != 'owner') || atLeast(prodId, 'owner'));
+        allow delete: if atLeast(prodId, 'admin')
+          && (resource.data.role != 'owner' || atLeast(prodId, 'owner'));
+      }
+
+      // Tree nodes. Created, numbered, moved and deleted only by Functions.
+      // Artists edit content; supervisors also assign and change status.
+      // Artists may change the status of nodes assigned to them ("move my
+      // task to review").
+      match /nodes/{nodeId} {
+        allow read: if atLeast(prodId, 'viewer');
+        allow update: if atLeast(prodId, 'artist') && nodeFieldsOk()
+          && (
+            onlyChanges(nodeContentKeys())
+            || (onlyChanges(nodeContentKeys().concat(['statusId'])) && me() in resource.data.assigneeIds)
+            || (atLeast(prodId, 'supervisor') && onlyChanges(nodeContentKeys().concat(['statusId', 'assigneeIds'])))
+          );
+        allow create, delete: if false;
+      }
+
+      // Media documents are written by the generation worker / upload
+      // Functions. Clients can only archive or restore (§5.1).
+      match /media/{mediaId} {
+        allow read: if atLeast(prodId, 'viewer');
+        allow update: if atLeast(prodId, 'artist') && onlyChanges(['archived']) && data().archived is bool;
+        allow create, delete: if false;
+      }
+
+      // Non-destructive cuts placed in nodes.
+      match /takes/{takeId} {
+        allow read: if atLeast(prodId, 'viewer');
+        allow create: if atLeast(prodId, 'artist') && inProduction(prodId)
+          && data().createdBy == me()
+          && data().nodeId is string && data().mediaId is string
+          && cutOk();
+        allow update: if atLeast(prodId, 'artist') && onlyChanges(['inSec', 'outSec']) && cutOk();
+        allow delete: if atLeast(prodId, 'artist');
+      }
+
+      // Everyone, clients included, can comment. Authors edit their text;
+      // authors and artists+ resolve.
+      match /comments/{commentId} {
+        allow read: if atLeast(prodId, 'viewer');
+        allow create: if atLeast(prodId, 'viewer') && inProduction(prodId)
+          && data().authorId == me()
+          && data().resolved == false
+          && data().nodeId is string
+          && textOk(data().text);
+        allow update: if atLeast(prodId, 'viewer') && (
+          (resource.data.authorId == me() && onlyChanges(['text']) && textOk(data().text))
+          || ((resource.data.authorId == me() || atLeast(prodId, 'artist'))
+              && onlyChanges(['resolved']) && data().resolved is bool)
+        );
+        allow delete: if resource.data.authorId == me() || atLeast(prodId, 'admin');
+      }
+
+      // Breakdown: cast, props, locations, style.
+      match /assets/{assetId} {
+        allow read: if atLeast(prodId, 'viewer');
+        allow create: if atLeast(prodId, 'artist') && inProduction(prodId);
+        allow update: if atLeast(prodId, 'artist') && !changedKeys().hasAny(['id', 'productionId']);
+        allow delete: if atLeast(prodId, 'artist');
+      }
+
+      // Generation / render queue. Clients request a job; the onJobCreated
+      // trigger and the worker own every later state. Whether the requester
+      // has Magnific connected is checked by the worker (§6).
+      match /jobs/{jobId} {
+        allow read: if atLeast(prodId, 'viewer');
+        allow create: if atLeast(prodId, 'artist') && inProduction(prodId)
+          && data().createdBy == me()
+          && data().status == 'requested';
+        allow update, delete: if false;
+      }
+
+      // Append-only audit log / feed.
+      match /activity/{eventId} {
+        allow read: if atLeast(prodId, 'viewer');
+        allow create: if atLeast(prodId, 'viewer') && inProduction(prodId) && data().actorId == me();
+        allow update, delete: if false;
+      }
+    }
+
+    function nodeContentKeys() {
+      return ['title', 'notes', 'assetIds', 'selectedTakeId', 'updatedAt', 'updatedBy'];
+    }
+
+    function nodeFieldsOk() {
+      return data().updatedBy == me()
+        && data().title is string && data().title.size() <= 200
+        && data().notes is string && data().notes.size() <= 20000;
+    }
+
+    function cutOk() {
+      return data().inSec is number && data().outSec is number
+        && data().inSec >= 0 && data().outSec > data().inSec;
+    }
+
+    function textOk(text) {
+      return text is string && text.size() > 0 && text.size() <= 5000;
+    }
+  }
+}
