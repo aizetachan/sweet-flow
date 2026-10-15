@@ -115,7 +115,7 @@
 .card--watched { box-shadow: 0 0 0 1px #3cd39f66; }
 .card--scene { background: var(--bg-3); border: 1px dashed var(--line-2); }
 /* Same size as the cards next to it; just a "+". */
-.card--add { align-items: center; justify-content: center; color: var(--fg-4); border-style: dashed; width: var(--card); height: 100%; background: none; }
+.card--add { align-items: center; justify-content: center; align-self: stretch; color: var(--fg-4); border-style: dashed; width: var(--card); min-height: 120px; background: none; }
 .card--add:hover { color: var(--fg-1); }
 .card__swatch { position: absolute; left: 7px; right: 7px; top: 7px; height: 3px; border-radius: 3px 3px 0 0; opacity: .85; }
 .card__meta { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
@@ -506,3 +506,7 @@ button.tree__hint { padding: 0 14px 8px; }
 .addbar__btn:hover { border-color: var(--primary); color: var(--fg-0); background: var(--primary-soft); }
 .addbar--big { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding: 24px 2px; }
 .addbar--big p { margin: 0; }
+/* Delete from a sequence or scene header: shown on hover */
+.head__del { opacity: 0; transition: opacity .12s; }
+.group__head:hover .head__del, .lane__head:hover .head__del, .head__del:focus-visible { opacity: 1; }
+.head__del:hover { color: var(--bad); }

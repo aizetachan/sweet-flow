@@ -75,6 +75,8 @@ interface UiState {
   flash: number;
   /** Windows popped out from this one (own OS/browser windows). */
   popped: PoppedWindow[];
+  /** Nodes waiting for the user to confirm their deletion. */
+  deleteAsk: Id[] | null;
   /** Asking to confirm leaving the production with windows open; holds where to go. */
   leaveAsk: { folderId?: Id | null } | null;
 }
@@ -110,6 +112,9 @@ interface Store extends UiState {
   /** Close a node's popped window and show it in the side panel again. */
   bringBack: (nodeId: Id) => void;
   notify: (text: string) => void;
+  /** Ask to delete nodes (with everything inside); `confirmDelete` does it. */
+  requestDelete: (ids: Id[]) => void;
+  confirmDelete: () => void;
 }
 
 /** Stand-in while no production is open: views that need a source are not mounted then. */
@@ -161,6 +166,7 @@ export const useStore = create<Store>((set, get) => ({
   flash: 0,
   popped: [],
   leaveAsk: null,
+  deleteAsk: null,
   sideTab: "work",
   set: (patch) => set(patch),
   select: (id, tab, stay) => {
@@ -217,7 +223,7 @@ export const useStore = create<Store>((set, get) => ({
     unsubscribeSource = () => undefined;
     if (!sourceIsShared) get().source.dispose?.();
     sourceIsShared = false;
-    set({ ...PANEL_RESET, source: IDLE, snap: null, productionId: null, phase: "dashboard", popped: [], leaveAsk: null, ...(folderId !== undefined ? { folderId, dashSection: "home" as DashSection } : {}) });
+    set({ ...PANEL_RESET, source: IDLE, snap: null, productionId: null, phase: "dashboard", popped: [], leaveAsk: null, deleteAsk: null, ...(folderId !== undefined ? { folderId, dashSection: "home" as DashSection } : {}) });
   },
   requestLeave: (folderId) => {
     const { floating, popped } = get();
@@ -250,6 +256,26 @@ export const useStore = create<Store>((set, get) => ({
     clearTimeout(noticeTimer);
     set({ notice: text });
     noticeTimer = setTimeout(() => set({ notice: null }), 5000);
+  },
+  requestDelete: (ids) => ids.length && set({ deleteAsk: ids }),
+  confirmDelete: () => {
+    const { deleteAsk, snap, source, selectedId, multi } = get();
+    set({ deleteAsk: null });
+    if (!deleteAsk || !snap) return;
+    const asked = new Set(deleteAsk);
+    // A node inside another one being deleted goes with it.
+    const isInside = (id: Id) => {
+      for (let n = snap.nodes.find((x) => x.id === id); n?.parentId; n = snap.nodes.find((x) => x.id === n!.parentId)) if (asked.has(n.parentId)) return true;
+      return false;
+    };
+    const top = deleteAsk.filter((id) => !isInside(id));
+    for (const id of top) {
+      closePoppedWindow(id);
+      source.deleteNode(id);
+    }
+    const gone = new Set(snap.nodes.filter((n) => asked.has(n.id) || isInside(n.id)).map((n) => n.id));
+    if (selectedId && gone.has(selectedId)) get().select(null);
+    if (multi.some((id) => gone.has(id))) set({ multi: multi.filter((id) => !gone.has(id)) });
   },
   focusPopped: (nodeId) => focusPoppedWindow(nodeId),
   bringBack: (nodeId) => {

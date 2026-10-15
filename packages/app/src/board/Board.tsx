@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { IconExternalLink, IconMessageCircle, IconPlus, IconSearch, IconStack2, IconWand, IconX } from "@tabler/icons-react";
+import { IconExternalLink, IconMessageCircle, IconPlus, IconSearch, IconStack2, IconTrash, IconWand, IconX } from "@tabler/icons-react";
 import {
   childrenOf,
   codeOf,
@@ -11,7 +11,7 @@ import {
   type Id,
   type ProdNode,
 } from "@sweetflow/domain";
-import { AvatarStack, Button, cx, Pill, Segmented } from "@sweetflow/ui";
+import { AvatarStack, Button, cx, IconButton, Pill, Segmented } from "@sweetflow/ui";
 import { useSnap, useStore, type CardSize } from "../state/store";
 import { colorSlot, countsOf, coverOf, durationOf, filtersActive, matches, memberName, presenceAt, progressOf, statusOf } from "../state/selectors";
 import { Thumb } from "../components/media";
@@ -69,6 +69,7 @@ function Group({ node }: { node: ProdNode }) {
   const li = levelIndex(p, node);
   const filters = useStore((s) => s.filters);
   const createRow = useCreateRow();
+  const requestDelete = useStore((s) => s.requestDelete);
   if (li === rowLevel) return <Lane row={node} />;
   const kids = childrenOf(snap.nodes, node.id);
   const prog = progressOf(snap, node);
@@ -85,6 +86,7 @@ function Group({ node }: { node: ProdNode }) {
             <IconPlus size={14} /> {childLevel.name}
           </Button>
         ) : null}
+        <IconButton size="sm" className="head__del" label={`Eliminar ${codeOf(p, node)} y todo su contenido`} onClick={() => requestDelete([node.id])}><IconTrash size={14} /></IconButton>
       </GroupHead>
       {kids.map((k) => <Group key={k.id} node={k} />)}
     </section>
@@ -133,7 +135,7 @@ function GroupHead({ node, children }: { node: ProdNode; children: ReactNode }) 
 
 function Lane({ row }: { row: ProdNode }) {
   const snap = useSnap();
-  const { filters, source } = useStore();
+  const { filters, source, requestDelete } = useStore();
   const p = snap.production;
   const all = childrenOf(snap.nodes, row.id);
   const active = filtersActive(filters);
@@ -164,6 +166,7 @@ function Lane({ row }: { row: ProdNode }) {
             <IconWand size={14} /> Keyframes vacíos ({empty.length})
           </Button>
         ) : null}
+        <IconButton size="sm" className="head__del" label={`Eliminar ${codeOf(p, row)} y sus ${unitLevel.name.toLowerCase()}s`} onClick={() => requestDelete([row.id])}><IconTrash size={14} /></IconButton>
       </div>
       <div className={cx("lane__cards", endDrop.over && "dnd-end")} {...endDrop.props}>
         <SceneCard node={row} />

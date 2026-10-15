@@ -7,6 +7,7 @@ import {
   IconPinFilled,
   IconPlus,
   IconSparkles,
+  IconTrash,
   IconX,
 } from "@tabler/icons-react";
 import { ancestorsOf, codeOf, folderPath, levelOf, roleOf, type ProdNode } from "@sweetflow/domain";
@@ -146,7 +147,7 @@ export function WindowInspector({ nodeId }: { nodeId: string }) {
 function InspectorBody({ floatKey, onDragHandle }: { floatKey?: string; onDragHandle?: (e: ReactPointerEvent) => void }) {
   const snap = useSnap();
   const panel = usePanel();
-  const { select, dockPanel, closeFloating, popOut, source, set } = useStore();
+  const { select, dockPanel, closeFloating, popOut, source, set, requestDelete } = useStore();
   const node = snap.nodes.find((n) => n.id === panel.nodeId);
   const p = snap.production;
 
@@ -179,6 +180,9 @@ function InspectorBody({ floatKey, onDragHandle }: { floatKey?: string; onDragHa
           />
           {panel.mode === "floating" && floatKey ? (
             <IconButton label="Acoplar al panel lateral" size="sm" onClick={() => dockPanel(floatKey)}><IconLayoutSidebarLeftExpand size={14} /></IconButton>
+          ) : null}
+          {panel.mode !== "window" ? (
+            <IconButton label={`Eliminar ${codeOf(p, node)} (Supr)`} size="sm" onClick={() => requestDelete([node.id])}><IconTrash size={14} /></IconButton>
           ) : null}
           {panel.mode !== "window" ? <PinButton node={node} /> : null}
           {panel.mode !== "window" ? (
