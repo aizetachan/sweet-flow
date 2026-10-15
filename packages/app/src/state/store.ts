@@ -10,7 +10,7 @@ import type { Id } from "@sweetflow/domain";
 import type { DataSource, Snapshot } from "../data/source";
 import type { Library, LibraryState } from "../data/library";
 import { createLibrary } from "../data";
-import { closePoppedWindows, joinOwner, trackPoppedWindows, WINDOW_ID, type PoppedWindow } from "./windows";
+import { closePoppedWindows, hostWindows, openerShare, popOutWindow, watchOpener, type PoppedWindow } from "./windows";
 
 export type Phase = "dashboard" | "production" | "window";
 export type View = "board" | "library" | "team";
@@ -19,6 +19,8 @@ export type PanelTab = "produce" | "cut" | "review" | "activity";
 export type DashLayout = "grid" | "list";
 export type DashSection = "home" | "recent" | "starred" | "trash" | "settings";
 export type SettingsTab = "profile" | "storage" | "integrations" | "about";
+/** Left column of the production screen: the work panel or the structure tree. */
+export type SideTab = "work" | "structure";
 
 export interface Filters {
   query: string;
@@ -47,6 +49,7 @@ interface UiState {
   settingsTab: SettingsTab;
   /** Open production (library entry id). */
   productionId: Id | null;
+  sideTab: SideTab;
   /** Node shown by a popped-out window (phase "window"). */
   windowNodeId: Id | null;
   view: View;
@@ -80,12 +83,13 @@ interface Store extends UiState {
   source: DataSource;
   snap: Snapshot | null;
   set: (patch: Partial<UiState>) => void;
-  select: (id: Id | null, tab?: PanelTab) => void;
+  /** Select a node; the left column switches to the work panel unless `stay` (picking from the tree). */
+  select: (id: Id | null, tab?: PanelTab, stay?: boolean) => void;
   /** ⌘-click toggles a node in the multi-selection; ⇧-click extends it. */
   toggleMulti: (id: Id) => void;
   setFilters: (patch: Partial<Filters>) => void;
   toggleCollapsed: (id: Id) => void;
-  openProduction: (id: Id, opts?: { windowNodeId?: Id }) => void;
+  openProduction: (id: Id, opts?: { windowNodeId?: Id; source?: DataSource }) => void;
   closeProduction: (folderId?: Id | null) => void;
   /** Leave the production, asking first if floating panels or popped windows are open. */
   requestLeave: (folderId?: Id | null) => void;
@@ -114,6 +118,8 @@ const PANEL_RESET = { selectedId: null, multi: [], scopeId: null, activeMediaId:
 
 const library = createLibrary();
 let unsubscribeSource: () => void = () => undefined;
+/** A popped window borrows its opener's source: it must not dispose it. */
+let sourceIsShared = false;
 let floatSeq = 0;
 let noticeTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -145,10 +151,11 @@ export const useStore = create<Store>((set, get) => ({
   notice: null,
   popped: [],
   leaveAsk: null,
+  sideTab: "work",
   set: (patch) => set(patch),
-  select: (id, tab) => {
+  select: (id, tab, stay) => {
     if (id !== get().selectedId) set({ activeMediaId: null, playhead: 0, playing: false });
-    set({ selectedId: id, multi: [], ...(tab ? { panelTab: tab } : {}) });
+    set({ selectedId: id, multi: [], ...(tab ? { panelTab: tab } : {}), ...(id && !stay ? { sideTab: "work" as SideTab } : {}) });
     get().source.setPresence(id ?? undefined);
   },
   toggleMulti: (id) => {
@@ -161,8 +168,9 @@ export const useStore = create<Store>((set, get) => ({
 
   openProduction: (id, opts) => {
     get().closeProduction(get().folderId);
-    const src = get().library.open(id);
-    get().library.touch(id);
+    const src = opts?.source ?? get().library.open(id);
+    sourceIsShared = !!opts?.source;
+    if (!opts?.windowNodeId) get().library.touch(id);
     unsubscribeSource = src.subscribe((snap) => set({ snap }));
     set({ ...PANEL_RESET, source: src, snap: null, productionId: id, phase: opts?.windowNodeId ? "window" : "production", windowNodeId: opts?.windowNodeId ?? null });
   },
@@ -171,7 +179,8 @@ export const useStore = create<Store>((set, get) => ({
     closePoppedWindows();
     unsubscribeSource();
     unsubscribeSource = () => undefined;
-    get().source.dispose?.();
+    if (!sourceIsShared) get().source.dispose?.();
+    sourceIsShared = false;
     set({ ...PANEL_RESET, source: IDLE, snap: null, productionId: null, phase: "dashboard", popped: [], leaveAsk: null, ...(folderId !== undefined ? { folderId, dashSection: "home" as DashSection } : {}) });
   },
   requestLeave: (folderId) => {
@@ -210,26 +219,35 @@ export const useStore = create<Store>((set, get) => ({
     const { productionId } = get();
     if (!productionId) return;
     // href without the hash: also right for file:// in the packaged desktop app (origin is "null" there).
-    const url = `${location.href.split("#")[0]}#/ventana/${encodeURIComponent(productionId)}/${encodeURIComponent(nodeId)}/${WINDOW_ID}`;
-    // noopener: the new window gets its own sessionStorage, i.e. its own device id.
-    window.open(url, "_blank", "noopener,width=560,height=880");
+    const url = `${location.href.split("#")[0]}#/ventana/${encodeURIComponent(productionId)}/${encodeURIComponent(nodeId)}`;
+    popOutWindow(url, productionId, nodeId);
   },
 }));
 
 library.subscribe((lib) => useStore.setState({ lib }));
 
-// A popped-out window opens straight on its node (no splash, no dashboard) and
-// reports to the window that opened it; any other window tracks its own.
-const popped = /^#\/ventana\/([^/]+)\/([^/]+)\/([^/]+)$/.exec(location.hash);
+// A popped-out window opens straight on its node (no splash, no dashboard) on
+// its opener's own DataSource; a main window lends its source and tracks them.
+const popped = /^#\/ventana\/([^/]+)\/([^/]+)$/.exec(location.hash);
 if (popped) {
+  const productionId = decodeURIComponent(popped[1]!);
   const nodeId = decodeURIComponent(popped[2]!);
-  useStore.getState().openProduction(decodeURIComponent(popped[1]!), { windowNodeId: nodeId });
-  joinOwner(popped[3]!, nodeId, () => {
-    useStore.getState().closeProduction();
-    useStore.setState({ phase: "window", windowNodeId: null });
-  });
+  const share = openerShare(productionId);
+  useStore.getState().openProduction(productionId, { windowNodeId: nodeId, source: share?.source() });
+  if (share) {
+    // Stop listening before this window goes, and go quiet if the opener leaves.
+    window.addEventListener("pagehide", () => unsubscribeSource());
+    watchOpener(productionId, () => {
+      useStore.getState().closeProduction();
+      useStore.setState({ phase: "window", windowNodeId: null });
+      window.close();
+    });
+  }
 } else {
-  trackPoppedWindows((list) => useStore.setState({ popped: list }));
+  hostWindows(
+    { productionId: () => useStore.getState().productionId, source: () => useStore.getState().source },
+    (list) => useStore.setState({ popped: list }),
+  );
 }
 
 /** Snapshot accessor for components rendered after the first emit. */

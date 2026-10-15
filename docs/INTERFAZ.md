@@ -54,7 +54,7 @@ Se gestionan desde el dashboard:
 
 - **Perfil:** nombre y email (el avatar sale del nombre).
 - **Almacenamiento:** dónde se guardan ahora las producciones y la conexión
-  con la **carpeta de Dropbox** del equipo (próximamente).
+  con la carpeta del equipo en **Dropbox** o **Google Drive** (próximamente).
 - **Integraciones:** **Magnific**, con la cuenta de cada persona
   (próximamente).
 - **Acerca de:** versión y origen de los datos.
@@ -82,8 +82,13 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
 
 ## 2. Producción
 
-**Panel de trabajo a la izquierda, tablero en el centro y estructura a la
-derecha.**
+**Columna izquierda con dos pestañas y el tablero a todo el ancho restante**
+(así, con muchos planos, el tablero tiene la pantalla ancha):
+
+- **Producción** (primera pestaña): el panel de trabajo de la escena o el plano
+  seleccionado. Muestra el código de lo seleccionado.
+- **Estructura:** el árbol. Un clic selecciona sin salir del árbol; doble clic
+  (o seleccionar en el tablero) abre la pestaña Producción.
 
 - El **tablero** es la vista general: se va actualizando solo mientras se genera
   y mientras el equipo trabaja.
@@ -108,25 +113,23 @@ derecha.**
   siempre se sepa qué es cada cosa. Si el número ya existe en ese padre, se
   avisa y no se cambia.
 
-## 3. Ventanas flotantes
+## 3. Ventanas aparte
 
-- El panel de trabajo se puede **soltar como ventana flotante**, y se pueden tener
-  varias abiertas a la vez (varios planos o escenas en paralelo).
-- **Dentro de la app:** paneles flotantes que se mueven y redimensionan sobre el
-  tablero.
-- **En escritorio, además:** "sacar a ventana" la convierte en una ventana del
-  sistema que se puede llevar a otro monitor.
-- Todas muestran el mismo estado: lo que se hace en una se ve en el tablero y en
-  las demás al momento.
-- Volver a acoplar una ventana la devuelve al panel lateral.
-- **Solo existen dentro de la producción.** Si hay paneles flotantes o
-  ventanas aparte abiertos y se sale de la producción (migas de pan, logo),
-  se pregunta: «Tienes ventanas emergentes abiertas. ¿Estás seguro?». **Sí**
-  las cierra todas y sale; **No** se queda en la producción. Si una ventana
-  aparte no se puede cerrar (el navegador solo deja cerrar las que abrió la
-  app), deja de mostrar la producción.
-- "Ventana aparte" necesita que las ventanas compartan los datos: funciona en
-  modo local y en escritorio, no en la demo.
+- Cada plano o escena se puede **abrir en una ventana aparte** (botón en la
+  cabecera del panel). Es una ventana del navegador o de la app que se puede
+  llevar a otro monitor, y se pueden tener varias a la vez.
+- Funciona en el navegador y en escritorio, en cualquier modo: la ventana
+  aparte trabaja sobre los mismos datos que la ventana principal, así que lo
+  que se hace en una se ve en el tablero y en las demás al momento.
+- Volver a abrir el mismo plano trae su ventana al frente en lugar de abrir
+  otra.
+- **Solo existen dentro de la producción.** Si hay ventanas aparte abiertas y
+  se sale de la producción (migas de pan, logo), se pregunta: «Tienes ventanas
+  emergentes abiertas. ¿Estás seguro?». **Sí** las cierra todas y sale; **No**
+  se queda en la producción. Recargar o cerrar la ventana principal también
+  las cierra.
+- **Pendiente:** el panel flotante dentro de la misma ventana existe en el
+  código pero está oculto; se retomará para un uso más concreto.
 
 ## Mientras estamos en modo local
 

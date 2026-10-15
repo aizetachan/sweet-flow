@@ -4,7 +4,6 @@ import {
   IconExternalLink,
   IconFolder,
   IconLayoutSidebarLeftExpand,
-  IconPictureInPicture,
   IconPlus,
   IconSparkles,
   IconX,
@@ -29,18 +28,18 @@ export function DockedInspector() {
   const node = snap.nodes.find((n) => n.id === selectedId);
   if (!node) {
     return (
-      <aside className="insp insp--empty">
+      <div className="insp insp--empty">
         <div>
           <h3>Selecciona una escena o un plano</h3>
-          <p className="sf-muted">Desde aquí se genera, se corta y se reparte, se revisa y se comenta. Puedes soltar el panel como ventana flotante para trabajar varios a la vez.</p>
+          <p className="sf-muted">Desde aquí se genera, se corta y se reparte, se revisa y se comenta. Puedes abrir cada plano en una ventana aparte para trabajar varios a la vez, incluso en otro monitor.</p>
         </div>
-      </aside>
+      </div>
     );
   }
   return (
-    <aside className="insp">
+    <div className="insp">
       <DockedPanel nodeId={node.id}><InspectorBody /></DockedPanel>
-    </aside>
+    </div>
   );
 }
 
@@ -107,7 +106,7 @@ export function WindowInspector({ nodeId }: { nodeId: string }) {
 function InspectorBody({ floatKey, onDragHandle }: { floatKey?: string; onDragHandle?: (e: ReactPointerEvent) => void }) {
   const snap = useSnap();
   const panel = usePanel();
-  const { select, floatPanel, dockPanel, closeFloating, popOut, library } = useStore();
+  const { select, dockPanel, closeFloating, popOut } = useStore();
   const node = snap.nodes.find((n) => n.id === panel.nodeId);
   const p = snap.production;
 
@@ -137,17 +136,13 @@ function InspectorBody({ floatKey, onDragHandle }: { floatKey?: string; onDragHa
           ))}
           <span className="sf-faint"> · {levelOf(p, node).name}{roleOf(p, node) === "production" ? " · punto de producción" : roleOf(p, node) === "group" ? " · montaje" : ""}</span>
           <span className="insp__spacer" />
-          {panel.mode === "docked" ? (
-            <IconButton label="Soltar como ventana flotante" size="sm" onClick={() => floatPanel(node.id)}><IconPictureInPicture size={14} /></IconButton>
-          ) : null}
           {panel.mode === "floating" && floatKey ? (
             <IconButton label="Acoplar al panel lateral" size="sm" onClick={() => dockPanel(floatKey)}><IconLayoutSidebarLeftExpand size={14} /></IconButton>
           ) : null}
           {panel.mode !== "window" ? (
             <IconButton
-              label={library.canPopOut ? "Abrir en una ventana aparte (otro monitor)" : "Ventana aparte: disponible en modo local y en la app de escritorio"}
+              label="Abrir en una ventana aparte (puedes llevarla a otro monitor)"
               size="sm"
-              disabled={!library.canPopOut}
               onClick={() => {
                 popOut(node.id);
                 if (floatKey) closeFloating(floatKey);

@@ -53,7 +53,6 @@ function singleLibrary(name: string, open: () => DataSource): Library {
   };
   const ignore = () => undefined;
   return {
-    canPopOut: false,
     subscribe: (cb) => (cb(state), () => undefined),
     createFolder: unsupported,
     createProduction: unsupported,

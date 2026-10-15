@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Button, Modal, Spinner } from "@sweetflow/ui";
-import { useStore } from "./state/store";
+import { codeOf, isUnit } from "@sweetflow/domain";
+import { Button, cx, Modal, Spinner } from "@sweetflow/ui";
+import { useSnap, useStore } from "./state/store";
 import { Rail, Topbar } from "./shell/Shell";
 import { Splash } from "./shell/Splash";
 import { Dashboard } from "./dashboard/Dashboard";
@@ -38,11 +39,10 @@ function Production() {
       <div className="app__main">
         <Topbar />
         {view === "board" ? (
-          // Work panel on the left, structure on the right (docs/INTERFAZ.md §2).
+          // Work panel and structure share the left column; the board gets the rest (docs/INTERFAZ.md §2).
           <div className="workspace">
-            <DockedInspector />
+            <SidePanel />
             <Board />
-            <StructureTree />
           </div>
         ) : view === "library" ? <LibraryView /> : <TeamView />}
       </div>
@@ -51,6 +51,30 @@ function Production() {
       <LeaveConfirm />
       <Modals />
     </div>
+  );
+}
+
+function SidePanel() {
+  const snap = useSnap();
+  const sideTab = useStore((s) => s.sideTab);
+  const selectedId = useStore((s) => s.selectedId);
+  const set = useStore((s) => s.set);
+  const node = snap.nodes.find((n) => n.id === selectedId);
+  const units = snap.nodes.filter((n) => isUnit(snap.production, n)).length;
+  return (
+    <aside className="side">
+      <div className="sidetabs" role="tablist">
+        <button role="tab" aria-selected={sideTab === "work"} className={cx("sidetabs__tab", sideTab === "work" && "sidetabs__tab--on")} onClick={() => set({ sideTab: "work" })}>
+          Producción
+          {node ? <span className="sidetabs__badge">{codeOf(snap.production, node)}</span> : null}
+        </button>
+        <button role="tab" aria-selected={sideTab === "structure"} className={cx("sidetabs__tab", sideTab === "structure" && "sidetabs__tab--on")} onClick={() => set({ sideTab: "structure" })}>
+          Estructura
+          <span className="sidetabs__count">{units}</span>
+        </button>
+      </div>
+      {sideTab === "work" ? <DockedInspector /> : <StructureTree />}
+    </aside>
   );
 }
 

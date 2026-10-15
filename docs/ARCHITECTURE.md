@@ -53,7 +53,7 @@ implementación distinta.
 | Etapa | Estado de la producción | Archivos (media) | Compartir | `DataSource` |
 | --- | --- | --- | --- | --- |
 | **A. Prueba de concepto** | Registro de eventos en la carpeta de la producción (§5.0) | En la misma carpeta, ordenados por código (§5.2) | La carpeta vive en una **carpeta compartida de Dropbox**; la sincroniza el cliente de escritorio de Dropbox. Los cambios llegan en segundos | `LocalSource` (escritorio) |
-| **B. API de Dropbox** | Igual que A | Igual que A | OAuth de Dropbox por usuario; la app lee y escribe por API y detecta cambios con *long-polling*. No hace falta tener el cliente de Dropbox (web de revisión) | `DropboxSource` |
+| **B. API de Dropbox / Google Drive** | Igual que A | Igual que A | OAuth del proveedor por usuario; la app lee y escribe por API y detecta cambios (§2.2). No hace falta el cliente de escritorio (web de revisión) | `CloudSource` (un adaptador por proveedor) |
 | **C. Tiempo real** | Firestore (§3 y §4): presencia, listeners y roles aplicados en el servidor | **Siguen en Dropbox.** Cloud Storage desaparece del plan | Firebase Auth + Dropbox | `FirebaseSource` |
 
 Por qué Dropbox para los archivos:
@@ -73,6 +73,44 @@ Lo que Dropbox no da, y por eso se aplaza a la etapa C:
 - **Roles.** Dropbox solo distingue lectura y edición por carpeta. En A y B los
   roles (§8) se muestran en la UI, pero no se pueden imponer: quien edita la
   carpeta puede cambiarlo todo.
+
+### 2.2 Proveedores: Dropbox y Google Drive
+
+Cada equipo elige dónde guarda: **Dropbox** o **Google Drive** (decisión 10).
+El formato en la carpeta es el mismo (§5), así que el resto de la app no
+distingue entre ellos.
+
+**Etapa A (carpeta sincronizada).** Los dos tienen cliente de escritorio que
+sincroniza una carpeta local, y la app solo escribe en esa carpeta:
+
+| | Dropbox | Google Drive para escritorio |
+| --- | --- | --- |
+| Carpeta del equipo | Carpeta compartida | Unidad compartida (recomendado) o carpeta compartida |
+| Ruta en macOS | `~/Library/CloudStorage/Dropbox…` | `~/Library/CloudStorage/GoogleDrive-<cuenta>/…` (en Windows, una unidad `G:`) |
+| Archivos solo en la nube | Opción "solo en línea" | Modo "Transmitir archivos" (por defecto): se descargan al abrirlos |
+| Choques al guardar a la vez | Crea una "copia en conflicto" | Crea una copia duplicada |
+
+- El registro por dispositivo (§5.0) evita los choques en los dos: nadie
+  escribe nunca en el archivo de otro.
+- **A validar con Google Drive:** que la app vea a tiempo los cambios que trae
+  el cliente (en macOS las dos usan *File Provider* y `fs.watch` puede
+  retrasarse; si hace falta, se relee la carpeta cada pocos segundos), y que
+  leer un registro aún no descargado lo descarga sin bloquear la app.
+- Para vídeo pesado, conviene marcar la carpeta de la producción como
+  "disponible sin conexión" en los dos servicios.
+
+**Etapa B (API).** Un adaptador por proveedor detrás de la misma interfaz
+(`LogStore` + archivos):
+
+| | Dropbox API | Google Drive API v3 |
+| --- | --- | --- |
+| Detectar cambios | `files/list_folder/longpoll`, sin servidor | `changes.list` con *page token* (consultar cada pocos segundos); `changes.watch` necesita un servidor que reciba avisos |
+| Añadir eventos | No hay "append": se sube el archivo del dispositivo entero | Igual: nueva revisión del archivo |
+| Permisos de la app | Acceso a una carpeta de la app o a todo Dropbox | `drive.file` (solo lo que el usuario elige con el selector de Google) o `drive` (acceso completo: Google exige una verificación de seguridad para apps públicas) |
+
+- **A validar con Google:** si con `drive.file` y el selector de carpetas la
+  app puede leer lo que otros miembros crean dentro de la unidad compartida.
+  Si no, hará falta el permiso `drive` y su verificación.
 
 El diagrama siguiente es el de la **etapa C**:
 
@@ -560,6 +598,7 @@ sobre una carpeta compartida de Dropbox.
 | 7 | Almacenamiento | Primero local, sobre una carpeta compartida de Dropbox, con registro de eventos por dispositivo. Después, API de Dropbox. Firestore solo para el tiempo real, más adelante. Los archivos se quedan en Dropbox; no se usa Cloud Storage (15 oct 2026) | §2.1, §5 |
 | 8 | Orden y códigos | El orden en pantalla es visual y no cambia el código ni la carpeta. Arrastrar a otro padre mueve la carpeta | §3.2, `INTERFAZ.md` §2.1 |
 | 9 | Dashboard | Refleja la carpeta de Dropbox en los dos sentidos: lo que se organiza en la app se aplica en Dropbox y lo que cambia en Dropbox se ve en la app | `INTERFAZ.md` §1 |
+| 10 | Proveedores de almacenamiento | Dropbox o Google Drive, a elegir por equipo, con el mismo formato de carpeta. Primero mediante su cliente de escritorio; después por API (§2.2) | §2.2 |
 
 ### Pendiente de validar
 

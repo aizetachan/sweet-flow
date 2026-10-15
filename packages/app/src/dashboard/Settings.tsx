@@ -5,7 +5,7 @@
  */
 
 import { useEffect, useState, type ReactNode } from "react";
-import { IconBolt, IconBrandDropbox, IconDeviceDesktop, IconInfoCircle, IconPlugConnected, IconUser } from "@tabler/icons-react";
+import { IconBolt, IconBrandDropbox, IconBrandGoogleDrive, IconDeviceDesktop, IconFolders, IconInfoCircle, IconPlugConnected, IconUser } from "@tabler/icons-react";
 import { Avatar, Button, cx } from "@sweetflow/ui";
 import type { LibraryState } from "../data/library";
 import { isDesktop } from "../platform";
@@ -13,7 +13,7 @@ import { useStore, type SettingsTab } from "../state/store";
 
 const TABS: Array<{ id: SettingsTab; label: string; icon: typeof IconUser }> = [
   { id: "profile", label: "Perfil", icon: IconUser },
-  { id: "storage", label: "Almacenamiento", icon: IconBrandDropbox },
+  { id: "storage", label: "Almacenamiento", icon: IconFolders },
   { id: "integrations", label: "Integraciones", icon: IconPlugConnected },
   { id: "about", label: "Acerca de", icon: IconInfoCircle },
 ];
@@ -98,11 +98,19 @@ function Storage({ lib }: { lib: LibraryState }) {
           </div>
         </div>
       </Section>
-      <Section title="Dropbox" hint="La carpeta compartida de Dropbox del equipo será el almacenamiento: el dashboard mostrará sus carpetas y cada producción se guardará en ella, ordenada por códigos. Todo el que tenga acceso a esa carpeta verá lo mismo.">
+      <Section
+        title="Almacenamiento del equipo"
+        hint="Una carpeta compartida en la nube será el almacenamiento: el dashboard mostrará sus carpetas y cada producción se guardará en ella, ordenada por códigos. Todo el que tenga acceso a esa carpeta verá lo mismo. Cada equipo elige su servicio."
+      >
         <Connection
           icon={<IconBrandDropbox size={22} stroke={1.5} />}
-          name="Carpeta de Dropbox"
-          detail={isDesktop() ? "Elige la carpeta del equipo dentro de tu Dropbox." : "Disponible en la app de escritorio."}
+          name="Dropbox"
+          detail={isDesktop() ? "Una carpeta compartida de Dropbox del equipo." : "Una carpeta compartida de Dropbox del equipo. En la app de escritorio."}
+        />
+        <Connection
+          icon={<IconBrandGoogleDrive size={22} stroke={1.5} />}
+          name="Google Drive"
+          detail={isDesktop() ? "Una unidad compartida (o carpeta compartida) de Google Drive." : "Una unidad compartida de Google Drive. En la app de escritorio."}
         />
       </Section>
     </>

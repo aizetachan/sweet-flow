@@ -90,8 +90,6 @@ export interface Library {
   setProfile(p: Profile): void;
   /** DataSource of a production. Caller disposes it when leaving. */
   open(id: Id): DataSource;
-  /** Whether productions can be opened in other windows and stay in sync. */
-  readonly canPopOut: boolean;
 }
 
 /** Entry ids inside `rootIds` (themselves included), at any depth. */
@@ -128,7 +126,6 @@ interface EntryLibraryOptions {
   watch: (cb: () => void) => () => void;
   logStoreFor: (productionId: Id) => LogStore;
   deviceId: Id;
-  canPopOut: boolean;
   /** Productions handled outside the log (the demo episode). */
   special?: Record<Id, { open: () => DataSource; summary: ProductionSummary }>;
 }
@@ -136,7 +133,6 @@ interface EntryLibraryOptions {
 const newId = (p: string) => `${p}_${crypto.randomUUID()}`;
 
 class EntryLibrary implements Library {
-  readonly canPopOut: boolean;
   private entries: LibraryEntry[];
   private prefs: UserPrefs;
   private me: Member;
@@ -144,7 +140,6 @@ class EntryLibrary implements Library {
   private listeners = new Set<(s: LibraryState) => void>();
 
   constructor(private readonly o: EntryLibraryOptions) {
-    this.canPopOut = o.canPopOut;
     this.entries = o.entries.load();
     this.prefs = o.prefs.load();
     this.me = o.profile.load();
@@ -345,7 +340,6 @@ export function demoLibrary(mock: { open: () => DataSource; summary: ProductionS
     watch: () => () => undefined,
     logStoreFor: (id) => stores.get(id) ?? stores.set(id, new MemoryLogStore()).get(id)!,
     deviceId: "demo",
-    canPopOut: false,
     special: { p_demo: { open: mock.open, summary: mock.summary } },
   });
 }
@@ -394,8 +388,9 @@ export function browserLibrary(): Library {
       return () => window.removeEventListener("storage", h);
     },
     logStoreFor: (id) => new BrowserLogStore(`prod:${id}`),
-    // sessionStorage is per window: every window writes its own log file.
-    deviceId: `win-${remembered(sessionStorage, "sweetflow:device")}`,
-    canPopOut: true,
+    // sessionStorage is per window: every window writes its own log file. A
+    // popped window inherits its opener's sessionStorage, so it gets a fresh id
+    // (it normally borrows the opener's source and writes nothing itself).
+    deviceId: location.hash.startsWith("#/ventana/") ? `win-${crypto.randomUUID().slice(0, 8)}` : `win-${remembered(sessionStorage, "sweetflow:device")}`,
   });
 }

@@ -16,6 +16,7 @@ import {
 import { Button, cx, IconButton, Spinner } from "@sweetflow/ui";
 import type { Placement } from "../data/source";
 import { useSnap, useStore } from "../state/store";
+import { colorSlot } from "../state/selectors";
 import { usePanel } from "./panel";
 import { Player } from "../components/media";
 
@@ -127,9 +128,8 @@ export function CutTab({ node }: { node: ProdNode }) {
         {placed.length ? (
           <div className="tl__placed" title="Tramos ya colocados de este clip">
             {placed.map((t) => {
-              const k = childrenOf(snap.nodes, owner.id).findIndex((x) => x.id === t.nodeId);
               return (
-                <span key={t.id} className={`seg-c${(k < 0 ? 5 : k) % 6}`} style={{ left: `${(t.inSec / dur) * 100}%`, width: `${((t.outSec - t.inSec) / dur) * 100}%` }} title={`${nameOf(t.nodeId)} · ${formatTc(t.inSec)}–${formatTc(t.outSec)}`}>
+                <span key={t.id} className={`seg-c${colorSlot(snap, t.nodeId)}`} style={{ left: `${(t.inSec / dur) * 100}%`, width: `${((t.outSec - t.inSec) / dur) * 100}%` }} title={`${nameOf(t.nodeId)} · ${formatTc(t.inSec)}–${formatTc(t.outSec)}`}>
                   {codeOf(p, snap.nodes.find((n) => n.id === t.nodeId) ?? owner)}
                 </span>
               );

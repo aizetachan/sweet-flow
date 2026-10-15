@@ -18,6 +18,19 @@ import type { Filters } from "./store";
 export const statusOf = (s: Snapshot, n: ProdNode): StatusDef =>
   s.production.statuses.find((x) => x.id === n.statusId) ?? s.production.statuses[0]!;
 
+/**
+ * Colour slot (seg-c0…5) of a node: its rank by code among its siblings, so
+ * siblings get different colours and a card keeps its colour when reordered
+ * (reordering never changes codes). A card and its segments in the scene's
+ * cut strip share it.
+ */
+export function colorSlot(s: Snapshot, nodeId: Id): number {
+  const n = s.nodes.find((x) => x.id === nodeId);
+  if (!n) return 0;
+  const byCode = s.nodes.filter((x) => x.parentId === n.parentId).sort((a, b) => a.number - b.number);
+  return Math.max(0, byCode.findIndex((x) => x.id === nodeId)) % 6;
+}
+
 export const memberName = (s: Snapshot, uid: Id) => s.members.find((m) => m.uid === uid)?.displayName ?? "—";
 
 /** Cover for a card: the selected take's media (at its in-point), else the latest ready own media. */

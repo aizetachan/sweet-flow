@@ -12,7 +12,7 @@ import {
 } from "@sweetflow/domain";
 import { AvatarStack, Button, cx, Pill, Segmented } from "@sweetflow/ui";
 import { useSnap, useStore, type CardSize } from "../state/store";
-import { countsOf, coverOf, durationOf, filtersActive, matches, memberName, presenceAt, progressOf, statusOf } from "../state/selectors";
+import { colorSlot, countsOf, coverOf, durationOf, filtersActive, matches, memberName, presenceAt, progressOf, statusOf } from "../state/selectors";
 import { Thumb } from "../components/media";
 import { nodeDragProps, useEndDrop, useNodeDrop } from "./dnd";
 
@@ -142,7 +142,6 @@ function SceneCard({ node }: { node: ProdNode }) {
   const role = roleOf(p, node);
   const clips = snap.media.filter((m) => m.nodeId === node.id && !m.archived);
   const cover = coverOf(snap, node);
-  const kids = childrenOf(snap.nodes, node.id);
   // Which clip feeds the shots, and the segments it was cut into.
   const fed = clips.find((c) => snap.takes.some((t) => t.mediaId === c.id && t.nodeId !== node.id));
   const segs = fed ? snap.takes.filter((t) => t.mediaId === fed.id).sort((a, b) => a.inSec - b.inSec) : [];
@@ -156,9 +155,8 @@ function SceneCard({ node }: { node: ProdNode }) {
       </div>
       {fed && fed.durationSec ? (
         <div className="cutstrip" title={`v${fed.version} repartido en ${segs.length} tramos`}>
-          {segs.map((t, i) => {
-            const k = kids.findIndex((x) => x.id === t.nodeId);
-            return <span key={t.id} className={`seg-c${(k < 0 ? i : k) % 6}`} style={{ left: `${(t.inSec / fed.durationSec!) * 100}%`, width: `${((t.outSec - t.inSec) / fed.durationSec!) * 100}%` }} />;
+          {segs.map((t) => {
+            return <span key={t.id} className={`seg-c${colorSlot(snap, t.nodeId)}`} style={{ left: `${(t.inSec / fed.durationSec!) * 100}%`, width: `${((t.outSec - t.inSec) / fed.durationSec!) * 100}%` }} />;
           })}
         </div>
       ) : null}
@@ -179,8 +177,6 @@ function UnitCard({ node }: { node: ProdNode }) {
   const c = countsOf(snap, node);
   const cover = coverOf(snap, node);
   const viewers = presenceAt(snap, node.id);
-  const kids = node.parentId ? childrenOf(snap.nodes, node.parentId) : [];
-  const idx = kids.findIndex((k) => k.id === node.id);
 
   return (
     <div
@@ -190,7 +186,7 @@ function UnitCard({ node }: { node: ProdNode }) {
       onClick={(e) => (e.metaKey || e.ctrlKey || e.shiftKey ? toggleMulti(node.id) : select(node.id))}
     >
       <Thumb {...cover} />
-      <span className={`card__swatch seg-c${(idx < 0 ? 0 : idx) % 6}`} />
+      <span className={`card__swatch seg-c${colorSlot(snap, node.id)}`} />
       <div className="card__meta">
         <span className="card__code">{codeOf(p, node)}</span>
         <Pill color={st.color}>{st.name}</Pill>

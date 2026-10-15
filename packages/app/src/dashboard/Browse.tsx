@@ -91,8 +91,8 @@ export function Browse({ lib, section }: { lib: LibraryState; section: Exclude<D
         {meta ? (
           <h1 className="dash__title"><meta.icon size={20} stroke={1.6} /> {meta.title}</h1>
         ) : (
-          <nav className="crumbs" aria-label="Ubicación">
-            <Crumb label={<><IconHome size={15} /> Inicio</>} onOpen={() => set({ folderId: null })} target={null} />
+          <nav className="crumbs crumbs--title" aria-label="Ubicación">
+            <Crumb label={<><IconHome size={20} stroke={1.6} /> Inicio</>} onOpen={() => set({ folderId: null })} target={null} />
             {trail.map((f) => (
               <span key={f.id} className="crumbs__item">
                 <IconChevronRight size={13} className="sf-faint" />

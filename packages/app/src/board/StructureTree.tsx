@@ -13,9 +13,9 @@ export function StructureTree() {
   const roots = childrenOf(snap.nodes, null);
   const rootDrop = useEndDrop(null);
   return (
-    <aside className="tree">
+    <div className="tree">
       <div className="tree__head">
-        <span>Estructura</span>
+        <span>{top.name}s</span>
         <IconButton label={`Nuevo ${top.name.toLowerCase()}`} size="sm" onClick={() => {
           const id = source.createNode(null, "");
           set({ scopeId: id });
@@ -34,7 +34,7 @@ export function StructureTree() {
         {snap.production.levels.map((l) => l.name).join(" › ")}
         <button className="link" onClick={() => set({ modal: "levels" })}>Editar</button>
       </div>
-    </aside>
+    </div>
   );
 }
 
@@ -68,8 +68,10 @@ function TreeRow({ node, depth }: { node: ProdNode; depth: number }) {
         onClick={(e) => {
           if (e.metaKey || e.ctrlKey || e.shiftKey) return toggleMulti(node.id);
           if (depth === 0 && !unit) set({ scopeId: node.id });
-          select(node.id);
+          // Picking in the tree keeps the tree open; double click opens it to work on.
+          select(node.id, undefined, true);
         }}
+        onDoubleClick={() => select(node.id)}
       >
         {unit ? <span className="trow__caret" /> : (
           <button className={cx("trow__caret", open && "is-open")} onClick={(e) => { e.stopPropagation(); toggleCollapsed(node.id); }} aria-label="Plegar">
