@@ -101,7 +101,25 @@ Anotadas el 15 oct 2026, pendientes de que el usuario elija orden:
    y Edge), sobre `FolderFs` (`docs/ARCHITECTURE.md` §5.4). El dashboard y las
    producciones son carpetas reales con su registro; renombrar o mover mueve la
    carpeta. Se revisan los cambios cada 2,5 s.
-4. **Conectar Dropbox** (etapa B, decisión 11): `FolderFs` sobre la API de
+4. **Conectar Dropbox — aparcado (16 oct 2026), no es prioridad ahora.**
+   Requisito: Sweet Flow se instalará en otras máquinas y cada usuario tiene
+   que poder conectar su Dropbox (o Drive) sin saber nada técnico:
+   - Una sola app «Sweet Flow» registrada en Dropbox y en Google; su
+     identificador va dentro de la app. El usuario solo pulsa «Conectar», inicia
+     sesión en el navegador y elige la carpeta del equipo. Sin claves ni
+     configuración.
+   - En escritorio, el login vuelve a la app por `http://127.0.0.1:<puerto>` o
+     por un esquema propio (`sweetflow://`); el token se guarda cifrado
+     (`safeStorage`).
+   - Dropbox: mientras la app esté en modo desarrollo, solo puede enlazarla un
+     número limitado de usuarios; antes de repartirla hay que pedir el paso a
+     producción.
+   - Google Drive: proyecto en Google Cloud con pantalla de consentimiento; en
+     modo de prueba solo entran los usuarios de prueba que se añadan. El permiso
+     `drive.file` vale con el selector de Google; el permiso `drive` exige
+     verificación (§2.2).
+
+   Detalle técnico (etapa B, decisión 11): `FolderFs` sobre la API de
    Dropbox con OAuth PKCE, desde Ajustes, y copia local opcional. Necesita el
    *App key* de una app de Dropbox (Scoped access, Full Dropbox, permisos
    `files.metadata.*` y `files.content.*`, redirección
