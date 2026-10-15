@@ -79,7 +79,7 @@ function Group({ node }: { node: ProdNode }) {
         <span className="sf-faint sf-small">{levelOf(p, node).name} · {prog.done}/{prog.total} aprobados · {fmtDur(durationOf(snap, node))}</span>
       </GroupHead>
       <Siblings nodes={kids} />
-      {!filtersActive(filters) ? <AddBar parentId={node.id} /> : null}
+      {!kids.length && !filtersActive(filters) ? <AddBar parentId={node.id} /> : null}
     </section>
   );
 }
@@ -113,7 +113,11 @@ function InsertGap({ after }: { after: ProdNode }) {
   );
 }
 
-/** Dashed "+" at the end of a group (or of the board): a new child at the end; the only way in when it is empty. */
+/**
+ * Square "+" at the end of the board (new sequence) or of an empty group (its
+ * first scene). A non-empty group already adds scenes from its rows ("+" card
+ * and the gap below each one), so it shows none.
+ */
 function AddBar({ parentId, big }: { parentId: Id | null; big?: boolean }) {
   const snap = useSnap();
   const { source, select } = useStore();
@@ -122,11 +126,12 @@ function AddBar({ parentId, big }: { parentId: Id | null; big?: boolean }) {
   const level = p.levels[parent ? levelIndex(p, parent) + 1 : 0];
   if (!level) return null;
   const name = level.name.toLowerCase();
+  const label = big ? `Crear la primera ${name}` : `Nueva ${name}${parent ? ` en ${codeOf(p, parent)}` : ""}`;
   return (
     <div className={cx("addbar", big && "addbar--big")}>
       {big ? <p className="sf-muted">La producción está vacía. Empieza por la primera {name}: dentro irán sus {p.levels[1]?.name.toLowerCase() ?? "elementos"}s.</p> : null}
-      <button className="addbar__btn" onClick={() => select(source.createNode(parentId, ""))}>
-        <IconPlus size={14} /> {big ? `Crear la primera ${name}` : `Nueva ${name}${parent ? ` en ${codeOf(p, parent)}` : ""}`}
+      <button className="addbar__btn" title={label} aria-label={label} onClick={() => select(source.createNode(parentId, ""))}>
+        <IconPlus size={18} stroke={1.6} />
       </button>
     </div>
   );

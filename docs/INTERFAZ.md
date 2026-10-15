@@ -113,10 +113,12 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
 - **Añadir escenas y secuencias en el tablero:**
   - Entre dos escenas (o secuencias), al pasar el ratón aparece una línea con
     **"+ Escena debajo"**: crea una justo ahí, con el primer código libre.
-  - Al final de cada secuencia, **"+ Nueva escena en SQ010"**; es la forma de
-    llenar una secuencia vacía.
-  - Al final del tablero, **"+ Nueva secuencia"**. Con la producción vacía, un
-    botón grande **"Crear la primera secuencia"**.
+  - Al final del tablero, un **botón "+" cuadrado alineado a la izquierda**
+    (sin texto; el tooltip dice «Nueva secuencia»). Una secuencia vacía muestra
+    el mismo botón para su primera escena; con escenas no hace falta (ya están
+    el "+" de cada fila y la línea entre escenas).
+  - Con la producción vacía, una frase que explica qué va dentro y el mismo
+    botón "+".
   - Lo creado se abre en el panel y empieza en Pendiente. Con filtros activos no
     se muestran (no se sabría dónde cae).
 - El **panel de trabajo** aparece al seleccionar un plano o una escena y es donde
