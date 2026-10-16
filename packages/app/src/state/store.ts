@@ -192,13 +192,15 @@ export const useStore = create<Store>((set, get) => ({
     const src = opts?.source ?? get().library.open(id);
     sourceIsShared = !!opts?.source;
     if (!opts?.windowNodeId) get().library.touch(id);
+    // Reset first, then subscribe: a source that is already loaded (the one a
+    // popped window borrows) emits at once, and that first snapshot must stay.
+    set({ ...PANEL_RESET, source: src, snap: null, productionId: id, phase: opts?.windowNodeId ? "window" : "production", windowNodeId: opts?.windowNodeId ?? null });
     let pending = opts?.nodeId;
     unsubscribeSource = src.subscribe((snap) => {
       set({ snap });
       if (!pending) return;
       const nodeId = pending;
       pending = undefined;
-      // After openProduction has reset the panel (the first emit can be synchronous).
       queueMicrotask(() => {
         if (snap.nodes.some((n) => n.id === nodeId)) {
           get().select(nodeId);
@@ -210,7 +212,6 @@ export const useStore = create<Store>((set, get) => ({
         }
       });
     });
-    set({ ...PANEL_RESET, source: src, snap: null, productionId: id, phase: opts?.windowNodeId ? "window" : "production", windowNodeId: opts?.windowNodeId ?? null });
   },
   openPin: (pin) => {
     const entry = get().lib?.entries.find((e) => e.id === pin.entryId);

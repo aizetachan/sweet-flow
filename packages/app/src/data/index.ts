@@ -40,6 +40,11 @@ const generator = new MagnificGenerator();
  */
 export async function initStorage(mode = dataMode()): Promise<void> {
   if (mode !== "local") return;
+  // A popped-out window works on its main window's production: nothing to open here.
+  if (location.hash.startsWith("#/ventana/") && window.opener) {
+    prepared = { library: browserLibrary(generator), status: { status: "browser" } };
+    return;
+  }
   const { restoreLocalFolder } = await import("./folder/browserFs");
   const found = await restoreLocalFolder();
   if (found.status === "ready") {
