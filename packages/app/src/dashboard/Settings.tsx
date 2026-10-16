@@ -5,7 +5,7 @@
  */
 
 import { useEffect, useState, type ReactNode } from "react";
-import { IconBolt, IconBrandDropbox, IconBrandGoogleDrive, IconDeviceDesktop, IconFolder, IconFolderOpen, IconFolders, IconInfoCircle, IconPlugConnected, IconUser } from "@tabler/icons-react";
+import { IconBolt, IconBrandDropbox, IconCheck, IconBrandGoogleDrive, IconDeviceDesktop, IconFolder, IconFolderOpen, IconFolders, IconInfoCircle, IconPlugConnected, IconUser } from "@tabler/icons-react";
 import { Avatar, Button, cx } from "@sweetflow/ui";
 import type { LibraryState } from "../data/library";
 import { storageStatus } from "../data";
@@ -210,7 +210,10 @@ function MagnificCard() {
       <div className="scard">
         <IconBolt size={22} stroke={1.5} />
         <div className="scard__text">
-          <strong>Magnific</strong>
+          <strong className="scard__name">
+            Magnific
+            {connected ? <span className="sok" title="Conectada" aria-label="Conectada"><IconCheck size={10} stroke={3} /></span> : null}
+          </strong>
           <span className="sf-muted">{connected ? who ?? "Conectada. Comprobando la cuenta…" : "Generación de imágenes y vídeo con tu cuenta y tus créditos."}</span>
         </div>
         <span className="scard__spacer" />

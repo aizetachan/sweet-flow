@@ -525,3 +525,5 @@ button.tree__hint { padding: 0 14px 8px; }
 /* Team folder needs permission again */
 .reconnect { display: flex; align-items: center; gap: 10px; margin: 14px 28px 0; padding: 10px 12px; border-radius: var(--r-lg); background: var(--primary-soft); color: var(--fg-1); font-size: 13px; }
 .reconnect span { flex: 1; }
+.scard__name { display: inline-flex; align-items: center; gap: 7px; }
+.sok { display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; background: var(--ok); color: var(--bg-0); }
