@@ -104,10 +104,16 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
   la derecha, el estado. **El estado es solo la etiqueta**: al hacer clic se
   despliega la lista. Todo lo nuevo empieza en **Pendiente**.
 - **Barra superior:** logo (vuelve al inicio) y migas de pan a la izquierda; a
-  la derecha, **buscar** y el botón de **filtros** (en el tablero), quién está en
-  la producción, Carpeta, Magnific, equipo y **tu avatar**. Los filtros (estado,
-  responsable, desglose) se despliegan debajo del botón, que muestra cuántos hay
-  activos.
+  la derecha, el **buscador** (en el tablero), quién está en la producción y
+  **tu avatar**.
+  - El botón de **filtros** va dentro del buscador, a la derecha, con el número
+    de filtros activos. Abre un panel estrecho: **estado** (se elige uno; por
+    defecto «Seleccionar estado», con una × para quitarlo) y **responsable**.
+  - El **avatar abre un menú**: tu nombre; la carpeta del equipo y su estado;
+    Magnific (conectada, con tus créditos y un tick verde, o «Conectar tu
+    cuenta»); invitar al equipo; Ajustes; volver al inicio. Un punto verde en el
+    avatar indica que Magnific está conectada. Es la conexión real hecha en
+    Ajustes del dashboard (en la demo, la cuenta de ejemplo).
 - **Cabecera del tablero:** botón de **información** (secuencias, escenas y
   planos, aprobados, minutos montados y planos por estado, en un panel pequeño),
   el título y un contador con el número de planos.

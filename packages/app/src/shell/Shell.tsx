@@ -1,8 +1,8 @@
 import {
   IconBolt,
+  IconCheck,
   IconChevronRight,
   IconHome,
-  IconCloudUpload,
   IconFolder,
   IconFolderOff,
   IconLayoutBoard,
@@ -12,11 +12,13 @@ import {
   IconUsers,
 } from "@tabler/icons-react";
 import { splitTrash } from "@sweetflow/domain";
-import { Avatar, AvatarStack, cx, IconButton, Spinner } from "@sweetflow/ui";
+import { Avatar, AvatarStack, cx, Spinner } from "@sweetflow/ui";
 import { useSnap, useStore, type View } from "../state/store";
 import { memberName } from "../state/selectors";
 import { useLibraryTrail } from "../dashboard/Dashboard";
 import { BoardFilters } from "../board/Board";
+import { Popover } from "../components/Popover";
+import { useMagnific } from "../integrations/magnific/useMagnific";
 
 const NAV: Array<{ id: View; label: string; icon: typeof IconLayoutBoard }> = [
   { id: "board", label: "Producción", icon: IconLayoutBoard },
@@ -53,12 +55,10 @@ export function Dock() {
 
 export function Topbar() {
   const snap = useSnap();
-  const { source, set, requestLeave, productionId } = useStore.getState();
+  const { requestLeave, productionId } = useStore.getState();
   const view = useStore((s) => s.view);
   const trail = useLibraryTrail(productionId);
   const online = snap.presence.filter((p) => p.uid !== snap.me.uid).map((p) => memberName(snap, p.uid));
-  const m = snap.mirror;
-  const team = snap.features.team;
 
   return (
     <header className="topbar">
@@ -89,24 +89,71 @@ export function Topbar() {
         </div>
       ) : null}
 
-      <button className={cx("chip", m.status === "unlinked" && "chip--warn")} onClick={() => source.linkFolder()} title={m.rootPath ? `Carpeta: ${m.rootPath}` : "Vincular la carpeta del escritorio"}>
-        {m.status === "unlinked" ? <IconFolderOff size={14} /> : m.status === "syncing" ? <Spinner /> : <IconFolder size={14} />}
-        {m.status === "unlinked" ? "Vincular carpeta" : m.status === "syncing" ? `Sincronizando ${m.pending}…` : "Carpeta al día"}
-        {m.status === "synced" ? <IconCloudUpload size={13} className="sf-faint" /> : null}
-      </button>
-
-      <button
-        className="chip"
-        disabled={!team}
-        title={!team ? "Conectar Magnific: próximamente en modo local" : snap.me.magnificConnected ? "Tu cuenta de Magnific: tus generaciones usan tus créditos" : "Conecta tu cuenta de Magnific para generar"}
-        onClick={() => set({ view: "team" })}
-      >
-        <IconBolt size={14} className={snap.me.magnificConnected ? "accent" : ""} />
-        {!team ? "Magnific · próximamente" : snap.me.magnificConnected ? `${(snap.me.magnificCredits ?? 0).toLocaleString("es-ES")} créditos` : "Conectar Magnific"}
-      </button>
-
-      <IconButton label={team ? "Invitar al equipo" : "Invitar: próximamente en modo local"} disabled={!team} onClick={() => set({ modal: "invite" })}><IconUsers size={16} /></IconButton>
-      <span className="topbar__me" title={snap.me.displayName}><Avatar name={snap.me.displayName} size={28} /></span>
+      <AccountMenu />
     </header>
+  );
+}
+
+/**
+ * The avatar opens a small menu with what used to sit in the top bar: the
+ * team folder, Magnific, inviting, and the way to Settings.
+ */
+function AccountMenu() {
+  const snap = useSnap();
+  const lib = useStore((s) => s.lib);
+  const { set, requestLeave, source } = useStore.getState();
+  const real = useMagnific();
+  const demo = lib?.mode === "demo";
+  // The demo shows its pretend account; elsewhere, the real connection.
+  const mag = demo ? { connected: snap.me.magnificConnected, credits: snap.me.magnificCredits } : real;
+  const m = snap.mirror;
+  const team = snap.features.team;
+  const folder = lib?.storage.kind === "folder" ? lib.storage.name : m.rootPath || null;
+  const toSettings = (tab: "storage" | "integrations" | "profile") => {
+    set({ dashSection: "settings", settingsTab: tab });
+    requestLeave();
+  };
+  return (
+    <Popover align="right" className="amenu" button={({ open, toggle }) => (
+      <button className={cx("topbar__me", open && "topbar__me--on")} title={snap.me.displayName} aria-label="Tu cuenta" onClick={toggle}>
+        <Avatar name={snap.me.displayName} size={28} />
+        {mag.connected ? <span className="topbar__me-dot" title="Magnific conectada" /> : null}
+      </button>
+    )}>
+      <div className="amenu__who">
+        <Avatar name={snap.me.displayName} size={32} />
+        <span className="amenu__name">
+          <strong>{snap.me.displayName}</strong>
+          <span className="sf-faint sf-small">{snap.me.email || lib?.label}</span>
+        </span>
+      </div>
+      <div className="menu__sep" />
+      <button className="menu__item" onClick={() => (demo ? source.linkFolder() : toSettings("storage"))}>
+        {m.status === "unlinked" && !folder ? <IconFolderOff size={15} /> : m.status === "syncing" ? <Spinner /> : <IconFolder size={15} />}
+        <span className="menu__label">
+          {folder ? `Carpeta «${folder.split("/").pop()}»` : "Carpeta del equipo"}
+          <span className="menu__hint">{m.status === "syncing" ? `Guardando ${m.pending}…` : folder ? "Al día" : "Sin carpeta: se guarda en este navegador"}</span>
+        </span>
+      </button>
+      <button className="menu__item" onClick={() => (demo ? set({ view: "team" }) : toSettings("integrations"))}>
+        <IconBolt size={15} className={mag.connected ? "accent" : ""} />
+        <span className="menu__label">
+          Magnific
+          <span className="menu__hint">{mag.connected ? (mag.credits !== undefined ? `${mag.credits.toLocaleString("es-ES")} créditos` : "Conectada") : "Conectar tu cuenta"}</span>
+        </span>
+        {mag.connected ? <span className="sok"><IconCheck size={10} stroke={3} /></span> : null}
+      </button>
+      <button className="menu__item" disabled={!team} onClick={() => set({ modal: "invite" })}>
+        <IconUsers size={15} />
+        <span className="menu__label">Invitar al equipo{!team ? <span className="menu__hint">Próximamente</span> : null}</span>
+      </button>
+      <div className="menu__sep" />
+      <button className="menu__item" onClick={() => toSettings("profile")}>
+        <IconSettings size={15} /> <span className="menu__label">Ajustes</span>
+      </button>
+      <button className="menu__item" onClick={() => requestLeave(null)}>
+        <IconHome size={15} /> <span className="menu__label">Volver al inicio</span>
+      </button>
+    </Popover>
   );
 }

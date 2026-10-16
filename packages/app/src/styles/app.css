@@ -547,12 +547,27 @@ button.tree__hint { padding: 0 14px 8px; }
 .pinfo__bar { display: block; width: auto; margin: 0 8px 4px; }
 
 /* Board search and filters, in the top bar */
-.tfilters { display: flex; align-items: center; gap: 6px; }
-.tfilters .filters__search { width: 240px; }
+.tfilters { width: 280px; padding-right: 3px; }
 .filters__clear { display: grid; place-items: center; width: 18px; height: 18px; padding: 0; border: 0; border-radius: 50%; background: var(--ghost); color: var(--fg-3); }
-.fbtn { position: relative; display: grid; place-items: center; width: 30px; height: 30px; border: 1px solid var(--line-1); border-radius: var(--r-md); background: var(--bg-2); color: var(--fg-2); }
-.fbtn:hover, .fbtn--on { color: var(--fg-0); border-color: var(--line-2); }
+.fbtn { position: relative; display: grid; place-items: center; width: 24px; height: 24px; border: 0; border-radius: var(--r-sm); background: none; color: var(--fg-3); }
+.fbtn:hover, .fbtn--on { color: var(--fg-0); background: var(--ghost); }
 .fbtn__count { position: absolute; top: -5px; right: -5px; min-width: 16px; padding: 0 4px; border-radius: 99px; font-size: 10px; font-weight: 700; line-height: 16px; color: #fff; background: var(--primary); }
-.fpanel { width: 320px; display: flex; flex-direction: column; gap: 4px; }
+.fpanel { width: 230px; display: flex; flex-direction: column; gap: 4px; top: calc(100% + 8px); right: -4px; }
 .fpanel .sf-select { width: 100%; max-width: none; }
-.fpanel .filters__statuses { padding: 2px 4px 6px; }
+.fpanel .picker { display: flex; align-items: center; gap: 4px; padding: 0 2px 4px; }
+.fpanel__clear { align-self: flex-start; margin: 6px 6px 0; }
+.picker__btn--empty { flex: 1; }
+.picker__placeholder { display: flex; align-items: center; justify-content: space-between; width: 100%; height: 30px; padding: 0 10px; border: 1px solid var(--line-1); border-radius: var(--r-md); background: var(--bg-2); color: var(--fg-3); font-size: 13px; }
+.picker__clear { display: grid; place-items: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 50%; background: var(--ghost); color: var(--fg-2); }
+.picker__clear:hover { background: var(--ghost-2); color: var(--fg-0); }
+
+/* Avatar menu (top bar) */
+button.topbar__me { position: relative; padding: 0; border: 0; border-radius: 50%; background: none; cursor: pointer; }
+.topbar__me--on, button.topbar__me:hover { box-shadow: 0 0 0 2px var(--line-2); }
+.topbar__me-dot { position: absolute; right: -1px; bottom: -1px; width: 9px; height: 9px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 2px var(--bg-0); }
+.amenu { width: 250px; top: calc(100% + 8px); }
+.amenu__who { display: flex; align-items: center; gap: 10px; padding: 6px 6px 8px; }
+.amenu__name { display: flex; flex-direction: column; min-width: 0; }
+.amenu__name strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.amenu .menu__hint { display: block; font-size: 11px; color: var(--fg-4); }
+.amenu .menu__item:disabled { opacity: .5; cursor: default; }

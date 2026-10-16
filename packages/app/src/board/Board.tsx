@@ -16,6 +16,7 @@ import { useSnap, useStore, type CardSize } from "../state/store";
 import { colorSlot, countsOf, coverOf, durationOf, filtersActive, matches, memberName, presenceAt, progressOf, statusOf } from "../state/selectors";
 import { Thumb } from "../components/media";
 import { Popover } from "../components/Popover";
+import { StatusPicker } from "../components/StatusPicker";
 import { nodeDragProps, useEndDrop, useNodeDrop } from "./dnd";
 
 export function Board() {
@@ -138,13 +139,14 @@ function Lane({ row }: { row: ProdNode }) {
   const all = childrenOf(snap.nodes, row.id);
   const active = filtersActive(filters);
   const units = active ? all.filter((u) => matches(snap, u, filters)) : all;
-  if (active && !units.length) return null;
   const unitLevel = p.levels[levelIndex(p, row) + 1]!;
   const empty = all.filter((u) => !snap.media.some((m) => m.nodeId === u.id) && !snap.takes.some((t) => t.nodeId === u.id));
   const st = statusOf(snap, row);
   const viewers = presenceAt(snap, row.id);
   const headDrop = useNodeDrop(row, "y");
   const endDrop = useEndDrop(row.id);
+  // After every hook: a row left empty by the filters is hidden.
+  if (active && !units.length) return null;
 
   return (
     <section className="lane">
@@ -298,47 +300,38 @@ function ProductionInfo({ scopeId }: { scopeId: Id | null }) {
   );
 }
 
-/** Search and filters of the board, in the top bar: search always visible, the rest behind the filter button. */
+/** Search and filters of the board, in the top bar: one field, with the filter button inside it. */
 export function BoardFilters() {
   const snap = useSnap();
   const { filters, setFilters } = useStore();
   const statuses = snap.production.statuses.filter((s) => !s.archived).sort((a, b) => a.order - b.order);
-  const toggle = (id: string) =>
-    setFilters({ statusIds: filters.statusIds.includes(id) ? filters.statusIds.filter((x) => x !== id) : [...filters.statusIds, id] });
   const active = filters.statusIds.length + (filters.assigneeId ? 1 : 0) + (filters.assetId ? 1 : 0);
   return (
-    <div className="tfilters">
-      <label className="filters__search">
-        <IconSearch size={14} />
-        <input placeholder="Buscar planos, notas…" value={filters.query} onChange={(e) => setFilters({ query: e.target.value })} />
-        {filters.query ? <button className="filters__clear" aria-label="Borrar búsqueda" onClick={() => setFilters({ query: "" })}><IconX size={12} /></button> : null}
-      </label>
-      <Popover align="right" className="fpanel" button={({ open, toggle: t }) => (
-        <button className={cx("fbtn", (open || active > 0) && "fbtn--on")} title="Filtros" aria-label="Filtros" onClick={t}>
-          <IconFilter size={15} stroke={1.7} />
+    <div className="filters__search tfilters">
+      <IconSearch size={14} />
+      <input placeholder="Buscar planos, notas…" value={filters.query} onChange={(e) => setFilters({ query: e.target.value })} />
+      {filters.query ? <button className="filters__clear" aria-label="Borrar búsqueda" onClick={() => setFilters({ query: "" })}><IconX size={12} /></button> : null}
+      <Popover align="right" className="fpanel" button={({ open, toggle }) => (
+        <button className={cx("fbtn", (open || active > 0) && "fbtn--on")} title="Filtros" aria-label="Filtros" onClick={toggle}>
+          <IconFilter size={14} stroke={1.7} />
           {active ? <span className="fbtn__count">{active}</span> : null}
         </button>
       )}>
         <div className="menu__title">Estado</div>
-        <div className="filters__statuses">
-          {statuses.map((s) => (
-            <button key={s.id} className={cx("fchip", filters.statusIds.includes(s.id) && "fchip--on")} style={filters.statusIds.includes(s.id) ? { borderColor: s.color, color: s.color } : undefined} onClick={() => toggle(s.id)}>
-              <span className="sf-pill__dot" style={{ background: s.color }} /> {s.name}
-            </button>
-          ))}
-        </div>
+        <StatusPicker
+          statuses={statuses}
+          value={filters.statusIds[0] ?? null}
+          placeholder="Seleccionar estado"
+          onChange={(id) => setFilters({ statusIds: [id] })}
+          onClear={() => setFilters({ statusIds: [] })}
+        />
         <div className="menu__title">Responsable</div>
         <select className="sf-select" value={filters.assigneeId ?? ""} onChange={(e) => setFilters({ assigneeId: e.target.value || null })}>
-          <option value="">Cualquier responsable</option>
+          <option value="">Cualquiera</option>
           {snap.members.filter((m) => m.role !== "viewer").map((m) => <option key={m.uid} value={m.uid}>{m.displayName}</option>)}
         </select>
-        <div className="menu__title">Desglose</div>
-        <select className="sf-select" value={filters.assetId ?? ""} onChange={(e) => setFilters({ assetId: e.target.value || null })}>
-          <option value="">Reparto, props, localización…</option>
-          {snap.assets.filter((a) => a.type !== "style").map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
-        </select>
-        {filtersActive(filters) ? (
-          <Button size="sm" variant="ghost" onClick={() => setFilters({ query: "", statusIds: [], assigneeId: null, assetId: null })}><IconX size={13} /> Limpiar filtros</Button>
+        {active ? (
+          <button className="link sf-small fpanel__clear" onClick={() => setFilters({ statusIds: [], assigneeId: null, assetId: null })}>Quitar filtros</button>
         ) : null}
       </Popover>
     </div>
