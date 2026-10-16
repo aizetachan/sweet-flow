@@ -106,9 +106,9 @@
 .lane__cards { display: flex; gap: 10px; overflow-x: auto; padding: 4px 4px 6px; margin: -4px -4px -2px; }
 
 /* cards */
-.board__body { --card: 196px; }
+.board__body { --card: 268px; }
 .board__body.cards-s { --card: 150px; }
-.board__body.cards-l { --card: 268px; }
+.board__body.cards-l { --card: 536px; }
 .card { position: relative; flex: none; width: var(--card); display: flex; flex-direction: column; gap: 7px; padding: 7px; border-radius: var(--r-lg); border: 1px solid var(--line-0); background: var(--bg-2); cursor: pointer; transition: border-color .12s, transform .12s; }
 .card:hover { border-color: var(--line-2); }
 .card--on { border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary); }

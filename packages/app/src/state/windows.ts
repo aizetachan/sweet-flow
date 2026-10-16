@@ -45,7 +45,9 @@ export function hostWindows(share: WindowShare, onChange: (list: PoppedWindow[])
 /** Main window: open (or bring forward) the window of a node. */
 export function popOutWindow(url: string, productionId: Id, nodeId: Id): void {
   const name = `sf-${productionId}-${nodeId}`;
-  const win = window.open(url, name, "popup,width=560,height=880");
+  // As big as the screen (docs/INTERFAZ.md §3): a full working window, not a copy of the side panel's shape.
+  const sc = window.screen as Screen & { availLeft?: number; availTop?: number };
+  const win = window.open(url, name, `popup,left=${sc.availLeft ?? 0},top=${sc.availTop ?? 0},width=${sc.availWidth},height=${sc.availHeight}`);
   if (!win) return;
   win.focus();
   children.set(name, { win, nodeId });

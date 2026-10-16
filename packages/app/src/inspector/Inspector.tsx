@@ -163,8 +163,7 @@ function InspectorBody({ floatKey, onDragHandle }: { floatKey?: string; onDragHa
   const comments = snap.comments.filter((c) => c.nodeId === node.id && !c.resolved).length;
   const hasVideo = snap.media.some((m) => m.kind === "video" && m.status === "ready" && !m.archived && ancestorsOf(snap.nodes, node).some((a) => a.id === m.nodeId));
   const { features } = snap;
-  const canCut = hasVideo && snap.features.takes;
-  const tab: PanelTab = panel.tab === "cut" && !canCut ? "produce" : panel.tab;
+  const tab: PanelTab = panel.tab === "cut" && !hasVideo ? "produce" : panel.tab;
   const path = folderPath(p, snap.nodes, node);
 
   return (
@@ -224,7 +223,7 @@ function InspectorBody({ floatKey, onDragHandle }: { floatKey?: string; onDragHa
         onChange={(v) => panel.setPanel({ tab: v })}
         items={[
           { id: "produce", label: "Producir" },
-          ...(canCut ? [{ id: "cut" as const, label: "Cortar y repartir" }] : []),
+          ...(hasVideo ? [{ id: "cut" as const, label: "Cortar y repartir" }] : []),
           { id: "review", label: "Revisión", count: comments },
           { id: "activity", label: "Actividad" },
         ]}

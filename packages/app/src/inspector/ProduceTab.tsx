@@ -67,7 +67,7 @@ export function ProduceTab({ node }: { node: ProdNode }) {
         </section>
       ) : null}
 
-      {snap.features.takes ? <TakesHere node={node} /> : null}
+      <TakesHere node={node} />
     </div>
   );
 }
@@ -77,7 +77,6 @@ function MediaMeta({ media, node }: { media: Media; node: ProdNode }) {
   const { source } = useStore();
   const { setPanel } = usePanel();
   const inUse = snap.takes.some((t) => t.mediaId === media.id);
-  const takes = snap.features.takes;
   const unit = isUnit(snap.production, node);
   const g = media.generation;
   return (
@@ -87,10 +86,10 @@ function MediaMeta({ media, node }: { media: Media; node: ProdNode }) {
         <span className="sf-muted sf-small">{g?.model} · {memberName(snap, media.createdBy)} · {new Date(media.createdAt).toLocaleString("es-ES", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
         {g?.credits ? <span className="sf-faint sf-small" title={`Créditos de ${memberName(snap, g.launchedBy)}`}><IconBolt size={11} /> {g.credits}</span> : null}
         <span className="mmeta__spacer" />
-        {takes && media.status === "ready" && media.kind === "video" ? (
+        {media.status === "ready" && media.kind === "video" ? (
           <Button size="sm" onClick={() => setPanel({ tab: "cut", activeMediaId: media.id })}><IconCut size={13} /> Cortar</Button>
         ) : null}
-        {takes && media.status === "ready" && (unit || media.kind === "image") ? (
+        {media.status === "ready" && (unit || media.kind === "image") ? (
           <Button size="sm" variant="primary" onClick={() => source.placeTakes(media.id, [{ segment: { inSec: 0, outSec: media.durationSec ?? 0 }, target: { nodeId: node.id } }])}>
             <IconCheck size={13} /> Usar como toma
           </Button>

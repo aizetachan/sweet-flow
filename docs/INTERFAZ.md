@@ -177,6 +177,9 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
 
 ## 3. Ventanas aparte
 
+La ventana aparte se abre **del tamaño de la pantalla** (no con la forma del
+panel lateral). Su diseño a pantalla completa está por definir.
+
 - Cada plano o escena se puede **abrir en una ventana aparte** (botón en la
   cabecera del panel). Es una ventana del navegador o de la app que se puede
   llevar a otro monitor, y se pueden tener varias a la vez.

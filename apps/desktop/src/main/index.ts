@@ -4,7 +4,7 @@
  * here or in utility processes; the renderer is sandboxed.
  */
 
-import { app, BrowserWindow, shell } from "electron";
+import { app, BrowserWindow, screen, shell } from "electron";
 import path from "node:path";
 import { VERSION_ARG } from "../shared/api";
 import { DEV_URL, isAppUrl } from "./env";
@@ -48,11 +48,12 @@ function createWindow(): BrowserWindow {
 function lockNavigation(win: BrowserWindow): void {
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (isAppUrl(url)) {
+      // A popped-out node opens as big as the screen it starts on (it can be moved to another monitor).
+      const area = screen.getDisplayMatching(win.getBounds()).workArea;
       return {
         action: "allow",
         overrideBrowserWindowOptions: {
-          width: 560,
-          height: 880,
+          ...area,
           minWidth: 380,
           minHeight: 480,
           backgroundColor: "#0b0b0c",
