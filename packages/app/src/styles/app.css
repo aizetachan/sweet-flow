@@ -343,7 +343,8 @@ button.tree__hint { padding: 0 14px 8px; }
 .dentry__rename { height: 26px; padding: 0 6px; width: 100%; }
 .dentry__ficon { color: var(--warn); flex: none; }
 .dentry__acts { position: absolute; top: 6px; right: 6px; display: flex; gap: 2px; padding: 2px; border-radius: var(--r-md); background: var(--bg-3); opacity: 0; transition: opacity .1s; }
-.dcard:hover .dentry__acts, .dcard:focus-within .dentry__acts, .drow:hover .dentry__acts, .drow:focus-within .dentry__acts { opacity: 1; }
+/* Only on hover, or keyboard focus: a mouse click leaves focus on the button and must not keep them shown. */
+.dcard:hover .dentry__acts, .dcard:has(:focus-visible) .dentry__acts, .drow:hover .dentry__acts, .drow:has(:focus-visible) .dentry__acts { opacity: 1; }
 
 .drow { position: relative; display: grid; grid-template-columns: minmax(0, 2.2fr) minmax(120px, 1fr) 110px 130px 70px; align-items: center; gap: 12px; min-height: 44px; padding: 0 10px; border-radius: var(--r-sm); border: 1px solid transparent; border-bottom-color: var(--line-0); user-select: none; outline: none; }
 .drow:hover { background: var(--ghost); }

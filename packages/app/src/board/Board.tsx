@@ -330,6 +330,11 @@ export function BoardFilters() {
           <option value="">Cualquiera</option>
           {snap.members.filter((m) => m.role !== "viewer").map((m) => <option key={m.uid} value={m.uid}>{m.displayName}</option>)}
         </select>
+        <div className="menu__title">Desglose</div>
+        <select className="sf-select" value={filters.assetId ?? ""} onChange={(e) => setFilters({ assetId: e.target.value || null })}>
+          <option value="">Reparto, props, localización…</option>
+          {snap.assets.filter((a) => a.type !== "style").map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+        </select>
         {active ? (
           <button className="link sf-small fpanel__clear" onClick={() => setFilters({ statusIds: [], assigneeId: null, assetId: null })}>Quitar filtros</button>
         ) : null}

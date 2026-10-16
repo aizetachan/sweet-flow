@@ -108,7 +108,8 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
   **tu avatar**.
   - El botón de **filtros** va dentro del buscador, a la derecha, con el número
     de filtros activos. Abre un panel estrecho: **estado** (se elige uno; por
-    defecto «Seleccionar estado», con una × para quitarlo) y **responsable**.
+    defecto «Seleccionar estado», con una × para quitarlo), **responsable** y
+    **desglose** (reparto, props y localizaciones de la Biblioteca).
   - El **avatar abre un menú**: tu nombre; la carpeta del equipo y su estado;
     Magnific (conectada, con tus créditos y un tick verde, o «Conectar tu
     cuenta»); invitar al equipo; Ajustes; volver al inicio. Un punto verde en el
