@@ -26,6 +26,10 @@ export interface FolderFs {
   readText(path: string): Promise<string | null>;
   /** Creates or replaces the file, and the folders above it. */
   writeText(path: string, text: string): Promise<void>;
+  /** Binary files (images, video). Creates the folders above. */
+  writeBlob(path: string, data: Blob): Promise<void>;
+  /** null when the file does not exist. */
+  readBlob(path: string): Promise<Blob | null>;
   mkdir(path: string): Promise<void>;
   /** Moves or renames a file or a folder (with its contents). */
   move(from: string, to: string): Promise<void>;
@@ -46,6 +50,7 @@ export class MemoryFolderFs implements FolderFs {
   readonly kind = "memory" as const;
   readonly files = new Map<string, { text: string; modified: number }>();
   readonly dirs = new Set<string>([""]);
+  readonly blobs = new Map<string, Blob>();
   private tick = 0;
 
   async list(dir: string): Promise<FsEntry[]> {
@@ -74,6 +79,16 @@ export class MemoryFolderFs implements FolderFs {
     this.files.set(path, { text, modified: ++this.tick });
   }
 
+  async writeBlob(path: string, data: Blob): Promise<void> {
+    await this.mkdir(splitPath(path).dir);
+    this.blobs.set(path, data);
+    this.files.set(path, { text: "", modified: ++this.tick });
+  }
+
+  async readBlob(path: string): Promise<Blob | null> {
+    return this.blobs.get(path) ?? null;
+  }
+
   async mkdir(path: string): Promise<void> {
     const parts = path.split("/").filter(Boolean);
     for (let i = 1; i <= parts.length; i++) this.dirs.add(parts.slice(0, i).join("/"));
@@ -83,6 +98,7 @@ export class MemoryFolderFs implements FolderFs {
     const under = (p: string) => p === from || p.startsWith(`${from}/`);
     const moved = (p: string) => to + p.slice(from.length);
     for (const [p, f] of [...this.files]) if (under(p)) (this.files.delete(p), this.files.set(moved(p), f));
+    for (const [p, b] of [...this.blobs]) if (under(p)) (this.blobs.delete(p), this.blobs.set(moved(p), b));
     for (const d of [...this.dirs]) if (under(d)) (this.dirs.delete(d), this.dirs.add(moved(d)));
     await this.mkdir(splitPath(to).dir);
   }
@@ -90,6 +106,7 @@ export class MemoryFolderFs implements FolderFs {
   async remove(path: string): Promise<void> {
     const under = (p: string) => p === path || p.startsWith(`${path}/`);
     for (const p of [...this.files.keys()]) if (under(p)) this.files.delete(p);
+    for (const p of [...this.blobs.keys()]) if (under(p)) this.blobs.delete(p);
     for (const d of [...this.dirs]) if (d && under(d)) this.dirs.delete(d);
   }
 }

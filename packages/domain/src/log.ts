@@ -11,7 +11,7 @@
 
 import { parseStamp, type Stamp } from "./clock";
 import { byNumber, splitTrash } from "./tree";
-import type { Id, LevelDef, Member, Millis, ProdNode, Production, StatusDef } from "./types";
+import type { Id, LevelDef, Media, Member, Millis, ProdNode, Production, StatusDef } from "./types";
 
 /** Bump when an event's shape changes incompatibly. */
 export const LOG_VERSION = 1;
@@ -41,11 +41,19 @@ export type LogEventBody =
    * changes too (edited by hand, or taken in the new parent).
    */
   | { type: "node.moved"; id: Id; parentId: Id | null; order: number; number?: number }
-  /** Removes the node and its whole subtree. */
+  /** To the production's trash, with its subtree. */
   | { type: "node.trashed"; id: Id }
   /** `number`: a new one when its code was taken while it was in the trash. */
   | { type: "node.restored"; id: Id; number?: number }
-  | { type: "node.deleted"; id: Id };
+  /** Removes the node and its whole subtree. */
+  | { type: "node.deleted"; id: Id }
+  /** A generated (or uploaded) image or video, from the moment it is requested. */
+  | { type: "media.added"; media: MediaRecord }
+  | { type: "media.updated"; id: Id; patch: MediaPatch };
+
+/** What the log keeps of a media: the URL to show it is resolved by each device. */
+export type MediaRecord = Omit<Media, "productionId" | "url" | "thumbUrl">;
+export type MediaPatch = Partial<Pick<Media, "status" | "progress" | "archived" | "error" | "file" | "remote" | "width" | "height" | "durationSec">>;
 
 export type LogEvent = LogEventBody & {
   v: number;
@@ -69,6 +77,8 @@ export interface LogState {
   /** null until a `production.created` event is seen. */
   production: Production | null;
   nodes: ProdNode[];
+  /** Media of nodes that still exist (board or trash). */
+  media: Media[];
   members: Member[];
   conflicts: NumberConflict[];
   /** Highest stamp folded; feed it to `hlcObserve` before writing new events. */
@@ -127,6 +137,8 @@ const TYPES = new Set<string>([
   "node.trashed",
   "node.restored",
   "node.deleted",
+  "media.added",
+  "media.updated",
 ]);
 
 function isLogEvent(e: unknown): e is LogEvent {
@@ -172,6 +184,7 @@ export function foldLog(events: LogEvent[]): LogState {
   const numberAt = new Map<Id, Stamp>();
   const deleted = new Set<Id>();
   const members = new Map<Id, Member>();
+  const media = new Map<Id, MediaRecord>();
 
   for (const e of sorted) {
     const at = wallOf(e.at);
@@ -243,6 +256,14 @@ export function foldLog(events: LogEvent[]): LogState {
         numberAt.set(e.id, e.at);
         break;
       }
+      case "media.added":
+        if (!media.has(e.media.id)) media.set(e.media.id, e.media);
+        break;
+      case "media.updated": {
+        const m = media.get(e.id);
+        if (m) media.set(e.id, { ...m, ...e.patch });
+        break;
+      }
       case "node.deleted":
         deleted.add(e.id);
         nodes.delete(e.id);
@@ -255,7 +276,9 @@ export function foldLog(events: LogEvent[]): LogState {
   // Codes only clash on the board: what is in the trash keeps its number untouched.
   const conflicts = production ? separateClashes(production, splitTrash(live).live, numberAt) : [];
 
-  return { production, nodes: live, members: [...members.values()], conflicts, lastStamp: sorted.at(-1)?.at ?? null };
+  const nodeIds = new Set(live.map((n) => n.id));
+  const kept = [...media.values()].filter((m) => nodeIds.has(m.nodeId)).map((m) => ({ ...m, productionId }));
+  return { production, nodes: live, media: kept, members: [...members.values()], conflicts, lastStamp: sorted.at(-1)?.at ?? null };
 }
 
 /** Drop nodes whose parent is missing (deleted, or never synced). */

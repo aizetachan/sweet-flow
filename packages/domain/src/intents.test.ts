@@ -17,6 +17,7 @@ import {
   planTrashNode,
   splitTrash,
   planUpdateNode,
+  nextMediaVersion,
   ZERO_HLC,
   type Hlc,
   type LogEvent,
@@ -183,5 +184,18 @@ describe("structure intents", () => {
     run((s) => planRestoreNode(s.production!, s.nodes, a));
     expect(state().nodes.find((n) => n.id === a)).toMatchObject({ number: 10 });
     expect(state().nodes.find((n) => n.id === a)?.trashedAt).toBeUndefined();
+  });
+
+  it("keeps media in the log, merges its updates and drops it with its node", () => {
+    const { run, state } = session();
+    const sh = run((s) => planCreateNode(s.production!, s.nodes, null, "msh")).nodeId!;
+    const base = { nodeId: sh, kind: "image" as const, origin: "generated" as const, archived: false, createdBy: "u", createdAt: 1 };
+    run(() => ({ events: [{ type: "media.added", media: { ...base, id: "m1", version: nextMediaVersion([], sh, "image"), status: "queued", progress: 0 } }] }));
+    run(() => ({ events: [{ type: "media.updated", id: "m1", patch: { status: "ready", progress: 100, file: "SH0010_img_v001.png" } }] }));
+    expect(state().media).toMatchObject([{ id: "m1", version: 1, status: "ready", file: "SH0010_img_v001.png", productionId: "p" }]);
+    expect(nextMediaVersion(state().media, sh, "image")).toBe(2);
+    expect(nextMediaVersion(state().media, sh, "video")).toBe(1);
+    run((s) => planDeleteNode(s.nodes, sh));
+    expect(state().media).toEqual([]);
   });
 });

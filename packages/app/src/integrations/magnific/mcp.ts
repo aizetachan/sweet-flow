@@ -7,6 +7,7 @@
  * desktop app will do it from its main process.
  */
 
+import { decode } from "@toon-format/toon";
 import { accessToken, NotConnected } from "./auth";
 
 const ENDPOINT = "/magnific/mcp";
@@ -16,7 +17,7 @@ let session: Promise<string | null> | null = null;
 let seq = 0;
 
 export interface ToolResult {
-  /** The tool's JSON output when it gives one (`structuredContent`, or text that parses as JSON). */
+  /** The tool's output as data (`structuredContent`, or its text read as JSON or TOON). */
   data: unknown;
   /** The tool's text output, as is. */
   text: string;
@@ -32,14 +33,22 @@ export async function callTool(name: string, args: Record<string, unknown> = {})
   const text = (res.content ?? []).filter((c) => c.type === "text").map((c) => c.text ?? "").join("\n");
   if (res.isError) throw new Error(text || `Magnific ha fallado en ${name}.`);
   let data: unknown = res.structuredContent;
-  if (data === undefined) {
-    try {
-      data = JSON.parse(text);
-    } catch {
-      data = undefined;
-    }
-  }
+  if (data === undefined) data = parseText(text);
   return { data, text };
+}
+
+/** Magnific answers in JSON or in TOON (a compact JSON-like text); both become the same data. */
+function parseText(text: string): unknown {
+  try {
+    return JSON.parse(text);
+  } catch {
+    // not JSON
+  }
+  try {
+    return decode(text);
+  } catch {
+    return undefined;
+  }
 }
 
 async function rpc(method: string, params: unknown, retried = false): Promise<unknown> {

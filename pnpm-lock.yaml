@@ -96,6 +96,9 @@ importers:
       '@tabler/icons-react':
         specifier: ^3.44.0
         version: 3.49.0(react@18.3.1)
+      '@toon-format/toon':
+        specifier: 4.1.1
+        version: 4.1.1
       firebase:
         specifier: ^12.19.0
         version: 12.19.0
@@ -1338,6 +1341,9 @@ packages:
 
   '@tabler/icons@3.49.0':
     resolution: {integrity: sha512-l+GnSkFETx0U26icxv1VUFnxxiTqXfCcVRiRAnyMwibupM2S2L/hSaZ9gmSgz01rkrsH/93NvLsxykqdanc6lw==}
+
+  '@toon-format/toon@4.1.1':
+    resolution: {integrity: sha512-SGCkS7IjVpwRmGPgnY8ENKpAf0EdAnZDOQkvFW0d2cgOpdn9FEFl7sTgryESyypXrWr0YajHGpwsAUX4zw9ZvA==}
 
   '@tootallnate/once@2.0.1':
     resolution: {integrity: sha512-HqmEUIGRJ5fSXchkVgR5F7qn48bDBzv0kWj/Kfu5e6uci4UlEeng4331LnBkWffb++Ei3FOVLxo8JJWMFBDMeQ==}
@@ -5616,6 +5622,8 @@ snapshots:
       react: 18.3.1
 
   '@tabler/icons@3.49.0': {}
+
+  '@toon-format/toon@4.1.1': {}
 
   '@tootallnate/once@2.0.1':
     optional: true

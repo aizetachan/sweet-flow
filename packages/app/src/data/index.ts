@@ -10,6 +10,7 @@
  */
 
 import { isDesktop } from "../platform";
+import { MagnificGenerator } from "../integrations/magnific/generator";
 import { buildSeed } from "./mock/seed";
 import { MockSource } from "./mock/MockSource";
 import { browserLibrary, demoLibrary, folderLibrary, summarize, type Library, type LibraryState } from "./library";
@@ -29,6 +30,9 @@ let demo: MockSource | undefined;
 export type StorageStatus = { status: "browser" } | { status: "folder"; name: string } | { status: "reconnect"; name: string };
 let prepared: { library: Library; status: StorageStatus } | null = null;
 
+/** Local and folder modes generate with Magnific, with each person's own account. */
+const generator = new MagnificGenerator();
+
 /**
  * Before the app renders: in local mode, open the remembered team folder.
  * If the browser wants a click to allow it again, the app starts on this
@@ -40,13 +44,13 @@ export async function initStorage(mode = dataMode()): Promise<void> {
   const found = await restoreLocalFolder();
   if (found.status === "ready") {
     try {
-      prepared = { library: await folderLibrary(found.fs), status: { status: "folder", name: found.fs.label } };
+      prepared = { library: await folderLibrary(found.fs, generator), status: { status: "folder", name: found.fs.label } };
       return;
     } catch (err) {
       console.error("[carpeta] no se pudo abrir la carpeta del equipo", err);
     }
   }
-  prepared = { library: browserLibrary(), status: found.status === "reconnect" ? { status: "reconnect", name: found.name } : { status: "browser" } };
+  prepared = { library: browserLibrary(generator), status: found.status === "reconnect" ? { status: "reconnect", name: found.name } : { status: "browser" } };
 }
 
 export function storageStatus(): StorageStatus {
@@ -61,20 +65,20 @@ export async function openTeamFolder(): Promise<Library | null> {
   const { restoreLocalFolder } = await import("./folder/browserFs");
   const found = await restoreLocalFolder();
   if (found.status !== "ready") return null;
-  const library = await folderLibrary(found.fs);
+  const library = await folderLibrary(found.fs, generator);
   prepared = { library, status: { status: "folder", name: found.fs.label } };
   return library;
 }
 
 /** Back to this browser's own storage (the folder is forgotten). */
 export function switchToBrowserStorage(): Library {
-  const library = browserLibrary();
+  const library = browserLibrary(generator);
   prepared = { library, status: { status: "browser" } };
   return library;
 }
 
 export function createLibrary(mode = dataMode()): Library {
-  if (mode === "local") return prepared?.library ?? browserLibrary();
+  if (mode === "local") return prepared?.library ?? browserLibrary(generator);
   if (mode === "firebase") {
     return singleLibrary("Firebase", () => deferred(() => import("./firebase/FirebaseSource").then((m) => new m.FirebaseSource())));
   }

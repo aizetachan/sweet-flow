@@ -74,3 +74,8 @@ export function entryFolderNames(siblings: Array<{ id: string; name: string; cre
   }
   return out;
 }
+
+/** Next version (v001, v002…) of a node's media of one kind: one more than the highest so far. */
+export function nextMediaVersion(media: Array<{ nodeId: string; kind: string; version: number }>, nodeId: string, kind: string): number {
+  return Math.max(0, ...media.filter((m) => m.nodeId === nodeId && m.kind === kind).map((m) => m.version)) + 1;
+}

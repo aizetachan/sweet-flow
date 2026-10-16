@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { IconArchive, IconArchiveOff, IconBolt, IconCheck, IconCut, IconPhoto, IconTrash, IconVideo, IconWand } from "@tabler/icons-react";
 import {
   ancestorsOf,
@@ -16,12 +16,9 @@ import { Avatar, Button, cx, IconButton, Segmented } from "@sweetflow/ui";
 import { useSnap, useStore } from "../state/store";
 import { usePanel } from "./panel";
 import { memberName } from "../state/selectors";
+import { MODELS } from "../data/generation";
 import { Player, Thumb } from "../components/media";
 
-const MODELS: Record<"image" | "video", string[]> = {
-  image: ["Nano Banana Pro", "Recraft V4.1", "Auto (Magnific elige)"],
-  video: ["Seedance 2.0", "Kling 2.5", "Seedance 2.0 Fast", "Auto (Magnific elige)"],
-};
 
 export function ProduceTab({ node }: { node: ProdNode }) {
   const snap = useSnap();
@@ -70,7 +67,7 @@ export function ProduceTab({ node }: { node: ProdNode }) {
         </section>
       ) : null}
 
-      <TakesHere node={node} />
+      {snap.features.takes ? <TakesHere node={node} /> : null}
     </div>
   );
 }
@@ -80,6 +77,7 @@ function MediaMeta({ media, node }: { media: Media; node: ProdNode }) {
   const { source } = useStore();
   const { setPanel } = usePanel();
   const inUse = snap.takes.some((t) => t.mediaId === media.id);
+  const takes = snap.features.takes;
   const unit = isUnit(snap.production, node);
   const g = media.generation;
   return (
@@ -89,10 +87,10 @@ function MediaMeta({ media, node }: { media: Media; node: ProdNode }) {
         <span className="sf-muted sf-small">{g?.model} · {memberName(snap, media.createdBy)} · {new Date(media.createdAt).toLocaleString("es-ES", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
         {g?.credits ? <span className="sf-faint sf-small" title={`Créditos de ${memberName(snap, g.launchedBy)}`}><IconBolt size={11} /> {g.credits}</span> : null}
         <span className="mmeta__spacer" />
-        {media.status === "ready" && media.kind === "video" ? (
+        {takes && media.status === "ready" && media.kind === "video" ? (
           <Button size="sm" onClick={() => setPanel({ tab: "cut", activeMediaId: media.id })}><IconCut size={13} /> Cortar</Button>
         ) : null}
-        {media.status === "ready" && (unit || media.kind === "image") ? (
+        {takes && media.status === "ready" && (unit || media.kind === "image") ? (
           <Button size="sm" variant="primary" onClick={() => source.placeTakes(media.id, [{ segment: { inSec: 0, outSec: media.durationSec ?? 0 }, target: { nodeId: node.id } }])}>
             <IconCheck size={13} /> Usar como toma
           </Button>
@@ -106,6 +104,7 @@ function MediaMeta({ media, node }: { media: Media; node: ProdNode }) {
         </IconButton>
       </div>
       {g?.prompt ? <p className="mmeta__prompt">{g.prompt}</p> : null}
+      {media.status === "failed" ? <p className="mmeta__error">{media.error ?? "No se ha podido generar."}</p> : null}
     </div>
   );
 }
@@ -123,13 +122,33 @@ function GenerateBox({ node }: { node: ProdNode }) {
   const [from, setFrom] = useState("");
   const images = snap.media.filter((m) => m.kind === "image" && m.status === "ready" && !m.archived && (m.nodeId === node.id || m.nodeId === node.parentId));
   const fallback = ancestorsOf(snap.nodes, node).map((a) => [a.title, a.notes].filter(Boolean).join(": ")).filter(Boolean).join(". ");
-  const cost = kind === "video" ? Math.round(dur * 9) : 8;
+  const guess = kind === "video" ? Math.round(dur * 9) : 8;
+  const [cost, setCost] = useState<number | null>(null);
+  // Real cost from the provider when the source can ask (Magnific's simulate_cost); a guess otherwise.
+  useEffect(() => {
+    if (!source.estimate) return setCost(null);
+    let alive = true;
+    setCost(null);
+    const t = setTimeout(() => {
+      void source.estimate!({ nodeId: node.id, kind, prompt: prompt.trim() || fallback || "x", model, durationSec: kind === "video" ? dur : undefined }).then((c) => alive && setCost(c));
+    }, 350);
+    return () => {
+      alive = false;
+      clearTimeout(t);
+    };
+  }, [source, node.id, kind, model, dur]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!snap.me.magnificConnected) {
     return (
       <div className="note note--cta">
         <IconBolt size={16} /> Conecta tu cuenta de Magnific para generar con tus créditos.
-        <Button size="sm" variant="primary" onClick={() => useStore.getState().set({ view: "team" })}>Conectar</Button>
+        <Button size="sm" variant="primary" onClick={() => {
+          const st = useStore.getState();
+          if (st.lib?.mode === "demo") return st.set({ view: "team" });
+          // Connected from the dashboard's Settings › Integrations.
+          st.set({ dashSection: "settings", settingsTab: "integrations" });
+          st.requestLeave();
+        }}>Conectar</Button>
       </div>
     );
   }
@@ -173,7 +192,7 @@ function GenerateBox({ node }: { node: ProdNode }) {
         setPrompt("");
       }}>
         <IconWand size={15} /> Generar {kind === "video" ? `${dur}s de vídeo` : "imagen"}
-        <span className="gen__cost"><IconBolt size={12} /> {cost}</span>
+        <span className="gen__cost" title={cost === null && source.estimate ? "Calculando el coste…" : "Créditos que gasta"}><IconBolt size={12} /> {cost ?? (source.estimate ? "…" : guess)}</span>
       </Button>
     </section>
   );

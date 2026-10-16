@@ -5,8 +5,12 @@ import { LocalSource } from "../local/LocalSource";
 import { FolderEntries } from "./folderEntries";
 import { FolderLogStore } from "./FolderLogStore";
 import { MemoryFolderFs } from "./fs";
+import { ProductionFiles } from "./ProductionFiles";
+import type { GenerationRequest, Generator } from "../generation";
 
 const entry = (id: string, kind: LibraryEntry["kind"], name: string, parentId: string | null, createdAt = 1): LibraryEntry => ({ id, kind, name, parentId, createdAt, updatedAt: createdAt });
+let seq = 0;
+const uniq = (p: string) => `${p}${++seq}`;
 const me: Member = { uid: "u1", email: "", displayName: "Uno", role: "owner", magnificConnected: false };
 
 describe("team folder", () => {
@@ -71,5 +75,52 @@ describe("team folder", () => {
     reopened.subscribe((s) => (titles = s.nodes.map((n) => n.title)));
     expect(titles).toEqual(["Apertura"]);
     reopened.dispose();
+  });
+
+  it("generates into the shot's _media folder and the folders follow renames", async () => {
+    const fs = new MemoryFolderFs();
+    const lib = new FolderEntries(fs, "dev-a", () => "u1");
+    await lib.init();
+    lib.save([entry("p1", "production", "Anuncio", null)]);
+    const asked: GenerationRequest[] = [];
+    let polls = 0;
+    const generator: Generator = {
+      provider: "test",
+      connected: () => true,
+      estimate: async () => 60,
+      start: async (req) => (asked.push(req), { id: "c1", folder: "ref" }),
+      poll: async () => (++polls < 2 ? { status: "pending", progress: 40 } : { status: "done", url: "https://cdn/x.png", width: 1920, height: 1080 }),
+      download: async () => new Blob(["png"], { type: "image/png" }),
+      viewUrl: (u) => u,
+    };
+    const base = () => lib.pathOf("p1");
+    const src = new LocalSource({
+      store: new FolderLogStore(fs, base),
+      files: new ProductionFiles(fs, base),
+      generator,
+      deviceId: "dev-a",
+      me,
+      create: { id: "p1", name: "Anuncio", levels: defaultLevels(uniq), statuses: defaultStatuses(uniq) },
+    });
+    await src.ready;
+    const sq = src.createNode(null, "Apertura");
+    const sc = src.createNode(sq, "Puerto");
+    const sh = src.createNode(sc, "Faro");
+    src.generate({ nodeId: sh, kind: "image", prompt: "un faro", model: "Recraft V4.1" });
+    for (let i = 0; i < 100 && !fs.blobs.size; i++) await new Promise((r) => setTimeout(r, 50));
+    await new Promise((r) => setTimeout(r, 10));
+
+    expect(asked[0]!.folderPath).toEqual(["Anuncio", "SQ010_Apertura", "SC010_Puerto", "SH0010_Faro"]);
+    expect([...fs.blobs.keys()]).toEqual(["Anuncio/SQ010_Apertura/SC010_Puerto/SH0010_Faro/_media/SH0010_img_v001.png"]);
+    let media: Array<{ status: string; file?: string; version: number }> = [];
+    src.subscribe((s) => (media = s.media));
+    expect(media).toMatchObject([{ status: "ready", file: "SH0010_img_v001.png", version: 1 }]);
+
+    // Renaming the scene moves its folder, with the shot and its media inside.
+    src.updateNode(sc, { title: "Muelle" });
+    await src.flushed();
+    await new Promise((r) => setTimeout(r, 20));
+    expect([...fs.blobs.keys()]).toEqual(["Anuncio/SQ010_Apertura/SC010_Muelle/SH0010_Faro/_media/SH0010_img_v001.png"]);
+    src.dispose();
   });
 });

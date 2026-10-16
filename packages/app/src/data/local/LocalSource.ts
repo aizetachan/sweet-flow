@@ -6,8 +6,9 @@
  * the background (retrying on failure); changes from other devices arrive
  * through `LogStore.watch` and are merged on top.
  *
- * Structure only for now: production, levels, statuses, nodes and members.
- * Generation, takes, comments and presence come in later steps.
+ * Structure, and generation when a provider is given: the job is recorded in
+ * the log (requested, rendering, ready) and the file is saved in the node's
+ * `_media/` folder. Takes, comments and presence come in later steps.
  */
 
 import {
@@ -16,8 +17,13 @@ import {
   hlcObserve,
   hlcTick,
   LOG_VERSION,
+  codeOf,
+  folderPath,
   logFilePath,
+  mediaFileName,
+  nextMediaVersion,
   parseLog,
+  safeTitle,
   parseStamp,
   planCreateNode,
   planDeleteNode,
@@ -37,6 +43,8 @@ import {
   type LogEvent,
   type LogEventBody,
   type LogState,
+  type Media,
+  type MediaPatch,
   type Member,
   type NodePatch,
   type Plan,
@@ -45,6 +53,8 @@ import {
   type StatusDef,
 } from "@sweetflow/domain";
 import type { DataSource, GenerateArgs, Placement, Snapshot } from "../source";
+import type { Generator, GenerationRequest } from "../generation";
+import type { ProductionFiles } from "../folder/ProductionFiles";
 import type { LogStore } from "./store";
 
 export interface LocalSourceOptions {
@@ -54,6 +64,10 @@ export interface LocalSourceOptions {
   me: Member;
   /** Production to create when the folder has none yet. */
   create?: Pick<Production, "id" | "name" | "levels" | "statuses"> & { format?: string };
+  /** The production's folders in the team folder (none: browser storage, media stays at the provider). */
+  files?: ProductionFiles;
+  /** Image and video generation (Magnific) with this person's account. */
+  generator?: Generator;
   /** Injectable for tests. */
   now?: () => number;
   newId?: (prefix: string) => Id;
@@ -78,6 +92,13 @@ export class LocalSource implements DataSource {
   private snapshot: Snapshot | null = null;
   private listeners = new Set<(s: Snapshot) => void>();
   private unwatch: () => void;
+  private readonly files?: ProductionFiles;
+  private readonly generator?: Generator;
+  /** Folder moves run one after another, in the order the changes were made. */
+  private filing: Promise<void> = Promise.resolve();
+  /** Generation jobs this window is following. */
+  private jobs = new Set<Id>();
+  private disposed = false;
 
   /** Resolves when the folder has been read (and the production created if asked). */
   readonly ready: Promise<void>;
@@ -88,11 +109,16 @@ export class LocalSource implements DataSource {
     this.me = opts.me;
     this.now = opts.now ?? Date.now;
     this.newId = opts.newId ?? ((p) => `${p}_${crypto.randomUUID()}`);
+    this.files = opts.files;
+    this.generator = opts.generator;
     this.unwatch = this.store.watch(() => void this.reload());
-    this.ready = this.reload().then(() => this.bootstrap(opts.create));
+    this.ready = this.reload()
+      .then(() => this.bootstrap(opts.create))
+      .then(() => this.resumeJobs());
   }
 
   dispose(): void {
+    this.disposed = true;
     this.unwatch();
     if (this.retry) clearTimeout(this.retry);
   }
@@ -146,6 +172,7 @@ export class LocalSource implements DataSource {
 
   private write(bodies: LogEventBody[]): void {
     if (!bodies.length) return;
+    const before = this.state?.nodes ?? [];
     for (const body of bodies) {
       this.clock = hlcTick(this.clock, this.now());
       const e = { ...body, v: LOG_VERSION, at: formatStamp(this.clock, this.deviceId), userId: this.me.uid } as LogEvent;
@@ -154,6 +181,13 @@ export class LocalSource implements DataSource {
     }
     this.refold();
     this.save();
+    // This device changed the tree: its folders on disk follow.
+    const p = this.state?.production;
+    if (this.files && p && bodies.some((b) => b.type.startsWith("node.") || b.type === "levels.set")) {
+      const after = this.state!.nodes;
+      const files = this.files;
+      this.filing = this.filing.then(() => files.follow(p, before, after)).catch((err) => console.error("[carpeta] no se pudieron mover las carpetas", err));
+    }
   }
 
   private save(): void {
@@ -202,22 +236,36 @@ export class LocalSource implements DataSource {
     const split = splitTrash(s.nodes);
     this.snapshot = {
       workspace: { id: "local", name: this.store.label, createdAt: s.production.createdAt },
-      me: this.me,
+      me: { ...this.me, magnificConnected: !!this.generator?.connected() },
       members,
       productions: [s.production],
       production: s.production,
       nodes: split.live,
       trash: split.trash,
-      media: [],
+      media: s.media.map((m) => this.withUrl(m, s)),
       takes: [],
       comments: [],
       assets: [],
       activity: [],
       presence: [],
       mirror: { status: this.saveError ? "offline" : pending ? "syncing" : "synced", rootPath: this.store.label, pending },
-      features: { generation: false, review: false, presence: false, team: false },
+      features: { generation: !!this.generator, review: false, presence: false, team: false, takes: false },
     };
     for (const l of this.listeners) l(this.snapshot);
+  }
+
+  /** Where to show a media from: its file in the team folder, or the provider's copy. */
+  private withUrl(m: Media, s: LogState): Media {
+    const node = s.nodes.find((n) => n.id === m.nodeId);
+    let url: string | undefined;
+    if (m.file && this.files && node && s.production) {
+      const path = this.files.mediaPath(s.production, s.nodes, node, m.file);
+      if (path) url = this.files.url(path, () => this.emit());
+    }
+    const remote = m.remote?.url ?? m.remote?.previewUrl;
+    url ??= remote && this.generator ? this.generator.viewUrl(remote) : undefined;
+    const preview = m.remote?.previewUrl && this.generator ? this.generator.viewUrl(m.remote.previewUrl) : undefined;
+    return { ...m, url, thumbUrl: m.kind === "image" ? url : preview };
   }
 
   // ---------- structure ----------
@@ -286,13 +334,132 @@ export class LocalSource implements DataSource {
     // One production per folder for now (phase 1, step 6 adds the list).
   }
 
+  // ---------- generation ----------
+
+  async estimate(args: GenerateArgs): Promise<number | null> {
+    if (!this.generator) return null;
+    try {
+      return await this.generator.estimate(this.request(args));
+    } catch {
+      return null;
+    }
+  }
+
+  generate(args: GenerateArgs): void {
+    if (!this.generator) return notYet("generar");
+    const s = this.loaded();
+    if (!s.nodes.some((n) => n.id === args.nodeId)) return;
+    const id = this.newId("m");
+    const now = this.now();
+    this.write([
+      {
+        type: "media.added",
+        media: {
+          id,
+          nodeId: args.nodeId,
+          kind: args.kind,
+          version: nextMediaVersion(s.media, args.nodeId, args.kind),
+          origin: "generated",
+          status: "queued",
+          progress: 0,
+          archived: false,
+          generation: {
+            provider: this.generator.provider,
+            model: args.model,
+            prompt: args.prompt,
+            params: { durationSec: args.durationSec, deviceId: this.deviceId },
+            sourceMediaId: args.sourceMediaId,
+            launchedBy: this.me.uid,
+          },
+          createdBy: this.me.uid,
+          createdAt: now,
+        },
+      },
+    ]);
+    void this.runJob(id);
+  }
+
+  private request(args: Pick<GenerateArgs, "nodeId" | "kind" | "prompt" | "model" | "durationSec" | "sourceMediaId">): GenerationRequest {
+    const s = this.loaded();
+    const node = s.nodes.find((n) => n.id === args.nodeId)!;
+    // The provider's folders mirror the team folder down to the node.
+    const inTeam = this.files?.nodeDir(s.production, s.nodes, node);
+    const segments = (inTeam ?? [safeTitle(s.production.name) || "Sweet-Flow", folderPath(s.production, s.nodes, node)].join("/")).split("/");
+    const source = args.sourceMediaId ? s.media.find((m) => m.id === args.sourceMediaId) : undefined;
+    return { kind: args.kind, prompt: args.prompt, model: args.model, durationSec: args.durationSec, startFrom: source?.remote?.id, folderPath: segments };
+  }
+
+  private updateMedia(id: Id, patch: MediaPatch): void {
+    this.write([{ type: "media.updated", id, patch }]);
+  }
+
+  /** Follows a job to the end: queued → rendering → file saved (or failed). */
+  private async runJob(id: Id): Promise<void> {
+    const gen = this.generator;
+    if (!gen || this.jobs.has(id)) return;
+    this.jobs.add(id);
+    const media = () => this.state?.media.find((m) => m.id === id);
+    try {
+      let m = media();
+      if (!m) return;
+      if (!m.remote) {
+        const g = m.generation!;
+        const started = await gen.start(this.request({ nodeId: m.nodeId, kind: m.kind, prompt: g.prompt, model: g.model, durationSec: g.params?.durationSec as number | undefined, sourceMediaId: g.sourceMediaId }));
+        this.updateMedia(id, { status: "rendering", progress: 5, remote: { provider: gen.provider, id: started.id, folder: started.folder } });
+      }
+      for (;;) {
+        if (this.disposed) return;
+        m = media();
+        if (!m?.remote) return;
+        const poll = await gen.poll(m.remote.id);
+        if (poll.status === "failed") return this.updateMedia(id, { status: "failed", error: poll.error });
+        if (poll.status === "pending") {
+          if (poll.progress !== undefined && Math.round(poll.progress) > m.progress) this.updateMedia(id, { progress: Math.round(poll.progress) });
+          await new Promise((r) => setTimeout(r, 2000));
+          continue;
+        }
+        const remote = { ...m.remote, url: poll.url, previewUrl: poll.previewUrl };
+        const dims = { width: poll.width, height: poll.height, durationSec: poll.durationSec };
+        const file = await this.saveFile(m, poll.url);
+        return this.updateMedia(id, { status: "ready", progress: 100, remote, ...dims, ...(file ? { file } : {}) });
+      }
+    } catch (err) {
+      console.error("[generar] ha fallado", err);
+      this.updateMedia(id, { status: "failed", error: err instanceof Error ? err.message : String(err) });
+    } finally {
+      this.jobs.delete(id);
+    }
+  }
+
+  /** Downloads the result into the node's `_media/`; returns its file name (none without a team folder). */
+  private async saveFile(m: Media, url: string): Promise<string | null> {
+    const s = this.loaded();
+    const node = s.nodes.find((n) => n.id === m.nodeId);
+    if (!this.files || !this.generator || !node) return null;
+    const blob = await this.generator.download(url);
+    const file = mediaFileName(codeOf(s.production, node), m.kind, m.version, extensionOf(blob.type, url, m.kind));
+    const path = this.files.mediaPath(s.production, s.nodes, node, file);
+    if (!path) return null;
+    await this.files.saveMedia(path, blob);
+    return file;
+  }
+
+  /** After a reload: pick up the jobs this device left running. */
+  private resumeJobs(): void {
+    if (!this.generator) return;
+    for (const m of this.state?.media ?? []) {
+      if (m.status !== "queued" && m.status !== "rendering") continue;
+      if (m.generation?.params?.deviceId !== this.deviceId) continue;
+      if (m.remote) void this.runJob(m.id);
+      // Never reached the provider: it can't be picked up.
+      else this.updateMedia(m.id, { status: "failed", error: "Se interrumpió antes de llegar a Magnific." });
+    }
+  }
+
   // ---------- not available yet in local mode ----------
 
-  generate(_args: GenerateArgs): void {
-    notYet("generar");
-  }
-  setArchived(_mediaId: Id, _archived: boolean): void {
-    notYet("archivar media");
+  setArchived(mediaId: Id, archived: boolean): void {
+    this.updateMedia(mediaId, { archived });
   }
   placeTakes(_mediaId: Id, _placements: Placement[]): void {
     notYet("colocar tomas");
@@ -319,4 +486,11 @@ export class LocalSource implements DataSource {
 
 function notYet(what: string): void {
   console.warn(`[local] Todavía no se puede ${what} en modo local.`);
+}
+
+function extensionOf(type: string, url: string, kind: Media["kind"]): string {
+  const known: Record<string, string> = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp", "video/mp4": "mp4", "video/quicktime": "mov", "video/webm": "webm" };
+  if (known[type]) return known[type]!;
+  const m = /\.([a-z0-9]{3,4})(?:[?#]|$)/i.exec(url);
+  return m ? m[1]!.toLowerCase() : kind === "video" ? "mp4" : "png";
 }

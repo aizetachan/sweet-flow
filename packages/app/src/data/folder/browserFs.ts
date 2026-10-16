@@ -60,6 +60,26 @@ export class BrowserFolderFs implements FolderFs {
     await w.close();
   }
 
+  async writeBlob(path: string, data: Blob): Promise<void> {
+    const { dir, name } = splitPath(path);
+    const d = (await this.dir(dir, true))!;
+    const w = await (await d.getFileHandle(name, { create: true })).createWritable();
+    await w.write(data);
+    await w.close();
+  }
+
+  async readBlob(path: string): Promise<Blob | null> {
+    const { dir, name } = splitPath(path);
+    const d = await this.dir(dir, false);
+    if (!d) return null;
+    try {
+      return await (await d.getFileHandle(name)).getFile();
+    } catch (e) {
+      if (isNotFound(e)) return null;
+      throw e;
+    }
+  }
+
   async mkdir(path: string): Promise<void> {
     await this.dir(path, true);
   }
@@ -70,7 +90,8 @@ export class BrowserFolderFs implements FolderFs {
     const dst = splitPath(to);
     const srcDir = await this.dir(src.dir, false);
     if (!srcDir) return;
-    const handle = await srcDir.getDirectoryHandle(src.name).catch(() => srcDir.getFileHandle(src.name));
+    const handle = await srcDir.getDirectoryHandle(src.name).catch(() => srcDir.getFileHandle(src.name)).catch(() => null);
+    if (!handle) return; // nothing there (never created, or already moved)
     const target = (await this.dir(dst.dir, true))!;
     const move = (handle as Movable).move;
     if (move) {

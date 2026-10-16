@@ -17,6 +17,7 @@
     "@sweetflow/functions": "workspace:*",
     "@sweetflow/ui": "workspace:*",
     "@tabler/icons-react": "^3.44.0",
+    "@toon-format/toon": "4.1.1",
     "firebase": "^12.19.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

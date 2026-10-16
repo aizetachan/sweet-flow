@@ -133,6 +133,22 @@ Anotadas el 15 oct 2026, pendientes de que el usuario elija orden:
 
 ### Fase 2 · Generación
 
+**Hecho (16 oct 2026), en modo local en el navegador:**
+- Conectar Magnific por persona en *Ajustes › Integraciones* (OAuth con PKCE,
+  registro automático del cliente) y llamar a sus herramientas MCP sin modelo de
+  lenguaje en medio. En desarrollo, el servidor de Vite reenvía las llamadas.
+- Generar imagen o vídeo desde el panel de una escena o un plano, con el coste
+  real (`simulate_cost`) en el botón. El trabajo queda en el registro
+  (`media.added` / `media.updated`): en cola, generando, listo o fallido; si se
+  recarga la página, se retoma.
+- El archivo se guarda en la carpeta del equipo, en
+  `…/SQ010_…/SC010_…/SH0010_…/_media/SH0010_img_v001.png`. Las carpetas de
+  los nodos se crean al crearlos y se mueven al renombrar, renumerar o mover.
+- En Magnific, lo generado va a la carpeta del nodo (proyecto › carpetas › SQ ›
+  SC › SH), creada la primera vez.
+
+**Pendiente:**
+
 - **Conexión de Magnific por usuario:** OAuth 2.0 + PKCE desde la app de escritorio; token cifrado con `safeStorage`.
 - **Carpetas en Magnific:** la estructura se refleja en la cuenta de cada
   usuario **hasta el plano** (proyecto › carpetas del dashboard › SQ › SC ›

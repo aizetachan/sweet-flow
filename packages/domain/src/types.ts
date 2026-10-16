@@ -130,6 +130,10 @@ export interface Media {
   archived: boolean;
   generation?: GenerationInfo;
   error?: string;
+  /** File name inside the node's `_media/` folder, once downloaded (team folder). */
+  file?: string;
+  /** Where the provider keeps it (e.g. a Magnific creation), to resume, preview or re-download. */
+  remote?: { provider: string; id: string; url?: string; previewUrl?: string; folder?: string };
   createdBy: Id;
   createdAt: Millis;
 }

@@ -57,9 +57,11 @@ export interface Features {
   presence: boolean;
   /** Invite people and link provider accounts. */
   team: boolean;
+  /** Place, choose and remove takes (and cut videos into them). */
+  takes: boolean;
 }
 
-export const ALL_FEATURES: Features = { generation: true, review: true, presence: true, team: true };
+export const ALL_FEATURES: Features = { generation: true, review: true, presence: true, team: true, takes: true };
 
 export interface MirrorState {
   status: "unlinked" | "syncing" | "synced" | "offline";
@@ -96,6 +98,8 @@ export interface DataSource {
   moveNodes(ids: Id[], parentId: Id | null, beforeId: Id | null): void;
   /** Change the number of a node's code by hand. Throws with a UI message if invalid or taken. */
   setNodeNumber(nodeId: Id, number: number): void;
+  /** Credits a generation would cost, when the backend can tell (null: unknown). */
+  estimate?(args: GenerateArgs): Promise<number | null>;
   /** Move to the production's trash, with everything inside (docs/INTERFAZ.md §2.2). */
   trashNode(nodeId: Id): void;
   /** Back from the trash to where it was; returns the new number if its code was taken meanwhile. */

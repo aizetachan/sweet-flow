@@ -91,7 +91,11 @@ export function Player({
       ) : media.url ? (
         <img src={media.url} alt="" draggable={false} style={media.kind === "video" ? { transform: `scale(${1 + p * 0.12}) translate(${-p * 2}%, ${p * 1}%)` } : undefined} />
       ) : (
-        <div className="player__empty"><Spinner /> {media.status === "queued" ? "En cola" : `Generando… ${media.progress}%`}</div>
+        media.status === "failed" ? (
+          <div className="player__empty player__empty--failed">No se ha podido generar{media.error ? `: ${media.error}` : "."}</div>
+        ) : (
+          <div className="player__empty"><Spinner /> {media.status === "queued" ? "En cola" : `Generando… ${media.progress}%`}</div>
+        )
       )}
       {media.kind === "video" && media.url ? (
         <div className="player__hud">

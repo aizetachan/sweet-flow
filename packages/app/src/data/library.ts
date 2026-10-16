@@ -28,6 +28,8 @@ import { BrowserLogStore, MemoryLogStore, type LogStore } from "./local/store";
 import { FolderEntries } from "./folder/folderEntries";
 import { FolderLogStore } from "./folder/FolderLogStore";
 import type { FolderFs } from "./folder/fs";
+import { ProductionFiles } from "./folder/ProductionFiles";
+import type { Generator } from "./generation";
 import type { DataSource } from "./source";
 
 export type EntryKind = "folder" | "production";
@@ -156,6 +158,9 @@ interface EntryLibraryOptions {
   /** Changes made elsewhere (another window). */
   watch: (cb: () => void) => () => void;
   logStoreFor: (productionId: Id) => LogStore;
+  /** The production's folders in the team folder (folder mode only). */
+  filesFor?: (productionId: Id) => ProductionFiles;
+  generator?: Generator;
   deviceId: Id;
   /** Productions handled outside the log (the demo episode). */
   special?: Record<Id, { open: () => DataSource; summary: ProductionSummary }>;
@@ -312,7 +317,7 @@ class EntryLibrary implements Library {
   // ---------- internals ----------
 
   private source(id: Id, create?: ConstructorParameters<typeof LocalSource>[0]["create"]): LocalSource {
-    return new LocalSource({ store: this.o.logStoreFor(id), deviceId: this.o.deviceId, me: this.me, create });
+    return new LocalSource({ store: this.o.logStoreFor(id), deviceId: this.o.deviceId, me: this.me, create, files: this.o.filesFor?.(id), generator: this.o.generator });
   }
 
   private entry(id: Id, kind: EntryKind, name: string, parentId: Id | null): LibraryEntry {
@@ -445,7 +450,7 @@ function personal() {
 }
 
 /** localStorage library: one user per browser profile, one device per window. */
-export function browserLibrary(): Library {
+export function browserLibrary(generator?: Generator): Library {
   const ENTRIES = "sweetflow:library";
   const me = personal();
   return new EntryLibrary({
@@ -470,6 +475,7 @@ export function browserLibrary(): Library {
       return () => window.removeEventListener("storage", h);
     },
     logStoreFor: (id) => new BrowserLogStore(`prod:${id}`),
+    generator,
     deviceId: me.deviceId,
   });
 }
@@ -479,7 +485,7 @@ export function browserLibrary(): Library {
  * production live in it, as event logs and real folders. Same code for a
  * folder of this computer now and for Dropbox or Drive next.
  */
-export async function folderLibrary(fs: FolderFs): Promise<Library> {
+export async function folderLibrary(fs: FolderFs, generator?: Generator): Promise<Library> {
   const me = personal();
   const entries = new FolderEntries(fs, me.deviceId, () => me.profile.load().uid);
   await entries.init();
@@ -502,6 +508,8 @@ export async function folderLibrary(fs: FolderFs): Promise<Library> {
       };
     },
     logStoreFor: (id) => new FolderLogStore(fs, () => entries.pathOf(id)),
+    filesFor: (id) => new ProductionFiles(fs, () => entries.pathOf(id)),
+    generator,
     deviceId: me.deviceId,
   });
 }

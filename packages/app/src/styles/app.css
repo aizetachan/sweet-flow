@@ -572,3 +572,5 @@ button.topbar__me { position: relative; padding: 0; border: 0; border-radius: 50
 .amenu__name strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .amenu .menu__hint { display: block; font-size: 11px; color: var(--fg-4); }
 .amenu .menu__item:disabled { opacity: .5; cursor: default; }
+.player__empty--failed { color: var(--bad); padding: 0 16px; text-align: center; }
+.mmeta__error { margin: 4px 0 0; font-size: 12px; color: var(--bad); }
