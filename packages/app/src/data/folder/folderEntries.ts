@@ -110,7 +110,6 @@ export class FolderEntries {
   /** Reads the log; call (and await) before using the entries. */
   async init(): Promise<void> {
     await this.read();
-    this.poll();
   }
 
   load(): LibraryEntry[] {
@@ -233,7 +232,11 @@ export class FolderEntries {
     return changed;
   }
 
-  private poll(): void {
+  private polling: ReturnType<typeof setTimeout> | null = null;
+
+  /** Look for what other devices wrote, every POLL_MS, until `stopPolling`. */
+  startPolling(): void {
+    if (this.polling) return;
     let last = "";
     const tick = async () => {
       try {
@@ -250,8 +253,13 @@ export class FolderEntries {
       } catch (err) {
         console.warn("[carpeta] no se pudo revisar el dashboard", err);
       }
-      setTimeout(tick, POLL_MS);
+      if (this.polling) this.polling = setTimeout(tick, POLL_MS);
     };
-    setTimeout(tick, POLL_MS);
+    this.polling = setTimeout(tick, POLL_MS);
+  }
+
+  stopPolling(): void {
+    if (this.polling) clearTimeout(this.polling);
+    this.polling = null;
   }
 }

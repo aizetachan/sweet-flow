@@ -8,7 +8,7 @@ import { useMemo, useState, type DragEvent, type ReactNode } from "react";
 import { IconClock, IconFolder, IconHome, IconMovie, IconPin, IconPinnedOff, IconSettings, IconTrash } from "@tabler/icons-react";
 import type { Id } from "@sweetflow/domain";
 import { Avatar, Button, cx } from "@sweetflow/ui";
-import { storageStatus } from "../data";
+import { openTeamFolder, storageStatus } from "../data";
 import { reconnectLocalFolder } from "../data/folder/browserFs";
 import { isInTrash, pinKey, type LibraryEntry, type LibraryState, type Pin } from "../data/library";
 import { useStore, type DashSection } from "../state/store";
@@ -32,6 +32,8 @@ export function Dashboard() {
 
 /** The team folder needs a click to be opened again (browser permission). */
 function ReconnectBar() {
+  useStore((s) => s.library); // re-render when the storage changes
+  const setLibrary = useStore((s) => s.setLibrary);
   const status = storageStatus();
   const [busy, setBusy] = useState(false);
   if (status.status !== "reconnect") return null;
@@ -41,7 +43,8 @@ function ReconnectBar() {
       <span>Para abrir la carpeta del equipo «{status.name}», el navegador necesita tu permiso otra vez. Mientras tanto ves lo guardado en este navegador.</span>
       <Button size="sm" variant="primary" disabled={busy} onClick={async () => {
         setBusy(true);
-        if (await reconnectLocalFolder().catch(() => false)) location.reload();
+        const lib = (await reconnectLocalFolder().catch(() => false)) ? await openTeamFolder().catch(() => null) : null;
+        if (lib) setLibrary(lib);
         setBusy(false);
       }}>Abrir «{status.name}»</Button>
     </div>

@@ -527,3 +527,4 @@ button.tree__hint { padding: 0 14px 8px; }
 .reconnect span { flex: 1; }
 .scard__name { display: inline-flex; align-items: center; gap: 7px; }
 .sok { display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; background: var(--ok); color: var(--bg-0); }
+.sdone { display: flex; align-items: center; gap: 6px; color: var(--ok); }

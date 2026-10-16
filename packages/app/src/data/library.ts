@@ -100,6 +100,8 @@ export interface LibraryState {
 
 export interface Library {
   subscribe(cb: (s: LibraryState) => void): () => void;
+  /** Stop watching for changes (switching to another storage). */
+  dispose?(): void;
   createFolder(parentId: Id | null, name: string): Id;
   createProduction(parentId: Id | null, name: string): Promise<Id>;
   rename(id: Id, name: string): void;
@@ -167,19 +169,25 @@ class EntryLibrary implements Library {
   private me: Member;
   private summaries: Record<Id, ProductionSummary> = {};
   private listeners = new Set<(s: LibraryState) => void>();
+  private unwatch: () => void = () => undefined;
 
   constructor(private readonly o: EntryLibraryOptions) {
     this.entries = o.entries.load();
     this.prefs = normalizePrefs(o.prefs.load());
     this.me = o.profile.load();
     for (const [id, sp] of Object.entries(o.special ?? {})) this.summaries[id] = sp.summary;
-    o.watch(() => {
+    this.unwatch = o.watch(() => {
       this.entries = o.entries.load();
       this.prefs = normalizePrefs(o.prefs.load());
       this.me = o.profile.load();
       void this.refreshSummaries();
     });
     void this.refreshSummaries();
+  }
+
+  dispose(): void {
+    this.unwatch();
+    this.listeners.clear();
   }
 
   subscribe(cb: (s: LibraryState) => void): () => void {
@@ -484,10 +492,12 @@ export async function folderLibrary(fs: FolderFs): Promise<Library> {
     profile: me.profile,
     watch: (cb) => {
       const off = entries.watch(cb);
+      entries.startPolling();
       const h = (e: StorageEvent) => me.keys.includes(e.key ?? "") && cb();
       window.addEventListener("storage", h);
       return () => {
         off();
+        entries.stopPolling();
         window.removeEventListener("storage", h);
       };
     },

@@ -116,6 +116,8 @@ interface Store extends UiState {
   /** Close a node's popped window and show it in the side panel again. */
   bringBack: (nodeId: Id) => void;
   notify: (text: string, action?: Notice["action"]) => void;
+  /** Use another library (the team folder changed); the dashboard updates in place. */
+  setLibrary: (library: Library) => void;
   /** Move nodes (with everything inside) to the production's trash, with "Deshacer". */
   trashNodes: (ids: Id[]) => void;
 }
@@ -134,6 +136,7 @@ const IDLE: DataSource = new Proxy({} as DataSource, {
 const PANEL_RESET = { selectedId: null, multi: [], scopeId: null, activeMediaId: null, playhead: 0, playing: false, floating: [], view: "board" as View };
 
 const library = createLibrary();
+let unsubscribeLibrary: () => void = () => undefined;
 let unsubscribeSource: () => void = () => undefined;
 /** A popped window borrows its opener's source: it must not dispose it. */
 let sourceIsShared = false;
@@ -261,6 +264,14 @@ export const useStore = create<Store>((set, get) => ({
     set({ notice: { text, action } });
     noticeTimer = setTimeout(() => set({ notice: null }), action ? 8000 : 5000);
   },
+  setLibrary: (next) => {
+    const prev = get().library;
+    if (prev === next) return;
+    unsubscribeLibrary();
+    prev.dispose?.();
+    set({ library: next, folderId: null });
+    unsubscribeLibrary = next.subscribe((lib) => set({ lib }));
+  },
   trashNodes: (ids) => {
     const { snap, source, selectedId, multi } = get();
     if (!snap || !ids.length) return;
@@ -304,7 +315,7 @@ export const useStore = create<Store>((set, get) => ({
   },
 }));
 
-library.subscribe((lib) => useStore.setState({ lib }));
+unsubscribeLibrary = library.subscribe((lib) => useStore.setState({ lib }));
 
 // A popped-out window opens straight on its node (no splash, no dashboard) on
 // its opener's own DataSource; a main window lends its source and tracks them.

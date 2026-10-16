@@ -53,6 +53,26 @@ export function storageStatus(): StorageStatus {
   return prepared?.status ?? { status: "browser" };
 }
 
+/**
+ * Switch to the remembered team folder (just picked or allowed again) without
+ * reloading the app. Resolves the new library, or null if it can't be opened.
+ */
+export async function openTeamFolder(): Promise<Library | null> {
+  const { restoreLocalFolder } = await import("./folder/browserFs");
+  const found = await restoreLocalFolder();
+  if (found.status !== "ready") return null;
+  const library = await folderLibrary(found.fs);
+  prepared = { library, status: { status: "folder", name: found.fs.label } };
+  return library;
+}
+
+/** Back to this browser's own storage (the folder is forgotten). */
+export function switchToBrowserStorage(): Library {
+  const library = browserLibrary();
+  prepared = { library, status: { status: "browser" } };
+  return library;
+}
+
 export function createLibrary(mode = dataMode()): Library {
   if (mode === "local") return prepared?.library ?? browserLibrary();
   if (mode === "firebase") {

@@ -8,7 +8,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { IconBolt, IconBrandDropbox, IconCheck, IconBrandGoogleDrive, IconDeviceDesktop, IconFolder, IconFolderOpen, IconFolders, IconInfoCircle, IconPlugConnected, IconUser } from "@tabler/icons-react";
 import { Avatar, Button, cx } from "@sweetflow/ui";
 import type { LibraryState } from "../data/library";
-import { storageStatus } from "../data";
+import { openTeamFolder, storageStatus, switchToBrowserStorage } from "../data";
 import * as magnific from "../integrations/magnific/auth";
 import { callTool, type ToolResult } from "../integrations/magnific/mcp";
 import { forgetLocalFolder, localFoldersSupported, pickLocalFolder, reconnectLocalFolder } from "../data/folder/browserFs";
@@ -116,21 +116,38 @@ function Storage({ lib }: { lib: LibraryState }) {
 /** A folder of this computer as the team folder (browser File System Access). */
 function LocalFolder({ lib }: { lib: LibraryState }) {
   const status = storageStatus();
+  const storageName = () => (storageStatus() as { name?: string }).name ?? "";
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const supported = localFoldersSupported();
-  const run = (f: () => Promise<boolean | string | null | void>) => async () => {
+  const setLibrary = useStore((s) => s.setLibrary);
+  const [done, setDone] = useState<string | null>(null);
+  const run = (f: () => Promise<string | null>) => async () => {
     setBusy(true);
     setError(null);
+    setDone(null);
     try {
-      if (await f()) location.reload();
+      setDone(await f());
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
       setBusy(false);
     }
   };
-  const pick = run(() => pickLocalFolder());
+  // Switch in place: no reload, the dashboard follows.
+  const switchToFolder = async () => {
+    const lib = await openTeamFolder();
+    if (!lib) throw new Error("No se ha podido abrir la carpeta.");
+    setLibrary(lib);
+    return `Listo: ahora todo se guarda en «${storageName()}».`;
+  };
+  const pick = run(async () => ((await pickLocalFolder()) ? switchToFolder() : null));
+  const reconnect = run(async () => ((await reconnectLocalFolder()) ? switchToFolder() : null));
+  const forget = run(async () => {
+    await forgetLocalFolder();
+    setLibrary(switchToBrowserStorage());
+    return "Ahora se guarda en este navegador.";
+  });
   const title = status.status === "folder" ? `Carpeta «${status.name}»` : status.status === "reconnect" ? `Carpeta «${status.name}» (sin permiso)` : "Este navegador";
   const detail =
     status.status === "folder"
@@ -149,21 +166,22 @@ function LocalFolder({ lib }: { lib: LibraryState }) {
         <span className="scard__spacer" />
         {!supported ? <span className="sbadge">Usa Chrome o Edge</span> : status.status === "reconnect" ? (
           <>
-            <Button size="sm" variant="primary" disabled={busy} onClick={run(reconnectLocalFolder)}>Abrir «{status.name}»</Button>
+            <Button size="sm" variant="primary" disabled={busy} onClick={reconnect}>Abrir «{status.name}»</Button>
             <Button size="sm" disabled={busy} onClick={pick}>Elegir otra</Button>
           </>
         ) : (
           <>
             <Button size="sm" variant={status.status === "browser" ? "primary" : undefined} disabled={busy} onClick={pick}>
-              <IconFolderOpen size={14} /> {status.status === "folder" ? "Cambiar carpeta" : "Elegir carpeta"}
+              <IconFolderOpen size={14} /> {busy ? "Abriendo…" : status.status === "folder" ? "Cambiar carpeta" : "Elegir carpeta"}
             </Button>
-            {status.status === "folder" ? <Button size="sm" disabled={busy} onClick={run(async () => (await forgetLocalFolder(), true))}>Dejar de usarla</Button> : null}
+            {status.status === "folder" ? <Button size="sm" disabled={busy} onClick={forget}>Dejar de usarla</Button> : null}
           </>
         )}
       </div>
       {status.status === "browser" && lib.entries.length ? (
         <p className="sf-faint sf-small">Lo que ya tienes en este navegador no se copia a la carpeta: sigue aquí si dejas de usarla.</p>
       ) : null}
+      {done ? <p className="sf-small sdone"><IconCheck size={12} /> {done}</p> : null}
       {error ? <p className="sf-small" style={{ color: "var(--bad)" }}>{error}</p> : null}
     </>
   );
