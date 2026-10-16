@@ -37,7 +37,8 @@ Abrir la app ──▶ 0. Pantalla de carga ──▶ 1. Dashboard ──▶ 2. 
 Organización tipo Drive, como Frame.io: aquí están todos los proyectos. Es una
 aplicación completa con **menú lateral**:
 
-- **Inicio:** las carpetas y producciones, navegando por carpetas.
+- **Inicio:** las carpetas y producciones, navegando por carpetas. Un clic
+  selecciona (⌘ añade); un clic fuera de las tarjetas quita la selección.
 - **Recientes:** lo último que has abierto (es personal, no se comparte).
 - **Papelera:** lo que se borra va aquí y desaparece del resto del dashboard,
   con su contenido. Se puede **restaurar** (vuelve a su carpeta, o a Inicio si
@@ -103,8 +104,13 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
   la derecha, el estado. **El estado es solo la etiqueta**: al hacer clic se
   despliega la lista. Todo lo nuevo empieza en **Pendiente**.
 - **Barra superior:** logo (vuelve al inicio) y migas de pan a la izquierda; a
-  la derecha, quién está en la producción, Carpeta, Magnific, equipo y **tu
-  avatar**.
+  la derecha, **buscar** y el botón de **filtros** (en el tablero), quién está en
+  la producción, Carpeta, Magnific, equipo y **tu avatar**. Los filtros (estado,
+  responsable, desglose) se despliegan debajo del botón, que muestra cuántos hay
+  activos.
+- **Cabecera del tablero:** botón de **información** (secuencias, escenas y
+  planos, aprobados, minutos montados y planos por estado, en un panel pequeño),
+  el título y un contador con el número de planos.
 - **Secciones** (Producción, Biblioteca, Equipo, Ajustes): barra **flotante
   centrada abajo**, para que el tablero tenga todo el ancho.
 - **Crear en el tablero, un sitio por nivel:**

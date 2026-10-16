@@ -16,6 +16,7 @@ import { Avatar, AvatarStack, cx, IconButton, Spinner } from "@sweetflow/ui";
 import { useSnap, useStore, type View } from "../state/store";
 import { memberName } from "../state/selectors";
 import { useLibraryTrail } from "../dashboard/Dashboard";
+import { BoardFilters } from "../board/Board";
 
 const NAV: Array<{ id: View; label: string; icon: typeof IconLayoutBoard }> = [
   { id: "board", label: "Producción", icon: IconLayoutBoard },
@@ -53,6 +54,7 @@ export function Dock() {
 export function Topbar() {
   const snap = useSnap();
   const { source, set, requestLeave, productionId } = useStore.getState();
+  const view = useStore((s) => s.view);
   const trail = useLibraryTrail(productionId);
   const online = snap.presence.filter((p) => p.uid !== snap.me.uid).map((p) => memberName(snap, p.uid));
   const m = snap.mirror;
@@ -77,6 +79,8 @@ export function Topbar() {
       </nav>
 
       <div className="topbar__spacer" />
+
+      {view === "board" ? <BoardFilters /> : null}
 
       {online.length ? (
         <div className="topbar__presence" title={`Ahora en la producción: ${online.join(", ")}`}>

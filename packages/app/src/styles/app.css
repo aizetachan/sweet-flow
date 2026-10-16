@@ -528,3 +528,31 @@ button.tree__hint { padding: 0 14px 8px; }
 .scard__name { display: inline-flex; align-items: center; gap: 7px; }
 .sok { display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; background: var(--ok); color: var(--bg-0); }
 .sdone { display: flex; align-items: center; gap: 6px; color: var(--ok); }
+
+/* Popover (info, filters) */
+.pop { position: relative; display: inline-flex; }
+.pop__panel { padding: 6px 8px 8px; }
+.pop__panel--right { left: auto; right: 0; }
+.is-on { background: var(--ghost-2); color: var(--fg-0); }
+
+/* Board header: info · title · count */
+.board__head { align-items: center; }
+.board__title { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.board__title h1 { margin: 0; }
+.board__count { min-width: 24px; padding: 1px 8px; border-radius: 99px; font-size: 12px; font-weight: 600; line-height: 20px; text-align: center; color: var(--fg-1); background: var(--bg-4); }
+.pinfo { min-width: 240px; }
+.pinfo__row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 5px 8px; font-size: 13px; color: var(--fg-2); }
+.pinfo__row strong { color: var(--fg-0); font-weight: 600; font-variant-numeric: tabular-nums; }
+.pinfo__row .sf-pill__dot { margin-right: 6px; }
+.pinfo__bar { display: block; width: auto; margin: 0 8px 4px; }
+
+/* Board search and filters, in the top bar */
+.tfilters { display: flex; align-items: center; gap: 6px; }
+.tfilters .filters__search { width: 240px; }
+.filters__clear { display: grid; place-items: center; width: 18px; height: 18px; padding: 0; border: 0; border-radius: 50%; background: var(--ghost); color: var(--fg-3); }
+.fbtn { position: relative; display: grid; place-items: center; width: 30px; height: 30px; border: 1px solid var(--line-1); border-radius: var(--r-md); background: var(--bg-2); color: var(--fg-2); }
+.fbtn:hover, .fbtn--on { color: var(--fg-0); border-color: var(--line-2); }
+.fbtn__count { position: absolute; top: -5px; right: -5px; min-width: 16px; padding: 0 4px; border-radius: 99px; font-size: 10px; font-weight: 700; line-height: 16px; color: #fff; background: var(--primary); }
+.fpanel { width: 320px; display: flex; flex-direction: column; gap: 4px; }
+.fpanel .sf-select { width: 100%; max-width: none; }
+.fpanel .filters__statuses { padding: 2px 4px 6px; }

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { IconExternalLink, IconMessageCircle, IconPlus, IconSearch, IconStack2, IconTrash, IconWand, IconX } from "@tabler/icons-react";
+import { IconExternalLink, IconMessageCircle, IconPlus, IconFilter, IconInfoCircle, IconSearch, IconStack2, IconTrash, IconWand, IconX } from "@tabler/icons-react";
 import {
   childrenOf,
   codeOf,
@@ -15,6 +15,7 @@ import { AvatarStack, Button, cx, IconButton, Pill, Segmented } from "@sweetflow
 import { useSnap, useStore, type CardSize } from "../state/store";
 import { colorSlot, countsOf, coverOf, durationOf, filtersActive, matches, memberName, presenceAt, progressOf, statusOf } from "../state/selectors";
 import { Thumb } from "../components/media";
+import { Popover } from "../components/Popover";
 import { nodeDragProps, useEndDrop, useNodeDrop } from "./dnd";
 
 export function Board() {
@@ -24,21 +25,19 @@ export function Board() {
   const scope = scopeId ? snap.nodes.find((n) => n.id === scopeId) : undefined;
   const roots = scope ? [scope] : childrenOf(snap.nodes, null);
   const units = (scope ? descendantsOf(snap.nodes, scope.id) : snap.nodes).filter((n) => isUnit(p, n));
-  const done = units.filter((u) => statusOf(snap, u).category === "done").length;
-  const total = roots.reduce((a, r) => a + durationOf(snap, r), 0);
+  const unitName = p.levels[p.levels.length - 1]!.name.toLowerCase();
 
   return (
     <main className="board">
       <div className="board__head">
-        <div>
+        <div className="board__title">
+          <Popover button={({ open, toggle }) => (
+            <IconButton size="sm" label="Información de la producción" className={open ? "is-on" : undefined} onClick={toggle}><IconInfoCircle size={17} stroke={1.6} /></IconButton>
+          )}>
+            <ProductionInfo scopeId={scope?.id ?? null} />
+          </Popover>
           <h1>{scope ? <><span className="board__code">{codeOf(p, scope)}</span> {scope.title}</> : "Toda la producción"}</h1>
-          <div className="board__stats">
-            <span>{units.length} {p.levels[p.levels.length - 1]!.name.toLowerCase()}s</span>
-            <span className="board__bar"><span style={{ width: `${units.length ? (done / units.length) * 100 : 0}%` }} /></span>
-            <span>{done} aprobados</span>
-            <span>·</span>
-            <span>{fmtDur(total)} montados</span>
-          </div>
+          <span className="board__count" title={`${units.length} ${unitName}${units.length === 1 ? "" : "s"}`}>{units.length}</span>
         </div>
         <div className="board__tools">
           <Segmented<CardSize>
@@ -48,7 +47,6 @@ export function Board() {
           />
         </div>
       </div>
-      <FilterBar />
       <div className={cx("board__body", `cards-${cardSize}`)}>
         {p.levels.length === 1 ? (
           <div className="lane"><div className="lane__cards">{childrenOf(snap.nodes, null).map((n) => <UnitCard key={n.id} node={n} />)}</div></div>
@@ -266,36 +264,83 @@ function UnitCard({ node }: { node: ProdNode }) {
   );
 }
 
-function FilterBar() {
+/** What the info button shows: counts per level, approved, edited length, per status. */
+function ProductionInfo({ scopeId }: { scopeId: Id | null }) {
+  const snap = useSnap();
+  const p = snap.production;
+  const inScope = scopeId ? [snap.nodes.find((n) => n.id === scopeId)!, ...descendantsOf(snap.nodes, scopeId)] : snap.nodes;
+  const units = inScope.filter((n) => isUnit(p, n));
+  const done = units.filter((u) => statusOf(snap, u).category === "done").length;
+  const roots = scopeId ? inScope.slice(0, 1) : childrenOf(snap.nodes, null);
+  const total = roots.reduce((a, r) => a + durationOf(snap, r), 0);
+  const statuses = [...p.statuses].filter((s) => !s.archived).sort((a, b) => a.order - b.order);
+  const plural = (n: number, name: string) => `${name}${n === 1 ? "" : "s"}`;
+  return (
+    <div className="pinfo">
+      <div className="menu__title">{scopeId ? "Esta parte" : "La producción"}</div>
+      {p.levels.map((l) => {
+        const n = inScope.filter((x) => x.levelId === l.id).length;
+        return <div key={l.id} className="pinfo__row"><span>{plural(n, l.name)}</span><strong>{n}</strong></div>;
+      })}
+      <div className="pinfo__row"><span>Aprobados</span><strong>{done} de {units.length}</strong></div>
+      <span className="board__bar pinfo__bar"><span style={{ width: `${units.length ? (done / units.length) * 100 : 0}%` }} /></span>
+      <div className="pinfo__row"><span>Montado</span><strong>{fmtDur(total)}</strong></div>
+      {units.length ? (
+        <>
+          <div className="menu__title">Por estado</div>
+          {statuses.map((st) => {
+            const n = units.filter((u) => u.statusId === st.id).length;
+            return n ? <div key={st.id} className="pinfo__row"><span><span className="sf-pill__dot" style={{ background: st.color }} /> {st.name}</span><strong>{n}</strong></div> : null;
+          })}
+        </>
+      ) : null}
+    </div>
+  );
+}
+
+/** Search and filters of the board, in the top bar: search always visible, the rest behind the filter button. */
+export function BoardFilters() {
   const snap = useSnap();
   const { filters, setFilters } = useStore();
   const statuses = snap.production.statuses.filter((s) => !s.archived).sort((a, b) => a.order - b.order);
   const toggle = (id: string) =>
     setFilters({ statusIds: filters.statusIds.includes(id) ? filters.statusIds.filter((x) => x !== id) : [...filters.statusIds, id] });
+  const active = filters.statusIds.length + (filters.assigneeId ? 1 : 0) + (filters.assetId ? 1 : 0);
   return (
-    <div className="filters">
+    <div className="tfilters">
       <label className="filters__search">
         <IconSearch size={14} />
         <input placeholder="Buscar planos, notas…" value={filters.query} onChange={(e) => setFilters({ query: e.target.value })} />
+        {filters.query ? <button className="filters__clear" aria-label="Borrar búsqueda" onClick={() => setFilters({ query: "" })}><IconX size={12} /></button> : null}
       </label>
-      <div className="filters__statuses">
-        {statuses.map((s) => (
-          <button key={s.id} className={cx("fchip", filters.statusIds.includes(s.id) && "fchip--on")} style={filters.statusIds.includes(s.id) ? { borderColor: s.color, color: s.color } : undefined} onClick={() => toggle(s.id)}>
-            <span className="sf-pill__dot" style={{ background: s.color }} /> {s.name}
-          </button>
-        ))}
-      </div>
-      <select className="sf-select" value={filters.assigneeId ?? ""} onChange={(e) => setFilters({ assigneeId: e.target.value || null })}>
-        <option value="">Cualquier responsable</option>
-        {snap.members.filter((m) => m.role !== "viewer").map((m) => <option key={m.uid} value={m.uid}>{m.displayName}</option>)}
-      </select>
-      <select className="sf-select" value={filters.assetId ?? ""} onChange={(e) => setFilters({ assetId: e.target.value || null })}>
-        <option value="">Reparto, props, localización…</option>
-        {snap.assets.filter((a) => a.type !== "style").map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
-      </select>
-      {filtersActive(filters) ? (
-        <Button size="sm" variant="ghost" onClick={() => setFilters({ query: "", statusIds: [], assigneeId: null, assetId: null })}><IconX size={13} /> Limpiar</Button>
-      ) : null}
+      <Popover align="right" className="fpanel" button={({ open, toggle: t }) => (
+        <button className={cx("fbtn", (open || active > 0) && "fbtn--on")} title="Filtros" aria-label="Filtros" onClick={t}>
+          <IconFilter size={15} stroke={1.7} />
+          {active ? <span className="fbtn__count">{active}</span> : null}
+        </button>
+      )}>
+        <div className="menu__title">Estado</div>
+        <div className="filters__statuses">
+          {statuses.map((s) => (
+            <button key={s.id} className={cx("fchip", filters.statusIds.includes(s.id) && "fchip--on")} style={filters.statusIds.includes(s.id) ? { borderColor: s.color, color: s.color } : undefined} onClick={() => toggle(s.id)}>
+              <span className="sf-pill__dot" style={{ background: s.color }} /> {s.name}
+            </button>
+          ))}
+        </div>
+        <div className="menu__title">Responsable</div>
+        <select className="sf-select" value={filters.assigneeId ?? ""} onChange={(e) => setFilters({ assigneeId: e.target.value || null })}>
+          <option value="">Cualquier responsable</option>
+          {snap.members.filter((m) => m.role !== "viewer").map((m) => <option key={m.uid} value={m.uid}>{m.displayName}</option>)}
+        </select>
+        <div className="menu__title">Desglose</div>
+        <select className="sf-select" value={filters.assetId ?? ""} onChange={(e) => setFilters({ assetId: e.target.value || null })}>
+          <option value="">Reparto, props, localización…</option>
+          {snap.assets.filter((a) => a.type !== "style").map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+        </select>
+        {filtersActive(filters) ? (
+          <Button size="sm" variant="ghost" onClick={() => setFilters({ query: "", statusIds: [], assigneeId: null, assetId: null })}><IconX size={13} /> Limpiar filtros</Button>
+        ) : null}
+      </Popover>
     </div>
   );
 }

@@ -83,7 +83,8 @@ export function Browse({ lib, section }: { lib: LibraryState; section: Exclude<D
   const meta = section === "home" ? undefined : TITLES[section];
 
   return (
-    <div className="dash" onClick={(e) => e.target === e.currentTarget && setPicked([])}>
+    // A click anywhere but on an entry (or its buttons) clears the selection.
+    <div className="dash" onClick={(e) => !(e.target as HTMLElement).closest(".dcard, .drow") && setPicked([])}>
       <header className="dash__head">
         {meta ? (
           <h1 className="dash__title"><meta.icon size={20} stroke={1.6} /> {meta.title}</h1>
