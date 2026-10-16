@@ -10,7 +10,8 @@
 
 const ISSUER = "https://auth.magnific.com/realms/mcp";
 const AUTHORIZE = `${ISSUER}/protocol/openid-connect/auth`;
-const TOKEN = `${ISSUER}/protocol/openid-connect/token`;
+/** Through the relay (vite.config.ts): the sign-in rejects token requests that carry a web page's origin. */
+const TOKEN = "/magnific/token";
 const REGISTER = `${ISSUER}/clients-registrations/openid-connect`;
 const SCOPE = "openid profile email mcp:custom-audience";
 export const CALLBACK_PATH = "/auth/magnific";

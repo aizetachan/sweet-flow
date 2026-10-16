@@ -33,6 +33,12 @@ function magnificFiles(): Plugin {
   };
 }
 
+const dropOrigin = (proxy: { on(e: "proxyReq", cb: (req: { removeHeader(h: string): void }) => void): void }) =>
+  proxy.on("proxyReq", (req) => {
+    req.removeHeader("origin");
+    req.removeHeader("referer");
+  });
+
 // Renderer of the desktop app. `base: "./"` so the same build loads from
 // Electron (file://) and from any static host.
 export default defineConfig({
@@ -41,7 +47,9 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      "/magnific/mcp": { target: "https://mcp.magnific.com", changeOrigin: true, rewrite: () => "/" },
+      // Without the page's Origin: Magnific's sign-in rejects token requests from web pages ("Invalid origin").
+      "/magnific/mcp": { target: "https://mcp.magnific.com", changeOrigin: true, rewrite: () => "/", configure: dropOrigin },
+      "/magnific/token": { target: "https://auth.magnific.com", changeOrigin: true, rewrite: () => "/realms/mcp/protocol/openid-connect/token", configure: dropOrigin },
     },
   },
 });
