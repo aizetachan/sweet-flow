@@ -24,6 +24,9 @@ export interface PoppedWindow {
   nodeId: Id;
 }
 
+/** Size a popped window opens at: a 13–14" laptop screen. The user can make it bigger. */
+export const POPPED_SIZE = { width: 1440, height: 900 };
+
 const children = new Map<string, { win: Window; nodeId: Id }>();
 let onChildren: (list: PoppedWindow[]) => void = () => undefined;
 
@@ -45,9 +48,13 @@ export function hostWindows(share: WindowShare, onChange: (list: PoppedWindow[])
 /** Main window: open (or bring forward) the window of a node. */
 export function popOutWindow(url: string, productionId: Id, nodeId: Id): void {
   const name = `sf-${productionId}-${nodeId}`;
-  // As big as the screen (docs/INTERFAZ.md §3): a full working window, not a copy of the side panel's shape.
+  // A 13–14" laptop screen (1440×900), centred; smaller if the screen is (docs/INTERFAZ.md §3).
   const sc = window.screen as Screen & { availLeft?: number; availTop?: number };
-  const win = window.open(url, name, `popup,left=${sc.availLeft ?? 0},top=${sc.availTop ?? 0},width=${sc.availWidth},height=${sc.availHeight}`);
+  const w = Math.min(POPPED_SIZE.width, sc.availWidth);
+  const h = Math.min(POPPED_SIZE.height, sc.availHeight);
+  const left = (sc.availLeft ?? 0) + Math.round((sc.availWidth - w) / 2);
+  const top = (sc.availTop ?? 0) + Math.round((sc.availHeight - h) / 2);
+  const win = window.open(url, name, `popup,left=${left},top=${top},width=${w},height=${h}`);
   if (!win) return;
   win.focus();
   children.set(name, { win, nodeId });

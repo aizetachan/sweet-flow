@@ -13,9 +13,11 @@ import {
 import { ancestorsOf, codeOf, folderPath, levelOf, roleOf, type ProdNode } from "@sweetflow/domain";
 import { Avatar, Button, cx, IconButton, Tabs } from "@sweetflow/ui";
 import { useSnap, useStore, type FloatingPanel, type PanelTab } from "../state/store";
-import { presenceAt } from "../state/selectors";
+import { coverOf, presenceAt } from "../state/selectors";
 import { StatusPicker } from "../components/StatusPicker";
 import { DockedPanel, OwnPanel, usePanel } from "./panel";
+import { StageProvider, useWide } from "./stage";
+import { Player } from "../components/media";
 import { ProduceTab } from "./ProduceTab";
 import { CutTab } from "./CutTab";
 import { ReviewTab } from "./ReviewTab";
@@ -150,6 +152,8 @@ function InspectorBody({ floatKey, onDragHandle }: { floatKey?: string; onDragHa
   const { select, dockPanel, closeFloating, popOut, source, set, trashNodes } = useStore();
   const node = snap.nodes.find((n) => n.id === panel.nodeId);
   const p = snap.production;
+  // A popped window wide enough: tabs on the left, the viewer on the right (docs/INTERFAZ.md §3).
+  const wide = useWide(panel.mode === "window");
 
   if (!node) {
     return (
@@ -166,7 +170,7 @@ function InspectorBody({ floatKey, onDragHandle }: { floatKey?: string; onDragHa
   const tab: PanelTab = panel.tab === "cut" && !hasVideo ? "produce" : panel.tab;
   const path = folderPath(p, snap.nodes, node);
 
-  return (
+  const content = (
     <>
       <div className="insp__top">
         {/* Row 1: code + title, close on the right. */}
@@ -236,7 +240,23 @@ function InspectorBody({ floatKey, onDragHandle }: { floatKey?: string; onDragHa
       </div>
     </>
   );
+  return (
+    <StageProvider stage={wide} fallback={<StageFallback node={node} />}>
+      {(stage) => (stage ? <div className="insp__wide"><div className="insp__side">{content}</div>{stage}</div> : content)}
+    </StageProvider>
+  );
 }
+
+/** What the stage shows on tabs without a viewer of their own: the node's latest image or video. */
+function StageFallback({ node }: { node: ProdNode }) {
+  const snap = useSnap();
+  const { playhead, playing, setPanel } = usePanel();
+  const { media } = coverOf(snap, node);
+  if (!media) return <div className="insp__stage-empty sf-muted">Aún no hay nada generado en {codeOf(snap.production, node)}.</div>;
+  return <Player media={media} time={playhead} playing={playing} onTime={(t) => setPanel({ playhead: t })} onPlaying={(v) => setPanel({ playing: v })} />;
+}
+
+
 
 function ComingSoon({ what }: { what: string }) {
   return (

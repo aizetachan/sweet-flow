@@ -18,6 +18,7 @@ import type { Placement } from "../data/source";
 import { useSnap, useStore } from "../state/store";
 import { colorSlot } from "../state/selectors";
 import { usePanel } from "./panel";
+import { OnStage } from "./stage";
 import { Player } from "../components/media";
 
 const KEEP = "__keep__";
@@ -102,7 +103,9 @@ export function CutTab({ node }: { node: ProdNode }) {
         {owner.id !== node.id ? <span className="sf-small sf-muted"><IconCornerDownRight size={12} /> clip de {codeOf(p, owner)}</span> : null}
       </div>
 
-      <Player media={media} time={playhead} playing={playing} onTime={(t) => setPanel({ playhead: t })} onPlaying={(v) => setPanel({ playing: v })} />
+      <OnStage>
+        <Player media={media} time={playhead} playing={playing} onTime={(t) => setPanel({ playhead: t })} onPlaying={(v) => setPanel({ playing: v })} />
+      </OnStage>
 
       <div className="tl">
         <div className="tl__ruler">

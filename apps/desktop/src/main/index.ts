@@ -48,12 +48,18 @@ function createWindow(): BrowserWindow {
 function lockNavigation(win: BrowserWindow): void {
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (isAppUrl(url)) {
-      // A popped-out node opens as big as the screen it starts on (it can be moved to another monitor).
+      // A popped-out node opens like a 13–14" laptop screen (1440×900), centred on the
+      // screen it starts on, smaller if that screen is (it can be resized or moved).
       const area = screen.getDisplayMatching(win.getBounds()).workArea;
+      const width = Math.min(1440, area.width);
+      const height = Math.min(900, area.height);
       return {
         action: "allow",
         overrideBrowserWindowOptions: {
-          ...area,
+          width,
+          height,
+          x: area.x + Math.round((area.width - width) / 2),
+          y: area.y + Math.round((area.height - height) / 2),
           minWidth: 380,
           minHeight: 480,
           backgroundColor: "#0b0b0c",

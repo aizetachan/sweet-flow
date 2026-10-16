@@ -15,6 +15,7 @@ import {
 import { Avatar, Button, cx, IconButton, Segmented } from "@sweetflow/ui";
 import { useSnap, useStore } from "../state/store";
 import { usePanel } from "./panel";
+import { OnStage } from "./stage";
 import { memberName } from "../state/selectors";
 import { MODELS } from "../data/generation";
 import { Player, Thumb } from "../components/media";
@@ -36,8 +37,10 @@ export function ProduceTab({ node }: { node: ProdNode }) {
         <p className="note">En este nivel no se genera: agrupa y conserva los montajes de sus {snap.production.levels[snap.production.levels.indexOf(level) + 1]?.name.toLowerCase()}s.</p>
       )}
 
+      {/* Nothing generated here: the wide window's stage shows the node's cover instead. */}
+      {own.length ? <OnStage>
       {active ? (
-        <section className="sec">
+        <section className="sec sec--viewer">
           <Player media={active} time={playhead} playing={playing} onTime={(t) => setPanel({ playhead: t })} onPlaying={(v) => setPanel({ playing: v })} />
           <MediaMeta media={active} node={node} />
         </section>
@@ -66,6 +69,7 @@ export function ProduceTab({ node }: { node: ProdNode }) {
           </div>
         </section>
       ) : null}
+      </OnStage> : null}
 
       <TakesHere node={node} />
     </div>

@@ -177,8 +177,17 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
 
 ## 3. Ventanas aparte
 
-La ventana aparte se abre **del tamaño de la pantalla** (no con la forma del
-panel lateral). Su diseño a pantalla completa está por definir.
+- **Tamaño:** se abre como una pantalla de portátil de 13–14″ (1440×900),
+  centrada; más pequeña si la pantalla lo es. Solo crece si el usuario la
+  agranda.
+- **Diseño ancho** (desde 960 px de ancho): como la pantalla de producción a
+  menor escala. **A la izquierda**, el panel (cabecera, pestañas Producir ·
+  Cortar y repartir · Revisión · Actividad y su contenido); **a la derecha**, el
+  visor grande con las versiones y sus datos debajo. En Cortar, el visor de la
+  derecha es el del corte. Si el plano no tiene nada generado, el visor muestra
+  su toma o lo último de su rama. Más estrecha, se ve como el panel lateral.
+- El contenido y la estructura de cada pestaña en este formato se irán
+  perfilando.
 
 - Cada plano o escena se puede **abrir en una ventana aparte** (botón en la
   cabecera del panel). Es una ventana del navegador o de la app que se puede

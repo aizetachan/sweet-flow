@@ -574,3 +574,14 @@ button.topbar__me { position: relative; padding: 0; border: 0; border-radius: 50
 .amenu .menu__item:disabled { opacity: .5; cursor: default; }
 .player__empty--failed { color: var(--bad); padding: 0 16px; text-align: center; }
 .mmeta__error { margin: 4px 0 0; font-size: 12px; color: var(--bad); }
+
+/* Popped window, wide: tabs on the left, viewer on the right (like the production screen) */
+.insp__wide { display: grid; grid-template-columns: 440px minmax(0, 1fr); height: 100%; min-height: 0; }
+.insp__side { display: flex; flex-direction: column; min-height: 0; border-right: 1px solid var(--line-0); background: var(--bg-1); }
+.insp__stage { min-width: 0; min-height: 0; overflow: auto; padding: 20px 24px; background: var(--bg-0); }
+.insp__stage-in { display: flex; flex-direction: column; gap: 16px; }
+.insp__stage-in:empty { display: none; }
+.insp__stage .player { width: 100%; max-height: calc(100vh - 220px); }
+.insp__stage .player img, .insp__stage .player video { object-fit: contain; }
+.insp__stage .versions { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.insp__stage-empty { display: grid; place-items: center; height: 100%; min-height: 240px; }
