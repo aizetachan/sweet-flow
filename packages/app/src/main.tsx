@@ -5,13 +5,19 @@ import "@sweetflow/ui/tokens.css";
 import "./styles/app.css";
 import "./styles/splash.css";
 import { initStorage } from "./data";
+import { handleCallback } from "./integrations/magnific/auth";
 
-// The team folder (if any) must be open before the store creates the library.
-void initStorage().then(async () => {
+// Magnific's sign-in comes back to this page in a popup: hand over and close.
+if (handleCallback()) {
+  document.body.textContent = "Puedes cerrar esta ventana.";
+} else {
+  // The team folder (if any) must be open before the store creates the library.
+  void initStorage().then(async () => {
   const { App } = await import("./App");
-  createRoot(document.getElementById("root")!).render(
-    <StrictMode>
-      <App />
-    </StrictMode>,
-  );
-});
+    createRoot(document.getElementById("root")!).render(
+      <StrictMode>
+        <App />
+      </StrictMode>,
+    );
+  });
+}

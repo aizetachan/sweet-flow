@@ -9,6 +9,8 @@ import { IconBolt, IconBrandDropbox, IconBrandGoogleDrive, IconDeviceDesktop, Ic
 import { Avatar, Button, cx } from "@sweetflow/ui";
 import type { LibraryState } from "../data/library";
 import { storageStatus } from "../data";
+import * as magnific from "../integrations/magnific/auth";
+import { callTool, type ToolResult } from "../integrations/magnific/mcp";
 import { forgetLocalFolder, localFoldersSupported, pickLocalFolder, reconnectLocalFolder } from "../data/folder/browserFs";
 import { useStore, type SettingsTab } from "../state/store";
 
@@ -170,9 +172,63 @@ function LocalFolder({ lib }: { lib: LibraryState }) {
 function Integrations() {
   return (
     <Section title="Integraciones" hint="Cada persona conecta su propia cuenta: lo que genera gasta sus créditos, y el resultado lo ve todo el equipo.">
-      <Connection icon={<IconBolt size={22} stroke={1.5} />} name="Magnific" detail="Generación de imágenes y vídeo con tu cuenta y tus créditos." />
+      <MagnificCard />
     </Section>
   );
+}
+
+/** Connect this person's Magnific account (OAuth in a popup) and show who and how many credits. */
+function MagnificCard() {
+  const [connected, setConnected] = useState(magnific.isConnected());
+  const [who, setWho] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => magnific.onConnectionChange(() => setConnected(magnific.isConnected())), []);
+  useEffect(() => {
+    if (!connected) return setWho(null);
+    let alive = true;
+    void Promise.all([callTool("account_profile"), callTool("account_balance")])
+      .then(([profile, balance]) => alive && setWho(describeAccount(profile, balance)))
+      .catch((e: unknown) => alive && setError(e instanceof Error ? e.message : String(e)));
+    return () => {
+      alive = false;
+    };
+  }, [connected]);
+  const connect = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await magnific.connect();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <>
+      <div className="scard">
+        <IconBolt size={22} stroke={1.5} />
+        <div className="scard__text">
+          <strong>Magnific</strong>
+          <span className="sf-muted">{connected ? who ?? "Conectada. Comprobando la cuenta…" : "Generación de imágenes y vídeo con tu cuenta y tus créditos."}</span>
+        </div>
+        <span className="scard__spacer" />
+        {connected ? <Button size="sm" onClick={() => magnific.disconnect()}>Desconectar</Button> : (
+          <Button size="sm" variant="primary" disabled={busy} onClick={() => void connect()}>{busy ? "Esperando a Magnific…" : "Conectar"}</Button>
+        )}
+      </div>
+      {error ? <p className="sf-small" style={{ color: "var(--bad)" }}>{error}</p> : null}
+    </>
+  );
+}
+
+function describeAccount(profile: ToolResult, balance: ToolResult): string {
+  const p = (profile.data ?? {}) as { displayName?: string; name?: string; email?: string };
+  const b = (balance.data ?? {}) as { credits?: { available?: number }; plan?: { productName?: string } };
+  const name = p.displayName || p.name || p.email || "tu cuenta";
+  const credits = b.credits?.available;
+  return [`Conectada como ${name}`, b.plan?.productName, credits !== undefined ? `${credits.toLocaleString("es-ES")} créditos` : null].filter(Boolean).join(" · ");
 }
 
 /** An account or folder link that is not available yet. */
