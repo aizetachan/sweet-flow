@@ -242,7 +242,7 @@ function UnitCard({ node }: { node: ProdNode }) {
       {...drop.props}
       onClick={(e) => (e.metaKey || e.ctrlKey || e.shiftKey ? toggleMulti(node.id) : select(node.id))}
     >
-      <Thumb {...cover} />
+      <Thumb {...cover} preview />
       <span className={`card__swatch seg-c${colorSlot(snap, node.id)}`} />
       <div className="card__meta">
         <span className="card__code">{codeOf(p, node)}</span>

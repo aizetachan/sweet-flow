@@ -120,6 +120,10 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
   el título y un contador con el número de planos.
 - **Secciones** (Producción, Biblioteca, Equipo, Ajustes): barra **flotante
   centrada abajo**, para que el tablero tenga todo el ancho.
+- **Previsualizar vídeo:** en las tarjetas de plano con vídeo, al pasar el
+  ratón por la portada se reproduce sin sonido, sin hacer clic. Si el plano es
+  un tramo de otro vídeo, solo se ve ese tramo, en bucle. Al salir, vuelve al
+  primer fotograma.
 - **Crear en el tablero, un sitio por nivel:**
   - **Plano:** el **"+"** al final de cada fila de escena, sin texto. Tiene
     siempre el tamaño y la proporción de una tarjeta de plano (S, M o L),

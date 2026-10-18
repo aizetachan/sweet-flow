@@ -42,15 +42,41 @@ export function useDuration(media?: Media): number {
   return known ?? (url ? read ?? probed.get(url) ?? 0 : 0);
 }
 
-/** Card/version thumbnail. With a take: its poster at the in-point and its own duration. */
-export function Thumb({ media, take, pending, className }: { media?: Media; take?: Take; pending?: Media; className?: string }) {
+/**
+ * Card/version thumbnail. With a take: its poster at the in-point and its own
+ * duration. `preview`: a real video plays muted while the mouse is over it
+ * (only its stretch, for a take), and goes back to its first frame on leaving.
+ */
+export function Thumb({ media, take, pending, className, preview }: { media?: Media; take?: Take; pending?: Media; className?: string; preview?: boolean }) {
   const poster = take?.thumbUrl ?? media?.thumbUrl ?? media?.url;
   const length = useDuration(media);
   const dur = take ? takeDuration(take) : length || undefined;
+  const video = useRef<HTMLVideoElement>(null);
+  const start = take?.inSec ?? 0;
+  const playable = preview && isRealVideo(media) && !take?.thumbUrl;
+  const hover = playable
+    ? {
+        onMouseEnter: () => {
+          const v = video.current;
+          if (!v) return;
+          v.currentTime = start;
+          void v.play().catch(() => undefined);
+        },
+        onMouseLeave: () => {
+          const v = video.current;
+          if (!v) return;
+          v.pause();
+          v.currentTime = start;
+        },
+      }
+    : {};
   return (
-    <div className={cx("thumb", className)}>
+    <div className={cx("thumb", playable && "thumb--preview", className)} {...hover}>
       {poster ? (
-        isRealVideo(media) && !take?.thumbUrl ? <video src={`${media!.url}#t=${take?.inSec ?? 0}`} muted preload="metadata" /> : <img src={poster} alt="" draggable={false} />
+        isRealVideo(media) && !take?.thumbUrl ? (
+          <video ref={video} src={`${media!.url}#t=${start}`} muted playsInline loop={!take} preload="metadata"
+            onTimeUpdate={take ? (e) => { if (e.currentTarget.currentTime >= take.outSec) e.currentTarget.currentTime = take.inSec; } : undefined} />
+        ) : <img src={poster} alt="" draggable={false} />
       ) : (
         <div className="thumb__empty">{pending ? null : <IconPhoto size={20} stroke={1.5} />}</div>
       )}
