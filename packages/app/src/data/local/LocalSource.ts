@@ -67,7 +67,7 @@ import {
   type Segment,
   type StatusDef,
 } from "@sweetflow/domain";
-import { importKind, type BrowsePage, type BrowseQuery, type DataSource, type GenerateArgs, type ImportItem, type NewComment, type Placement, type Snapshot } from "../source";
+import { importKind, type BrowsePage, type BrowseQuery, type DataSource, type GenerateArgs, type ImportItem, type NewComment, type Placement, type RemoteFolder, type Snapshot } from "../source";
 import type { Generator, GenerationRequest } from "../generation";
 import type { ProductionFiles } from "../folder/ProductionFiles";
 import type { LogStore } from "./store";
@@ -692,6 +692,11 @@ export class LocalSource implements DataSource {
   async browseCreations(q: BrowseQuery): Promise<BrowsePage> {
     if (!this.generator?.browse) throw new Error("No hay ninguna cuenta de Magnific conectada.");
     return this.generator.browse(q);
+  }
+
+  async browseFolders(parent: string | null): Promise<RemoteFolder[]> {
+    if (!this.generator?.folders) throw new Error("No hay ninguna cuenta de Magnific conectada.");
+    return this.generator.folders(parent);
   }
 
   // ---------- not available yet in local mode ----------

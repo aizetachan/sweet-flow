@@ -101,7 +101,7 @@ export interface RemoteFolder {
 }
 
 export interface BrowseQuery {
-  /** Inside this folder (null: the latest creations, everywhere). */
+  /** Inside this folder and its subfolders (null: the latest creations, everywhere). */
   folder: string | null;
   search?: string;
   kind?: MediaKind;
@@ -110,8 +110,6 @@ export interface BrowseQuery {
 
 export interface BrowsePage {
   items: RemoteCreation[];
-  /** Folders inside `folder` (the top level when null). */
-  folders: RemoteFolder[];
   more: boolean;
 }
 
@@ -252,6 +250,8 @@ export interface DataSource {
   importShots(rowId: Id, items: ImportItem[], before: RowItem | null, groupId: Id | null): Id[];
   /** This person's creations at the provider (Magnific), to import; absent when there is no provider. */
   browseCreations?(q: BrowseQuery): Promise<BrowsePage>;
+  /** Folders at the provider: its projects (`parent` null) or what is inside one. */
+  browseFolders?(parent: string | null): Promise<RemoteFolder[]>;
 
   // review
   /** A comment, or a reply (`parentId`); returns its id. */

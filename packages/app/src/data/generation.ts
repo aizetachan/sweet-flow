@@ -7,7 +7,7 @@
 
 import type { MediaKind } from "@sweetflow/domain";
 import type { RefType } from "./models";
-import type { BrowsePage, BrowseQuery } from "./source";
+import type { BrowsePage, BrowseQuery, RemoteFolder } from "./source";
 
 export interface GenerationRequest {
   kind: MediaKind;
@@ -54,5 +54,6 @@ export interface Generator {
   viewUrl(url: string): string;
   /** This person's creations and folders there, to import them. */
   browse?(q: BrowseQuery): Promise<BrowsePage>;
+  folders?(parent: string | null): Promise<RemoteFolder[]>;
 }
 

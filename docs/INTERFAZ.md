@@ -308,10 +308,14 @@ Para meter algo que ya se tiene, sin generar (no gasta créditos):
   SH0015 entre SH0010 y SH0020; dentro del grupo si está abierto).
 - **Versión de un plano:** «Importar» junto a «Galería», o **soltar archivos
   sobre el panel** del plano: cada uno entra como su siguiente versión.
-- La ventana **Importar** tiene dos pestañas:
-  - **De Magnific:** las creaciones de la persona (recientes primero), con
-    buscador, tipo (vídeo por defecto) y sus carpetas. Se eligen una o varias;
-    el número indica el orden en que entran.
+- La ventana **Importar** mide lo mismo en sus dos pestañas:
+  - **De Magnific:** arriba, el tipo (iconos de vídeo, imagen y audio; vídeo
+    por defecto; otro clic en el elegido muestra todo) y el buscador. A la
+    izquierda, una **lista**: «Recientes» y todos los proyectos de Magnific,
+    con un filtro pequeño encima; al elegir un proyecto se ve todo lo que
+    tiene (también en sus carpetas) y sus carpetas se despliegan debajo. A la
+    derecha, la galería. Se eligen una o varias; el número indica el orden en
+    que entran.
   - **Del ordenador:** soltar o elegir archivos.
 - El archivo se guarda en la carpeta `_media` del plano como su versión
   (`origin: uploaded`). Lo que viene de Magnific guarda además su referencia

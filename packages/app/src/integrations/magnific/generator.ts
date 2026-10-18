@@ -10,7 +10,7 @@
  */
 
 import type { GenerationPoll, GenerationRequest, Generator } from "../../data/generation";
-import type { BrowsePage, BrowseQuery, RemoteCreation } from "../../data/source";
+import type { BrowsePage, BrowseQuery, RemoteCreation, RemoteFolder } from "../../data/source";
 import type { MediaKind } from "@sweetflow/domain";
 import { isConnected } from "./auth";
 import { callTool, fileUrl } from "./mcp";
@@ -85,19 +85,15 @@ export class MagnificGenerator implements Generator {
   async browse(q: BrowseQuery): Promise<BrowsePage> {
     const page = q.page ?? 1;
     const perPage = 24;
-    const [found, folders] = await Promise.all([
-      callTool("creations_search", {
-        full: true,
-        perPage,
-        page,
-        ...(q.folder ? { from: "folder", reference: q.folder } : {}),
-        ...(q.kind ? { fileType: q.kind } : {}),
-        ...(q.search?.trim() ? { query: q.search.trim() } : {}),
-      }),
-      page === 1 && !q.search?.trim()
-        ? callTool("folders_list", q.folder ? { parentReference: q.folder } : {}).catch(() => null)
-        : Promise.resolve(null),
-    ]);
+    const found = await callTool("creations_search", {
+      full: true,
+      perPage,
+      page,
+      // Everything inside the folder, its subfolders too.
+      ...(q.folder ? { from: "folder", reference: q.folder, includeSubfolders: true } : {}),
+      ...(q.kind ? { fileType: q.kind } : {}),
+      ...(q.search?.trim() ? { query: q.search.trim() } : {}),
+    });
     const d = (found.data ?? {}) as { items?: Array<Record<string, unknown>>; pagination?: { currentPage?: number; lastPage?: number } };
     const items = (d.items ?? []).flatMap((c): RemoteCreation[] => {
       const kind = kindOf(c);
@@ -120,12 +116,20 @@ export class MagnificGenerator implements Generator {
         createdAt: created ? Date.parse(created) : undefined,
       }];
     });
-    const fl = ((folders?.data ?? {}) as { items?: Array<{ reference?: string; name?: string }> }).items ?? [];
-    return {
-      items,
-      folders: fl.flatMap((f) => (f.reference ? [{ id: f.reference, name: f.name ?? "Carpeta" }] : [])),
-      more: (d.pagination?.currentPage ?? page) < (d.pagination?.lastPage ?? page),
-    };
+    return { items, more: (d.pagination?.currentPage ?? page) < (d.pagination?.lastPage ?? page) };
+  }
+
+  /** Projects (top level) or the folders inside one, all pages. */
+  async folders(parent: string | null): Promise<RemoteFolder[]> {
+    const out: RemoteFolder[] = [];
+    for (let page = 1; page <= 20; page++) {
+      const r = await callTool("folders_list", parent ? { parentReference: parent, page } : { page });
+      const items = ((r.data as { items?: Array<{ reference?: string; name?: string }> } | undefined)?.items ?? []);
+      for (const f of items) if (f.reference) out.push({ id: f.reference, name: f.name ?? "Carpeta" });
+      const pg = (r.data as { pagination?: { currentPage?: number; lastPage?: number } } | undefined)?.pagination;
+      if (pg ? (pg.currentPage ?? page) >= (pg.lastPage ?? page) : items.length < 20) break;
+    }
+    return out;
   }
 
   // ---------- internals ----------

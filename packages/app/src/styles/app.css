@@ -842,19 +842,29 @@ button.topbar__me { position: relative; padding: 0; border: 0; border-radius: 50
 
 /* «Importar» (docs/INTERFAZ.md §2.0) */
 .imp__top { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+.imp__wrap { height: min(640px, calc(100vh - 220px)); display: flex; flex-direction: column; }
+.imp__wrap > * { flex: 1; min-height: 0; }
 .imp { display: flex; flex-direction: column; gap: 10px; }
+.imp__main { flex: 1; min-height: 0; display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 12px; }
+.imp__side { display: flex; flex-direction: column; gap: 6px; min-height: 0; border-right: 1px solid var(--line-0); padding-right: 10px; }
+.imp__filter { display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 8px; border-radius: var(--r-sm); background: var(--bg-1); color: var(--fg-3); }
+.imp__filter input { flex: 1; min-width: 0; border: 0; background: none; color: var(--fg-0); font-size: 12px; outline: none; }
+.imp__list { flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 1px; }
+.imp__li { display: flex; align-items: center; gap: 6px; min-height: 28px; padding: 0 6px; border: 0; border-radius: var(--r-sm); background: none; color: var(--fg-2); font-size: 12.5px; text-align: left; cursor: pointer; flex: none; }
+.imp__li:hover { background: var(--ghost); color: var(--fg-0); }
+.imp__li.is-on { background: var(--bg-4); color: var(--fg-0); }
+.imp__li svg { flex: none; }
+.imp__liname { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.imp__chev { display: grid; place-items: center; width: 14px; color: var(--fg-4); transition: transform .12s; }
+.imp__chev.is-open { transform: rotate(90deg); }
+.imp__chev.is-empty { visibility: hidden; }
+.imp__none { padding: 6px; }
+.imp__gallery { min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 10px; }
+.imp__gallery .imp__grid { max-height: none; overflow: visible; }
 .imp__bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .imp__search { position: relative; flex: 1; min-width: 200px; display: flex; align-items: center; color: var(--fg-3); }
 .imp__search svg { position: absolute; left: 10px; pointer-events: none; }
 .imp__search .sf-input { width: 100%; padding-left: 30px; }
-.imp__crumbs { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; font-size: 12.5px; }
-.imp__crumbs .link { color: var(--fg-3); }
-.imp__crumbs .link.is-on { color: var(--fg-0); font-weight: 600; }
-.imp__crumb { display: inline-flex; align-items: center; gap: 4px; }
-.imp__folders { display: flex; gap: 6px; flex-wrap: wrap; }
-.imp__folder { display: inline-flex; align-items: center; gap: 6px; height: var(--ctl); padding: 0 10px; border: 1px solid var(--line-1); border-radius: var(--r-md); background: var(--bg-3); color: var(--fg-1); font-size: 12.5px; }
-.imp__folder:hover { background: var(--bg-4); }
-.imp__grid { max-height: 46vh; }
 .imp__thumb { position: relative; display: grid; place-items: center; overflow: hidden; border-radius: var(--r-md); background: var(--bg-1); color: var(--fg-3); }
 .imp__thumb img { width: 100%; height: 100%; object-fit: cover; }
 .imp__n { position: absolute; top: 6px; left: 6px; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; background: var(--primary); color: #fff; font-size: 11px; font-weight: 700; display: grid; place-items: center; }
@@ -863,7 +873,7 @@ button.topbar__me { position: relative; padding: 0; border: 0; border-radius: 50
 .imp__name svg { flex: none; color: var(--fg-3); }
 .imp__more { display: flex; justify-content: center; padding: 4px; }
 .imp__foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 10px; border-top: 1px solid var(--line-0); }
-.imp__drop { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; min-height: 260px; border: 1.5px dashed var(--line-2); border-radius: var(--r-xl); color: var(--fg-2); text-align: center; }
+.imp__drop { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; border: 1.5px dashed var(--line-2); border-radius: var(--r-xl); color: var(--fg-2); text-align: center; }
 .imp__drop--over { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 8%, transparent); }
 /* Files dragged over a row or a gallery. */
 .files-over { outline: 1.5px dashed var(--primary); outline-offset: 4px; border-radius: var(--r-xl); }

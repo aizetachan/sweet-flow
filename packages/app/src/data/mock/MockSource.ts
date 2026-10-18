@@ -42,7 +42,7 @@ import {
   type StatusDef,
   type Take,
 } from "@sweetflow/domain";
-import { ALL_FEATURES, importKind, type BrowsePage, type BrowseQuery, type DataSource, type GenerateArgs, type ImportItem, type NewComment, type Placement, type RemoteCreation, type Snapshot } from "../source";
+import { ALL_FEATURES, importKind, type BrowsePage, type BrowseQuery, type DataSource, type GenerateArgs, type ImportItem, type NewComment, type Placement, type RemoteCreation, type RemoteFolder, type Snapshot } from "../source";
 import { frame, type Mood } from "./frames";
 import { buildSeed, newId } from "./seed";
 
@@ -371,16 +371,22 @@ export class MockSource implements DataSource {
   /** A pretend Magnific library for the demo: a few folders and creations. */
   async browseCreations(q: BrowseQuery): Promise<BrowsePage> {
     await new Promise((r) => setTimeout(r, 250));
-    const folders = q.folder ? [] : [{ id: "f-mareas", name: "Mareas" }, { id: "f-refs", name: "Referencias" }];
     const names = ["Faro bajo la lluvia", "Muelle al amanecer", "Barca en la niebla", "Ola rompiendo", "Gaviotas sobre el puerto", "Cocina de Elena", "Tormenta en alta mar", "Linterna encendida", "Playa al atardecer", "Red de pesca", "Calle del pueblo", "Noche estrellada"];
     const all: RemoteCreation[] = names.map((name, i) => {
       const kind = i % 3 === 2 ? "image" : "video";
       const url = frame(`magnific-${i}`, MOODS[i % MOODS.length]!);
-      return { provider: "magnific", id: `demo-${i}`, name, kind, url, thumbUrl: url, durationSec: kind === "video" ? 5 + (i % 4) : undefined, width: 1920, height: 1080, folder: i % 2 ? "f-mareas" : "f-refs", createdAt: Date.now() - i * 3_600_000 };
+      return { provider: "magnific", id: `demo-${i}`, name, kind, url, thumbUrl: url, durationSec: kind === "video" ? 5 + (i % 4) : undefined, width: 1920, height: 1080, folder: i % 2 ? (i % 4 === 1 ? "f-mareas-ep1" : "f-mareas") : "f-refs", createdAt: Date.now() - i * 3_600_000 };
     });
     const term = q.search?.trim().toLowerCase();
-    const items = all.filter((c) => (!q.folder || c.folder === q.folder) && (!q.kind || c.kind === q.kind) && (!term || c.name.toLowerCase().includes(term)));
-    return { items, folders, more: false };
+    const inside = (f?: string) => !q.folder || f === q.folder || (!!f && f.startsWith(`${q.folder}-`));
+    const items = all.filter((c) => inside(c.folder) && (!q.kind || c.kind === q.kind) && (!term || c.name.toLowerCase().includes(term)));
+    return { items, more: false };
+  }
+
+  async browseFolders(parent: string | null): Promise<RemoteFolder[]> {
+    await new Promise((r) => setTimeout(r, 150));
+    if (!parent) return [{ id: "f-mareas", name: "Mareas" }, { id: "f-refs", name: "Referencias" }, { id: "f-pruebas", name: "Pruebas de estilo" }];
+    return parent === "f-mareas" ? [{ id: "f-mareas-ep1", name: "Ep. 01" }] : [];
   }
 
   setArchived(mediaId: Id, archived: boolean): void {
