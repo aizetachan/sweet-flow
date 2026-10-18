@@ -204,9 +204,12 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
   (quitada el 18 oct 2026; se ajustará de otra forma). Abajo, comentarios,
   ventana aparte, quién está y responsables. El borde de la seleccionada va
   por dentro, para que no se corte al arrastrarla.
-- **Junto al título** de una secuencia: número de planos y duración («13
-  planos · 0:17»); si hay planos aprobados, a la derecha «· 3 aprobados». En
-  una escena, lo mismo después de su estado.
+- **Junto al título** de una secuencia (y en una escena, después de su
+  estado): solo la **duración de lo aprobado**, con un reloj pequeño (suma de
+  sus planos aprobados). Mientras no hay nada aprobado, no se muestra nada.
+  Ni el número de planos ni el de aprobados: están en la información de la
+  producción (botón ⓘ de arriba), que también da la duración aprobada. El
+  título del tablero tampoco lleva número.
 - **Duraciones:** la de un plano es la de su toma elegida o, si no tiene, la
   de su propio vídeo (una imagen cuenta 0). Una escena suma sus planos y una
   secuencia sus escenas. Si el proveedor no dio la duración de un vídeo, se lee

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode, type RefObject } from "react";
-import { IconFileImport, IconCopy, IconDownload, IconLink, IconNote, IconArrowBackUp, IconArrowLeft, IconPencil, IconStack2, IconExternalLink, IconMessageCircle, IconPlus, IconFilter, IconSearch, IconTrash, IconLayoutGrid, IconLayoutList, IconX } from "@tabler/icons-react";
+import { IconClock, IconFileImport, IconCopy, IconDownload, IconLink, IconNote, IconArrowBackUp, IconArrowLeft, IconPencil, IconStack2, IconExternalLink, IconMessageCircle, IconPlus, IconFilter, IconSearch, IconTrash, IconLayoutGrid, IconLayoutList, IconX } from "@tabler/icons-react";
 import {
   childrenOf,
   codeOf,
@@ -16,7 +16,7 @@ import {
 } from "@sweetflow/domain";
 import { AvatarStack, Button, cx, IconButton, Pill, Segmented } from "@sweetflow/ui";
 import { useSnap, useStore, type CardSize } from "../state/store";
-import { countsOf, coverOf, durationOf, filtersActive, matches, memberName, presenceAt, progressOf, statusOf } from "../state/selectors";
+import { approvedDurationOf, countsOf, coverOf, durationOf, filtersActive, matches, memberName, presenceAt, statusOf } from "../state/selectors";
 import { Thumb, useDuration } from "../components/media";
 import { Popover } from "../components/Popover";
 import { ContextMenu, type MenuAt } from "../components/ContextMenu";
@@ -33,15 +33,12 @@ export function Board() {
   const p = snap.production;
   const scope = scopeId ? snap.nodes.find((n) => n.id === scopeId) : undefined;
   const roots = scope ? [scope] : childrenOf(snap.nodes, null);
-  const units = (scope ? descendantsOf(snap.nodes, scope.id) : snap.nodes).filter((n) => isUnit(p, n));
-  const unitName = p.levels[p.levels.length - 1]!.name.toLowerCase();
 
   return (
     <main className="board">
       <div className="board__head">
         <div className="board__title">
           <h1>{scope ? <>{showCodes ? <span className="board__code">{codeOf(p, scope)}</span> : null} {scope.title || UNTITLED}</> : "Espacio de trabajo"}</h1>
-          {scope ? <span className="board__count" title={`${units.length} ${unitName}${units.length === 1 ? "" : "s"}`}>{units.length}</span> : null}
         </div>
         <div className="board__tools">
           <Segmented<CardSize>
@@ -64,12 +61,14 @@ export function Board() {
 const fmtDur = (s: number) => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")}`;
 
 /** Next to a sequence's or scene's title: how many shots and how long; the approved ones only if any. */
-function HeadInfo({ shots, done, seconds, unit }: { shots: number; done: number; seconds: number; unit: string }) {
-  const name = unit.toLowerCase();
+/** Only the length of what is approved, with a small clock; nothing until something is approved (the counts are in the production's info). */
+function HeadInfo({ node }: { node: ProdNode }) {
+  const snap = useSnap();
+  const sec = approvedDurationOf(snap, node);
+  if (!sec) return null;
   return (
-    <span className="sf-faint sf-small">
-      {shots} {name}{shots === 1 ? "" : "s"} · {fmtDur(seconds)}
-      {done ? <span className="head__done"> · {done} aprobado{done === 1 ? "" : "s"}</span> : null}
+    <span className="head__approved" title="Duración de lo aprobado">
+      <IconClock size={12} /> {fmtDur(sec)}
     </span>
   );
 }
@@ -87,7 +86,6 @@ function Group({ node }: { node: ProdNode }) {
   const [folded, toggleFold] = useFold(node.id, (sel) => descendantsOf(snap.nodes, node.id).some((d) => d.id === sel));
   if (li === rowLevel) return <Lane row={node} />;
   const kids = childrenOf(snap.nodes, node.id);
-  const prog = progressOf(snap, node);
   const childLevel = p.levels[li + 1]!;
   return (
     <section className="group">
@@ -95,7 +93,7 @@ function Group({ node }: { node: ProdNode }) {
         {showCodes ? <span className="group__code">{codeOf(p, node)}</span> : null}
         <InlineEdit className="group__title" value={node.title} placeholder="Sin título" label="Doble clic para cambiar el título"
           onSave={(title) => useStore.getState().source.updateNode(node.id, { title })} />
-        <HeadInfo shots={prog.total} done={prog.done} seconds={durationOf(snap, node)} unit={p.levels.at(-1)!.name} />
+        <HeadInfo node={node} />
         <span className="group__spacer" />
         {!filtersActive(filters) ? (
           <Button size="sm" variant="ghost" title={`Nueva ${childLevel.name.toLowerCase()} al final de ${nameOf(p, node)}`} onClick={() => createRow(node.id)}>
@@ -268,7 +266,7 @@ function Lane({ row }: { row: ProdNode }) {
           <StatusPicker floating statuses={p.statuses} value={row.statusId} onChange={(id) => useStore.getState().source.updateNode(row.id, { statusId: id })}
             onEdit={() => useStore.getState().set({ modal: "statuses" })} />
         </span>
-        <HeadInfo shots={all.length} done={all.filter((u) => statusOf(snap, u).category === "done").length} seconds={durationOf(snap, row)} unit={unitLevel.name} />
+        <HeadInfo node={row} />
         {viewers.length ? <AvatarStack names={viewers} size={18} /> : null}
         {/* Trash right after the info, shown on hover; the row's own buttons stay on the right. */}
         <IconButton size="sm" className="head__del" label={`Mover ${nameOf(p, row)} y sus ${unitLevel.name.toLowerCase()}s a la papelera`} onClick={() => trashNodes([row.id])}><IconTrash size={14} /></IconButton>
@@ -728,6 +726,7 @@ export function ProductionInfo({ scopeId }: { scopeId: Id | null }) {
       <div className="pinfo__row"><span>Aprobados</span><strong>{done} de {units.length}</strong></div>
       <span className="board__bar pinfo__bar"><span style={{ width: `${units.length ? (done / units.length) * 100 : 0}%` }} /></span>
       <div className="pinfo__row"><span>Montado</span><strong>{fmtDur(total)}</strong></div>
+      <div className="pinfo__row"><span>Aprobado</span><strong>{fmtDur(roots.reduce((a, r) => a + approvedDurationOf(snap, r), 0))}</strong></div>
       {units.length ? (
         <>
           <div className="menu__title">Por estado</div>

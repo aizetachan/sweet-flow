@@ -58,6 +58,12 @@ export function durationOf(s: Snapshot, n: ProdNode): number {
   return Math.round(childrenOf(s.nodes, n.id).reduce((acc, c) => acc + durationOf(s, c), 0) * 10) / 10;
 }
 
+/** Length of what is approved: its approved shots added up (a shot counts only if approved). */
+export function approvedDurationOf(s: Snapshot, n: ProdNode): number {
+  if (isUnit(s.production, n)) return statusOf(s, n).category === "done" ? durationOf(s, n) : 0;
+  return Math.round(childrenOf(s.nodes, n.id).reduce((acc, c) => acc + approvedDurationOf(s, c), 0) * 10) / 10;
+}
+
 export function progressOf(s: Snapshot, n: ProdNode): { done: number; total: number } {
   const units = isUnit(s.production, n) ? [n] : descendantsOf(s.nodes, n.id).filter((d) => isUnit(s.production, d));
   return { done: units.filter((u) => statusOf(s, u).category === "done").length, total: units.length };
