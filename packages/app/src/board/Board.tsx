@@ -318,8 +318,10 @@ function UnitCard({ node, inRow, hint }: { node: ProdNode; inRow?: boolean; hint
     >
       {/* The length goes under the status, not on the cover. */}
       <Thumb {...cover} preview badge={false} />
+      {/* The title carries the weight (it is how a shot is found); the code goes under it. */}
       <div className="card__meta">
-        <span className="card__code">{codeOf(p, node)}</span>
+        <InlineEdit className="card__name" value={node.title} placeholder="Sin título" label="Doble clic para escribir el título"
+          onEditing={setEditing} startSignal={rename} onSave={(title) => source.updateNode(node.id, { title })} />
         {/* The status changes right here: a click opens the list (the card is not selected). */}
         <span className="card__status" draggable={false} onClick={(e) => e.stopPropagation()} onDragStart={(e) => { e.preventDefault(); e.stopPropagation(); }}>
           <StatusPicker floating statuses={p.statuses} value={node.statusId} onChange={(id) => source.updateNode(node.id, { statusId: id })}
@@ -327,8 +329,7 @@ function UnitCard({ node, inRow, hint }: { node: ProdNode; inRow?: boolean; hint
         </span>
       </div>
       <div className="card__row">
-        <InlineEdit className="card__title" value={node.title} placeholder="Sin título" label="Doble clic para escribir el título"
-          onEditing={setEditing} startSignal={rename} onSave={(title) => source.updateNode(node.id, { title })} />
+        <span className="card__title">{codeOf(p, node)}</span>
         <CardLength cover={cover} />
       </div>
       <div className="card__foot">
@@ -525,7 +526,8 @@ export function InlineEdit({ value, placeholder, label, className, onSave, onEdi
     onEditing?.(false);
   };
   if (draft === null) {
-    return <span className={cx("inline-edit", className)} title={label} onDoubleClick={begin}>{value || <span className="sf-faint">{placeholder}</span>}</span>;
+    // Long text is cut with "…"; resting the mouse on it shows it whole.
+    return <span className={cx("inline-edit", className)} title={value || label} onDoubleClick={begin}>{value || <span className="sf-faint">{placeholder}</span>}</span>;
   }
   return (
     <input className={cx("inline-edit__in", className)} autoFocus value={draft} placeholder={placeholder}

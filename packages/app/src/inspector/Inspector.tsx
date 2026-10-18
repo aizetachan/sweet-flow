@@ -171,11 +171,11 @@ function InspectorBody({ floatKey, onDragHandle }: { floatKey?: string; onDragHa
       <div className="insp__top">
         {/* Row 1: code + title, status, then the actions and close. */}
         <div className={cx("nhead__row nhead__row--title", onDragHandle && "insp__drag")} onPointerDown={onDragHandle}>
-          <CodeEditor node={node} />
           <input
             className="sf-input sf-input--bare nhead__title"
             value={node.title}
             placeholder={`Título del ${levelOf(p, node).name.toLowerCase()}`}
+            title={node.title}
             onChange={(e) => source.updateNode(node.id, { title: e.target.value })}
           />
           <StatusPicker statuses={p.statuses} value={node.statusId} onChange={(id) => source.updateNode(node.id, { statusId: id })} onEdit={() => set({ modal: "statuses" })} />
@@ -204,8 +204,20 @@ function InspectorBody({ floatKey, onDragHandle }: { floatKey?: string; onDragHa
           <IconButton
             label={panel.mode === "window" ? "Cerrar ventana" : "Cerrar panel"}
             size="sm"
-            onClick={() => (panel.mode === "window" ? window.close() : floatKey ? closeFloating(floatKey) : select(null))}
+            onClick={() => {
+              if (panel.mode === "window") return window.close();
+              if (floatKey) return closeFloating(floatKey);
+              // Never an empty column: closing the shot shows the structure.
+              select(null);
+              useStore.getState().set({ sideTab: "structure" });
+            }}
           ><IconX size={14} /></IconButton>
+        </div>
+        {/* Row 2: the code, lighter, under the title; who works on it on the right. */}
+        <div className="nhead__row nhead__row--code">
+          <CodeEditor node={node} />
+          <span className="insp__spacer" />
+          <Assignees node={node} />
         </div>
         <NodeHeader node={node} />
       </div>
@@ -314,31 +326,37 @@ function CodeEditor({ node }: { node: ProdNode }) {
   );
 }
 
+/** Who works on it: the team's avatars, lit when assigned; a click assigns or removes. */
+function Assignees({ node }: { node: ProdNode }) {
+  const snap = useSnap();
+  const source = useStore((s) => s.source);
+  const team = snap.members.filter((m) => m.role !== "viewer");
+  return (
+    <div className="assignees">
+      {team.map((m) => {
+        const on = node.assigneeIds.includes(m.uid);
+        return (
+          <button key={m.uid} className={cx("assignee", on && "assignee--on")} title={`${on ? "Quitar" : "Asignar"} ${m.displayName}`} onClick={() =>
+            source.updateNode(node.id, { assigneeIds: on ? node.assigneeIds.filter((x) => x !== m.uid) : [...node.assigneeIds, m.uid] })
+          }>
+            <Avatar name={m.displayName} size={20} />
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function NodeHeader({ node }: { node: ProdNode }) {
   const snap = useSnap();
   const source = useStore((s) => s.source);
   const [adding, setAdding] = useState(false);
   const viewers = presenceAt(snap, node.id);
   const assets = node.assetIds.map((id) => snap.assets.find((a) => a.id === id)).filter(Boolean);
-  const team = snap.members.filter((m) => m.role !== "viewer");
 
   return (
     <div className="nhead">
-      <div className="nhead__row nhead__row--wrap">
-        <div className="assignees">
-          {team.map((m) => {
-            const on = node.assigneeIds.includes(m.uid);
-            return (
-              <button key={m.uid} className={cx("assignee", on && "assignee--on")} title={`${on ? "Quitar" : "Asignar"} ${m.displayName}`} onClick={() =>
-                source.updateNode(node.id, { assigneeIds: on ? node.assigneeIds.filter((x) => x !== m.uid) : [...node.assigneeIds, m.uid] })
-              }>
-                <Avatar name={m.displayName} size={20} />
-              </button>
-            );
-          })}
-        </div>
-        {viewers.length ? <span className="sf-small sf-muted"><span className="live-dot" /> {viewers.join(", ")} aquí</span> : null}
-      </div>
+      {viewers.length ? <div className="nhead__row sf-small sf-muted"><span className="live-dot" /> {viewers.join(", ")} aquí</div> : null}
       {snap.assets.length || assets.length ? (
         <div className="breakdown">
           {assets.map((a) => (

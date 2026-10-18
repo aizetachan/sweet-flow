@@ -102,8 +102,10 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
 
 - El **tablero** es la vista general: se va actualizando solo mientras se genera
   y mientras el equipo trabaja.
-- **Cabecera del panel:** una sola fila con el código (número editable), el
-  título, el estado, papelera, **copiar la ruta** (secuencia, escena y plano,
+- **Cabecera del panel:** el **título** con más peso (se corta con «…» y al
+  dejar el ratón encima se ve entero) y, debajo y más discreto, el **código**
+  (número editable), con los responsables a la derecha. En la fila del título:
+  el estado, papelera, **copiar la ruta** (secuencia, escena y plano,
   para el Finder o para enviarla), ventana aparte y cerrar. La fila de la
   ubicación y la chincheta de Fijados se quitaron el 18 oct 2026 (se fija
   desde el dashboard). **El estado es solo la etiqueta**: al hacer clic se
@@ -144,10 +146,17 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
   - **Grupo:** estado de sus planos («Varios» si no es el mismo), cambiar el nombre, abrir el grupo,
     deshacer el grupo (los planos vuelven a la fila) y mover a la papelera
     (con sus planos dentro).
-- **Tarjeta de plano:** portada (sin etiqueta de duración encima); código y estado (**clic en el estado** abre
-  la lista para cambiarlo ahí mismo, sin seleccionar la tarjeta); debajo, el título y, a la
-  derecha (bajo el estado), la **duración del vídeo** (la del tramo si es un
-  plano cortado; «N/A» si es una imagen; «—» si aún no tiene nada). No muestra
+- **Visor de vídeo:** controles de siempre: reproducir/pausa, la **línea de
+  tiempo** para ir a cualquier punto, el tiempo y pantalla completa. En un
+  plano hecho de un tramo, la línea recorre solo su tramo.
+- **Cerrar el panel** de un plano abre la pestaña Estructura, para que la
+  columna nunca quede vacía.
+- **Tarjeta de plano:** portada (sin etiqueta de duración encima). Arriba, el
+  **título** con peso (se corta con «…»; entero al dejar el ratón encima) y el
+  estado (**clic en él** abre la lista para cambiarlo ahí mismo, sin
+  seleccionar la tarjeta). Debajo, el **código**, más discreto, y a la derecha
+  la **duración del vídeo** (la del tramo si es un plano cortado; «N/A» si es
+  una imagen; «—» si aún no tiene nada). No muestra
   el número de versiones (hay un vídeo por plano) ni franja de color arriba
   (quitada el 18 oct 2026; se ajustará de otra forma). Abajo, comentarios,
   ventana aparte, quién está y responsables. El borde de la seleccionada va

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type MouseEvent } from "react";
-import { IconMusic, IconPhoto, IconPlayerPauseFilled, IconPlayerPlayFilled, IconVideo } from "@tabler/icons-react";
+import { IconMaximize, IconMusic, IconPhoto, IconPlayerPauseFilled, IconPlayerPlayFilled, IconVideo } from "@tabler/icons-react";
 import { formatTc, round1, takeDuration, type Media, type Take } from "@sweetflow/domain";
 import { cx, Spinner } from "@sweetflow/ui";
 import { useStore } from "../state/store";
@@ -159,8 +159,9 @@ export function Player({
   }, [time, playing]);
 
   const p = dur ? time / dur : 0;
+  const box = useRef<HTMLDivElement>(null);
   return (
-    <div className="player">
+    <div className="player" ref={box}>
       {media.kind === "audio" && media.status === "ready" ? (
         <div className="player__audio">
           <IconMusic size={28} stroke={1.4} />
@@ -187,14 +188,26 @@ export function Player({
         )
       )}
       {media.kind === "video" && media.url ? (
-        <div className="player__hud">
+        // The usual controls: play/pause, a timeline to jump anywhere, the time, full screen.
+        <div className="player__hud" onClick={(e) => e.stopPropagation()}>
           <button className="player__play" onClick={() => {
             if (!playing && time >= (range?.outSec ?? dur) - 0.05) onTime(range?.inSec ?? 0);
             onPlaying(!playing);
           }} aria-label={playing ? "Pausa" : "Reproducir"}>
             {playing ? <IconPlayerPauseFilled size={14} /> : <IconPlayerPlayFilled size={14} />}
           </button>
-          <span className="sf-mono">{formatTc(time)} / {formatTc(dur)}</span>
+          <span className="sf-mono player__tc">{formatTc(time)}</span>
+          <input className="player__seek" type="range" aria-label="Línea de tiempo"
+            min={range?.inSec ?? 0} max={range?.outSec ?? (dur || 0.1)} step={0.05} value={Math.min(Math.max(time, range?.inSec ?? 0), range?.outSec ?? dur)}
+            style={{ ["--p" as string]: `${(((time - (range?.inSec ?? 0)) / Math.max(0.1, (range?.outSec ?? dur) - (range?.inSec ?? 0))) * 100).toFixed(2)}%` }}
+            onChange={(e) => onTime(+e.target.value)} />
+          <span className="sf-mono player__tc sf-faint">{formatTc(range?.outSec ?? dur)}</span>
+          <button className="player__btn" aria-label="Pantalla completa" title="Pantalla completa" onClick={() => {
+            const el = box.current;
+            if (!el) return;
+            if (document.fullscreenElement) void document.exitFullscreen();
+            else void el.requestFullscreen?.();
+          }}><IconMaximize size={14} /></button>
         </div>
       ) : null}
     </div>
