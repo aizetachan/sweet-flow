@@ -175,7 +175,7 @@ function InspectorBody({ floatKey, onDragHandle }: { floatKey?: string; onDragHa
   const content = (
     <>
       <div className="insp__top">
-        {/* Row 1: code + title, status, then the actions and close. */}
+        {/* Row 1: the title, then the actions and close. */}
         <div className={cx("nhead__row nhead__row--title", onDragHandle && "insp__drag")} onPointerDown={onDragHandle}>
           <input
             className="sf-input sf-input--bare nhead__title"
@@ -184,7 +184,6 @@ function InspectorBody({ floatKey, onDragHandle }: { floatKey?: string; onDragHa
             title={node.title}
             onChange={(e) => source.updateNode(node.id, { title: e.target.value })}
           />
-          <StatusPicker statuses={p.statuses} value={node.statusId} onChange={(id) => source.updateNode(node.id, { statusId: id })} onEdit={() => set({ modal: "statuses" })} />
           {panel.mode === "floating" && floatKey ? (
             <IconButton label="Acoplar al panel lateral" size="sm" onClick={() => dockPanel(floatKey)}><IconLayoutSidebarLeftExpand size={14} /></IconButton>
           ) : null}
@@ -218,9 +217,10 @@ function InspectorBody({ floatKey, onDragHandle }: { floatKey?: string; onDragHa
             }}
           ><IconX size={14} /></IconButton>
         </div>
-        {/* Row 2: the code (only with «Mostrar códigos»), lighter, under the title; who works on it on the right. */}
+        {/* Row 2, under the title: the code (only with «Mostrar códigos»), the status and the notes; who works on it on the right. */}
         <div className="nhead__row nhead__row--code">
           {showCodes ? <CodeEditor node={node} /> : null}
+          <StatusPicker statuses={p.statuses} value={node.statusId} onChange={(id) => source.updateNode(node.id, { statusId: id })} onEdit={() => set({ modal: "statuses" })} />
           <button className={cx("notes__btn", node.notes.trim() && "notes__btn--on")} title={node.notes.trim() ? node.notes : "Escribir notas: acción, diálogo, dirección (base del prompt)"}
             onClick={() => set({ modal: "notes", notesFor: node.id })}>
             <IconNote size={13} /> Notas
