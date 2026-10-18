@@ -328,7 +328,7 @@
 .version__chosen { flex: none; }
 .version__chosen { margin-left: auto; display: inline-flex; align-items: center; gap: 2px; padding: 0 5px; border-radius: 99px; background: var(--ok); color: #000; font-family: var(--font, inherit); font-weight: 600; font-size: 10px; }
 .version--chosen .thumb { box-shadow: 0 0 0 2px var(--ok); }
-.version__act--on, .version__act--on:hover:not(:disabled) { background: var(--ok); color: #000; }
+.version__act.version__act--on, .version__act.version__act--on:hover:not(:disabled) { background: var(--ok); color: #000; }
 .version__acts { position: absolute; top: 7px; right: 7px; display: flex; gap: 4px; opacity: 0; transition: opacity .12s; }
 .version:hover .version__acts, .version:focus-within .version__acts { opacity: 1; }
 .version__act { width: 24px; height: 24px; display: grid; place-items: center; border: 0; border-radius: 6px; background: #000c; color: #fff; }
