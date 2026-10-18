@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
 import { IconArrowLeft, IconStack2, IconExternalLink, IconMessageCircle, IconPlus, IconFilter, IconInfoCircle, IconSearch, IconTrash, IconWand, IconX } from "@tabler/icons-react";
 import {
   childrenOf,
@@ -234,11 +234,14 @@ function UnitCard({ node }: { node: ProdNode }) {
   const c = countsOf(snap, node);
   const cover = coverOf(snap, node);
   const viewers = presenceAt(snap, node.id);
+  const source = useStore((s) => s.source);
+  const [editing, setEditing] = useState(false);
 
   return (
     <div
       className={cx("card", selectedId === node.id && "card--on", multi.includes(node.id) && "card--multi", viewers.length > 0 && "card--watched", drop.zone && `dnd-${drop.zone}`)}
       {...nodeDragProps(node.id)}
+      draggable={!editing}
       {...drop.props}
       onClick={(e) => (e.metaKey || e.ctrlKey || e.shiftKey ? toggleMulti(node.id) : select(node.id))}
     >
@@ -248,7 +251,8 @@ function UnitCard({ node }: { node: ProdNode }) {
         <span className="card__code">{codeOf(p, node)}</span>
         <Pill color={st.color}>{st.name}</Pill>
       </div>
-      <div className="card__title">{node.title || <span className="sf-faint">Sin título</span>}</div>
+      <InlineEdit className="card__title" value={node.title} placeholder="Sin título" label="Doble clic para escribir el título"
+        onEditing={setEditing} onSave={(title) => source.updateNode(node.id, { title })} />
       <div className="card__foot">
         <span>{durationOf(snap, node).toFixed(1)}s</span>
         <span title="Versiones generadas en este plano">{c.media}v</span>
@@ -278,20 +282,32 @@ function GroupCard({ group, onOpen }: { group: ShotGroup; onOpen: () => void }) 
   const snap = useSnap();
   const drop = useGroupDrop(group.id);
   const shots = snap.nodes.filter((n) => n.groupId === group.id && n.parentId === group.parentId).sort(byPosition);
+  const source = useStore((s) => s.source);
+  const [editing, setEditing] = useState(false);
+  // A click opens the group, a bit later, so a double click on the name can rename it instead.
+  const opening = useRef<ReturnType<typeof setTimeout> | null>(null);
   const more = shots.length > GROUP_TILES ? shots.length - (GROUP_TILES - 1) : 0;
   const tiles = shots.slice(0, GROUP_TILES);
   return (
-    <div className={cx("card card--group", drop.over && "dnd-group")} {...drop.props} onClick={onOpen} title={`Abrir «${group.name}»`}>
+    <div className={cx("card card--group", drop.over && "dnd-group")} {...drop.props} onClick={(e) => {
+      // The second click of a double click waits for the rename instead.
+      if (editing || e.detail > 1) return;
+      if (opening.current) clearTimeout(opening.current);
+      opening.current = setTimeout(onOpen, 220);
+    }} title={`Abrir «${group.name}»`}>
       <div className={`gmosaic gmosaic--${tiles.length}`}>
         {tiles.map((s, i) => (
           <div key={s.id} className="gmosaic__tile" title={codeOf(snap.production, s)}>
-            <Thumb {...coverOf(snap, s)} />
+            <Thumb {...coverOf(snap, s)} preview />
             {more && i === tiles.length - 1 ? <span className="gmosaic__more">+{more}</span> : null}
           </div>
         ))}
       </div>
       <div className="card__meta">
-        <span className="card__code"><IconStack2 size={12} /> {group.name}</span>
+        <span className="card__code"><IconStack2 size={12} />
+          <InlineEdit value={group.name} placeholder="Grupo" label="Doble clic para cambiar el nombre" onEditing={setEditing}
+            onStart={() => { if (opening.current) clearTimeout(opening.current); }} onSave={(name) => source.renameGroup(group.id, name)} />
+        </span>
         <span className="sf-faint sf-small">{shots.length} plano{shots.length === 1 ? "" : "s"}</span>
       </div>
     </div>
@@ -324,6 +340,42 @@ function GroupBar({ group, row, count, onClose }: { group: ShotGroup; row: ProdN
       <span className="lane__spacer" />
       <Button size="sm" variant="ghost" title="Los planos vuelven a la fila; el grupo desaparece" onClick={() => { source.dissolveGroup(group.id); onClose(); }}>Deshacer grupo</Button>
     </div>
+  );
+}
+
+/**
+ * Text that becomes an input on double click (Enter or leaving saves,
+ * Escape cancels). Used for a card's title and a group's name.
+ */
+function InlineEdit({ value, placeholder, label, className, onSave, onEditing, onStart }: {
+  value: string;
+  placeholder: string;
+  label: string;
+  className?: string;
+  onSave: (v: string) => void;
+  onEditing?: (on: boolean) => void;
+  onStart?: () => void;
+}) {
+  const [draft, setDraft] = useState<string | null>(null);
+  const begin = (e: ReactMouseEvent) => {
+    e.stopPropagation();
+    onStart?.();
+    setDraft(value);
+    onEditing?.(true);
+  };
+  const end = (save: boolean) => {
+    if (save && draft !== null && draft.trim() !== value) onSave(draft.trim());
+    setDraft(null);
+    onEditing?.(false);
+  };
+  if (draft === null) {
+    return <span className={cx("inline-edit", className)} title={label} onDoubleClick={begin}>{value || <span className="sf-faint">{placeholder}</span>}</span>;
+  }
+  return (
+    <input className={cx("inline-edit__in", className)} autoFocus value={draft} placeholder={placeholder}
+      onClick={(e) => e.stopPropagation()} onDoubleClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}
+      onChange={(e) => setDraft(e.target.value)} onBlur={() => end(true)}
+      onKeyDown={(e) => { e.stopPropagation(); if (e.key === "Enter") end(true); if (e.key === "Escape") end(false); }} />
   );
 }
 

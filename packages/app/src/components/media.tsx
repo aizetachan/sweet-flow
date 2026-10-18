@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { IconPhoto, IconPlayerPauseFilled, IconPlayerPlayFilled, IconVideo } from "@tabler/icons-react";
 import { formatTc, round1, takeDuration, type Media, type Take } from "@sweetflow/domain";
 import { cx, Spinner } from "@sweetflow/ui";
@@ -44,8 +44,9 @@ export function useDuration(media?: Media): number {
 
 /**
  * Card/version thumbnail. With a take: its poster at the in-point and its own
- * duration. `preview`: a real video plays muted while the mouse is over it
- * (only its stretch, for a take), and goes back to its first frame on leaving.
+ * duration. `preview`: over a real video, the width of the cover is its
+ * timeline — moving the mouse left and right scrubs through it, silently
+ * (only its stretch, for a take); leaving goes back to the first frame.
  */
 export function Thumb({ media, take, pending, className, preview }: { media?: Media; take?: Take; pending?: Media; className?: string; preview?: boolean }) {
   const poster = take?.thumbUrl ?? media?.thumbUrl ?? media?.url;
@@ -54,19 +55,22 @@ export function Thumb({ media, take, pending, className, preview }: { media?: Me
   const video = useRef<HTMLVideoElement>(null);
   const start = take?.inSec ?? 0;
   const playable = preview && isRealVideo(media) && !take?.thumbUrl;
+  const end = take?.outSec ?? length;
+  const [at, setAt] = useState<number | null>(null);
   const hover = playable
     ? {
-        onMouseEnter: () => {
+        onMouseMove: (e: MouseEvent<HTMLDivElement>) => {
           const v = video.current;
-          if (!v) return;
-          v.currentTime = start;
-          void v.play().catch(() => undefined);
+          if (!v || !end) return;
+          const r = e.currentTarget.getBoundingClientRect();
+          const f = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
+          v.currentTime = start + f * (end - start);
+          setAt(f);
         },
         onMouseLeave: () => {
           const v = video.current;
-          if (!v) return;
-          v.pause();
-          v.currentTime = start;
+          if (v) v.currentTime = start;
+          setAt(null);
         },
       }
     : {};
@@ -74,12 +78,12 @@ export function Thumb({ media, take, pending, className, preview }: { media?: Me
     <div className={cx("thumb", playable && "thumb--preview", className)} {...hover}>
       {poster ? (
         isRealVideo(media) && !take?.thumbUrl ? (
-          <video ref={video} src={`${media!.url}#t=${start}`} muted playsInline loop={!take} preload="metadata"
-            onTimeUpdate={take ? (e) => { if (e.currentTarget.currentTime >= take.outSec) e.currentTarget.currentTime = take.inSec; } : undefined} />
+          <video ref={video} src={`${media!.url}#t=${start}`} muted playsInline preload="metadata" />
         ) : <img src={poster} alt="" draggable={false} />
       ) : (
         <div className="thumb__empty">{pending ? null : <IconPhoto size={20} stroke={1.5} />}</div>
       )}
+      {at !== null ? <span className="thumb__scrub" style={{ width: `${at * 100}%` }} /> : null}
       {media?.kind === "video" ? (
         <span className="thumb__badge" title={take ? "Duración del tramo" : "Duración del clip"}><IconVideo size={11} /> {dur ? `${dur}s` : ""}</span>
       ) : null}

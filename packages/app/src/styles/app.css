@@ -135,6 +135,10 @@
 .thumb__empty { width: 100%; height: 100%; display: grid; place-items: center; color: var(--fg-4); background: repeating-linear-gradient(135deg, var(--bg-1) 0 8px, var(--bg-2) 8px 16px); }
 .thumb__badge { position: absolute; right: 5px; bottom: 5px; display: inline-flex; align-items: center; gap: 3px; padding: 1px 5px; border-radius: 4px; background: #000b; font-size: 10px; color: var(--fg-1); }
 .thumb__job { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 6px; background: #0009; font-size: 11px; color: var(--fg-1); backdrop-filter: blur(2px); }
+.inline-edit { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.card__code .inline-edit { display: inline; }
+.inline-edit__in { width: 100%; min-width: 0; font: inherit; color: var(--fg-1); background: var(--bg-0); border: 1px solid var(--primary); border-radius: 4px; padding: 0 4px; outline: none; }
+.thumb__scrub { position: absolute; left: 0; bottom: 0; height: 2px; background: var(--primary); pointer-events: none; }
 .thumb__bar { position: absolute; left: 0; bottom: 0; height: 2px; background: var(--accent); transition: width .3s; }
 
 .seg-c0 { background: #6f8bf7; } .seg-c1 { background: #3cd39f; } .seg-c2 { background: #e6b85c; }
@@ -396,7 +400,7 @@ button.tree__hint { padding: 0 14px 8px; }
 .codeedit__error { position: absolute; top: calc(100% + 4px); left: 0; z-index: 5; white-space: nowrap; padding: 4px 8px; border-radius: var(--r-sm); background: #ec6a6a26; color: var(--bad); font-size: 11.5px; }
 
 /* ---------- drag and drop of nodes ---------- */
-.trow[draggable="true"], .card[draggable="true"], .lane__head[draggable="true"], .group__head[draggable="true"] { cursor: grab; }
+/* No grab hand on hover: dragging shows its own cursor only while it happens. */
 .trow--multi, .card--multi { box-shadow: inset 0 0 0 1px var(--primary); background: var(--primary-soft); }
 .dnd-before, .dnd-after { position: relative; }
 .trow.dnd-before, .lane__head.dnd-before, .group__head.dnd-before { box-shadow: inset 0 2px 0 var(--primary); }
