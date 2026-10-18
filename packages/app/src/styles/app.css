@@ -16,7 +16,7 @@
 .topbar__spacer { flex: 1; }
 .topbar__format { font-size: 11px; color: var(--fg-3); border: 1px solid var(--line-1); border-radius: 99px; padding: 2px 8px; }
 .topbar__presence { display: flex; align-items: center; gap: 8px; }
-.chip { height: 30px; display: inline-flex; align-items: center; gap: 7px; padding: 0 10px; border-radius: 99px; border: 1px solid var(--line-1); background: var(--bg-2); color: var(--fg-1); font-size: 12px; }
+.chip { height: var(--ctl); display: inline-flex; align-items: center; gap: 7px; padding: 0 10px; border-radius: 99px; border: 1px solid var(--line-1); background: var(--bg-2); color: var(--fg-1); font-size: 12px; }
 .chip:hover { background: var(--bg-3); }
 .chip--warn { color: var(--warn); border-color: #e6b85c55; }
 
@@ -88,7 +88,7 @@
 .empty { color: var(--fg-3); padding: 40px 0; text-align: center; }
 
 .filters { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 8px; padding: 8px 22px 10px; background: linear-gradient(var(--bg-0) 80%, transparent); flex-wrap: wrap; }
-.filters__search { display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border-radius: var(--r-md); border: 1px solid var(--line-1); background: var(--bg-2); color: var(--fg-3); width: 220px; }
+.filters__search { display: flex; align-items: center; gap: 6px; height: var(--ctl); padding: 0 10px; border-radius: var(--r-md); border: 1px solid var(--line-1); background: var(--bg-2); color: var(--fg-3); width: 220px; }
 .filters__search input { flex: 1; min-width: 0; border: 0; background: none; outline: none; }
 .filters__statuses { display: flex; gap: 4px; flex-wrap: wrap; }
 .filters .sf-select { max-width: 200px; }
@@ -234,8 +234,8 @@
 .gen__dur { flex: 1; display: flex; align-items: center; gap: 8px; }
 .gen__dur input { flex: 1; accent-color: var(--accent); }
 .gen__head { display: flex; align-items: center; gap: 8px; }
-.gen__kinds { display: inline-flex; gap: 2px; padding: 2px; border-radius: var(--r-md); background: var(--bg-1); flex: none; }
-.gen__kind { width: 32px; height: 30px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 6px; background: none; color: var(--fg-3); }
+.gen__kinds { display: inline-flex; gap: 2px; padding: 0; border-radius: var(--r-md); background: var(--bg-1); flex: none; }
+.gen__kind { width: var(--ctl); height: var(--ctl); display: grid; place-items: center; padding: 0; border: 0; border-radius: 6px; background: none; color: var(--fg-3); }
 .gen__kind:hover { color: var(--fg-0); }
 .gen__kind.is-on { background: var(--bg-4); color: var(--fg-0); }
 .gen__head .gen__model { flex: 1; min-width: 0; }
@@ -260,7 +260,7 @@
 .gen__pick { flex-direction: column; align-items: stretch; gap: 3px; padding: 3px; height: auto; }
 .gen__pick-empty { padding: 4px 8px 8px; margin: 0; }
 .gen__opts { display: flex; flex-wrap: wrap; gap: 6px; }
-.gen__pill { display: inline-flex; align-items: center; gap: 5px; height: 30px; padding: 0 9px; border-radius: var(--r-md); background: var(--bg-3); color: var(--fg-1); font-size: 12px; border: 0; }
+.gen__pill { display: inline-flex; align-items: center; gap: 5px; height: var(--ctl); padding: 0 9px; border-radius: var(--r-md); background: var(--bg-3); color: var(--fg-1); font-size: 12px; border: 0; }
 /* No chevron: the pill itself opens the list, and it saves width. */
 .gen__pill select { appearance: none; -webkit-appearance: none; background: none; border: 0; color: inherit; font: inherit; padding: 0; outline: none; cursor: pointer; }
 .gen__pill:has(select) { cursor: pointer; }
@@ -534,7 +534,7 @@ button.tree__hint { padding: 0 14px 8px; }
 /* ---------- breadcrumbs (dashboard + top bar) ---------- */
 .crumbs { display: flex; align-items: center; gap: 2px; min-width: 0; }
 .crumbs__item { display: inline-flex; align-items: center; gap: 2px; min-width: 0; }
-.crumbs__btn { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 8px; border: 0; border-radius: var(--r-md); background: none; color: var(--fg-2); white-space: nowrap; }
+.crumbs__btn { display: inline-flex; align-items: center; gap: 6px; height: var(--ctl); padding: 0 8px; border: 0; border-radius: var(--r-md); background: none; color: var(--fg-2); white-space: nowrap; }
 .crumbs__btn:hover { background: var(--ghost); color: var(--fg-0); }
 .crumbs__btn.is-drop { background: var(--primary-soft); color: var(--fg-0); box-shadow: inset 0 0 0 1px var(--primary); }
 .crumbs__here { padding: 0 8px; font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -809,7 +809,7 @@ button.tree__hint { padding: 0 14px 8px; }
 .fpanel .picker { display: flex; align-items: center; gap: 4px; padding: 0 2px 4px; }
 .fpanel__clear { align-self: flex-start; margin: 6px 6px 0; }
 .picker__btn--empty { flex: 1; }
-.picker__placeholder { display: flex; align-items: center; justify-content: space-between; width: 100%; height: 30px; padding: 0 10px; border: 1px solid var(--line-1); border-radius: var(--r-md); background: var(--bg-2); color: var(--fg-3); font-size: 13px; }
+.picker__placeholder { display: flex; align-items: center; justify-content: space-between; width: 100%; height: var(--ctl); padding: 0 10px; border: 1px solid var(--line-1); border-radius: var(--r-md); background: var(--bg-2); color: var(--fg-3); font-size: 13px; }
 .picker__clear { display: grid; place-items: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 50%; background: var(--ghost); color: var(--fg-2); }
 .picker__clear:hover { background: var(--ghost-2); color: var(--fg-0); }
 
