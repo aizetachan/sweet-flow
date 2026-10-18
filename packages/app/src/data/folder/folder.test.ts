@@ -123,4 +123,50 @@ describe("team folder", () => {
     expect([...fs.blobs.keys()]).toEqual(["Anuncio/SQ010_Apertura/SC010_Muelle/SH0010_Faro/_media/SH0010_img_v001.png"]);
     src.dispose();
   });
+
+  it("cuts a shot into shots: the original and its video go to the scene's _editados", async () => {
+    const fs = new MemoryFolderFs();
+    const lib = new FolderEntries(fs, "dev-a", () => "u1");
+    await lib.init();
+    lib.save([entry("p1", "production", "Anuncio", null)]);
+    const generator: Generator = {
+      provider: "test",
+      connected: () => true,
+      estimate: async () => 1,
+      start: async () => ({ id: "c1" }),
+      poll: async () => ({ status: "done", url: "https://cdn/x.mp4", durationSec: 10 }),
+      download: async () => new Blob(["mp4"], { type: "video/mp4" }),
+      viewUrl: (u) => u,
+    };
+    const base = () => lib.pathOf("p1");
+    const src = new LocalSource({ store: new FolderLogStore(fs, base), files: new ProductionFiles(fs, base), generator, deviceId: "dev-a", me, create: { id: "p1", name: "Anuncio", levels: defaultLevels(uniq), statuses: defaultStatuses(uniq) } });
+    await src.ready;
+    const sc = src.createNode(src.createNode(null, "Apertura"), "Puerto");
+    const sh = src.createNode(sc, "Faro");
+    src.generate({ nodeId: sh, kind: "video", prompt: "un faro", model: "Kling 2.5", durationSec: 10 });
+    for (let i = 0; i < 100 && !fs.blobs.size; i++) await new Promise((r) => setTimeout(r, 20));
+    await new Promise((r) => setTimeout(r, 10));
+    let snap: Parameters<Parameters<LocalSource["subscribe"]>[0]>[0] | undefined;
+    src.subscribe((s) => (snap = s));
+    const video = snap!.media[0]!;
+
+    const ids = src.splitIntoShots(video.id, [{ inSec: 0, outSec: 4 }, { inSec: 6, outSec: 10 }]);
+    await src.flushed();
+    await new Promise((r) => setTimeout(r, 20));
+    expect(snap!.nodes.filter((n) => n.parentId === sc).map((n) => n.number)).toEqual([10, 20]);
+    expect(snap!.shelf.map((n) => n.id)).toEqual([sh]);
+    expect(snap!.takes.map((t) => `${t.nodeId === ids[0] ? "a" : "b"}:${t.inSec}-${t.outSec}`)).toEqual(["a:0-4", "b:6-10"]);
+    expect([...fs.blobs.keys()]).toEqual(["Anuncio/SQ010_Apertura/SC010_Puerto/_editados/SH0010_Faro/_media/SH0010_vid_v001.mp4"]);
+    expect(fs.dirs.has("Anuncio/SQ010_Apertura/SC010_Puerto/SH0010_Faro")).toBe(true);
+    expect(fs.dirs.has("Anuncio/SQ010_Apertura/SC010_Puerto/SH0020_Faro")).toBe(true);
+    // Still playable from the shelf: the new shots' takes point at it.
+    expect(snap!.media[0]!.file).toBe("SH0010_vid_v001.mp4");
+
+    // Back on the row (as SH0030: its code is taken), out of _editados.
+    expect(src.unshelveNode(sh)).toBe(30);
+    await src.flushed();
+    await new Promise((r) => setTimeout(r, 20));
+    expect([...fs.blobs.keys()]).toEqual(["Anuncio/SQ010_Apertura/SC010_Puerto/SH0030_Faro/_media/SH0010_vid_v001.mp4"]);
+    src.dispose();
+  });
 });

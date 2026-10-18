@@ -6,9 +6,9 @@
  * the background (retrying on failure); changes from other devices arrive
  * through `LogStore.watch` and are merged on top.
  *
- * Structure, and generation when a provider is given: the job is recorded in
- * the log (requested, rendering, ready) and the file is saved in the node's
- * `_media/` folder. Takes, comments and presence come in later steps.
+ * Structure, takes (cuts) and generation when a provider is given: the job
+ * is recorded in the log (requested, rendering, ready) and the file is saved
+ * in the node's `_media/` folder. Comments and presence come in later steps.
  */
 
 import {
@@ -32,7 +32,9 @@ import {
   planMoveNodes,
   planRestoreNode,
   planSetNumber,
+  planSplitShot,
   planTrashNode,
+  planUnshelveNode,
   splitTrash,
   planUpdateNode,
   serializeEvent,
@@ -50,6 +52,7 @@ import {
   type Plan,
   type ProdNode,
   type Production,
+  type Segment,
   type StatusDef,
 } from "@sweetflow/domain";
 import type { DataSource, GenerateArgs, Placement, Snapshot } from "../source";
@@ -242,14 +245,15 @@ export class LocalSource implements DataSource {
       production: s.production,
       nodes: split.live,
       trash: split.trash,
+      shelf: split.shelf,
       media: s.media.map((m) => this.withUrl(m, s)),
-      takes: [],
+      takes: s.takes,
       comments: [],
       assets: [],
       activity: [],
       presence: [],
       mirror: { status: this.saveError ? "offline" : pending ? "syncing" : "synced", rootPath: this.store.label, pending },
-      features: { generation: !!this.generator, review: false, presence: false, team: false, takes: false },
+      features: { generation: !!this.generator, review: false, presence: false, team: false, takes: true },
     };
     for (const l of this.listeners) l(this.snapshot);
   }
@@ -456,20 +460,66 @@ export class LocalSource implements DataSource {
     }
   }
 
-  // ---------- not available yet in local mode ----------
-
   setArchived(mediaId: Id, archived: boolean): void {
+    // Protected while a take uses it.
+    if (archived && this.loaded().takes.some((t) => t.mediaId === mediaId)) return;
     this.updateMedia(mediaId, { archived });
   }
-  placeTakes(_mediaId: Id, _placements: Placement[]): void {
-    notYet("colocar tomas");
+
+  // ---------- takes ----------
+
+  placeTakes(mediaId: Id, placements: Placement[]): void {
+    if (!this.loaded().media.some((m) => m.id === mediaId)) return;
+    for (const pl of placements) {
+      const s = this.loaded();
+      let nodeId: Id | undefined;
+      if ("nodeId" in pl.target) nodeId = pl.target.nodeId;
+      else nodeId = this.apply(planCreateNode(s.production, this.board(), pl.target.newChildOf, this.newId("n"), `Corte ${pl.segment.inSec}–${pl.segment.outSec}s`));
+      const node = nodeId ? this.loaded().nodes.find((n) => n.id === nodeId) : undefined;
+      if (!node) continue;
+      const take = { id: this.newId("tk"), nodeId: node.id, mediaId, inSec: pl.segment.inSec, outSec: pl.segment.outSec, createdBy: this.me.uid, createdAt: this.now() };
+      this.write([
+        { type: "take.added", take },
+        ...(node.selectedTakeId ? [] : [{ type: "node.updated" as const, id: node.id, patch: { selectedTakeId: take.id } }]),
+      ]);
+    }
   }
-  selectTake(_nodeId: Id, _takeId: Id): void {
-    notYet("elegir toma");
+
+  selectTake(nodeId: Id, takeId: Id): void {
+    this.apply(planUpdateNode(this.loaded().nodes, nodeId, { selectedTakeId: takeId }));
   }
-  removeTake(_takeId: Id): void {
-    notYet("quitar tomas");
+
+  removeTake(takeId: Id): void {
+    const s = this.loaded();
+    const t = s.takes.find((x) => x.id === takeId);
+    if (!t) return;
+    const node = s.nodes.find((n) => n.id === t.nodeId);
+    // The node falls back to another of its takes, if any.
+    const next = s.takes.find((x) => x.nodeId === t.nodeId && x.id !== takeId)?.id;
+    this.write([
+      { type: "take.removed", id: takeId },
+      ...(node?.selectedTakeId === takeId ? [{ type: "node.updated" as const, id: node.id, patch: { selectedTakeId: next } }] : []),
+    ]);
   }
+
+  splitIntoShots(mediaId: Id, segments: Segment[]): Id[] {
+    const s = this.loaded();
+    const media = s.media.find((m) => m.id === mediaId);
+    if (!media) return [];
+    const plan = planSplitShot(s.production, s.nodes, media, segments, this.newId, this.me.uid, this.now());
+    this.apply(plan);
+    return plan.nodeIds;
+  }
+
+  unshelveNode(nodeId: Id): number | undefined {
+    const s = this.loaded();
+    const plan = planUnshelveNode(s.production, s.nodes, nodeId);
+    this.apply(plan);
+    return plan.renumbered;
+  }
+
+  // ---------- not available yet in local mode ----------
+
   addComment(_nodeId: Id, _text: string, _mediaId?: Id, _atSec?: number): void {
     notYet("comentar");
   }

@@ -121,8 +121,12 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
 - **Secciones** (Producción, Biblioteca, Equipo, Ajustes): barra **flotante
   centrada abajo**, para que el tablero tenga todo el ancho.
 - **Crear en el tablero, un sitio por nivel:**
-  - **Plano:** el **"+"** al final de cada fila de escena (del tamaño de una
-    tarjeta, sin texto). La fila crece hacia la derecha; solo crea planos.
+  - **Plano:** el **"+"** al final de cada fila de escena, sin texto. Tiene
+    siempre el tamaño y la proporción de una tarjeta de plano (S, M o L),
+    también en una fila vacía. La fila crece hacia la derecha; solo crea planos.
+  - **Las filas tienen solo planos:** no hay tarjeta de «producción de
+    escena» (quitada el 18 oct 2026). Un vídeo largo se genera en un plano y se
+    corta en planos desde ahí (§2.3).
   - **Escena:** botón **"+ Escena"** a la derecha de la cabecera de cada
     secuencia; la crea al final de esa secuencia.
   - **Secuencia:** botón **"+" cuadrado** al final del tablero, alineado a la
@@ -175,6 +179,37 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
 - No se vacía sola. Si lo quitado estaba en una ventana aparte, se cierra; si
   estaba fijado, al pulsarlo avisa de que está en la papelera.
 
+### 2.3 Cortar en planos y «Vídeos editados»
+
+- Cualquier plano con un vídeo se puede **cortar en planos** desde la pestaña
+  **Cortar y repartir**. Se marcan los cortes con `C` o «Cortar» y, en la lista
+  de tramos, se elige con cuáles quedarse (**Plano**) y cuáles no
+  (**Descartar**). Pueden ser varios. «Crear N planos» hace esto:
+  - Cada tramo elegido pasa a ser un **plano nuevo en el sitio del original**,
+    con ese tramo como toma: un concepto propio, con su estado, notas y
+    versiones. El primero recibe el código del original (SH0020) y los demás
+    los del hueco que hay detrás (SH0025, o SH0023 y SH0026). Si no hay hueco,
+    van al final.
+  - **El original sale de la fila** y pasa a **«Vídeos editados»** de su
+    escena, con su vídeo completo, para organizarlo o descartarlo. Lo
+    descartado no se usa.
+  - Aviso abajo con **Deshacer**.
+- **«Vídeos editados»** es un botón en la cabecera de cada escena, con el
+  número de originales. Solo aparece cuando hay alguno. Lista cada original con
+  su duración y en qué planos se cortó:
+  - Clic en la miniatura: ver el vídeo completo.
+  - **Devolver a la fila:** vuelve como plano (si su código se usa ya, recibe
+    el siguiente libre y se avisa). Los planos cortados se quedan.
+  - **Descartar:** a la papelera de la producción (con Deshacer). Mientras
+    esté en la papelera, sus planos lo siguen usando. Si se elimina
+    definitivamente, esos planos se quedan sin su tramo.
+- **En disco:** el original va a `SC010_…/_editados/SH0020_…/` con su `_media/`.
+  Los planos nuevos tienen su carpeta normal. El corte no copia el vídeo: cada
+  plano guarda su tramo (entrada y salida) sobre el original. El render real
+  del tramo llega en la fase 3.
+- El vídeo de una escena o secuencia (en la demo) se sigue **repartiendo** en
+  sus planos como antes.
+
 ## 3. Ventanas aparte
 
 - **Tamaño:** se abre como una pantalla de portátil de 13–14″ (1440×900),
@@ -213,8 +248,8 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
 
 ## Mientras estamos en modo local
 
-Generar, tomas, comentarios y presencia todavía no funcionan sin conexión al
-proveedor o sin tiempo real. Hasta que lleguen, esos controles se muestran
+Comentarios y presencia todavía no funcionan sin tiempo real (generar funciona
+con Magnific conectada; tomas y cortes ya funcionan en local). Hasta que lleguen, esos controles se muestran
 **desactivados con un aviso "Próximamente"** en lugar de no hacer nada.
 
 ## Pendiente de concretar

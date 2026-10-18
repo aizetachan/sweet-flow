@@ -87,7 +87,16 @@ export function Player({
   return (
     <div className="player">
       {isRealVideo(media) ? (
-        <video ref={video} src={media.url} onTimeUpdate={(e) => onTime(e.currentTarget.currentTime)} onEnded={() => onPlaying(false)} />
+        <video ref={video} src={media.url} onEnded={() => onPlaying(false)} onTimeUpdate={(e) => {
+          const t = e.currentTarget.currentTime;
+          // A take plays only its stretch.
+          if (range && t >= range.outSec) {
+            e.currentTarget.pause();
+            onPlaying(false);
+            return onTime(range.outSec);
+          }
+          onTime(t);
+        }} />
       ) : media.url ? (
         <img src={media.url} alt="" draggable={false} style={media.kind === "video" ? { transform: `scale(${1 + p * 0.12}) translate(${-p * 2}%, ${p * 1}%)` } : undefined} />
       ) : (

@@ -15,6 +15,9 @@ import {
   planRestoreNode,
   planSetNumber,
   planTrashNode,
+  planSplitShot,
+  planUnshelveNode,
+  folderPath,
   splitTrash,
   planUpdateNode,
   nextMediaVersion,
@@ -197,5 +200,45 @@ describe("structure intents", () => {
     expect(nextMediaVersion(state().media, sh, "video")).toBe(1);
     run((s) => planDeleteNode(s.nodes, sh));
     expect(state().media).toEqual([]);
+  });
+
+  it("cuts a shot into shots in its place and sets the original aside in «Vídeos editados»", () => {
+    const { run, state } = session();
+    const sq = run((s) => planCreateNode(s.production!, s.nodes, null, "q")).nodeId!;
+    const sc = run((s) => planCreateNode(s.production!, s.nodes, sq, "c", "Puerto")).nodeId!;
+    const a = run((s) => planCreateNode(s.production!, s.nodes, sc, "a", "Faro")).nodeId!;
+    run((s) => planCreateNode(s.production!, s.nodes, sc, "b", "Muelle"));
+    const base = { nodeId: a, kind: "video" as const, origin: "generated" as const, archived: false, createdBy: "u", createdAt: 1, version: 1, status: "ready" as const, progress: 100, durationSec: 20 };
+    run(() => ({ events: [{ type: "media.added", media: { ...base, id: "mv" } }] }));
+
+    const segs = [{ inSec: 0, outSec: 4 }, { inSec: 9, outSec: 14 }, { inSec: 14, outSec: 20 }];
+    const plan = run((s) => planSplitShot(s.production!, s.nodes, { id: "mv", nodeId: a }, segs, id, "u", 5)) as Plan & { nodeIds: string[] };
+    const s = state();
+    const { live, shelf } = splitTrash(s.nodes);
+    // Same place on the row, codes 010, 013, 016 before 020; the original is off the board.
+    expect(childrenOf(live, sc).map((n) => `${n.number}:${n.title}`)).toEqual(["10:Faro", "13:Faro", "16:Faro", "20:Muelle"]);
+    expect(shelf.map((n) => n.id)).toEqual([a]);
+    expect(s.conflicts).toEqual([]);
+    // Each new shot plays its stretch of the original video.
+    const takes = plan.nodeIds.map((nid) => s.takes.find((t) => t.id === s.nodes.find((n) => n.id === nid)!.selectedTakeId));
+    expect(takes.map((t) => `${t?.mediaId}@${t?.inSec}-${t?.outSec}`)).toEqual(["mv@0-4", "mv@9-14", "mv@14-20"]);
+    expect(folderPath(s.production!, s.nodes, s.nodes.find((n) => n.id === a)!)).toBe("SQ010/SC010_Puerto/_editados/SH0010_Faro");
+
+    // Back to the row: its code is taken, so it gets the next free one.
+    const back = run((st) => planUnshelveNode(st.production!, st.nodes, a)) as Plan & { renumbered?: number };
+    expect(back.renumbered).toBe(30);
+    expect(splitTrash(state().nodes).shelf).toEqual([]);
+  });
+
+  it("puts the new shots at the end when there is no gap left in the codes", () => {
+    const { run, state } = session();
+    const sq = run((s) => planCreateNode(s.production!, s.nodes, null, "q")).nodeId!;
+    const sc = run((s) => planCreateNode(s.production!, s.nodes, sq, "c")).nodeId!;
+    const a = run((s) => planCreateNode(s.production!, s.nodes, sc, "a")).nodeId!;
+    const b = run((s) => planCreateNode(s.production!, s.nodes, sc, "b")).nodeId!;
+    run(() => ({ events: [{ type: "node.renumbered", numbers: { [b]: 11 } }] }));
+    run(() => ({ events: [{ type: "media.added", media: { id: "mv", nodeId: a, kind: "video", origin: "generated", archived: false, createdBy: "u", createdAt: 1, version: 1, status: "ready", progress: 100, durationSec: 9 } }] }));
+    run((s) => planSplitShot(s.production!, s.nodes, { id: "mv", nodeId: a }, [{ inSec: 0, outSec: 3 }, { inSec: 3, outSec: 6 }, { inSec: 6, outSec: 9 }], id, "u", 5));
+    expect(childrenOf(splitTrash(state().nodes).live, sc).map((n) => n.number)).toEqual([10, 20, 30, 11]);
   });
 });

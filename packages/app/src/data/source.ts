@@ -36,6 +36,8 @@ export interface Snapshot {
   nodes: ProdNode[];
   /** Nodes in the production's trash (with their subtrees); roots carry `trashedAt`. */
   trash: ProdNode[];
+  /** Shots set aside in their scene's «Vídeos editados» (docs/INTERFAZ.md §2.3). */
+  shelf: ProdNode[];
   media: Media[];
   takes: Take[];
   comments: Comment[];
@@ -117,6 +119,13 @@ export interface DataSource {
   generate(args: GenerateArgs): void;
   setArchived(mediaId: Id, archived: boolean): void;
   placeTakes(mediaId: Id, placements: Placement[]): void;
+  /**
+   * Cut a shot's video into new shots: one per kept segment, in its place,
+   * and the shot itself to its scene's «Vídeos editados». Returns the new ids.
+   */
+  splitIntoShots(mediaId: Id, segments: Segment[]): Id[];
+  /** Back to the row from «Vídeos editados»; returns the new number if its code was taken. */
+  unshelveNode(nodeId: Id): number | undefined;
   selectTake(nodeId: Id, takeId: Id): void;
   removeTake(takeId: Id): void;
 

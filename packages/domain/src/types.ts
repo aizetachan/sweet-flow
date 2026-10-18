@@ -92,6 +92,12 @@ export interface ProdNode {
    * goes with it. Hidden from the board; its code can be reused meanwhile.
    */
   trashedAt?: Millis;
+  /**
+   * Set aside in its parent's «Vídeos editados» since then: a shot whose video
+   * was cut into new shots (docs/INTERFAZ.md §2.3). Off the board, kept in
+   * `_editados/`, its media still feeding the new shots' takes.
+   */
+  shelvedAt?: Millis;
   updatedAt: Millis;
   updatedBy: Id;
 }

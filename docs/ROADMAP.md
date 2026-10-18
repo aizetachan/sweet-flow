@@ -163,9 +163,22 @@ Anotadas el 15 oct 2026, pendientes de que el usuario elija orden:
 - **Lotes y créditos:** estimación antes de lanzar y registro real por usuario, producción y nodo.
 - **Referencias del desglose:** reparto, props y localizaciones en el prompt y como referencias de biblioteca.
 
+### Grupos de planos (pilas) — siguiente
+
+Decidido el 18 oct 2026: dentro de una escena se pueden agrupar planos para
+tenerlos juntos (por ejemplo, varios por decidir o por validar). Al arrastrar
+un plano sobre otro se crea un grupo con portada, como una carpeta; al abrirlo,
+la fila muestra lo que hay dentro.
+- Es una **carpeta en disco** dentro de la escena. Los planos de dentro
+  **mantienen su código y su nombre**; el grupo no se muestra en su ruta, como
+  en Google Drive.
+- **Anotado para más adelante:** el orden de montaje de los planos de un grupo
+  (en qué orden entran en el montaje final). De momento no hace falta.
+
 ### Fase 3 · Corte y reparto real
 
-- **Tomas sobre vídeo real:** reproducción con entrada y salida.
+- **Tomas sobre vídeo real:** reproducción con entrada y salida. ✅ Los planos
+  cortados de un vídeo reproducen solo su tramo (18 oct 2026).
 - **Render de cortes:** ffmpeg local en el utility process.
 - **Posters y proxies:** fotograma de cada toma y proxies de baja resolución.
 

@@ -12,7 +12,8 @@
 import { codeFor } from "./naming";
 import type { LogEventBody, NodePatch } from "./log";
 import { byNumber, childrenOf, descendantsOf, levelIndex, nextNumber, numberBetween, sortValue, splitTrash } from "./tree";
-import type { Id, ProdNode, Production } from "./types";
+import type { Segment } from "./cuts";
+import type { Id, Media, Millis, ProdNode, Production } from "./types";
 
 export interface Plan {
   events: LogEventBody[];
@@ -146,12 +147,80 @@ export function planTrashNode(nodes: ProdNode[], nodeId: Id): Plan {
 export function planRestoreNode(p: Production, nodes: ProdNode[], nodeId: Id): Plan & { renumbered?: number } {
   const n = nodes.find((x) => x.id === nodeId);
   if (!n || n.trashedAt === undefined) return EMPTY;
-  const { live } = splitTrash(nodes);
-  const siblings = childrenOf(live, n.parentId);
-  if (!siblings.some((s) => s.number === n.number)) return { events: [{ type: "node.restored", id: nodeId }] };
+  const number = freeOnBoard(p, nodes, n);
+  return { events: [{ type: "node.restored", id: nodeId, ...(number === undefined ? {} : { number }) }], renumbered: number };
+}
+
+/** Back to the board from «Vídeos editados», like a restore: a new number if its code was taken. */
+export function planUnshelveNode(p: Production, nodes: ProdNode[], nodeId: Id): Plan & { renumbered?: number } {
+  const n = nodes.find((x) => x.id === nodeId);
+  if (!n || n.shelvedAt === undefined || n.trashedAt !== undefined) return EMPTY;
+  const number = freeOnBoard(p, nodes, n);
+  return { events: [{ type: "node.unshelved", id: nodeId, ...(number === undefined ? {} : { number }) }], renumbered: number };
+}
+
+/** A number for `n` coming back to the board: undefined if its own is free, else the next one. */
+function freeOnBoard(p: Production, nodes: ProdNode[], n: ProdNode): number | undefined {
+  const siblings = childrenOf(splitTrash(nodes).live, n.parentId).filter((s) => s.id !== n.id);
+  if (!siblings.some((s) => s.number === n.number)) return undefined;
   const level = p.levels.find((l) => l.id === n.levelId);
-  const number = nextNumber(siblings, level?.step ?? 10);
-  return { events: [{ type: "node.restored", id: nodeId, number }], renumbered: number };
+  return nextNumber(siblings, level?.step ?? 10);
+}
+
+/**
+ * Cut a shot's video into new shots (docs/INTERFAZ.md §2.3): each kept
+ * segment becomes a shot in its place, with that stretch as its take, and
+ * the original goes to its scene's «Vídeos editados». The first new shot
+ * takes the original's code; the rest take the codes in the gap after it
+ * (010 → 010, 013, 016 before 020), or the next free ones at the end.
+ * `nodes`: all of them, trash and shelf included.
+ */
+export function planSplitShot(
+  p: Production,
+  nodes: ProdNode[],
+  media: Pick<Media, "id" | "nodeId">,
+  segments: Segment[],
+  newId: (prefix: string) => Id,
+  by: Id,
+  now: Millis,
+): Plan & { nodeIds: Id[] } {
+  const original = nodes.find((n) => n.id === media.nodeId);
+  if (!original || original.trashedAt !== undefined || original.shelvedAt !== undefined || !segments.length) return { events: [], nodeIds: [] };
+  const level = p.levels[levelIndex(p, original)];
+  if (!level) return { events: [], nodeIds: [] };
+  const siblings = childrenOf(splitTrash(nodes).live, original.parentId).filter((n) => n.id !== original.id);
+  const k = segments.length;
+
+  // Codes: the original's, then the gap up to the next code.
+  const nextCode = siblings.filter((s) => s.number > original.number).sort(byNumber)[0]?.number;
+  const gap = nextCode === undefined ? level.step * k : nextCode - original.number;
+  let numbers: number[];
+  if (gap >= k) numbers = segments.map((_, i) => original.number + Math.floor((gap * i) / k));
+  else {
+    let last = nextNumber(siblings, level.step) - level.step;
+    numbers = [original.number, ...segments.slice(1).map(() => (last += level.step))];
+  }
+
+  // Places: where the original was, spread up to the next card.
+  const visual = childrenOf(splitTrash(nodes).live, original.parentId);
+  const nextCard = visual[visual.indexOf(original) + 1];
+  const lo = sortValue(original);
+  const hi = nextCard ? sortValue(nextCard) : lo + ORDER_STEP * k;
+
+  const events: LogEventBody[] = [];
+  const nodeIds: Id[] = [];
+  segments.forEach((seg, i) => {
+    const id = newId("n");
+    const takeId = newId("tk");
+    nodeIds.push(id);
+    events.push(
+      { type: "node.created", node: { id, parentId: original.parentId, levelId: original.levelId, number: numbers[i]!, title: original.title, statusId: firstStatus(p), order: lo + ((hi - lo) * i) / k } },
+      { type: "take.added", take: { id: takeId, nodeId: id, mediaId: media.id, inSec: seg.inSec, outSec: seg.outSec, createdBy: by, createdAt: now } },
+      { type: "node.updated", id, patch: { selectedTakeId: takeId } },
+    );
+  });
+  events.push({ type: "node.shelved", id: original.id });
+  return { events, nodeIds, nodeId: nodeIds[0] };
 }
 
 /** Only the fields that actually change, so concurrent edits of other fields survive. */

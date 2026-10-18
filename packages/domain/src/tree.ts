@@ -3,7 +3,7 @@
  * they run the same in the UI, in Cloud Functions and in the folder mirror.
  */
 
-import { codeFor, folderName } from "./naming";
+import { codeFor, folderName, SHELF_DIR } from "./naming";
 import type { Id, LevelDef, ProdNode, Production } from "./types";
 
 export type LevelRole = "group" | "production" | "unit";
@@ -73,9 +73,12 @@ export function codePath(p: Production, nodes: ProdNode[], n: ProdNode): string[
   return ancestorsOf(nodes, n).map((a) => codeOf(p, a));
 }
 
-/** Folder path relative to the production root, identical on macOS & Windows. */
+/**
+ * Folder path relative to the production root, identical on macOS & Windows.
+ * A shelved node lives in its parent's `_editados/`.
+ */
 export function folderPath(p: Production, nodes: ProdNode[], n: ProdNode): string {
-  return ancestorsOf(nodes, n).map((a) => folderOf(p, a)).join("/");
+  return ancestorsOf(nodes, n).map((a) => (a.shelvedAt !== undefined ? `${SHELF_DIR}/${folderOf(p, a)}` : folderOf(p, a))).join("/");
 }
 
 /** Stable global sort key (depth-first order). */
@@ -107,9 +110,10 @@ export function renumbered(siblings: ProdNode[], step: number): Map<Id, number> 
 /**
  * Board and trash (docs/INTERFAZ.md §2.2): a node is in the trash when it or
  * an ancestor was trashed. `roots` are the trashed nodes not inside another
- * trashed node — what the trash lists and restores.
+ * trashed node — what the trash lists and restores. `shelf`: shelved nodes
+ * not in the trash (the «Vídeos editados» of each scene), off the board too.
  */
-export function splitTrash(nodes: ProdNode[]): { live: ProdNode[]; trash: ProdNode[]; roots: ProdNode[] } {
+export function splitTrash(nodes: ProdNode[]): { live: ProdNode[]; trash: ProdNode[]; roots: ProdNode[]; shelf: ProdNode[] } {
   const byId = new Map(nodes.map((n) => [n.id, n]));
   const memo = new Map<Id, boolean>();
   const trashed = (n: ProdNode, depth = 0): boolean => {
@@ -122,10 +126,11 @@ export function splitTrash(nodes: ProdNode[]): { live: ProdNode[]; trash: ProdNo
   };
   const live: ProdNode[] = [];
   const trash: ProdNode[] = [];
-  for (const n of nodes) (trashed(n) ? trash : live).push(n);
+  const shelf: ProdNode[] = [];
+  for (const n of nodes) (trashed(n) ? trash : n.shelvedAt !== undefined ? shelf : live).push(n);
   const roots = trash.filter((n) => {
     const parent = n.parentId ? byId.get(n.parentId) : undefined;
     return n.trashedAt !== undefined && !(parent && trashed(parent));
   });
-  return { live, trash, roots };
+  return { live, trash, roots, shelf };
 }

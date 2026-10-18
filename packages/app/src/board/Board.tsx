@@ -17,6 +17,7 @@ import { Thumb } from "../components/media";
 import { Popover } from "../components/Popover";
 import { StatusPicker } from "../components/StatusPicker";
 import { nodeDragProps, useEndDrop, useNodeDrop } from "./dnd";
+import { ShelfButton } from "./Shelf";
 
 export function Board() {
   const snap = useSnap();
@@ -165,6 +166,7 @@ function Lane({ row }: { row: ProdNode }) {
             <IconWand size={14} /> Keyframes vacíos ({empty.length})
           </Button>
         ) : null}
+        <ShelfButton row={row} />
         <IconButton size="sm" className="head__del" label={`Mover ${codeOf(p, row)} y sus ${unitLevel.name.toLowerCase()}s a la papelera`} onClick={() => trashNodes([row.id])}><IconTrash size={14} /></IconButton>
       </div>
       <div className={cx("lane__cards", endDrop.over && "dnd-end")} {...endDrop.props}>
@@ -183,7 +185,14 @@ function AddCard({ row }: { row: ProdNode }) {
   const label = `Nuevo ${p.levels[levelIndex(p, row) + 1]!.name.toLowerCase()} en ${codeOf(p, row)}`;
   return (
     <button className="card card--add" title={label} aria-label={label} onClick={() => select(source.createNode(row.id, ""))}>
-      <IconPlus size={24} stroke={1.5} />
+      {/* Same insides as a shot card, invisible: it always has a card's size and ratio. */}
+      <span className="card__ghost" aria-hidden>
+        <span className="thumb" />
+        <span className="card__meta"><span className="card__code">SH</span><Pill color="transparent">·</Pill></span>
+        <span className="card__title">·</span>
+        <span className="card__foot">·</span>
+      </span>
+      <IconPlus size={24} stroke={1.5} className="card__plus" />
     </button>
   );
 }

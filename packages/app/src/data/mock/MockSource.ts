@@ -17,7 +17,9 @@ import {
   planMoveNodes,
   planRestoreNode,
   planSetNumber,
+  planSplitShot,
   planTrashNode,
+  planUnshelveNode,
   splitTrash,
   type Activity,
   type Id,
@@ -25,7 +27,9 @@ import {
   type Media,
   type Plan,
   type ProdNode,
+  type Segment,
   type StatusDef,
+  type Take,
 } from "@sweetflow/domain";
 import { ALL_FEATURES, type DataSource, type GenerateArgs, type Placement, type Snapshot } from "../source";
 import { frame, type Mood } from "./frames";
@@ -45,6 +49,7 @@ export class MockSource implements DataSource {
     this.s = {
       ...seed,
       trash: [],
+      shelf: [],
       presence: [
         { uid: "u_laura", nodeId: seed.nodes.find((n) => n.title === "La linterna se enciende")?.id, at: Date.now() },
         { uid: "u_marc", nodeId: seed.nodes.find((n) => n.title === "Mar abierto")?.id, at: Date.now() },
@@ -139,13 +144,13 @@ export class MockSource implements DataSource {
   }
 
   trashNode(nodeId: Id): void {
-    const all = [...this.s.nodes, ...this.s.trash];
+    const all = this.all();
     if (!planTrashNode(all, nodeId).events.length) return;
     this.setAll(all.map((n) => (n.id === nodeId ? { ...n, trashedAt: Date.now() } : n)));
   }
 
   restoreNode(nodeId: Id): number | undefined {
-    const all = [...this.s.nodes, ...this.s.trash];
+    const all = this.all();
     const plan = planRestoreNode(this.s.production, all, nodeId);
     if (!plan.events.length) return undefined;
     this.setAll(all.map((n) => {
@@ -156,21 +161,27 @@ export class MockSource implements DataSource {
     return plan.renumbered;
   }
 
-  /** Board and trash from one list. */
-  private setAll(all: ProdNode[]): void {
-    const { live, trash } = splitTrash(all);
-    this.commit({ nodes: live, trash }, true);
+  /** Board, trash and «Vídeos editados» in one list. */
+  private all(): ProdNode[] {
+    return [...this.s.nodes, ...this.s.trash, ...this.s.shelf];
+  }
+
+  /** Board, trash and «Vídeos editados» from one list. */
+  private setAll(all: ProdNode[], extra: Partial<Snapshot> = {}): void {
+    const { live, trash, shelf } = splitTrash(all);
+    this.commit({ ...extra, nodes: live, trash, shelf }, true);
   }
 
   deleteNode(nodeId: Id): void {
-    const all = [...this.s.nodes, ...this.s.trash];
+    const all = this.all();
     const ids = new Set([nodeId, ...descendantsOf(all, nodeId).map((d) => d.id)]);
     const mediaIds = new Set(this.s.media.filter((m) => ids.has(m.nodeId)).map((m) => m.id));
-    const { live, trash } = splitTrash(all.filter((n) => !ids.has(n.id)));
+    const { live, trash, shelf } = splitTrash(all.filter((n) => !ids.has(n.id)));
     this.commit(
       {
         nodes: live,
         trash,
+        shelf,
         media: this.s.media.filter((m) => !mediaIds.has(m.id)),
         takes: this.s.takes.filter((t) => !ids.has(t.nodeId) && !mediaIds.has(t.mediaId)),
         comments: this.s.comments.filter((c) => !ids.has(c.nodeId)),
@@ -289,6 +300,36 @@ export class MockSource implements DataSource {
     }
     const m = this.s.media.find((x) => x.id === mediaId);
     this.commit({ nodes, takes, activity: [this.log("take", `colocó ${placements.length} tramo${placements.length > 1 ? "s" : ""}`, m?.nodeId), ...this.s.activity] }, true);
+  }
+
+  splitIntoShots(mediaId: Id, segments: Segment[]): Id[] {
+    const media = this.s.media.find((m) => m.id === mediaId);
+    if (!media) return [];
+    const now = Date.now();
+    const plan = planSplitShot(this.s.production, this.all(), media, segments, newId, this.s.me.uid, now);
+    if (!plan.events.length) return [];
+    let all = this.all();
+    const takes: Take[] = [...this.s.takes];
+    const stamp = { updatedAt: now, updatedBy: this.s.me.uid };
+    for (const e of plan.events) {
+      if (e.type === "node.created") all = [...all, { ...e.node, productionId: this.s.production.id, notes: "", assigneeIds: [], assetIds: [], ...stamp }];
+      else if (e.type === "take.added") takes.push({ ...e.take, productionId: this.s.production.id, thumbUrl: frame(`${mediaId}@${e.take.inSec}`, this.moods[mediaId] ?? "noon") });
+      else if (e.type === "node.updated") all = all.map((n) => (n.id === e.id ? { ...n, ...e.patch } : n));
+      else if (e.type === "node.shelved") all = all.map((n) => (n.id === e.id ? { ...n, shelvedAt: now, ...stamp } : n));
+    }
+    this.setAll(all, { takes, activity: [this.log("take", `cortó en ${plan.nodeIds.length} plano${plan.nodeIds.length > 1 ? "s" : ""}`, plan.nodeIds[0]), ...this.s.activity] });
+    return plan.nodeIds;
+  }
+
+  unshelveNode(nodeId: Id): number | undefined {
+    const plan = planUnshelveNode(this.s.production, this.all(), nodeId);
+    if (!plan.events.length) return undefined;
+    this.setAll(this.all().map((n) => {
+      if (n.id !== nodeId) return n;
+      const { shelvedAt: _gone, ...rest } = n;
+      return { ...rest, number: plan.renumbered ?? n.number, updatedAt: Date.now(), updatedBy: this.s.me.uid };
+    }));
+    return plan.renumbered;
   }
 
   selectTake(nodeId: Id, takeId: Id): void {

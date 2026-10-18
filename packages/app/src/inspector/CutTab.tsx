@@ -25,9 +25,11 @@ const KEEP = "__keep__";
 const NEW = "__new__";
 
 /**
- * Non-destructive cutter. Cut points split a clip into segments; each segment
- * goes to a child folder (shot), a new child, or stays in this node. The
- * original media is never modified.
+ * Non-destructive cutter. Cut points split a clip into segments. A shot's own
+ * video is cut into shots (docs/INTERFAZ.md §2.3): the kept segments become
+ * shots in its place and the whole video goes to «Vídeos editados». A clip of
+ * a scene or sequence is shared out instead: each segment goes to a child, a
+ * new child, or stays in the node. The original media is never modified.
  */
 export function CutTab({ node }: { node: ProdNode }) {
   const snap = useSnap();
@@ -44,8 +46,10 @@ export function CutTab({ node }: { node: ProdNode }) {
   const media = clips.find((m) => m.id === activeMediaId) ?? [...clips].sort((a, b) => fed(b.id) - fed(a.id))[0];
   const [cuts, setCuts] = useState<number[]>([]);
   const [dest, setDest] = useState<Record<number, string>>({});
+  /** Segments left out when cutting a shot into shots. */
+  const [drop, setDrop] = useState<Record<number, boolean>>({});
   const [done, setDone] = useState(false);
-  useEffect(() => { setCuts([]); setDest({}); }, [media?.id]);
+  useEffect(() => { setCuts([]); setDest({}); setDrop({}); }, [media?.id]);
 
   // Cuts are applied at the node that owns the clip; destinations are its children.
   const owner = media ? snap.nodes.find((n) => n.id === media.nodeId)! : node;
@@ -53,6 +57,7 @@ export function CutTab({ node }: { node: ProdNode }) {
   const childLevel = p.levels[levelIndex(p, owner) + 1];
   const dur = media?.durationSec ?? 0;
   const segments = useMemo(() => segmentsFromCuts(dur, cuts), [dur, cuts]);
+  useEffect(() => setDrop({}), [segments.length]);
   const placed = media ? snap.takes.filter((t) => t.mediaId === media.id) : [];
 
   // Space = play/pause, C = cut at playhead. Floating panels leave shortcuts to the main panel.
@@ -87,6 +92,27 @@ export function CutTab({ node }: { node: ProdNode }) {
     setDest({});
     setDone(true);
     setTimeout(() => setDone(false), 2500);
+  };
+
+  // A shot's own video: the kept segments become shots, the video goes to «Vídeos editados».
+  const splitting = isUnit(p, owner) && media.nodeId === owner.id;
+  const kept = segments.flatMap((s, i) => (drop[i] ? [] : [s]));
+  const scene = owner.parentId ? snap.nodes.find((n) => n.id === owner.parentId) : undefined;
+  const split = () => {
+    const before = codeOf(p, owner);
+    const ids = source.splitIntoShots(media.id, kept);
+    if (!ids.length) return;
+    const { select, notify } = useStore.getState();
+    select(ids[0]!, "produce");
+    notify(`${before} pasó a Vídeos editados${scene ? ` de ${codeOf(p, scene)}` : ""} · ${ids.length} plano${ids.length > 1 ? "s" : ""} nuevo${ids.length > 1 ? "s" : ""}.`, {
+      label: "Deshacer",
+      run: () => {
+        for (const id of ids) source.trashNode(id);
+        source.unshelveNode(owner.id);
+        useStore.getState().select(owner.id, "cut");
+        useStore.getState().set({ notice: null });
+      },
+    });
   };
 
   const seek = (t: number) => setPanel({ playhead: Math.max(0, Math.min(dur, t)), playing: false });
@@ -154,7 +180,17 @@ export function CutTab({ node }: { node: ProdNode }) {
           <h4>{segments.length} tramo{segments.length > 1 ? "s" : ""}</h4>
           <span className="sf-faint sf-small">el original no se modifica</span>
         </div>
-        {segments.map((s, i) => (
+        {splitting ? segments.map((s, i) => (
+          <label key={`${s.inSec}-${s.outSec}`} className={cx("segrow segrow--pick", drop[i] && "segrow--off")}>
+            <span className={`segrow__n seg-c${i % 6}`}>{i + 1}</span>
+            <IconButton size="sm" label="Ver tramo" onClick={(e) => { e.preventDefault(); setPanel({ playhead: s.inSec, playing: true }); }}><IconPlayerPlay size={12} /></IconButton>
+            <span className="sf-mono segrow__tc">{formatTc(s.inSec)}–{formatTc(s.outSec)} <span className="sf-faint">{round1(s.outSec - s.inSec)}s</span></span>
+            <span className="segrow__keep">
+              <input type="checkbox" checked={!drop[i]} onChange={(e) => setDrop({ ...drop, [i]: !e.target.checked })} />
+              {drop[i] ? "Descartar" : "Plano"}
+            </span>
+          </label>
+        )) : segments.map((s, i) => (
           <div key={`${s.inSec}-${s.outSec}`} className="segrow">
             <span className={`segrow__n seg-c${i % 6}`}>{i + 1}</span>
             <IconButton size="sm" label="Ver tramo" onClick={() => setPanel({ playhead: s.inSec, playing: true })}><IconPlayerPlay size={12} /></IconButton>
@@ -166,9 +202,22 @@ export function CutTab({ node }: { node: ProdNode }) {
             </select>
           </div>
         ))}
-        <Button variant="primary" block onClick={() => place(segments.map((_, i) => i))}>
-          {done ? <><Spinner /> Colocado y sincronizando…</> : segments.length > 1 ? `Colocar los ${segments.length} tramos` : "Colocar"}
-        </Button>
+        {splitting ? (
+          <>
+            <Button variant="primary" block disabled={segments.length < 2 || !kept.length} onClick={split}>
+              <IconCut size={14} /> {kept.length > 1 ? `Crear ${kept.length} planos` : kept.length ? "Crear 1 plano" : "Elige algún tramo"}
+            </Button>
+            <p className="sf-faint sf-small">
+              {segments.length < 2
+                ? <>Pulsa <span className="sf-kbd">C</span> o «Cortar» donde empieza cada plano.</>
+                : <>Los tramos marcados sustituyen a {codeOf(p, owner)} en la fila; el vídeo completo pasa a «Vídeos editados»{scene ? ` de ${codeOf(p, scene)}` : ""}.</>}
+            </p>
+          </>
+        ) : (
+          <Button variant="primary" block onClick={() => place(segments.map((_, i) => i))}>
+            {done ? <><Spinner /> Colocado y sincronizando…</> : segments.length > 1 ? `Colocar los ${segments.length} tramos` : "Colocar"}
+          </Button>
+        )}
         {segments.length === 1 && !isUnit(p, owner) ? (
           <p className="sf-faint sf-small">Pulsa <span className="sf-kbd">C</span> o «Cortar» en el punto del timeline donde empieza cada plano.</p>
         ) : null}

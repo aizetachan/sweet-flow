@@ -11,7 +11,7 @@
 
 import { parseStamp, type Stamp } from "./clock";
 import { byNumber, splitTrash } from "./tree";
-import type { Id, LevelDef, Media, Member, Millis, ProdNode, Production, StatusDef } from "./types";
+import type { Id, LevelDef, Media, Member, Millis, ProdNode, Production, StatusDef, Take } from "./types";
 
 /** Bump when an event's shape changes incompatibly. */
 export const LOG_VERSION = 1;
@@ -45,14 +45,22 @@ export type LogEventBody =
   | { type: "node.trashed"; id: Id }
   /** `number`: a new one when its code was taken while it was in the trash. */
   | { type: "node.restored"; id: Id; number?: number }
+  /** To its parent's «Vídeos editados»: its video was cut into new shots. */
+  | { type: "node.shelved"; id: Id }
+  /** Back to the board from «Vídeos editados»; `number` as in `node.restored`. */
+  | { type: "node.unshelved"; id: Id; number?: number }
   /** Removes the node and its whole subtree. */
   | { type: "node.deleted"; id: Id }
   /** A generated (or uploaded) image or video, from the moment it is requested. */
   | { type: "media.added"; media: MediaRecord }
-  | { type: "media.updated"; id: Id; patch: MediaPatch };
+  | { type: "media.updated"; id: Id; patch: MediaPatch }
+  /** A stretch of a media placed in a node (non-destructive cut). */
+  | { type: "take.added"; take: TakeRecord }
+  | { type: "take.removed"; id: Id };
 
 /** What the log keeps of a media: the URL to show it is resolved by each device. */
 export type MediaRecord = Omit<Media, "productionId" | "url" | "thumbUrl">;
+export type TakeRecord = Omit<Take, "productionId" | "thumbUrl">;
 export type MediaPatch = Partial<Pick<Media, "status" | "progress" | "archived" | "error" | "file" | "remote" | "width" | "height" | "durationSec">>;
 
 export type LogEvent = LogEventBody & {
@@ -79,6 +87,8 @@ export interface LogState {
   nodes: ProdNode[];
   /** Media of nodes that still exist (board or trash). */
   media: Media[];
+  /** Takes whose node and media still exist. */
+  takes: Take[];
   members: Member[];
   conflicts: NumberConflict[];
   /** Highest stamp folded; feed it to `hlcObserve` before writing new events. */
@@ -136,9 +146,13 @@ const TYPES = new Set<string>([
   "node.moved",
   "node.trashed",
   "node.restored",
+  "node.shelved",
+  "node.unshelved",
   "node.deleted",
   "media.added",
   "media.updated",
+  "take.added",
+  "take.removed",
 ]);
 
 function isLogEvent(e: unknown): e is LogEvent {
@@ -164,8 +178,8 @@ const wallOf = (s: Stamp): Millis => parseStamp(s)?.clock.wall ?? 0;
  * Deterministic: the same set of events always gives the same state.
  *
  * - Events apply in stamp order; per field, the last write wins.
- * - A trashed node keeps its place and number but takes no part in number
- *   clashes until it is restored.
+ * - A trashed or shelved node keeps its place and number but takes no part
+ *   in number clashes until it is back on the board.
  * - A deleted node ignores later events, and its subtree disappears (also
  *   children another device created concurrently).
  * - Siblings that end up with the same number are separated: the node whose
@@ -185,6 +199,7 @@ export function foldLog(events: LogEvent[]): LogState {
   const deleted = new Set<Id>();
   const members = new Map<Id, Member>();
   const media = new Map<Id, MediaRecord>();
+  const takes = new Map<Id, TakeRecord>();
 
   for (const e of sorted) {
     const at = wallOf(e.at);
@@ -256,6 +271,25 @@ export function foldLog(events: LogEvent[]): LogState {
         numberAt.set(e.id, e.at);
         break;
       }
+      case "node.shelved": {
+        const n = nodes.get(e.id);
+        if (n) nodes.set(e.id, { ...n, shelvedAt: at, updatedAt: at, updatedBy: e.userId });
+        break;
+      }
+      case "node.unshelved": {
+        const n = nodes.get(e.id);
+        if (!n) break;
+        const { shelvedAt: _gone, ...rest } = n;
+        nodes.set(e.id, { ...rest, number: e.number ?? n.number, updatedAt: at, updatedBy: e.userId });
+        numberAt.set(e.id, e.at);
+        break;
+      }
+      case "take.added":
+        if (!takes.has(e.take.id)) takes.set(e.take.id, e.take);
+        break;
+      case "take.removed":
+        takes.delete(e.id);
+        break;
       case "media.added":
         if (!media.has(e.media.id)) media.set(e.media.id, e.media);
         break;
@@ -278,7 +312,9 @@ export function foldLog(events: LogEvent[]): LogState {
 
   const nodeIds = new Set(live.map((n) => n.id));
   const kept = [...media.values()].filter((m) => nodeIds.has(m.nodeId)).map((m) => ({ ...m, productionId }));
-  return { production, nodes: live, media: kept, members: [...members.values()], conflicts, lastStamp: sorted.at(-1)?.at ?? null };
+  const mediaIds = new Set(kept.map((m) => m.id));
+  const keptTakes = [...takes.values()].filter((t) => nodeIds.has(t.nodeId) && mediaIds.has(t.mediaId)).map((t) => ({ ...t, productionId }));
+  return { production, nodes: live, media: kept, takes: keptTakes, members: [...members.values()], conflicts, lastStamp: sorted.at(-1)?.at ?? null };
 }
 
 /** Drop nodes whose parent is missing (deleted, or never synced). */

@@ -37,6 +37,9 @@ export function ProduceTab({ node }: { node: ProdNode }) {
         <p className="note">En este nivel no se genera: agrupa y conserva los montajes de sus {snap.production.levels[snap.production.levels.indexOf(level) + 1]?.name.toLowerCase()}s.</p>
       )}
 
+      {/* Made from a stretch of another video (cut into shots): play that stretch. */}
+      {!own.length ? <TakeViewer node={node} /> : null}
+
       {/* Nothing generated here: the wide window's stage shows the node's cover instead. */}
       {own.length ? <OnStage>
       {active ? (
@@ -201,6 +204,35 @@ function GenerateBox({ node }: { node: ProdNode }) {
   );
 }
 
+/** The chosen take of a node with no media of its own, playing just its stretch. */
+function TakeViewer({ node }: { node: ProdNode }) {
+  const snap = useSnap();
+  const take = node.selectedTakeId ? snap.takes.find((t) => t.id === node.selectedTakeId) : undefined;
+  const media = take ? snap.media.find((m) => m.id === take.mediaId) : undefined;
+  const [time, setTime] = useState(take?.inSec ?? 0);
+  const [playing, setPlaying] = useState(false);
+  useEffect(() => { setTime(take?.inSec ?? 0); setPlaying(false); }, [take?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  if (!take || !media) return null;
+  const from = [...snap.nodes, ...snap.shelf].find((n) => n.id === media.nodeId);
+  const shelved = from?.shelvedAt !== undefined;
+  return (
+    <OnStage>
+      <section className="sec sec--viewer">
+        <Player media={media} time={time} playing={playing} range={take} onTime={setTime} onPlaying={setPlaying} />
+        <div className="mmeta">
+          <div className="mmeta__row">
+            <span className="mmeta__v">Tramo</span>
+            <span className="sf-muted sf-small">
+              {media.kind === "video" ? `${formatTc(take.inSec)} → ${formatTc(take.outSec)} · ${takeDuration(take)}s · ` : ""}
+              de {from ? codeOf(snap.production, from) : "—"} {versionTag(media.version)}{shelved ? " · en Vídeos editados" : ""}
+            </span>
+          </div>
+        </div>
+      </section>
+    </OnStage>
+  );
+}
+
 function TakesHere({ node }: { node: ProdNode }) {
   const snap = useSnap();
   const { source } = useStore();
@@ -212,7 +244,7 @@ function TakesHere({ node }: { node: ProdNode }) {
       <div className="sec__head"><h4>Tomas en {codeOf(snap.production, node)}</h4><span className="sf-faint sf-small">la elegida es la que cuenta en el montaje</span></div>
       {takes.map((t) => {
         const m = snap.media.find((x) => x.id === t.mediaId);
-        const from = m ? snap.nodes.find((n) => n.id === m.nodeId) : undefined;
+        const from = m ? [...snap.nodes, ...snap.shelf].find((n) => n.id === m.nodeId) : undefined;
         const on = node.selectedTakeId === t.id;
         return (
           <div key={t.id} className={cx("take", on && "take--on")}>

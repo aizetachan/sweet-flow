@@ -43,7 +43,10 @@ export function folderName(code: string, title: string): string {
   return t ? `${code}_${t}` : code;
 }
 
-export const versionTag = (v: number) => `v${String(v).padStart(3, "0")}`;
+/** Folder inside a scene with the originals cut into shots («Vídeos editados»). */
+export const SHELF_DIR = "_editados";
+
+export const versionTag =(v: number) => `v${String(v).padStart(3, "0")}`;
 
 const KIND_TAG = { image: "img", video: "vid", audio: "aud" } as const;
 

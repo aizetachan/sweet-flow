@@ -76,19 +76,21 @@ export class ProductionFiles {
       await this.fs.remove(was.get(n.id)!);
     }
     const depth = (n: ProdNode) => is.get(n.id)!.split("/").length;
-    for (const n of [...after].sort((a, b) => depth(a) - depth(b))) {
+    const byDepth = [...after].sort((a, b) => depth(a) - depth(b));
+    // Moves first: a shot cut into shots leaves for `_editados/` before the
+    // first new shot (same code, often same title) makes its folder.
+    for (const n of byDepth) {
       const to = is.get(n.id)!;
       const old = was.get(n.id);
-      if (old === undefined) {
-        await this.fs.mkdir(to);
-        continue;
-      }
-      if (old === to) continue;
-      // Where it is right now: under where its old parent is now (already moved), with its old name.
+      if (old === undefined || old === to) continue;
+      // Where it is right now: under where its old parent is now (already
+      // moved), at the same place inside it (its old name, or `_editados/` + name).
       const oldParent = prevById.get(n.id)!.parentId;
-      const parentNow = oldParent ? is.get(oldParent) ?? was.get(oldParent)! : base;
-      const now = joinPath(parentNow, old.slice(old.lastIndexOf("/") + 1));
+      const parentWas = oldParent ? was.get(oldParent)! : base;
+      const parentNow = oldParent ? is.get(oldParent) ?? parentWas : base;
+      const now = joinPath(parentNow, old.slice(parentWas.length).replace(/^\//, ""));
       if (now !== to) await this.fs.move(now, to);
     }
+    for (const n of byDepth) if (!was.has(n.id)) await this.fs.mkdir(is.get(n.id)!);
   }
 }

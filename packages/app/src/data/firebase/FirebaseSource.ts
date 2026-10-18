@@ -24,6 +24,7 @@ import type {
   ProdNode,
   Production,
   Role,
+  Segment,
   StatusDef,
   Take,
   Workspace,
@@ -182,6 +183,7 @@ export class FirebaseSource implements DataSource {
       nodes: l.nodes,
       // The production trash lands with stage C; until then deletes are for good.
       trash: [],
+      shelf: [],
       media: l.media.map((m) => this.withUrls(m)),
       takes: l.takes,
       comments: l.comments,
@@ -336,6 +338,14 @@ export class FirebaseSource implements DataSource {
 
   restoreNode(_nodeId: Id): number | undefined {
     throw new NotImplemented("Papelera de la producción", "etapa C");
+  }
+
+  splitIntoShots(_mediaId: Id, _segments: Segment[]): Id[] {
+    throw new NotImplemented("Cortar en planos", "etapa C");
+  }
+
+  unshelveNode(_nodeId: Id): number | undefined {
+    throw new NotImplemented("Vídeos editados", "etapa C");
   }
 
   deleteNode(nodeId: Id): void {
