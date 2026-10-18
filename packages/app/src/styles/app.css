@@ -932,7 +932,10 @@ button.topbar__me { position: relative; padding: 0; border: 0; border-radius: 50
 .workspace { position: relative; }
 .side__resize { position: absolute; top: 0; left: calc(var(--side-max) * var(--side-k, 1) - 4px); bottom: 0; width: 8px; z-index: 5; cursor: col-resize; touch-action: none; }
 .side__resize::after { content: ""; position: absolute; top: 0; bottom: 0; left: 3px; width: 2px; background: transparent; transition: background .15s; }
-.side__resize:hover::after, .side__resize.is-on::after { background: var(--primary); }
+/* Softer than a card's hover: a thin, dim line of the brand blue, a little brighter while dragging. */
+.side__resize::after { width: 1px; left: 3.5px; }
+.side__resize:hover::after { background: rgb(var(--brand-500-rgb) / .35); box-shadow: 0 0 4px rgb(var(--brand-500-rgb) / .2); }
+.side__resize.is-on::after { background: rgb(var(--brand-500-rgb) / .55); box-shadow: 0 0 5px rgb(var(--brand-500-rgb) / .3); }
 @media (max-width: 720px) { .side__resize { display: none; } }
 .workspace--resizing { cursor: col-resize; user-select: none; }
 /* A click on the edge: the width glides to its new place. */
