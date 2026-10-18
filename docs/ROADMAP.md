@@ -169,6 +169,10 @@ Anotadas el 15 oct 2026, pendientes de que el usuario elija orden:
 - Voz (TTS) con elección de voz; referencia de vídeo para la música; movimiento de cámara y multiplano en Seedance.
 - Subir a Magnific una imagen local para usarla como referencia.
 
+### Formato de la producción
+
+- Proporción por producción (16:9 por defecto; 9:16 para vertical): miniaturas, tarjetas, visor y la proporción por defecto al generar.
+
 ### Revisión: siguientes pasos
 
 - Avisos de todas las producciones en el dashboard (hoy, los de la abierta).

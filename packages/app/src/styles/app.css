@@ -291,9 +291,14 @@
 .mmeta__spacer { flex: 1; }
 .mmeta__prompt { margin: 0; font-size: 12px; color: var(--fg-3); line-height: 1.45; }
 
-.versions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.versions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
 .version { position: relative; padding: 3px; border: 1px solid transparent; border-radius: var(--r-md); background: none; text-align: left; cursor: pointer; }
-.version__tag { white-space: nowrap; overflow: hidden; }
+.version__tag { white-space: nowrap; overflow: hidden; min-width: 0; }
+/* Every tile the same size (the long tag is cut, never widens it); covers 16:9 like the production. */
+.version { min-width: 0; }
+.version .thumb { width: 100%; aspect-ratio: 16 / 9; }
+.version__label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.version__chosen { flex: none; }
 .version__chosen { margin-left: auto; display: inline-flex; align-items: center; gap: 2px; padding: 0 5px; border-radius: 99px; background: var(--ok); color: #000; font-family: var(--font, inherit); font-weight: 600; font-size: 10px; }
 .version--chosen .thumb { box-shadow: 0 0 0 2px var(--ok); }
 .version__acts { position: absolute; top: 7px; right: 7px; display: flex; gap: 4px; opacity: 0; transition: opacity .12s; }
@@ -766,6 +771,7 @@ button.topbar__me { position: relative; padding: 0; border: 0; border-radius: 50
 .insp__stage .player { width: 100%; max-height: calc(100vh - 220px); }
 .insp__stage .player img, .insp__stage .player video { object-fit: contain; }
 .insp__stage .versions { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.insp__stage .version { width: 100%; }
 .insp__stage-empty { display: grid; place-items: center; height: 100%; min-height: 240px; }
 
 /* Icon-only buttons: no browser padding, so the icon sits exactly in the middle. */

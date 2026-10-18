@@ -142,10 +142,10 @@ export function ProduceTab({ node }: { node: ProdNode }) {
             return (
               <div key={i.key} className={cx("version", i.key === active?.key && "version--on", m.archived && "version--archived", isChosen && "version--chosen")}
                 onClick={() => { setActiveKey(i.key); setPanel({ activeMediaId: m.id, playhead: i.foreign && i.take ? i.take.inSec : 0, playing: false }); }}>
-                <Thumb media={ready ? m : undefined} take={i.foreign ? i.take : undefined} pending={m.status === "queued" || m.status === "rendering" ? m : undefined} badge={false} />
+                <Thumb media={ready ? m : undefined} take={i.foreign ? i.take : undefined} pending={m.status === "queued" || m.status === "rendering" ? m : undefined} badge={false} preview />
                 <span className="version__tag">
                   {m.kind === "video" ? <IconVideo size={11} /> : m.kind === "audio" ? <IconMusic size={11} /> : <IconPhoto size={11} />}
-                  {i.foreign ? `Tramo de ${from ? codeOf(snap.production, from) : "—"}` : versionTag(m.version)}
+                  <span className="version__label" title={i.foreign ? `Tramo de ${from ? codeOf(snap.production, from) : "—"}` : undefined}>{i.foreign ? `Tramo de ${from ? codeOf(snap.production, from) : "—"}` : versionTag(m.version)}</span>
                   {isChosen ? <span className="version__chosen"><IconCheck size={10} stroke={3} /> Elegida</span> : <Avatar name={memberName(snap, m.createdBy)} size={14} />}
                 </span>
                 {ready && !m.archived ? (

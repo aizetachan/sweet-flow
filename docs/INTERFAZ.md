@@ -289,6 +289,9 @@ y «Tomas» por separado):
   colocados aquí («Tramo de SC020», al cortar en planos).
 - Clic en una: se ve en el visor, con su modelo y su prompt (y «Cortar» si es
   un vídeo).
+- **Todas las miniaturas miden lo mismo** (16:9, el formato de las
+  producciones; el texto largo se corta con «…»). En un vídeo, mover el ratón
+  por la miniatura lo recorre, como en las tarjetas del tablero.
 - Al pasar el ratón, dos botones en la miniatura:
   - **Elegir (✓):** el plano pasa a ser esa. Es la que cuenta: portada de la
     tarjeta, duración y montaje. La elegida lleva «Elegida» y un borde verde.
