@@ -127,11 +127,14 @@ function Thread({ c, replies, node, on, other, onGo, onDelete }: {
   const m = c.mediaId ? snap.media.find((x) => x.id === c.mediaId) : undefined;
   // Newer versions of this shot it can be taken to (worked on there).
   const newer = m ? snap.media.filter((x) => x.nodeId === node.id && x.id !== m.id && !x.archived && x.status === "ready" && x.createdAt > m.createdAt).sort((a, b) => b.createdAt - a.createdAt) : [];
-  const trail = (c.history ?? []).map((h) => snap.media.find((x) => x.id === h.mediaId)).filter(Boolean).map((x) => mediaLabel(x!));
+  const trail = (c.history ?? []).map((h) => snap.media.find((x) => x.id === h.mediaId)).filter((x): x is Media => !!x);
+  /** Opens that version in the viewer. */
+  const { setPanel } = usePanel();
+  const show = (id: Id) => setPanel({ activeMediaId: id, playing: false, ...(c.atSec !== undefined ? { playhead: c.atSec } : {}) });
   const takeTo = (id: Id) => {
     const to = snap.media.find((x) => x.id === id);
     source.moveCommentToVersion(c.id, id);
-    useStore.getState().set({ activeMediaId: id });
+    setPanel({ activeMediaId: id });
     useStore.getState().notify(`Comentario llevado a ${to ? versionTag(to.version) : "la nueva versión"}: la conversación sigue ahí.`);
   };
   return (
@@ -141,7 +144,19 @@ function Thread({ c, replies, node, on, other, onGo, onDelete }: {
       <CommentLine c={c} onDelete={onDelete} head={
         <>
           {/* Where it has been: v001 → v002 when it was worked on in a newer version. */}
-          {trail.length && m ? <span className="tc tc--plain" title="Versiones por las que ha pasado">{[...trail, mediaLabel(m)].join(" → ")}</span> : m && other ? <span className="sf-faint sf-small">{versionTag(m.version)}</span> : null}
+          {/* Each version a link: a click opens it in the viewer (the current one stands out). */}
+          {trail.length && m ? (
+            <span className="vtrail" title="Versiones por las que ha pasado: clic para verla">
+              {[...trail, m].map((v, i, all) => (
+                <span key={v.id + i} className="vtrail__step">
+                  {i ? <span className="vtrail__arrow">→</span> : null}
+                  <button className={cx("vtrail__v", i === all.length - 1 && "vtrail__v--now")} onClick={(e) => { e.stopPropagation(); show(v.id); }}>{mediaLabel(v)}</button>
+                </span>
+              ))}
+            </span>
+          ) : m && other ? (
+            <button className="vtrail__v" title="Ver esta versión" onClick={(e) => { e.stopPropagation(); show(m.id); }}>{mediaLabel(m)}</button>
+          ) : null}
           {c.atSec !== undefined ? <button className="tc" onClick={onGo}><IconClock size={11} /> {formatTc(c.atSec)}</button> : null}
           {c.point || c.area ? <span className="tc tc--plain" title={c.area ? "Área señalada en la imagen" : "Punto señalado en la imagen"}><IconMapPin size={11} /></span> : null}
         </>
