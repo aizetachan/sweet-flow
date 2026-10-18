@@ -21,8 +21,9 @@
   --ghost: #ffffff0f;
   --ghost-2: #ffffff1a;
 
-  --accent: #ff4fa8;        /* create / generate */
-  --accent-soft: #ff4fa81f;
+  /* Create / generate: the brand blue too (one corporate colour). */
+  --accent: #2f7dff;
+  --accent-soft: rgb(47 125 255 / .14);
   /* Brand blues (the corporate colour): light for lit edges, main for buttons
      and selection, deep for glows. As RGB too, for glows with alpha. */
   --brand-300: #6cb6ff;
@@ -80,8 +81,8 @@ button { cursor: pointer; }
 .sf-btn--ghost:hover:not(:disabled) { background: var(--ghost); color: var(--fg-0); }
 .sf-btn--primary { background: var(--primary); border-color: var(--primary); }
 .sf-btn--primary:hover:not(:disabled) { background: var(--primary-hover); border-color: var(--primary-hover); }
-.sf-btn--create { background: var(--accent); border-color: var(--accent); color: #140810; font-weight: 600; }
-.sf-btn--create:hover:not(:disabled) { background: #ff6db7; }
+.sf-btn--create { background: var(--brand-500); border-color: var(--brand-500); color: #fff; font-weight: 600; }
+.sf-btn--create:hover:not(:disabled) { background: var(--primary-hover); border-color: var(--primary-hover); }
 .sf-btn--block { width: 100%; }
 
 .sf-icon-btn {

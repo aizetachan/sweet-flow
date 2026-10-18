@@ -221,8 +221,11 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
 - **Color de marca:** la paleta azul es el color corporativo: azul claro
   `#6cb6ff` (bordes iluminados), azul `#2f7dff` (botones principales,
   selección, foco, avisos) y azul profundo `#1648d8` (resplandores). Viven en el
-  kit como `--brand-300/500/700`; `--primary` es el azul de marca. El rosa de
-  «Generar» (`--accent`) se mantiene para crear.
+  kit como `--brand-300/500/700`; `--primary` y `--accent` son el azul de
+  marca. **Generar** es un botón azul saturado con texto blanco; el progreso,
+  el cabezal de la línea de tiempo, los créditos y el logo también van en
+  azul (ya no hay rosa). El hover de las tarjetas usa el mismo azul saturado
+  que la selección, más suave.
 - **Tarjeta con el ratón encima y seleccionada:** el borde es una luz de neón
   suave en los azules de marca (difuminada, con un halo corto), no una línea
   nítida. Seleccionada,
