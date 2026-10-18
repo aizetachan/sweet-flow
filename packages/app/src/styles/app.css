@@ -37,7 +37,7 @@
 /* ---------- workspace ---------- */
 /* Left column (work panel | structure tabs) and the board (docs/INTERFAZ.md §2). */
 /* The left panel: its full width (--side-max) times how much of it the person keeps (--side-k, 0.8–1, dragging its right edge). */
-.workspace { --side-max: 440px; flex: 1; min-height: 0; display: grid; grid-template-columns: calc(var(--side-max) * var(--side-k, 1)) minmax(0, 1fr); }
+.workspace { --side-max: 440px; flex: 1; min-height: 0; display: grid; grid-template-columns: max(var(--side-min, 0px), calc(var(--side-max) * var(--side-k, 1))) minmax(0, 1fr); }
 .side { display: flex; flex-direction: column; min-height: 0; background: var(--bg-1); border-right: 1px solid var(--line-0); }
 .side > .insp, .side > .tree { flex: 1; min-height: 0; border: 0; }
 .sidetabs { flex: none; display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin: 10px 12px 2px; padding: 3px; border-radius: var(--r-md); background: var(--bg-3); }
@@ -942,7 +942,7 @@ button.topbar__me { position: relative; padding: 0; border: 0; border-radius: 50
 .insp__shelved { display: flex; align-items: center; gap: 6px; margin: 0 14px 8px; padding: 7px 10px; border-radius: var(--r-md); background: var(--bg-3); color: var(--fg-2); font-size: 12px; }
 /* Right edge of the left panel: drag to narrow it (down to 60%) or widen it back; a click snaps it. */
 .workspace { position: relative; }
-.side__resize { position: absolute; top: 0; left: calc(var(--side-max) * var(--side-k, 1) - 4px); bottom: 0; width: 8px; z-index: 5; cursor: col-resize; touch-action: none; }
+.side__resize { position: absolute; top: 0; left: calc(max(var(--side-min, 0px), calc(var(--side-max) * var(--side-k, 1))) - 4px); bottom: 0; width: 8px; z-index: 5; cursor: col-resize; touch-action: none; }
 .side__resize::after { content: ""; position: absolute; top: 0; bottom: 0; left: 3px; width: 2px; background: transparent; transition: background .15s; }
 /* Softer than a card's hover: a thin, dim line of the brand blue, a little brighter while dragging. */
 .side__resize::after { width: 1px; left: 3.5px; }

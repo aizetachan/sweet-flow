@@ -59,13 +59,16 @@ function Production() {
 }
 
 /**
- * How much of the left panel's width is kept (docs/INTERFAZ.md §2): 60–100 %,
+ * How much of the left panel's width is kept (docs/INTERFAZ.md §2): 60–100 %
+ * (never under what its tabs need),
  * remembered on this computer. Dragging its right edge sets it; a click on
  * the edge snaps it: from full to the narrowest and back, and in between to
  * whichever end is closer.
  */
 const SIDE_KEY = "sweetflow:side-k";
 const MIN_K = 0.6;
+/** Never narrower than this: the panel's tabs (Producir · Editar · Revisión · Actividad) and its header must fit. */
+const MIN_PX = 330;
 function readK(): number {
   try {
     const v = Number(localStorage.getItem(SIDE_KEY));
@@ -87,6 +90,12 @@ function Workspace({ children }: { children: ReactNode }) {
   const [dragging, setDragging] = useState(false);
   const [snapping, setSnapping] = useState(false);
   const box = useRef<HTMLDivElement>(null);
+  // The narrowest it can go here: 60 %, or what its contents need if that is more.
+  const minK = () => {
+    const ws = box.current;
+    const max = ws ? parseFloat(getComputedStyle(ws).getPropertyValue("--side-max")) || 440 : 440;
+    return Math.min(1, Math.max(MIN_K, MIN_PX / max));
+  };
   const snapTo = (to: number) => {
     setSnapping(true);
     setK(to);
@@ -107,7 +116,7 @@ function Workspace({ children }: { children: ReactNode }) {
       if (!moved && Math.abs(ev.clientX - startX) < 4) return;
       if (!moved) setDragging(true);
       moved = true;
-      last = Math.min(1, Math.max(MIN_K, (ev.clientX - left) / max));
+      last = Math.min(1, Math.max(minK(), (ev.clientX - left) / max));
       setK(last);
     };
     const up = () => {
@@ -116,13 +125,14 @@ function Workspace({ children }: { children: ReactNode }) {
       setDragging(false);
       if (moved) return saveK(last);
       // A click: full → narrowest, narrowest → full; in between, to the closer end.
-      snapTo(startK >= 0.999 ? MIN_K : startK <= MIN_K + 0.001 ? 1 : startK - MIN_K < 1 - startK ? MIN_K : 1);
+      const lo = minK();
+      snapTo(startK >= 0.999 ? lo : startK <= lo + 0.001 ? 1 : startK - lo < 1 - startK ? lo : 1);
     };
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", up);
   };
   return (
-    <div ref={box} className={cx("workspace", dragging && "workspace--resizing", snapping && "workspace--snapping")} style={{ "--side-k": k } as CSSProperties}>
+    <div ref={box} className={cx("workspace", dragging && "workspace--resizing", snapping && "workspace--snapping")} style={{ "--side-k": k, "--side-min": `${MIN_PX}px` } as CSSProperties}>
       {children}
       <div className={cx("side__resize", dragging && "is-on")} role="separator" aria-orientation="vertical" aria-label="Ancho del panel"
         title="Arrastra para cambiar el ancho del panel · clic: al mínimo o al máximo" onPointerDown={resize} />

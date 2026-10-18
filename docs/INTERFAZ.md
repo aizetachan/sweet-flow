@@ -100,8 +100,9 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
 (así, con muchos planos, el tablero tiene la pantalla ancha):
 
 - **Ancho de la columna:** se arrastra su borde derecho para estrecharla hasta
-  un 40 % (el mínimo es el 60 % del ancho de siempre, que es el máximo); el
-  contenido se adapta. **Un clic en el borde** la lleva de golpe (con una
+  un 40 % (el mínimo es el 60 % del ancho de siempre, que es el máximo,
+  pero nunca menos de 330 px, lo que necesitan sus pestañas y su cabecera);
+  el contenido se adapta. **Un clic en el borde** la lleva de golpe (con una
   transición corta): del máximo al mínimo y del mínimo al máximo; en medio, al
   extremo más cercano. Se recuerda en este ordenador.
 
