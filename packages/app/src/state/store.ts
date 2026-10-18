@@ -136,7 +136,8 @@ const IDLE: DataSource = new Proxy({} as DataSource, {
   },
 });
 
-const PANEL_RESET = { selectedId: null, multi: [], scopeId: null, activeMediaId: null, playhead: 0, playing: false, floating: [], view: "board" as View };
+// Nothing selected yet: the left column shows the structure, never an empty panel.
+const PANEL_RESET = { selectedId: null, multi: [], scopeId: null, activeMediaId: null, playhead: 0, playing: false, floating: [], view: "board" as View, sideTab: "structure" as SideTab };
 
 const library = createLibrary();
 let unsubscribeLibrary: () => void = () => undefined;
@@ -176,11 +177,12 @@ export const useStore = create<Store>((set, get) => ({
   flash: 0,
   popped: [],
   leaveAsk: null,
-  sideTab: "work",
+  sideTab: "structure",
   set: (patch) => set(patch),
   select: (id, tab, stay) => {
     if (id !== get().selectedId) set({ activeMediaId: null, playhead: 0, playing: false });
-    set({ selectedId: id, multi: [], ...(tab ? { panelTab: tab } : {}), ...(id && !stay ? { sideTab: "work" as SideTab } : {}) });
+    // Nothing selected (closed, deselected, sent to the trash): back to the structure.
+    set({ selectedId: id, multi: [], ...(tab ? { panelTab: tab } : {}), ...(id && !stay ? { sideTab: "work" as SideTab } : !id ? { sideTab: "structure" as SideTab } : {}) });
     get().source.setPresence(id ?? undefined);
   },
   toggleMulti: (id) => {

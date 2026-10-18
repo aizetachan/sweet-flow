@@ -208,9 +208,8 @@ function InspectorBody({ floatKey, onDragHandle }: { floatKey?: string; onDragHa
             onClick={() => {
               if (panel.mode === "window") return window.close();
               if (floatKey) return closeFloating(floatKey);
-              // Never an empty column: closing the shot shows the structure.
+              // Never an empty column: with nothing selected the structure shows.
               select(null);
-              useStore.getState().set({ sideTab: "structure" });
             }}
           ><IconX size={14} /></IconButton>
         </div>

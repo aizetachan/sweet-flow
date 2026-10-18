@@ -154,8 +154,9 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
 - **Visor de vídeo:** controles de siempre: reproducir/pausa, la **línea de
   tiempo** para ir a cualquier punto, el tiempo y pantalla completa. En un
   plano hecho de un tramo, la línea recorre solo su tramo.
-- **Cerrar el panel** de un plano abre la pestaña Estructura, para que la
-  columna nunca quede vacía.
+- **Sin nada seleccionado, la columna muestra Estructura** (al abrir la
+  producción, al cerrar el panel, al deseleccionar o al mandar lo abierto a la
+  papelera), para que nunca quede vacía. Al seleccionar algo pasa a Producción.
 - **Tarjeta de plano:** portada (sin etiqueta de duración encima). Arriba, el
   **título** con peso (se corta con «…»; entero al dejar el ratón encima) y el
   estado (**clic en él** abre la lista para cambiarlo ahí mismo, sin
