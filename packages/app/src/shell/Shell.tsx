@@ -3,6 +3,7 @@ import {
   IconCheck,
   IconChevronRight,
   IconHome,
+  IconInfoCircle,
   IconFolder,
   IconFolderOff,
   IconLayoutBoard,
@@ -10,20 +11,21 @@ import {
   IconSettings,
   IconTrash,
   IconUsers,
+  IconUsersGroup,
 } from "@tabler/icons-react";
 import { splitTrash } from "@sweetflow/domain";
-import { Avatar, AvatarStack, cx, Spinner } from "@sweetflow/ui";
+import { Avatar, AvatarStack, cx, IconButton, Spinner } from "@sweetflow/ui";
 import { useSnap, useStore, type View } from "../state/store";
 import { memberName } from "../state/selectors";
 import { useLibraryTrail } from "../dashboard/Dashboard";
-import { BoardFilters } from "../board/Board";
+import { BoardFilters, ProductionInfo } from "../board/Board";
+import { useState } from "react";
 import { Popover } from "../components/Popover";
 import { useMagnific } from "../integrations/magnific/useMagnific";
 
 const NAV: Array<{ id: View; label: string; icon: typeof IconLayoutBoard }> = [
   { id: "board", label: "Producción", icon: IconLayoutBoard },
   { id: "library", label: "Biblioteca", icon: IconLibraryPhoto },
-  { id: "team", label: "Equipo", icon: IconUsers },
 ];
 
 /** Production sections, floating at the bottom centre so the board keeps the full width. */
@@ -57,6 +59,7 @@ export function Topbar() {
   const snap = useSnap();
   const { requestLeave, productionId } = useStore.getState();
   const view = useStore((s) => s.view);
+  const scopeId = useStore((s) => s.scopeId);
   const trail = useLibraryTrail(productionId);
   const online = snap.presence.filter((p) => p.uid !== snap.me.uid).map((p) => memberName(snap, p.uid));
 
@@ -73,8 +76,13 @@ export function Topbar() {
         ))}
         <span className="crumbs__item">
           <IconChevronRight size={13} className="sf-faint" />
-          <span className="crumbs__here">{snap.production.name}</span>
+          <ProductionName />
         </span>
+        <Popover button={({ open, toggle }) => (
+          <IconButton size="sm" label="Información de la producción" className={open ? "is-on" : undefined} onClick={toggle}><IconInfoCircle size={16} stroke={1.6} /></IconButton>
+        )}>
+          <ProductionInfo scopeId={scopeId} />
+        </Popover>
         {snap.production.format ? <span className="topbar__format">{snap.production.format}</span> : null}
       </nav>
 
@@ -91,6 +99,29 @@ export function Topbar() {
 
       <AccountMenu />
     </header>
+  );
+}
+
+/**
+ * The production's name, the same one its card has in the dashboard: it
+ * comes from there, and a double click renames both.
+ */
+function ProductionName() {
+  const snap = useSnap();
+  const productionId = useStore((s) => s.productionId);
+  const entry = useStore((s) => s.lib?.entries.find((e) => e.id === productionId));
+  const name = entry?.name ?? snap.production.name;
+  const [draft, setDraft] = useState<string | null>(null);
+  const save = () => {
+    if (draft !== null && draft.trim() && productionId) useStore.getState().library.rename(productionId, draft.trim());
+    setDraft(null);
+  };
+  if (draft === null) {
+    return <span className="crumbs__here" title="Doble clic para cambiar el nombre" onDoubleClick={() => entry && setDraft(name)}>{name}</span>;
+  }
+  return (
+    <input className="sf-input crumbs__rename" autoFocus value={draft} onChange={(e) => setDraft(e.target.value)} onBlur={save}
+      onKeyDown={(e) => { if (e.key === "Enter") save(); if (e.key === "Escape") setDraft(null); }} />
   );
 }
 
@@ -135,13 +166,17 @@ function AccountMenu() {
           <span className="menu__hint">{m.status === "syncing" ? `Guardando ${m.pending}…` : folder ? "Al día" : "Sin carpeta: se guarda en este navegador"}</span>
         </span>
       </button>
-      <button className="menu__item" onClick={() => (demo ? set({ view: "team" }) : toSettings("integrations"))}>
+      <button className="menu__item" onClick={() => (demo ? set({ modal: "team" }) : toSettings("integrations"))}>
         <IconBolt size={15} className={mag.connected ? "accent" : ""} />
         <span className="menu__label">
           Magnific
           <span className="menu__hint">{mag.connected ? (mag.credits !== undefined ? `${mag.credits.toLocaleString("es-ES")} créditos` : "Conectada") : "Conectar tu cuenta"}</span>
         </span>
         {mag.connected ? <span className="sok"><IconCheck size={10} stroke={3} /></span> : null}
+      </button>
+      <button className="menu__item" onClick={() => set({ modal: "team" })}>
+        <IconUsersGroup size={15} />
+        <span className="menu__label">Equipo<span className="menu__hint">{snap.members.length} {snap.members.length === 1 ? "persona" : "personas"} en la producción</span></span>
       </button>
       <button className="menu__item" disabled={!team} onClick={() => set({ modal: "invite" })}>
         <IconUsers size={15} />

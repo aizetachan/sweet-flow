@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { IconBolt, IconCheck, IconPlus, IconPlugConnected } from "@tabler/icons-react";
-import { isUnit, ROLE_LABEL, type AssetType } from "@sweetflow/domain";
-import { Avatar, Button, cx, Pill, Segmented } from "@sweetflow/ui";
+import { IconPlus } from "@tabler/icons-react";
+import { isUnit, type AssetType } from "@sweetflow/domain";
+import { Button, Pill, Segmented } from "@sweetflow/ui";
 import { useSnap, useStore } from "../state/store";
 
 const TYPES: Array<{ id: AssetType | "all"; label: string }> = [
@@ -44,48 +44,6 @@ export function LibraryView() {
           </div>
         ))}
       </div>
-    </main>
-  );
-}
-
-export function TeamView() {
-  const snap = useSnap();
-  const { set } = useStore();
-  const online = new Set(snap.presence.map((p) => p.uid));
-  return (
-    <main className="page">
-      <div className="page__head">
-        <div>
-          <h1>Equipo · {snap.workspace.name}</h1>
-          <p className="sf-muted">Todos ven la misma producción en tiempo real. Cada miembro genera con su propia cuenta de Magnific y sus créditos.</p>
-        </div>
-        <Button variant="primary" onClick={() => set({ modal: "invite" })}><IconPlus size={15} /> Invitar</Button>
-      </div>
-      <div className="mycard">
-        <Avatar name={snap.me.displayName} size={36} />
-        <div className="grow">
-          <b>Tu cuenta de Magnific</b>
-          <div className="sf-muted sf-small">{snap.me.magnificConnected ? "Conectada · tus generaciones consumen tus créditos" : "Sin conectar · puedes ver, cortar, comentar y aprobar, pero no generar"}</div>
-        </div>
-        {snap.me.magnificConnected ? (
-          <span className="credits"><IconBolt size={15} /> {(snap.me.magnificCredits ?? 0).toLocaleString("es-ES")}</span>
-        ) : null}
-        <Button size="sm"><IconPlugConnected size={14} /> {snap.me.magnificConnected ? "Reconectar" : "Conectar Magnific"}</Button>
-      </div>
-      <table className="team">
-        <thead><tr><th>Miembro</th><th>Rol</th><th>Magnific</th><th>Asignados</th><th /></tr></thead>
-        <tbody>
-          {snap.members.map((m) => (
-            <tr key={m.uid}>
-              <td><div className="team__who"><Avatar name={m.displayName} size={26} /><div><b>{m.displayName}</b><div className="sf-faint sf-small">{m.email}</div></div></div></td>
-              <td><Pill>{ROLE_LABEL[m.role]}</Pill></td>
-              <td>{m.magnificConnected ? <span className="ok"><IconCheck size={13} /> Conectado</span> : <span className="sf-faint">—</span>}</td>
-              <td className="sf-muted">{snap.nodes.filter((n) => n.assigneeIds.includes(m.uid)).length}</td>
-              <td>{online.has(m.uid) ? <span className={cx("sf-small", "online")}><span className="live-dot" /> En línea</span> : null}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
     </main>
   );
 }

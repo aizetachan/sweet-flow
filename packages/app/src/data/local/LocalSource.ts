@@ -345,7 +345,7 @@ export class LocalSource implements DataSource {
 
   /** Rename the production itself (used by the dashboard). */
   renameProduction(name: string): void {
-    this.loaded();
+    if (this.loaded().production.name === name) return;
     this.write([{ type: "production.updated", patch: { name } }]);
   }
 

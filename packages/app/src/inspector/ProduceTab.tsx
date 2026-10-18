@@ -150,7 +150,7 @@ function GenerateBox({ node }: { node: ProdNode }) {
         <IconBolt size={16} /> Conecta tu cuenta de Magnific para generar con tus créditos.
         <Button size="sm" variant="primary" onClick={() => {
           const st = useStore.getState();
-          if (st.lib?.mode === "demo") return st.set({ view: "team" });
+          if (st.lib?.mode === "demo") return st.set({ modal: "team" });
           // Connected from the dashboard's Settings › Integrations.
           st.set({ dashSection: "settings", settingsTab: "integrations" });
           st.requestLeave();

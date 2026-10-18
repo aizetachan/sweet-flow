@@ -9,7 +9,7 @@ import { StructureTree } from "./board/StructureTree";
 import { Board } from "./board/Board";
 import { DockedInspector, FloatingInspectors, WindowInspector } from "./inspector/Inspector";
 import { Modals } from "./settings/Modals";
-import { LibraryView, TeamView } from "./views/OtherViews";
+import { LibraryView } from "./views/OtherViews";
 import { TrashView } from "./views/TrashView";
 
 /** Splash → dashboard → production (docs/INTERFAZ.md). Popped-out windows show one node. */
@@ -44,7 +44,7 @@ function Production() {
             <SidePanel />
             <Board />
           </div>
-        ) : view === "library" ? <LibraryView /> : view === "trash" ? <TrashView /> : <TeamView />}
+        ) : view === "library" ? <LibraryView /> : <TrashView />}
       </div>
       <Dock />
       <FloatingInspectors />

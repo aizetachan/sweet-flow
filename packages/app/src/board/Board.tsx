@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode, type RefObject } from "react";
-import { IconArrowLeft, IconStack2, IconExternalLink, IconMessageCircle, IconPlus, IconFilter, IconInfoCircle, IconSearch, IconTrash, IconLayoutGrid, IconLayoutList, IconX } from "@tabler/icons-react";
+import { IconArrowLeft, IconStack2, IconExternalLink, IconMessageCircle, IconPlus, IconFilter, IconSearch, IconTrash, IconLayoutGrid, IconLayoutList, IconX } from "@tabler/icons-react";
 import {
   childrenOf,
   codeOf,
@@ -36,11 +36,6 @@ export function Board() {
     <main className="board">
       <div className="board__head">
         <div className="board__title">
-          <Popover button={({ open, toggle }) => (
-            <IconButton size="sm" label="Información de la producción" className={open ? "is-on" : undefined} onClick={toggle}><IconInfoCircle size={17} stroke={1.6} /></IconButton>
-          )}>
-            <ProductionInfo scopeId={scope?.id ?? null} />
-          </Popover>
           <h1>{scope ? <><span className="board__code">{codeOf(p, scope)}</span> {scope.title}</> : "Toda la producción"}</h1>
           <span className="board__count" title={`${units.length} ${unitName}${units.length === 1 ? "" : "s"}`}>{units.length}</span>
         </div>
@@ -406,7 +401,7 @@ function GroupBar({ group, row, count, onClose }: { group: ShotGroup; row: ProdN
  * Text that becomes an input on double click (Enter or leaving saves,
  * Escape cancels). Used for a card's title and a group's name.
  */
-function InlineEdit({ value, placeholder, label, className, onSave, onEditing, onStart }: {
+export function InlineEdit({ value, placeholder, label, className, onSave, onEditing, onStart }: {
   value: string;
   placeholder: string;
   label: string;
@@ -439,7 +434,7 @@ function InlineEdit({ value, placeholder, label, className, onSave, onEditing, o
 }
 
 /** What the info button shows: counts per level, approved, edited length, per status. */
-function ProductionInfo({ scopeId }: { scopeId: Id | null }) {
+export function ProductionInfo({ scopeId }: { scopeId: Id | null }) {
   const snap = useSnap();
   const p = snap.production;
   const inScope = scopeId ? [snap.nodes.find((n) => n.id === scopeId)!, ...descendantsOf(snap.nodes, scopeId)] : snap.nodes;

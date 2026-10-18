@@ -66,6 +66,11 @@
 .trow__code { font-weight: 600; font-size: 12px; font-variant-numeric: tabular-nums; color: var(--fg-1); }
 .trow__title { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--fg-3); }
 .trow__prog { font-size: 10.5px; color: var(--fg-4); font-variant-numeric: tabular-nums; }
+.trow__gicon { flex: none; color: var(--fg-3); }
+.trow--group .trow__code { flex: 1; min-width: 0; }
+.trow__title.inline-edit__in, .trow__code.inline-edit__in { height: 22px; }
+.crumbs__rename { height: 26px; width: 240px; }
+.modal-foot { display: flex; justify-content: flex-end; margin-top: 14px; }
 .trow__acts { display: none; }
 .trow:hover .trow__acts { display: inline-flex; }
 .trow:hover .trow__prog { display: none; }

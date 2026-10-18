@@ -27,7 +27,11 @@ export function Popover({ button, children, align = "left", className }: {
   return (
     <div className="pop" ref={ref}>
       {button({ open, toggle: () => setOpen((v) => !v) })}
-      {open ? <div className={cx("menu pop__panel", align === "right" && "pop__panel--right", className)} role="dialog">{children}</div> : null}
+      {open ? (
+        // Picking an item of a menu closes it.
+        <div className={cx("menu pop__panel", align === "right" && "pop__panel--right", className)} role="dialog"
+          onClick={(e) => (e.target as HTMLElement).closest(".menu__item") && setOpen(false)}>{children}</div>
+      ) : null}
     </div>
   );
 }

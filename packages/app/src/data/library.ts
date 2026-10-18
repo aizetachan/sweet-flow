@@ -221,11 +221,17 @@ class EntryLibrary implements Library {
 
   rename(id: Id, name: string): void {
     const e = this.entries.find((x) => x.id === id);
-    if (!e || !name.trim() || e.name === name) return;
+    name = name.trim();
+    if (!e || !name || e.name === name) return;
     if (e.kind === "production" && !this.o.special?.[id]) {
-      // The production's own name lives in its log; keep both in step.
-      const src = this.source(id);
-      void src.ready.then(() => src.renameProduction(name)).then(() => src.flushed()).finally(() => src.dispose());
+      // The production's own name lives in its log; keep both in step. If it
+      // is open, through that same source (never two writing at once).
+      const open = this.opened.get(id);
+      if (open) void open.ready.then(() => open.renameProduction(name));
+      else {
+        const src = this.source(id);
+        void src.ready.then(() => src.renameProduction(name)).then(() => src.flushed()).finally(() => src.dispose());
+      }
     }
     this.commit(this.entries.map((x) => (x.id === id ? { ...x, name, updatedAt: Date.now() } : x)));
   }
@@ -310,11 +316,26 @@ class EntryLibrary implements Library {
     const special = this.o.special?.[id];
     if (special) return special.open();
     const src = this.source(id);
-    src.ready.catch((err) => console.error("[library] no se pudo abrir la producción", err));
+    this.opened.set(id, src);
+    const dispose = src.dispose.bind(src);
+    src.dispose = () => {
+      if (this.opened.get(id) === src) this.opened.delete(id);
+      dispose();
+    };
+    src.ready
+      .then(() => {
+        // One name inside and outside: the dashboard's wins when they differ (renamed while closed).
+        const name = this.entries.find((x) => x.id === id)?.name;
+        if (name) src.renameProduction(name);
+      })
+      .catch((err) => console.error("[library] no se pudo abrir la producción", err));
     return src;
   }
 
   // ---------- internals ----------
+
+  /** Productions open right now, to rename them through their own source. */
+  private opened = new Map<Id, LocalSource>();
 
   private source(id: Id, create?: ConstructorParameters<typeof LocalSource>[0]["create"]): LocalSource {
     return new LocalSource({ store: this.o.logStoreFor(id), deviceId: this.o.deviceId, me: this.me, create, files: this.o.filesFor?.(id), generator: this.o.generator });

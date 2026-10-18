@@ -1,9 +1,10 @@
-import { IconExternalLink, IconArrowDown, IconArrowUp, IconChevronRight, IconFolderPlus, IconLayoutList, IconPlus, IconTrash } from "@tabler/icons-react";
-import { childrenOf, codeOf, isUnit, levelIndex, type ProdNode } from "@sweetflow/domain";
+import { IconStack2, IconExternalLink, IconArrowDown, IconArrowUp, IconChevronRight, IconFolderPlus, IconLayoutList, IconPlus, IconTrash } from "@tabler/icons-react";
+import { childrenOf, codeOf, isUnit, levelIndex, sortValue, type ProdNode, type ShotGroup } from "@sweetflow/domain";
 import { cx, IconButton } from "@sweetflow/ui";
 import { useSnap, useStore } from "../state/store";
 import { progressOf, statusOf } from "../state/selectors";
-import { nodeDragProps, useEndDrop, useNodeDrop } from "./dnd";
+import { nodeDragProps, useEndDrop, useGroupDrop, useNodeDrop } from "./dnd";
+import { InlineEdit } from "./Board";
 
 export function StructureTree() {
   const snap = useSnap();
@@ -74,7 +75,8 @@ function TreeRow({ node, depth }: { node: ProdNode; depth: number }) {
         )}
         <span className="trow__dot" style={{ background: st.color }} title={st.name} />
         <span className="trow__code">{codeOf(p, node)}</span>
-        <span className="trow__title">{node.title || <i className="sf-faint">Sin título</i>}</span>
+        <InlineEdit className="trow__title" value={node.title} placeholder="Sin título" label="Doble clic para escribir el título"
+          onSave={(title) => source.updateNode(node.id, { title })} />
         {apart ? (
           <button className="apart" title="Abierto en una ventana aparte: ir a la ventana" onClick={(e) => { e.stopPropagation(); focusPopped(node.id); }}>
             <IconExternalLink size={12} />
@@ -91,7 +93,42 @@ function TreeRow({ node, depth }: { node: ProdNode; depth: number }) {
           <IconButton size="sm" label="Mover a la papelera (Supr)" onClick={() => trashNodes([node.id])}><IconTrash size={13} /></IconButton>
         </span>
       </div>
-      {open && !unit ? kids.map((k) => <TreeRow key={k.id} node={k} depth={depth + 1} />) : null}
+      {open && !unit ? <TreeChildren row={node} kids={kids} depth={depth + 1} /> : null}
+    </>
+  );
+}
+
+/**
+ * A node's children. In a scene, its groups of shots show as groups, as on
+ * the board (docs/INTERFAZ.md §2.4): closed by default, with their shots inside.
+ */
+function TreeChildren({ row, kids, depth }: { row: ProdNode; kids: ProdNode[]; depth: number }) {
+  const snap = useSnap();
+  const groups = snap.groups.filter((g) => g.parentId === row.id && kids.some((k) => k.groupId === g.id));
+  if (!groups.length) return <>{kids.map((k) => <TreeRow key={k.id} node={k} depth={depth} />)}</>;
+  const items = [
+    ...kids.filter((k) => !groups.some((g) => g.id === k.groupId)).map((k) => ({ at: sortValue(k), el: <TreeRow key={k.id} node={k} depth={depth} /> })),
+    ...groups.map((g) => ({ at: g.order, el: <TreeGroup key={g.id} group={g} shots={kids.filter((k) => k.groupId === g.id)} depth={depth} /> })),
+  ].sort((a, b) => a.at - b.at);
+  return <>{items.map((i) => i.el)}</>;
+}
+
+function TreeGroup({ group, shots, depth }: { group: ShotGroup; shots: ProdNode[]; depth: number }) {
+  const { collapsed, toggleCollapsed, source } = useStore();
+  const key = `open:${group.id}`;
+  const open = !!collapsed[key];
+  const drop = useGroupDrop(group.id);
+  return (
+    <>
+      <div className={cx("trow trow--group", drop.over && "dnd-into")} style={{ paddingLeft: 6 + depth * 14 }} {...drop.props} onClick={() => toggleCollapsed(key)}>
+        <button className={cx("trow__caret", open && "is-open")} onClick={(e) => { e.stopPropagation(); toggleCollapsed(key); }} aria-label={open ? "Plegar" : "Desplegar"}>
+          <IconChevronRight size={12} />
+        </button>
+        <IconStack2 size={13} className="trow__gicon" />
+        <InlineEdit className="trow__code" value={group.name} placeholder="Grupo" label="Doble clic para cambiar el nombre" onSave={(name) => source.renameGroup(group.id, name)} />
+        <span className="trow__prog">{shots.length}</span>
+      </div>
+      {open ? shots.map((s) => <TreeRow key={s.id} node={s} depth={depth + 1} />) : null}
     </>
   );
 }

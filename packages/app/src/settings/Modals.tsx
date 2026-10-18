@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { IconArrowDown, IconArrowUp, IconArchive, IconLink, IconMail, IconPlus } from "@tabler/icons-react";
+import { IconArrowDown, IconArrowUp, IconArchive, IconBolt, IconLink, IconMail, IconPlugConnected, IconPlus } from "@tabler/icons-react";
 import { codeFor, folderName, ROLE_LABEL, safeTitle, type LevelDef, type Role, type StatusCategory, type StatusDef } from "@sweetflow/domain";
-import { Button, IconButton, Modal } from "@sweetflow/ui";
+import { Avatar, Button, IconButton, Modal, Pill } from "@sweetflow/ui";
+import { useMagnific } from "../integrations/magnific/useMagnific";
 import { useSnap, useStore } from "../state/store";
 import { newId } from "../data/mock/seed";
 
@@ -12,7 +13,56 @@ export function Modals() {
   if (modal === "levels") return <LevelsModal onClose={close} />;
   if (modal === "statuses") return <StatusesModal onClose={close} />;
   if (modal === "invite") return <InviteModal onClose={close} />;
+  if (modal === "team") return <TeamModal onClose={close} />;
   return null;
+}
+
+/**
+ * Who works on the production (docs/INTERFAZ.md §2): a modal from the avatar
+ * menu, since it is a quick look. Your Magnific account is the real one
+ * (the example account in the demo).
+ */
+function TeamModal({ onClose }: { onClose: () => void }) {
+  const snap = useSnap();
+  const { set, requestLeave } = useStore();
+  const demo = useStore((s) => s.lib?.mode === "demo");
+  const real = useMagnific();
+  const mag = demo ? { connected: snap.me.magnificConnected, credits: snap.me.magnificCredits } : real;
+  const online = new Set(snap.presence.map((p) => p.uid));
+  return (
+    <Modal title="Equipo" onClose={onClose} width={640}>
+      <p className="sf-muted modal-lead">Todos ven la misma producción. Cada uno genera con su propia cuenta de Magnific y sus créditos.</p>
+      <div className="mycard">
+        <Avatar name={snap.me.displayName} size={36} />
+        <div className="grow">
+          <b>Tu cuenta de Magnific</b>
+          <div className="sf-muted sf-small">{mag.connected ? "Conectada · tus generaciones gastan tus créditos" : "Sin conectar · puedes ver, cortar y aprobar, pero no generar"}</div>
+        </div>
+        {mag.connected && mag.credits !== undefined ? <span className="credits"><IconBolt size={15} /> {mag.credits.toLocaleString("es-ES")}</span> : null}
+        {!demo ? (
+          <Button size="sm" onClick={() => { onClose(); set({ dashSection: "settings", settingsTab: "integrations" }); requestLeave(); }}>
+            <IconPlugConnected size={14} /> {mag.connected ? "Gestionar" : "Conectar Magnific"}
+          </Button>
+        ) : null}
+      </div>
+      <table className="team">
+        <thead><tr><th>Miembro</th><th>Rol</th><th>Asignados</th><th /></tr></thead>
+        <tbody>
+          {snap.members.map((m) => (
+            <tr key={m.uid}>
+              <td><div className="team__who"><Avatar name={m.displayName} size={26} /><div><b>{m.displayName}</b><div className="sf-faint sf-small">{m.email}</div></div></div></td>
+              <td><Pill>{ROLE_LABEL[m.role]}</Pill></td>
+              <td className="sf-muted">{snap.nodes.filter((n) => n.assigneeIds.includes(m.uid)).length}</td>
+              <td>{online.has(m.uid) && m.uid !== snap.me.uid ? <span className="sf-small online"><span className="live-dot" /> En línea</span> : null}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <div className="modal-foot">
+        <Button variant="primary" disabled={!snap.features.team} title={snap.features.team ? undefined : "Próximamente"} onClick={() => set({ modal: "invite" })}><IconPlus size={15} /> Invitar</Button>
+      </div>
+    </Modal>
+  );
 }
 
 function LevelsModal({ onClose }: { onClose: () => void }) {

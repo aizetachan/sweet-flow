@@ -13,7 +13,7 @@ import { createLibrary } from "../data";
 import { closePoppedWindow, closePoppedWindows, focusPoppedWindow, hostWindows, onFlashRequest, openerShare, popOutWindow, watchOpener, type PoppedWindow } from "./windows";
 
 export type Phase = "dashboard" | "production" | "window";
-export type View = "board" | "library" | "team" | "trash";
+export type View = "board" | "library" | "trash";
 export type CardSize = "s" | "m" | "l";
 export type PanelTab = "produce" | "cut" | "review" | "activity";
 export type DashLayout = "grid" | "list";
@@ -72,7 +72,8 @@ interface UiState {
   playhead: number;
   playing: boolean;
   filters: Filters;
-  modal: null | "levels" | "statuses" | "invite";
+  /** `team`: who works on the production (opened from the avatar menu). */
+  modal: null | "levels" | "statuses" | "invite" | "team";
   collapsed: Record<Id, boolean>;
   floating: FloatingPanel[];
   /** Short message at the bottom of the screen (e.g. a code changed on move). */

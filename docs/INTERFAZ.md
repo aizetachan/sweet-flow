@@ -94,7 +94,11 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
 - **Producción** (primera pestaña): el panel de trabajo de la escena o el plano
   seleccionado. Muestra el código de lo seleccionado.
 - **Estructura:** el árbol. Un clic selecciona sin salir del árbol; doble clic
-  (o seleccionar en el tablero) abre la pestaña Producción.
+  (o seleccionar en el tablero) abre la pestaña Producción. **Doble clic en el
+  título** (también «Sin título») lo edita ahí mismo. Los **grupos de planos**
+  se ven como en el tablero: una fila con su nombre (doble clic para
+  cambiarlo) y su número de planos, plegada por defecto; al desplegarla, sus
+  planos. Soltar un plano sobre ella lo mete en el grupo.
 
 - El **tablero** es la vista general: se va actualizando solo mientras se genera
   y mientras el equipo trabaja.
@@ -106,19 +110,29 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
 - **Barra superior:** logo (vuelve al inicio) y migas de pan a la izquierda; a
   la derecha, el **buscador** (en el tablero), quién está en la producción y
   **tu avatar**.
+  - El **nombre de la producción** en las migas es el mismo que tiene su
+    tarjeta en el dashboard: si se cambia fuera, cambia dentro, y con **doble
+    clic** se cambia dentro y fuera a la vez. Al abrirla, si eran distintos
+    (renombrada cerrada), manda el del dashboard.
+  - Justo a su derecha, el botón de **información** (antes en la cabecera del
+    tablero): secuencias, escenas y planos, aprobados, minutos montados y
+    planos por estado; de la parte elegida en Estructura, si hay una.
   - El botón de **filtros** va dentro del buscador, a la derecha, con el número
     de filtros activos. Abre un panel estrecho: **estado** (se elige uno; por
     defecto «Seleccionar estado», con una × para quitarlo), **responsable** y
     **desglose** (reparto, props y localizaciones de la Biblioteca).
   - El **avatar abre un menú**: tu nombre; la carpeta del equipo y su estado;
     Magnific (conectada, con tus créditos y un tick verde, o «Conectar tu
-    cuenta»); invitar al equipo; Ajustes; volver al inicio. Un punto verde en el
+    cuenta»); **Equipo**; invitar al equipo; Ajustes; volver al inicio. Elegir
+    una opción cierra el menú.
+  - **Equipo** se abre en una **ventana modal** (ya no está en la barra de
+    abajo ni es una pantalla completa): tu cuenta de Magnific (la real, con
+    tus créditos), quién está en la producción con su rol y sus planos
+    asignados, y el botón para invitar. Un punto verde en el
     avatar indica que Magnific está conectada. Es la conexión real hecha en
     Ajustes del dashboard (en la demo, la cuenta de ejemplo).
-- **Cabecera del tablero:** botón de **información** (secuencias, escenas y
-  planos, aprobados, minutos montados y planos por estado, en un panel pequeño),
-  el título y un contador con el número de planos.
-- **Secciones** (Producción, Biblioteca, Equipo, Ajustes): barra **flotante
+- **Cabecera del tablero:** el título y un contador con el número de planos.
+- **Secciones** (Producción, Biblioteca, Papelera, Ajustes): barra **flotante
   centrada abajo**, para que el tablero tenga todo el ancho.
 - **Tarjeta de plano:** portada; código y estado; debajo, el título y, a la
   derecha (bajo el estado), la **duración del vídeo** (la del tramo si es un
