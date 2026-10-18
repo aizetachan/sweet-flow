@@ -598,6 +598,13 @@ export class LocalSource implements DataSource {
     if (c && c.resolved !== resolved) this.write([{ type: "comment.updated", id: commentId, patch: { resolved } }]);
   }
 
+  moveCommentToVersion(commentId: Id, mediaId: Id): void {
+    const c = this.loaded().comments.find((x) => x.id === commentId);
+    if (!c || c.mediaId === mediaId) return;
+    const history = [...(c.history ?? []), ...(c.mediaId ? [{ mediaId: c.mediaId, at: this.now(), by: this.me.uid }] : [])];
+    this.write([{ type: "comment.updated", id: commentId, patch: { mediaId, history } }]);
+  }
+
   moveCommentMark(commentId: Id, mark: { point?: { x: number; y: number }; area?: { x: number; y: number; w: number; h: number } }): void {
     if (this.loaded().comments.some((x) => x.id === commentId && x.authorId === this.me.uid)) this.write([{ type: "comment.updated", id: commentId, patch: mark }]);
   }

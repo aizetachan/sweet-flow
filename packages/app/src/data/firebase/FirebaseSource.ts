@@ -476,6 +476,10 @@ export class FirebaseSource implements DataSource {
     return id;
   }
 
+  moveCommentToVersion(_commentId: Id, _mediaId: Id): void {
+    throw new NotImplemented("Llevar un comentario a otra versión", "etapa C");
+  }
+
   moveCommentMark(commentId: Id, mark: { point?: { x: number; y: number }; area?: { x: number; y: number; w: number; h: number } }): void {
     this.write(updateDoc(doc(this.col("comments"), commentId), stripUndefined(mark)));
   }

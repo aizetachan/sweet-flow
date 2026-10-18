@@ -192,6 +192,8 @@ export interface DataSource {
   setCommentResolved(commentId: Id, resolved: boolean): void;
   /** Its author removes it (with its replies). */
   deleteComment(commentId: Id): void;
+  /** Worked on in a newer version of the shot: the thread goes on there (its previous version kept in `history`). */
+  moveCommentToVersion(commentId: Id, mediaId: Id): void;
   /** Its author moves its point or area. */
   moveCommentMark(commentId: Id, mark: { point?: { x: number; y: number }; area?: { x: number; y: number; w: number; h: number } }): void;
 

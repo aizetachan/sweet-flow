@@ -397,6 +397,12 @@ export class MockSource implements DataSource {
     return c.id;
   }
 
+  moveCommentToVersion(commentId: Id, mediaId: Id): void {
+    this.commit({ comments: this.s.comments.map((c) => (c.id !== commentId || c.mediaId === mediaId ? c : {
+      ...c, mediaId, history: [...(c.history ?? []), ...(c.mediaId ? [{ mediaId: c.mediaId, at: Date.now(), by: this.s.me.uid }] : [])],
+    })) });
+  }
+
   moveCommentMark(commentId: Id, mark: { point?: { x: number; y: number }; area?: { x: number; y: number; w: number; h: number } }): void {
     this.commit({ comments: this.s.comments.map((c) => (c.id === commentId ? { ...c, ...mark } : c)) });
   }

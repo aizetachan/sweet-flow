@@ -321,6 +321,14 @@ y «Tomas» por separado):
   Al empezar a escribir, el vídeo se pausa.
 - **Quien escribió el comentario puede mover su punto o su área** arrastrándolos
   sobre la imagen.
+- **Resolver** lo da por hecho y cierra el hilo; **Responder** sigue la
+  conversación para aterrizar el feedback. Si se ha trabajado en una versión
+  nueva del plano, **«Llevar a v00N»** pasa el comentario (con su conversación,
+  su momento y su marca) a esa versión: queda registrado de dónde venía
+  («v001 → v002») y se sigue hablando sobre la nueva.
+- En la lista, cada comentario lleva **la misma chincheta** que en la imagen
+  (tres esquinas redondeadas y la de abajo a la izquierda en pico) con la
+  inicial y el color de quien lo dejó, en lugar del avatar.
 - **Cancelar** (o Esc) descarta el comentario a medias: ni el texto ni su marca
   se guardan.
 - **Sin números:** cada marca (punto, área y su puntito en la línea de tiempo)

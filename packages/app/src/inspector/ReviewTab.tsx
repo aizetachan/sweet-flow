@@ -6,7 +6,7 @@
  */
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { IconArrowBackUp, IconCheck, IconClock, IconMapPin, IconSend, IconTrash, IconX } from "@tabler/icons-react";
+import { IconArrowBackUp, IconArrowForwardUp, IconCheck, IconClock, IconMapPin, IconSend, IconTrash, IconX } from "@tabler/icons-react";
 import { codeOf, formatTc, versionTag, type Comment, type Id, type Member, type ProdNode } from "@sweetflow/domain";
 import { Avatar, avatarColor, Button, cx, IconButton } from "@sweetflow/ui";
 import { useSnap, useStore } from "../state/store";
@@ -124,13 +124,23 @@ function Thread({ c, replies, node, on, other, onGo, onDelete }: {
   const { source } = useStore();
   const [replying, setReplying] = useState(false);
   const m = c.mediaId ? snap.media.find((x) => x.id === c.mediaId) : undefined;
+  // Newer versions of this shot it can be taken to (worked on there).
+  const newer = m ? snap.media.filter((x) => x.nodeId === node.id && x.id !== m.id && !x.archived && x.status === "ready" && x.createdAt > m.createdAt).sort((a, b) => b.createdAt - a.createdAt) : [];
+  const trail = (c.history ?? []).map((h) => snap.media.find((x) => x.id === h.mediaId)).filter(Boolean).map((x) => versionTag(x!.version));
+  const takeTo = (id: Id) => {
+    const to = snap.media.find((x) => x.id === id);
+    source.moveCommentToVersion(c.id, id);
+    useStore.getState().set({ activeMediaId: id });
+    useStore.getState().notify(`Comentario llevado a ${to ? versionTag(to.version) : "la nueva versión"}: la conversación sigue ahí.`);
+  };
   return (
     // A click anywhere on it (not on its buttons) goes to its frame and lights its mark.
     <div className={cx("thread", c.resolved && "thread--resolved", on && "thread--on")}
       onClick={(e) => { if (!(e.target as HTMLElement).closest("button, textarea, input, a")) onGo(); }}>
       <CommentLine c={c} onDelete={onDelete} head={
         <>
-          {m && other ? <span className="sf-faint sf-small">{versionTag(m.version)}</span> : null}
+          {/* Where it has been: v001 → v002 when it was worked on in a newer version. */}
+          {trail.length && m ? <span className="tc tc--plain" title="Versiones por las que ha pasado">{[...trail, versionTag(m.version)].join(" → ")}</span> : m && other ? <span className="sf-faint sf-small">{versionTag(m.version)}</span> : null}
           {c.atSec !== undefined ? <button className="tc" onClick={onGo}><IconClock size={11} /> {formatTc(c.atSec)}</button> : null}
           {c.point || c.area ? <span className="tc tc--plain" title={c.area ? "Área señalada en la imagen" : "Punto señalado en la imagen"}><IconMapPin size={11} /></span> : null}
         </>
@@ -141,6 +151,19 @@ function Thread({ c, replies, node, on, other, onGo, onDelete }: {
         <button className="link sf-small" onClick={() => source.setCommentResolved(c.id, !c.resolved)}>
           <IconCheck size={12} /> {c.resolved ? "Reabrir" : "Resolver"}
         </button>
+        {newer.length === 1 ? (
+          <button className="link sf-small" title="Se ha trabajado en una versión nueva: el comentario y su conversación pasan ahí" onClick={() => takeTo(newer[0]!.id)}>
+            <IconArrowForwardUp size={12} /> Llevar a {versionTag(newer[0]!.version)}
+          </button>
+        ) : newer.length > 1 ? (
+          <label className="link sf-small thread__to" title="Se ha trabajado en una versión nueva: el comentario y su conversación pasan ahí">
+            <IconArrowForwardUp size={12} /> Llevar a
+            <select value="" onChange={(e) => e.target.value && takeTo(e.target.value)}>
+              <option value="">versión…</option>
+              {newer.map((x) => <option key={x.id} value={x.id}>{versionTag(x.version)}</option>)}
+            </select>
+          </label>
+        ) : null}
       </div>
       {replying ? (
         <Composer node={node} parentId={c.id} mediaId={c.mediaId} compact autoFocus onSent={() => setReplying(false)} onCancel={() => setReplying(false)} />
@@ -154,7 +177,7 @@ function CommentLine({ c, head, reply, onDelete }: { c: Comment; head?: ReactNod
   const mine = c.authorId === snap.me.uid;
   return (
     <div className={cx("comment", reply && "comment--reply")}>
-      <Avatar name={memberName(snap, c.authorId)} size={reply ? 20 : 24} />
+      <CommentPin name={memberName(snap, c.authorId)} size={reply ? 20 : 24} />
       <div className="comment__body">
         <div className="comment__head">
           <b>{memberName(snap, c.authorId)}</b>
@@ -166,6 +189,11 @@ function CommentLine({ c, head, reply, onDelete }: { c: Comment; head?: ReactNod
       {mine ? <IconButton size="sm" className="comment__del" label="Borrar" onClick={() => onDelete(c.id)}><IconTrash size={12} /></IconButton> : null}
     </div>
   );
+}
+
+/** The comment mark (three round corners, the bottom left one a point) with who left it: the same as on the picture. */
+function CommentPin({ name, size }: { name: string; size: number }) {
+  return <span className="cpin" title={name} style={{ width: size, height: size, fontSize: size * 0.46, background: avatarColor(name) }}>{initial(name)}</span>;
 }
 
 /** The text with each @Name of someone in the production highlighted. */

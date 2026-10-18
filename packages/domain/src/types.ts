@@ -192,6 +192,11 @@ export interface Comment {
   mentions?: Id[];
   /** The comment it answers (a thread); replies are never resolved on their own. */
   parentId?: Id;
+  /**
+   * Versions it was on before, oldest first: a comment worked on in a new
+   * version is taken there and the thread goes on (v001 → v002).
+   */
+  history?: Array<{ mediaId: Id; at: Millis; by: Id }>;
   authorId: Id;
   resolved: boolean;
   createdAt: Millis;
