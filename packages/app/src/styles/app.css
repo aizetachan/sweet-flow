@@ -136,8 +136,8 @@
 /* Inside the card, so neither the row nor the drag image cuts it */
 /* Hover and selected: a neon tube, not a sharp line — a blurred light ring drawn
    over the border (::after), with its halo; hover softer, selected brighter. */
-.card::after { content: ""; position: absolute; inset: -1px; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .18s; }
-.card:hover::after {
+.card::after, .dcard::after, .drow:not(.drow--head)::after { content: ""; position: absolute; inset: -1px; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .18s; }
+.card:hover::after, .dcard:hover::after, .drow:not(.drow--head):hover::after {
   opacity: 1;
   border: 1px solid rgb(var(--brand-500-rgb) / .8);
   filter: blur(.4px);
@@ -146,7 +146,7 @@
 /* Selected: a neon tube in the reference's blues — a thin edge as fine as
    the hover's, lit (light blue, never white), glowing electric blue around it
    and a little into the card, which takes a faint blue tint. */
-.card--on {
+.card--on, .dcard.is-picked, .drow.is-picked {
   --neon-edge: var(--brand-300);
   --neon: var(--brand-500-rgb);
   --neon-deep: var(--brand-700-rgb);
@@ -159,7 +159,7 @@
     inset 0 0 6px rgb(var(--neon) / .35),
     inset 0 0 18px rgb(var(--neon-deep) / .18);
 }
-.card--on::after, .card--on:hover::after {
+.card--on::after, .card--on:hover::after, .dcard.is-picked::after, .drow.is-picked::after {
   opacity: 1;
   border: 1px solid var(--neon-edge);
   filter: blur(.4px);
@@ -593,9 +593,10 @@ button.tree__hint { padding: 0 14px 8px; }
 .dash__empty p { margin: 0; }
 
 .dcard { position: relative; display: flex; flex-direction: column; border-radius: var(--r-lg); border: 1px solid var(--line-0); background: var(--bg-2); cursor: default; user-select: none; transition: border-color .12s, transform .12s; outline: none; }
-.dcard:hover { border-color: var(--line-2); }
+/* Hover and picked: the same brand neon as the board's cards (rules with .card). */
+.dcard:hover { border-color: transparent; }
 .dcard:focus-visible, .drow:focus-visible { box-shadow: 0 0 0 2px var(--primary); }
-.dcard.is-picked, .drow.is-picked { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 10%, var(--bg-2)); }
+
 .dcard.is-drop, .drow.is-drop { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-soft); transform: scale(1.02); }
 .dcard__thumb, .dcard__folder { aspect-ratio: 16 / 9; border-radius: calc(var(--r-lg) - 1px) calc(var(--r-lg) - 1px) 0 0; display: grid; place-items: center; position: relative; overflow: hidden; }
 .dcard__thumb { background: radial-gradient(120% 140% at 0% 0%, rgb(var(--brand-300-rgb) / .16), transparent 55%), radial-gradient(120% 140% at 100% 100%, rgb(var(--brand-500-rgb) / .2), transparent 55%), var(--bg-3); }
@@ -613,7 +614,7 @@ button.tree__hint { padding: 0 14px 8px; }
 .dcard:hover .dentry__acts, .dcard:has(:focus-visible) .dentry__acts, .drow:hover .dentry__acts, .drow:has(:focus-visible) .dentry__acts { opacity: 1; }
 
 .drow { position: relative; display: grid; grid-template-columns: minmax(0, 2.2fr) minmax(120px, 1fr) 110px 130px 70px; align-items: center; gap: 12px; min-height: 44px; padding: 0 10px; border-radius: var(--r-sm); border: 1px solid transparent; border-bottom-color: var(--line-0); user-select: none; outline: none; }
-.drow:hover { background: var(--ghost); }
+.drow:hover { background: var(--ghost); border-color: transparent; }
 .drow--head { min-height: 30px; }
 .drow--head:hover { background: none; }
 .drow__name { display: flex; align-items: center; gap: 8px; min-width: 0; }

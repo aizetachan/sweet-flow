@@ -225,7 +225,8 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
   marca. **Generar** es un botón azul saturado con texto blanco; el progreso,
   el cabezal de la línea de tiempo, los créditos y el logo también van en
   azul (ya no hay rosa). El hover de las tarjetas usa el mismo azul saturado
-  que la selección, más suave.
+  que la selección, más suave; igual en las carpetas y producciones del
+  dashboard (en cuadrícula y en lista).
 - **Tarjeta con el ratón encima y seleccionada:** el borde es una luz de neón
   suave en los azules de marca (difuminada, con un halo corto), no una línea
   nítida. Seleccionada,
