@@ -577,24 +577,16 @@ function GroupBar({ group, row, count, onClose }: { group: ShotGroup; row: ProdN
   const snap = useSnap();
   const { source } = useStore();
   const out = useUngroupDrop(group.id);
-  const [name, setName] = useState<string | null>(null);
-  const save = () => {
-    if (name !== null) source.renameGroup(group.id, name);
-    setName(null);
-  };
   return (
     <div className="lane__group">
       <button className={cx("lane__back", out.over && "dnd-group")} {...out.props} onClick={onClose} title={`Volver a ${codeOf(snap.production, row)}. Suelta aquí un plano para sacarlo del grupo.`}>
-        <IconArrowLeft size={14} /> {codeOf(snap.production, row)}
+        <IconArrowLeft size={14} /> Volver
       </button>
       <IconStack2 size={14} className="sf-faint" />
-      {name === null ? (
-        <button className="lane__gname" title="Cambiar el nombre" onClick={() => setName(group.name)}>{group.name}</button>
-      ) : (
-        <input className="sf-input lane__gname-in" autoFocus value={name} onChange={(e) => setName(e.target.value)} onBlur={save}
-          onKeyDown={(e) => { if (e.key === "Enter") save(); if (e.key === "Escape") setName(null); }} />
-      )}
-      <span className="sf-faint sf-small">{count} plano{count === 1 ? "" : "s"} · arrastra un plano a «{codeOf(snap.production, row)}» para sacarlo</span>
+      {/* A title like the other blocks': text, renamed with a double click. */}
+      <InlineEdit className="lane__title" value={group.name} placeholder="Sin nombre" label="Doble clic para cambiar el nombre"
+        onSave={(name) => { if (name.trim()) source.renameGroup(group.id, name.trim()); }} />
+      <span className="sf-faint sf-small">{count} plano{count === 1 ? "" : "s"} · arrastra un plano a «Volver» para sacarlo</span>
       <span className="lane__spacer" />
       <Button size="sm" variant="ghost" title="Los planos vuelven a la fila; el grupo desaparece" onClick={() => { source.dissolveGroup(group.id); onClose(); }}>Deshacer grupo</Button>
     </div>

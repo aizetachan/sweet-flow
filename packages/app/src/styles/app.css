@@ -633,9 +633,6 @@ button.tree__hint { padding: 0 14px 8px; }
 .lane__back { display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 8px; border-radius: var(--r-md); color: var(--fg-2); font-weight: 600; font-size: 12px; border: 1px dashed transparent; }
 .lane__back:hover { background: var(--ghost); color: var(--fg-1); }
 .lane__back.dnd-group { border-color: var(--primary); }
-.lane__gname { font-weight: 600; font-size: 13px; color: var(--fg-1); padding: 2px 4px; border-radius: 4px; }
-.lane__gname:hover { background: var(--ghost); }
-.lane__gname-in { height: 26px; width: 200px; }
 
 @media (max-width: 720px) {
   .dash { padding: 16px; }
