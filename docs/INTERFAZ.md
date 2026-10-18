@@ -267,8 +267,8 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
 
 Como el generador de Magnific, pero con el visor y las versiones debajo (o a la
 derecha en la ventana aparte). De arriba abajo:
-- **Imagen · Vídeo · Audio.**
-- **Modelo.** Cada uno ofrece **solo lo que permite** (catálogo de Magnific del
+- **Imagen · Vídeo · Audio** como tres botones de solo icono (el nombre al
+  pasar el ratón) y, en la misma fila a la derecha, el **modelo**. Cada uno ofrece **solo lo que permite** (catálogo de Magnific del
   18 oct 2026, en `data/models.ts`):
   - Imagen: Nano Banana Pro, Seedream 5 Pro, Recraft V4.1, Nano Banana 2 Lite,
     GPT 2, Auto.

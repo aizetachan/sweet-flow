@@ -16,7 +16,7 @@ import {
   type ProdNode,
   type Take,
 } from "@sweetflow/domain";
-import { Avatar, Button, cx, Segmented } from "@sweetflow/ui";
+import { Avatar, Button, cx } from "@sweetflow/ui";
 import { useSnap, useStore } from "../state/store";
 import { usePanel } from "./panel";
 import { OnStage } from "./stage";
@@ -317,20 +317,20 @@ function GenerateBox({ node }: { node: ProdNode }) {
 
   return (
     <section className="gen">
-      <Segmented<GenKind>
-        value={kind}
-        onChange={(k) => { setKind(k); setModel(modelsFor(k)[0]!.name); }}
-        items={[
-          { id: "image", label: <><IconPhoto size={13} /> Imagen</> },
-          { id: "video", label: <><IconVideo size={13} /> Vídeo</> },
-          { id: "audio", label: <><IconMusic size={13} /> Audio</> },
-        ]}
-      />
-
-      <div className="gen__label">Modelo</div>
-      <select className="sf-select" value={model} onChange={(e) => setModel(e.target.value)}>
-        {modelsFor(kind).map((m) => <option key={m.name}>{m.name}</option>)}
-      </select>
+      {/* Kind as three icon buttons, and the model on the same row. */}
+      <div className="gen__head">
+        <div className="gen__kinds" role="radiogroup" aria-label="Tipo">
+          {([["image", "Imagen", IconPhoto], ["video", "Vídeo", IconVideo], ["audio", "Audio", IconMusic]] as const).map(([id, label, Icon]) => (
+            <button key={id} role="radio" aria-checked={kind === id} aria-label={label} title={label} className={cx("gen__kind", kind === id && "is-on")}
+              onClick={() => { setKind(id); setModel(modelsFor(id)[0]!.name); }}>
+              <Icon size={16} stroke={1.7} />
+            </button>
+          ))}
+        </div>
+        <select className="sf-select gen__model" value={model} onChange={(e) => setModel(e.target.value)} title="Modelo">
+          {modelsFor(kind).map((m) => <option key={m.name}>{m.name}</option>)}
+        </select>
+      </div>
 
       {spec.startFrame || refTypes.length ? (
         <>
