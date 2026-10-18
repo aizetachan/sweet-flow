@@ -20,6 +20,7 @@ import {
   planUngroupShots,
   planDissolveGroup,
   planRenameGroup,
+  planPlaceInRow,
   planMoveNodes as moveNodes,
   planUnshelveNode,
   folderPath,
@@ -84,7 +85,7 @@ describe("structure intents", () => {
     run((s) => planCreateNode(s.production!, s.nodes, null, "a", "A"));
     run((s) => planCreateNode(s.production!, s.nodes, null, "b", "B"));
     run((s) => planInsertAfter(s.production!, s.nodes, "a", "x"));
-    expect(titles(null)).toEqual(["10:A", "15:", "20:B"]);
+    expect(titles(null)).toEqual(["10:A", "15:Secuencia 1,5", "20:B"]);
     for (const nid of ["y", "z", "w"]) run((s) => planInsertAfter(s.production!, s.nodes, "a", nid));
     // Each lands right after A; codes take the gap (12, 11) and, when it is
     // full, the next free number at the end (30). A and B keep 10 and 20.
@@ -227,7 +228,7 @@ describe("structure intents", () => {
     // Each new shot plays its stretch of the original video.
     const takes = plan.nodeIds.map((nid) => s.takes.find((t) => t.id === s.nodes.find((n) => n.id === nid)!.selectedTakeId));
     expect(takes.map((t) => `${t?.mediaId}@${t?.inSec}-${t?.outSec}`)).toEqual(["mv@0-4", "mv@9-14", "mv@14-20"]);
-    expect(folderPath(s.production!, s.nodes, s.nodes.find((n) => n.id === a)!)).toBe("SQ010/SC010_Puerto/_editados/SH0010_Faro");
+    expect(folderPath(s.production!, s.nodes, s.nodes.find((n) => n.id === a)!)).toBe("SQ010_Secuencia-1/SC010_Puerto/_editados/SH0010_Faro");
 
     // Back to the row: its code is taken, so it gets the next free one.
     const back = run((st) => planUnshelveNode(st.production!, st.nodes, a)) as Plan & { renumbered?: number };
@@ -260,7 +261,7 @@ describe("structure intents", () => {
     const g = (run((s) => planGroupShots(s.production!, s.nodes, s.groups, [b], { shotId: a }, "g1", 1)) as Plan & { groupId?: string }).groupId!;
     let s = state();
     expect(s.groups).toMatchObject([{ id: g, parentId: sc, name: "Grupo 1" }]);
-    expect(folderPath(s.production!, s.nodes, s.nodes.find((n) => n.id === b)!, s.groups)).toBe("SQ010/SC010_Puerto/Grupo-1/SH0020_Muelle");
+    expect(folderPath(s.production!, s.nodes, s.nodes.find((n) => n.id === b)!, s.groups)).toBe("SQ010_Secuencia-1/SC010_Puerto/Grupo-1/SH0020_Muelle");
 
     // A shot from another scene joins: it moves into the scene (keeps its code if free).
     run((st) => planGroupShots(st.production!, st.nodes, st.groups, [c], { groupId: g }, "unused", 2));
@@ -268,7 +269,7 @@ describe("structure intents", () => {
     expect(s.nodes.find((n) => n.id === c)).toMatchObject({ parentId: sc, groupId: g, number: 30 });
 
     run((st) => planRenameGroup(st.groups, g, "Por decidir"));
-    expect(folderPath(state().production!, state().nodes, state().nodes.find((n) => n.id === a)!, state().groups)).toBe("SQ010/SC010_Puerto/Por-decidir/SH0010_Faro");
+    expect(folderPath(state().production!, state().nodes, state().nodes.find((n) => n.id === a)!, state().groups)).toBe("SQ010_Secuencia-1/SC010_Puerto/Por-decidir/SH0010_Faro");
 
     // Moved to another scene: it leaves the group.
     run((st) => moveNodes(st.production!, st.nodes, [c], sc2, null));
@@ -280,5 +281,34 @@ describe("structure intents", () => {
     s = state();
     expect(s.groups).toEqual([]);
     expect(s.nodes.filter((n) => n.parentId === sc).map((n) => [n.number, n.groupId ?? null])).toEqual([[10, null], [20, null]]);
+  });
+
+  it("reorders a row with groups: shots and groups by what the row shows, joining and leaving groups", () => {
+    const { run, state } = session();
+    const sq = run((s) => planCreateNode(s.production!, s.nodes, null, "q")).nodeId!;
+    const sc = run((s) => planCreateNode(s.production!, s.nodes, sq, "c")).nodeId!;
+    const [a, b, c, d] = ["a", "b", "c", "d"].map((t) => run((s) => planCreateNode(s.production!, s.nodes, sc, `r${t}`, t.toUpperCase())).nodeId!) as [string, string, string, string];
+    const g = (run((s) => planGroupShots(s.production!, s.nodes, s.groups, [c], { shotId: b }, "rg", 1)) as Plan & { groupId?: string }).groupId!;
+    // The row shows A, [B C], D.
+    const row = () => {
+      const s = state();
+      const kids = childrenOf(s.nodes, sc);
+      const loose = kids.filter((n) => !n.groupId).map((n) => ({ k: n.title, at: n.order ?? n.number }));
+      const gs = s.groups.filter((x) => kids.some((n) => n.groupId === x.id)).map((x) => ({ k: `[${kids.filter((n) => n.groupId === x.id).map((n) => n.title).join(" ")}]`, at: x.order }));
+      return [...loose, ...gs].sort((x, y) => x.at - y.at).map((x) => x.k).join(" ");
+    };
+    expect(row()).toBe("A [B C] D");
+    // D before the group; the group before A.
+    run((s) => planPlaceInRow(s.production!, s.nodes, s.groups, [{ nodeId: d }], sc, { groupId: g }, null));
+    expect(row()).toBe("A D [B C]");
+    run((s) => planPlaceInRow(s.production!, s.nodes, s.groups, [{ groupId: g }], sc, { nodeId: a }, null));
+    expect(row()).toBe("[B C] A D");
+    // A into the open group, after B; then C out of it, at the end of the row.
+    run((s) => planPlaceInRow(s.production!, s.nodes, s.groups, [{ nodeId: a }], sc, { nodeId: c }, g));
+    expect(row()).toBe("[B A C] D");
+    run((s) => planPlaceInRow(s.production!, s.nodes, s.groups, [{ nodeId: c }], sc, null, null));
+    expect(row()).toBe("[B A] D C");
+    // Codes never changed.
+    expect(state().nodes.filter((n) => n.parentId === sc).map((n) => `${n.title}${n.number}`).sort()).toEqual(["A10", "B20", "C30", "D40"]);
   });
 });

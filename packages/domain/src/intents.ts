@@ -34,6 +34,7 @@ export function planCreateNode(p: Production, nodes: ProdNode[], parentId: Id | 
   if (!level) throw new Error("El último nivel no admite hijos");
   const siblings = childrenOf(nodes, parentId);
   const number = nextNumber(siblings, level.step);
+  title = title.trim() || defaultTitle(p, level, number);
   const last = siblings.at(-1);
   // Only needs an explicit order when hand-reordered siblings already sort past the new number.
   const order = last && sortValue(last) >= number ? sortValue(last) + ORDER_STEP : undefined;
@@ -56,7 +57,7 @@ export function planInsertAfter(p: Production, nodes: ProdNode[], nodeId: Id, ne
   const number = numberBetween(after, byCode[byCode.indexOf(after) + 1], level.step) ?? nextNumber(siblings, level.step);
   return {
     nodeId: newId,
-    events: [{ type: "node.created", node: { id: newId, parentId: after.parentId, levelId: after.levelId, number, title: "", statusId: firstStatus(p), order } }],
+    events: [{ type: "node.created", node: { id: newId, parentId: after.parentId, levelId: after.levelId, number, title: defaultTitle(p, level, number), statusId: firstStatus(p), order } }],
   };
 }
 
@@ -235,6 +236,18 @@ export function planUpdateNode(nodes: ProdNode[], nodeId: Id, patch: NodePatch):
   return Object.keys(changed).length ? { events: [{ type: "node.updated", id: nodeId, patch: changed }] } : EMPTY;
 }
 
+/**
+ * Title a new node starts with: "Escena 1", "Secuencia 3"… from its level
+ * name and code (SC010 → 1, SC015 → 1,5), so rows are easy to tell apart at a glance.
+ * Shots start untitled: their title is written per shot.
+ */
+export function defaultTitle(p: Production, level: { id: Id; name: string; step: number }, number: number): string {
+  if (p.levels.at(-1)?.id === level.id) return "";
+  // Inserted between two (015): "Escena 1,5", so it never repeats a neighbour's.
+  const n = Math.round((number / level.step) * 100) / 100;
+  return `${level.name} ${String(Math.max(n, 0)).replace(".", ",")}`;
+}
+
 function firstStatus(p: Production): Id {
   const s = [...p.statuses].filter((x) => !x.archived).sort((a, b) => a.order - b.order)[0];
   if (!s) throw new Error("La producción no tiene estados");
@@ -323,4 +336,82 @@ export function planRenameGroup(groups: ShotGroup[], groupId: Id, name: string):
   const g = groups.find((x) => x.id === groupId);
   const clean = name.trim();
   return g && clean && clean !== g.name ? { events: [{ type: "group.updated", id: groupId, patch: { name: clean } }] } : EMPTY;
+}
+
+/** Something in a row of the board: a shot, or a group of shots. */
+export type RowItem = { nodeId: Id } | { groupId: Id };
+
+/**
+ * Drag and drop in a row of the board, with its groups (docs/INTERFAZ.md
+ * §2.1, §2.4): put `moving` (shots and/or groups) in row `rowId` right
+ * before `before` (null: at the end), in the row itself (`groupId` null) or
+ * inside an open group. Positions count what the row shows: its loose shots
+ * and its groups. Shots join or leave groups to match where they land, and
+ * keep their codes unless the number is taken in a new scene.
+ */
+export function planPlaceInRow(
+  p: Production,
+  nodes: ProdNode[],
+  groups: ShotGroup[],
+  moving: RowItem[],
+  rowId: Id,
+  before: RowItem | null,
+  groupId: Id | null,
+): Plan {
+  const row = nodes.find((n) => n.id === rowId);
+  if (!row) return EMPTY;
+  const unitLevel = p.levels[levelIndex(p, row) + 1];
+  if (!unitLevel || p.levels.at(-1)?.id !== unitLevel.id) return EMPTY;
+  const key = (i: RowItem) => ("nodeId" in i ? `n:${i.nodeId}` : `g:${i.groupId}`);
+  const kids = childrenOf(nodes, rowId);
+  const rowGroups = groups.filter((g) => g.parentId === rowId && kids.some((k) => k.groupId === g.id));
+  const inRowGroup = (n: ProdNode) => !!n.groupId && rowGroups.some((g) => g.id === n.groupId);
+  // What the row (or the open group) shows, in order.
+  const shown: Array<{ item: RowItem; at: number }> = groupId
+    ? kids.filter((k) => k.groupId === groupId).map((k) => ({ item: { nodeId: k.id }, at: sortValue(k) }))
+    : [
+        ...kids.filter((k) => !inRowGroup(k)).map((k) => ({ item: { nodeId: k.id } as RowItem, at: sortValue(k) })),
+        ...rowGroups.map((g) => ({ item: { groupId: g.id } as RowItem, at: g.order })),
+      ].sort((a, b) => a.at - b.at);
+
+  // Only what can go there: shots of the unit level; a group only within its own row.
+  const valid = moving.filter((m) => {
+    if ("groupId" in m) return !groupId && rowGroups.some((g) => g.id === m.groupId);
+    const n = nodes.find((x) => x.id === m.nodeId);
+    return !!n && n.levelId === unitLevel.id;
+  });
+  if (!valid.length) return EMPTY;
+  const moved = new Set(valid.map(key));
+  const staying = shown.filter((s) => !moved.has(key(s.item)));
+  const at = before ? staying.findIndex((s) => key(s.item) === key(before)) : -1;
+  const index = at < 0 ? staying.length : at;
+  const prev = staying[index - 1];
+  const next = staying[index];
+  const k = valid.length;
+  const lo = prev ? prev.at : next ? next.at - ORDER_STEP * (k + 1) : 0;
+  const hi = next ? next.at : lo + ORDER_STEP * (k + 1);
+
+  const taken = new Set(kids.map((n) => n.number));
+  const events: LogEventBody[] = [];
+  valid.forEach((m, i) => {
+    const order = lo + ((hi - lo) * (i + 1)) / (k + 1);
+    if ("groupId" in m) {
+      events.push({ type: "group.updated", id: m.groupId, patch: { order } });
+      return;
+    }
+    const n = nodes.find((x) => x.id === m.nodeId)!;
+    let number: number | undefined;
+    if (n.parentId !== rowId && taken.has(n.number)) number = Math.floor(Math.max(...taken) / unitLevel.step) * unitLevel.step + unitLevel.step;
+    if (n.parentId !== rowId) taken.add(number ?? n.number);
+    events.push({ type: "node.moved", id: n.id, parentId: rowId, order, ...(number === undefined ? {} : { number }) });
+    // Lands in the open group, or loose in the row.
+    const want = groupId ?? null;
+    if ((n.groupId ?? null) !== want) events.push({ type: "node.updated", id: n.id, patch: { groupId: want } });
+  });
+  // Groups emptied by shots leaving them go.
+  for (const g of rowGroups) {
+    const left = kids.filter((n) => n.groupId === g.id && !events.some((e) => e.type === "node.updated" && e.id === n.id && e.patch.groupId !== g.id)).length;
+    if (!left) events.push({ type: "group.deleted", id: g.id });
+  }
+  return { events };
 }

@@ -11,6 +11,7 @@ export function StatusPicker({
   onEdit,
   placeholder,
   onClear,
+  floating,
 }: {
   statuses: StatusDef[];
   /** null: nothing picked yet (filters), shows `placeholder`. */
@@ -20,8 +21,11 @@ export function StatusPicker({
   placeholder?: string;
   /** Shows an × next to the picked status to go back to none. */
   onClear?: () => void;
+  /** Inside something that scrolls or clips (a row of cards): the list floats over everything, right-aligned. */
+  floating?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const [at, setAt] = useState<{ top: number; right: number } | null>(null);
   const ref = useRef<HTMLDivElement>(null);
   const cur = statuses.find((s) => s.id === value) ?? (placeholder ? null : statuses[0]!);
   useEffect(() => {
@@ -33,12 +37,18 @@ export function StatusPicker({
   const list = statuses.filter((s) => !s.archived).sort((a, b) => a.order - b.order);
   return (
     <div className="picker" ref={ref}>
-      <button className={cx("picker__btn", !cur && "picker__btn--empty")} title={cur ? "Cambiar el estado" : placeholder} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}>
+      <button className={cx("picker__btn", !cur && "picker__btn--empty")} title={cur ? "Cambiar el estado" : placeholder} aria-haspopup="menu" aria-expanded={open} onClick={(e) => {
+        if (floating) {
+          const r = e.currentTarget.getBoundingClientRect();
+          setAt({ top: r.bottom + 4, right: window.innerWidth - r.right });
+        }
+        setOpen(!open);
+      }}>
         {cur ? <Pill color={cur.color}>{cur.name}</Pill> : <span className="picker__placeholder">{placeholder} <IconChevronDown size={13} /></span>}
       </button>
       {cur && onClear ? <button className="picker__clear" aria-label="Quitar" title="Quitar" onClick={onClear}><IconX size={12} /></button> : null}
       {open ? (
-        <div className="menu">
+        <div className={cx("menu", floating && "menu--floating")} style={floating && at ? { top: at.top, right: at.right } : undefined}>
           {list.map((s) => (
             <button key={s.id} className="menu__item" onClick={() => { onChange(s.id); setOpen(false); }}>
               <span className="sf-pill__dot" style={{ background: s.color }} />

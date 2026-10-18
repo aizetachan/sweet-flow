@@ -19,6 +19,7 @@ import {
   planSetNumber,
   planSplitShot,
   planGroupShots,
+  planPlaceInRow,
   planUngroupShots,
   planDissolveGroup,
   planRenameGroup,
@@ -31,6 +32,7 @@ import {
   type Media,
   type Plan,
   type ProdNode,
+  type RowItem,
   type Segment,
   type StatusDef,
   type Take,
@@ -208,6 +210,10 @@ export class MockSource implements DataSource {
     const plan = planGroupShots(this.s.production, this.s.nodes, this.s.groups, ids, target, newId("g"), Date.now());
     this.applyPlan(plan);
     return plan.groupId;
+  }
+
+  placeInRow(moving: RowItem[], rowId: Id, before: RowItem | null, groupId: Id | null): void {
+    this.applyPlan(planPlaceInRow(this.s.production, this.s.nodes, this.s.groups, moving, rowId, before, groupId));
   }
 
   ungroupShots(ids: Id[]): void {

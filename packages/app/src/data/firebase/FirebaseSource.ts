@@ -24,6 +24,7 @@ import type {
   ProdNode,
   Production,
   Role,
+  RowItem,
   Segment,
   StatusDef,
   Take,
@@ -355,6 +356,10 @@ export class FirebaseSource implements DataSource {
 
   ungroupShots(_ids: Id[]): void {
     throw new NotImplemented("Grupos de planos", "etapa C");
+  }
+
+  placeInRow(_moving: RowItem[], _rowId: Id, _before: RowItem | null, _groupId: Id | null): void {
+    throw new NotImplemented("Reordenar con grupos", "etapa C");
   }
 
   dissolveGroup(_groupId: Id): void {

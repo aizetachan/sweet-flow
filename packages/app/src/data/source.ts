@@ -19,6 +19,7 @@ import type {
   Presence,
   ProdNode,
   Production,
+  RowItem,
   Segment,
   ShotGroup,
   StatusDef,
@@ -118,6 +119,11 @@ export interface DataSource {
   groupShots(ids: Id[], target: { shotId: Id } | { groupId: Id }): Id | undefined;
   /** Out of their group, right after it in the row (an emptied group goes). */
   ungroupShots(ids: Id[]): void;
+  /**
+   * Drag and drop in a row of the board: shots and groups go right before
+   * `before` (null: at the end), loose in the row or inside the open group.
+   */
+  placeInRow(moving: RowItem[], rowId: Id, before: RowItem | null, groupId: Id | null): void;
   /** Undo a group: its shots back on the row. */
   dissolveGroup(groupId: Id): void;
   renameGroup(groupId: Id, name: string): void;

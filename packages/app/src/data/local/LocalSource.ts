@@ -34,6 +34,7 @@ import {
   planSetNumber,
   planSplitShot,
   planGroupShots,
+  planPlaceInRow,
   planUngroupShots,
   planDissolveGroup,
   planRenameGroup,
@@ -56,6 +57,7 @@ import {
   type Plan,
   type ProdNode,
   type Production,
+  type RowItem,
   type Segment,
   type StatusDef,
 } from "@sweetflow/domain";
@@ -325,6 +327,11 @@ export class LocalSource implements DataSource {
     const plan = planGroupShots(s.production, this.board(), s.groups, ids, target, this.newId("g"), this.now());
     this.apply(plan);
     return plan.groupId;
+  }
+
+  placeInRow(moving: RowItem[], rowId: Id, before: RowItem | null, groupId: Id | null): void {
+    const s = this.loaded();
+    this.apply(planPlaceInRow(s.production, this.board(), s.groups, moving, rowId, before, groupId));
   }
 
   ungroupShots(ids: Id[]): void {

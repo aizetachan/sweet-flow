@@ -134,7 +134,8 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
 - **Cabecera del tablero:** el título y un contador con el número de planos.
 - **Secciones** (Producción, Biblioteca, Papelera, Ajustes): barra **flotante
   centrada abajo**, para que el tablero tenga todo el ancho.
-- **Tarjeta de plano:** portada; código y estado; debajo, el título y, a la
+- **Tarjeta de plano:** portada; código y estado (**clic en el estado** abre
+  la lista para cambiarlo ahí mismo, sin seleccionar la tarjeta); debajo, el título y, a la
   derecha (bajo el estado), la **duración del vídeo** (la del tramo si es un
   plano cortado; «N/A» si es una imagen; «—» si aún no tiene nada). No muestra
   el número de versiones (hay un vídeo por plano) ni franja de color arriba
@@ -174,6 +175,10 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
     izquierda (sin texto; el tooltip lo dice). La secuencia nueva trae ya su
     primera escena (SC010), así nunca hay secuencias vacías. Con la producción
     vacía, una frase que explica qué va dentro y el mismo botón.
+  - **Título por defecto:** las secuencias y escenas nuevas se llaman
+    «Secuencia 4», «Escena 1»… según su código (una insertada entre SC010 y
+    SC020 es «Escena 1,5»). Los planos empiezan sin título. **Doble clic en el
+    título** de la cabecera de una secuencia o escena lo cambia.
   - Lo creado se abre en el panel y empieza en Pendiente. Con filtros activos no
     se muestran (no se sabría dónde cae).
 - El **panel de trabajo** aparece al seleccionar un plano o una escena y es donde
@@ -186,6 +191,14 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
 - En el árbol y en las filas del tablero se **selecciona y arrastra** cualquier
   elemento (plano, escena, secuencia) a la posición que se quiera. Selección
   múltiple con ⇧/⌘.
+- **En una fila del tablero** decide dónde está el ratón al soltar:
+  - en el **centro de la portada** de un plano → crea un grupo con los dos;
+  - en el **centro de una tarjeta de grupo** → entra en el grupo;
+  - en los **bordes** de una tarjeta o en el **hueco entre dos** → se coloca
+    ahí (una línea azul marca el sitio). Sobre el «+», al final.
+  - Las **tarjetas de grupo se arrastran igual** para cambiarlas de sitio en
+    la fila. Con un grupo abierto, se reordena dentro; un plano que se suelta
+    en la fila sale de su grupo.
 - **El orden es solo visual.** Mover no cambia el código (`SH0030` sigue siendo
   `SH0030`) ni renombra su carpeta. El orden se guarda aparte.
 - **Se puede cambiar de padre:** arrastrar un plano a otra escena, o una escena

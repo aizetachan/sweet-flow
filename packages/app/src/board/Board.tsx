@@ -20,7 +20,7 @@ import { countsOf, coverOf, durationOf, filtersActive, matches, memberName, pres
 import { Thumb, useDuration } from "../components/media";
 import { Popover } from "../components/Popover";
 import { StatusPicker } from "../components/StatusPicker";
-import { nodeDragProps, useEndDrop, useGroupDrop, useNodeDrop, useUngroupDrop } from "./dnd";
+import { groupDragProps, nodeDragProps, useNodeDrop, useRowDrop, useUngroupDrop, type RowHint } from "./dnd";
 import { ShelfButton } from "./Shelf";
 
 export function Board() {
@@ -76,7 +76,8 @@ function Group({ node }: { node: ProdNode }) {
     <section className="group">
       <GroupHead node={node}>
         <span className="group__code">{codeOf(p, node)}</span>
-        <span className="group__title">{node.title}</span>
+        <InlineEdit className="group__title" value={node.title} placeholder="Sin título" label="Doble clic para cambiar el título"
+          onSave={(title) => useStore.getState().source.updateNode(node.id, { title })} />
         <span className="sf-faint sf-small">{levelOf(p, node).name} · {prog.done}/{prog.total} aprobados · {fmtDur(durationOf(snap, node))}</span>
         <span className="group__spacer" />
         {!filtersActive(filters) ? (
@@ -142,7 +143,7 @@ function Lane({ row }: { row: ProdNode }) {
   const st = statusOf(snap, row);
   const viewers = presenceAt(snap, row.id);
   const headDrop = useNodeDrop(row, "y");
-  const endDrop = useEndDrop(row.id);
+
   // Groups of shots (§2.4): a card each in the row; open, the row shows what is inside.
   const groups = snap.groups.filter((g) => g.parentId === row.id && all.some((u) => u.groupId === g.id));
   const [openId, setOpenId] = useState<Id | null>(null);
@@ -157,16 +158,18 @@ function Lane({ row }: { row: ProdNode }) {
   const setWrap = (v: boolean) => { setWrapState(v); writeWrap(row.id, v); };
   const box = useRef<HTMLDivElement>(null);
   const cols = useColumns(box, wrap);
+  const rowDrop = useRowDrop(row.id, open?.id ?? null);
+  const hintOf = (key: string) => (rowDrop.hint?.key === key ? rowDrop.hint.zone : undefined);
   // After every hook: a row left empty by the filters is hidden.
   if (active && !units.length) return null;
   const inGroup = (u: ProdNode) => !!u.groupId && groups.some((g) => g.id === u.groupId);
   const items: Array<{ key: string; at: number; el: ReactNode }> = active
-    ? units.map((u) => ({ key: u.id, at: 0, el: <UnitCard key={u.id} node={u} /> }))
+    ? units.map((u) => ({ key: u.id, at: 0, el: <UnitCard key={u.id} node={u} inRow hint={hintOf(`n:${u.id}`)} /> }))
     : open
-      ? units.filter((u) => u.groupId === open.id).map((u) => ({ key: u.id, at: 0, el: <UnitCard key={u.id} node={u} /> }))
+      ? units.filter((u) => u.groupId === open.id).map((u) => ({ key: u.id, at: 0, el: <UnitCard key={u.id} node={u} inRow hint={hintOf(`n:${u.id}`)} /> }))
       : [
-          ...units.filter((u) => !inGroup(u)).map((u) => ({ key: u.id, at: sortValue(u), el: <UnitCard key={u.id} node={u} /> })),
-          ...groups.map((g) => ({ key: g.id, at: g.order, el: <GroupCard key={g.id} group={g} onOpen={() => setOpenId(g.id)} /> })),
+          ...units.filter((u) => !inGroup(u)).map((u) => ({ key: u.id, at: sortValue(u), el: <UnitCard key={u.id} node={u} inRow hint={hintOf(`n:${u.id}`)} /> })),
+          ...groups.map((g) => ({ key: g.id, at: g.order, el: <GroupCard key={g.id} group={g} hint={hintOf(`g:${g.id}`)} onOpen={() => setOpenId(g.id)} /> })),
         ].sort((a, b) => a.at - b.at);
 
   const grid = wrap && cols > 0 && items.length + 1 > cols;
@@ -174,7 +177,8 @@ function Lane({ row }: { row: ProdNode }) {
     <section className="lane">
       <div className={cx("lane__head", headDrop.zone && `dnd-${headDrop.zone}`)} {...nodeDragProps(row.id)} {...headDrop.props}>
         <span className="lane__code">{codeOf(p, row)}</span>
-        <span className="lane__title">{row.title}</span>
+        <InlineEdit className="lane__title" value={row.title} placeholder="Sin título" label="Doble clic para cambiar el título"
+          onSave={(title) => useStore.getState().source.updateNode(row.id, { title })} />
         <Pill color={st.color}>{st.name}</Pill>
         <span className="sf-faint sf-small">{all.length} {unitLevel.name.toLowerCase()}s · {fmtDur(durationOf(snap, row))}</span>
         {viewers.length ? <AvatarStack names={viewers} size={18} /> : null}
@@ -187,10 +191,10 @@ function Lane({ row }: { row: ProdNode }) {
       </div>
       {open && !active ? <GroupBar group={open} row={row} count={units.filter((u) => u.groupId === open.id).length} onClose={() => setOpenId(null)} /> : null}
       {/* Wrapped only when they don't all fit in one row: then the columns fill the width exactly. */}
-      <div ref={box} className={cx("lane__cards", grid && "lane__cards--wrap", endDrop.over && "dnd-end")}
-        style={grid ? { gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` } : undefined} {...endDrop.props}>
+      <div ref={box} className={cx("lane__cards", grid && "lane__cards--wrap")}
+        style={grid ? { gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` } : undefined} {...rowDrop.props}>
         {items.map((i) => i.el)}
-        {!active ? <AddCard row={row} groupId={open?.id} /> : null}
+        {!active ? <AddCard row={row} groupId={open?.id} hint={hintOf("end")} /> : null}
       </div>
     </section>
   );
@@ -245,14 +249,14 @@ function writeWrap(rowId: Id, on: boolean): void {
 }
 
 /** "+" at the end of a row: a new shot in that scene (the row grows to the right). */
-function AddCard({ row, groupId }: { row: ProdNode; groupId?: Id }) {
+function AddCard({ row, groupId, hint }: { row: ProdNode; groupId?: Id; hint?: RowHint["zone"] }) {
   const snap = useSnap();
   const { source, select } = useStore();
   const p = snap.production;
   const g = groupId ? snap.groups.find((x) => x.id === groupId) : undefined;
   const label = `Nuevo ${p.levels[levelIndex(p, row) + 1]!.name.toLowerCase()} en ${g ? `«${g.name}»` : codeOf(p, row)}`;
   return (
-    <button className="card card--add" title={label} aria-label={label} onClick={() => {
+    <button className={cx("card card--add", hint && `dnd-${hint}`)} data-row-item="end" title={label} aria-label={label} onClick={() => {
       const id = source.createNode(row.id, "");
       if (groupId) source.groupShots([id], { groupId });
       select(id);
@@ -269,13 +273,15 @@ function AddCard({ row, groupId }: { row: ProdNode; groupId?: Id }) {
   );
 }
 
-function UnitCard({ node }: { node: ProdNode }) {
+/** `inRow`: its row handles drops (§2.1, §2.4); `hint` says where a drop would land. */
+function UnitCard({ node, inRow, hint }: { node: ProdNode; inRow?: boolean; hint?: RowHint["zone"] }) {
   const snap = useSnap();
   const { selectedId, multi, select, toggleMulti, focusPopped } = useStore();
   const apart = useStore((s) => s.popped.some((w) => w.nodeId === node.id));
-  const drop = useNodeDrop(node, "x", false, true);
+  // Only a production with a single level has no rows: there the card takes drops itself.
+  const drop = useNodeDrop(node, "x");
+  const zone = inRow ? hint : drop.zone;
   const p = snap.production;
-  const st = statusOf(snap, node);
   const c = countsOf(snap, node);
   const cover = coverOf(snap, node);
   const viewers = presenceAt(snap, node.id);
@@ -284,16 +290,21 @@ function UnitCard({ node }: { node: ProdNode }) {
 
   return (
     <div
-      className={cx("card", selectedId === node.id && "card--on", multi.includes(node.id) && "card--multi", viewers.length > 0 && "card--watched", drop.zone && `dnd-${drop.zone}`)}
+      className={cx("card", selectedId === node.id && "card--on", multi.includes(node.id) && "card--multi", viewers.length > 0 && "card--watched", zone && `dnd-${zone}`)}
+      data-row-item={`n:${node.id}`}
       {...nodeDragProps(node.id)}
       draggable={!editing}
-      {...drop.props}
+      {...(inRow ? {} : drop.props)}
       onClick={(e) => (e.metaKey || e.ctrlKey || e.shiftKey ? toggleMulti(node.id) : select(node.id))}
     >
       <Thumb {...cover} preview />
       <div className="card__meta">
         <span className="card__code">{codeOf(p, node)}</span>
-        <Pill color={st.color}>{st.name}</Pill>
+        {/* The status changes right here: a click opens the list (the card is not selected). */}
+        <span className="card__status" draggable={false} onClick={(e) => e.stopPropagation()} onDragStart={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+          <StatusPicker floating statuses={p.statuses} value={node.statusId} onChange={(id) => source.updateNode(node.id, { statusId: id })}
+            onEdit={() => useStore.getState().set({ modal: "statuses" })} />
+        </span>
       </div>
       <div className="card__row">
         <InlineEdit className="card__title" value={node.title} placeholder="Sin título" label="Doble clic para escribir el título"
@@ -332,9 +343,8 @@ function CardLength({ cover }: { cover: ReturnType<typeof coverOf> }) {
  * in small, each 16:9 like a shot's (up to four; "+N" on the last when there
  * are more), its name and how many shots. Click to open; drop shots on it to add them.
  */
-function GroupCard({ group, onOpen }: { group: ShotGroup; onOpen: () => void }) {
+function GroupCard({ group, hint, onOpen }: { group: ShotGroup; hint?: RowHint["zone"]; onOpen: () => void }) {
   const snap = useSnap();
-  const drop = useGroupDrop(group.id);
   const shots = snap.nodes.filter((n) => n.groupId === group.id && n.parentId === group.parentId).sort(byPosition);
   const source = useStore((s) => s.source);
   const [editing, setEditing] = useState(false);
@@ -343,7 +353,7 @@ function GroupCard({ group, onOpen }: { group: ShotGroup; onOpen: () => void }) 
   const more = shots.length > GROUP_TILES ? shots.length - (GROUP_TILES - 1) : 0;
   const tiles = shots.slice(0, GROUP_TILES);
   return (
-    <div className={cx("card card--group", drop.over && "dnd-group")} {...drop.props} onClick={(e) => {
+    <div className={cx("card card--group", hint && `dnd-${hint === "into" ? "group" : hint}`)} data-row-item={`g:${group.id}`} {...groupDragProps(group.id)} draggable={!editing} onClick={(e) => {
       // The second click of a double click waits for the rename instead.
       if (editing || e.detail > 1) return;
       if (opening.current) clearTimeout(opening.current);

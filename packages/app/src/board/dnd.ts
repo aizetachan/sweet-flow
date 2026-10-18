@@ -6,7 +6,7 @@
  */
 
 import { useState, type DragEvent } from "react";
-import { childrenOf, codeOf, isUnit, levelIndex, type Id, type ProdNode, type Production } from "@sweetflow/domain";
+import { childrenOf, codeOf, isUnit, levelIndex, type Id, type ProdNode, type Production, type RowItem } from "@sweetflow/domain";
 import { useStore } from "../state/store";
 
 const NODE_DRAG = "application/x-sweetflow-nodes";
@@ -25,6 +25,7 @@ export function nodeDragProps(id: Id) {
       e.stopPropagation();
       const { multi } = useStore.getState();
       dragging = multi.includes(id) ? multi : [id];
+      draggingGroup = null;
       e.dataTransfer.setData(NODE_DRAG, JSON.stringify(dragging));
       e.dataTransfer.effectAllowed = "move";
     },
@@ -233,4 +234,141 @@ function orderOnScreen(p: Production, nodes: ProdNode[], ids: Id[]): Id[] {
     });
   walk(null, "");
   return [...ids].sort((a, b) => (rank.get(a) ?? "").localeCompare(rank.get(b) ?? ""));
+}
+
+// ---------- rows of the board (docs/INTERFAZ.md §2.1, §2.4) ----------
+
+/** Group card being dragged, if any (shots go in `dragging`). */
+let draggingGroup: Id | null = null;
+
+export function groupDragProps(groupId: Id) {
+  return {
+    draggable: true,
+    onDragStart: (e: DragEvent) => {
+      e.stopPropagation();
+      draggingGroup = groupId;
+      dragging = [];
+      e.dataTransfer.setData(NODE_DRAG, JSON.stringify({ group: groupId }));
+      e.dataTransfer.effectAllowed = "move";
+    },
+    onDragEnd: () => {
+      draggingGroup = null;
+    },
+  };
+}
+
+/** Where a drop in a row lands: next to an item, onto a shot (new group) or into a group. */
+export type RowHint = { key: string; zone: "before" | "after" | "group" | "into" };
+
+/**
+ * Drop target for a whole row of cards. Every card carries
+ * `data-row-item` ("n:<id>", "g:<id>", or "end" for the "+"); the pointer
+ * decides: the middle of a shot's cover makes a group, the middle of a group
+ * card puts the shots inside, anything else — edges and the gaps between
+ * cards — places them before or after.
+ */
+export function useRowDrop(rowId: Id, openGroupId: Id | null) {
+  const [hint, setHint] = useState<RowHint | null>(null);
+
+  const ok = (): boolean => {
+    const { snap } = useStore.getState();
+    if (!snap) return false;
+    if (draggingGroup) return !openGroupId && snap.groups.some((g) => g.id === draggingGroup && g.parentId === rowId);
+    return dragging.length > 0 && dragging.every((id) => {
+      const n = snap.nodes.find((x) => x.id === id);
+      return !!n && isUnit(snap.production, n);
+    });
+  };
+
+  const pick = (e: DragEvent): RowHint | null => {
+    const box = e.currentTarget as HTMLElement;
+    const items = [...box.querySelectorAll<HTMLElement>("[data-row-item]")];
+    if (!items.length) return null;
+    const over = (e.target as HTMLElement).closest<HTMLElement>("[data-row-item]");
+    if (over && box.contains(over)) {
+      const key = over.dataset.rowItem!;
+      if (key === "end") return { key, zone: "before" };
+      const r = over.getBoundingClientRect();
+      const fx = (e.clientX - r.left) / r.width;
+      if (!draggingGroup && key.startsWith("g:") && fx > 0.25 && fx < 0.75) return { key, zone: "into" };
+      if (!draggingGroup && key.startsWith("n:") && !dragging.includes(key.slice(2)) && fx > 0.3 && fx < 0.7) {
+        const cover = over.querySelector(".thumb")?.getBoundingClientRect();
+        if (cover && e.clientY >= cover.top && e.clientY <= cover.bottom) return { key, zone: "group" };
+      }
+      return { key, zone: fx < 0.5 ? "before" : "after" };
+    }
+    // In a gap: before the first card to the right on this line, or the next line's first.
+    const line = items.filter((el) => {
+      const r = el.getBoundingClientRect();
+      return e.clientY >= r.top - 12 && e.clientY <= r.bottom + 12;
+    });
+    const right = line.find((el) => {
+      const r = el.getBoundingClientRect();
+      return r.left + r.width / 2 > e.clientX;
+    });
+    if (right) return { key: right.dataset.rowItem!, zone: "before" };
+    const last = line.at(-1);
+    return last ? { key: last.dataset.rowItem!, zone: "after" } : { key: "end", zone: "before" };
+  };
+
+  const drop = (h: RowHint, box: HTMLElement) => {
+    const { source, set, snap, notify } = useStore.getState();
+    if (!snap) return;
+    const toItem = (key: string): RowItem | null => (key === "end" ? null : key.startsWith("g:") ? { groupId: key.slice(2) } : { nodeId: key.slice(2) });
+    const ids = orderOnScreen(snap.production, snap.nodes, dragging);
+    const moving: RowItem[] = draggingGroup ? [{ groupId: draggingGroup }] : ids.map((nodeId) => ({ nodeId }));
+    const codeBefore = new Map(ids.map((id) => [id, codeOf(snap.production, snap.nodes.find((n) => n.id === id)!)]));
+    try {
+      if (h.zone === "group") source.groupShots(ids, { shotId: h.key.slice(2) });
+      else if (h.zone === "into") source.groupShots(ids, { groupId: h.key.slice(2) });
+      else {
+        let before = toItem(h.key);
+        if (h.zone === "after") {
+          const keys = [...box.querySelectorAll<HTMLElement>("[data-row-item]")].map((el) => el.dataset.rowItem!);
+          before = toItem(keys[keys.indexOf(h.key) + 1] ?? "end");
+        }
+        source.placeInRow(moving, rowId, before, openGroupId);
+      }
+    } catch (err) {
+      notify(err instanceof Error ? err.message : String(err));
+    }
+    dragging = [];
+    draggingGroup = null;
+    set({ multi: [] });
+    // A shot keeps its code unless it was taken in the new scene: say so.
+    const after = useStore.getState().snap;
+    const renamed = ids.flatMap((id) => {
+      const n = after?.nodes.find((x) => x.id === id);
+      const now = n && after ? codeOf(after.production, n) : undefined;
+      return now && now !== codeBefore.get(id) ? [`${codeBefore.get(id)} → ${now}`] : [];
+    });
+    if (renamed.length) notify(`${renamed.join(", ")}: ese código ya existía en el destino.`);
+  };
+
+  return {
+    hint,
+    props: {
+      onDragOver: (e: DragEvent) => {
+        if (!e.dataTransfer.types.includes(NODE_DRAG) || !ok()) return;
+        const h = pick(e);
+        if (!h) return setHint(null);
+        e.preventDefault();
+        e.stopPropagation();
+        e.dataTransfer.dropEffect = "move";
+        setHint((old) => (old && old.key === h.key && old.zone === h.zone ? old : h));
+      },
+      onDragLeave: (e: DragEvent) => {
+        if (!(e.currentTarget as HTMLElement).contains(e.relatedTarget as Node)) setHint(null);
+      },
+      onDrop: (e: DragEvent) => {
+        setHint(null);
+        if (!ok()) return;
+        const h = pick(e);
+        if (!h) return;
+        e.preventDefault();
+        e.stopPropagation();
+        drop(h, e.currentTarget as HTMLElement);
+      },
+    },
+  };
 }

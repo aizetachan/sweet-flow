@@ -132,6 +132,11 @@
 .card__title { color: var(--fg-2); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: -3px; }
 .card__row { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
 .card__row .card__title { flex: 1; min-width: 0; }
+.menu--floating { position: fixed; left: auto; z-index: 60; }
+.card__status { display: inline-flex; min-width: 0; }
+.card__status .picker__btn { padding: 0; background: none; border: 0; }
+.lane__title.inline-edit, .group__title.inline-edit { display: inline-block; max-width: 40%; }
+.lane__title.inline-edit__in, .group__title.inline-edit__in { width: 260px; height: 26px; }
 .card__len { flex: none; margin-top: -3px; font-size: 11px; color: var(--fg-3); font-variant-numeric: tabular-nums; }
 .card__foot { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--fg-3); min-height: 16px; }
 .card__comments { display: inline-flex; align-items: center; gap: 3px; color: var(--warn); }
