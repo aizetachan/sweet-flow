@@ -304,6 +304,15 @@ y «Tomas» por separado):
 - **Pestaña Revisión** del plano: el visor de la versión que se revisa (la
   elegida o la abierta; con varias, un selector «Revisando v00N»), la caja para
   escribir y los comentarios.
+- **Comentar rápido desde Producir:** botón de comentario en los controles del
+  visor (a la izquierda de pantalla completa; en una imagen, abajo a la
+  derecha). Pausa el vídeo y abre una caja debajo, ya con el cursor: el
+  comentario va a esa versión y a ese momento; un clic en la imagen señala el
+  punto. ⌘↵ envía, Esc cierra; aviso con «Ver en Revisión». Las marcas de los
+  comentarios abiertos también se ven en esa línea de tiempo.
+- En Revisión, **el momento y «Marcar punto» están activados por defecto**: el
+  comentario queda donde esté la línea de tiempo, y un clic en la imagen marca
+  el punto sin pulsar nada antes. Al empezar a escribir, el vídeo se pausa.
 - **Un comentario** va a una versión y, opcionalmente:
   - en un **vídeo**, al **momento** actual (casilla con el tiempo, activada por
     defecto). Se ve como una marca en la línea de tiempo; clic y el visor va ahí.

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
-  IconArchiveOff, IconAspectRatio, IconBolt, IconCheck, IconClock, IconCut, IconMusic, IconPhoto, IconPhotoDown, IconPhotoScan,
+  IconArchiveOff, IconAspectRatio, IconMessagePlus, IconBolt, IconCheck, IconClock, IconCut, IconMusic, IconPhoto, IconPhotoDown, IconPhotoScan,
   IconPhotoUp, IconPlus, IconRepeat, IconSparkles, IconTrash, IconVideo, IconVolume, IconVolumeOff, IconWand, IconX,
 } from "@tabler/icons-react";
 import {
@@ -24,6 +24,7 @@ import { memberName } from "../state/selectors";
 import { modelsFor, nearest, REF_LABEL, specOf, type GenKind, type RefType } from "../data/models";
 import type { GenerateArgs } from "../data/source";
 import { Popover } from "../components/Popover";
+import { Composer } from "./ReviewTab";
 import { Player, Thumb } from "../components/media";
 
 
@@ -57,7 +58,9 @@ export function ProduceTab({ node }: { node: ProdNode }) {
   ];
   const chosen = items.find((i) => i.take && i.take.id === node.selectedTakeId);
   const [activeKey, setActiveKey] = useState<string | null>(null);
-  useEffect(() => setActiveKey(null), [node.id]);
+  const [quick, setQuick] = useState(false);
+  const [quickPoint, setQuickPoint] = useState<{ x: number; y: number } | null>(null);
+  useEffect(() => { setActiveKey(null); setQuick(false); setQuickPoint(null); }, [node.id]);
   const active = items.find((i) => i.key === activeKey) ?? items.find((i) => i.media.id === activeMediaId) ?? chosen ?? items[0];
 
   /** The shot becomes this one: its take (made whole if it had none) is the chosen one. */
@@ -94,7 +97,29 @@ export function ProduceTab({ node }: { node: ProdNode }) {
       {active ? (
         <section className="sec sec--viewer">
           <Player media={active.media} time={time} playing={playing} range={active.foreign ? active.take : undefined}
-            onTime={(t) => setPanel({ playhead: t })} onPlaying={(v) => setPanel({ playing: v })} />
+            onTime={(t) => setPanel({ playhead: t })} onPlaying={(v) => setPanel({ playing: v })}
+            markers={active.media.kind === "video" ? snap.comments.filter((c) => c.mediaId === active.media.id && !c.parentId && !c.resolved && c.atSec !== undefined).map((c, i) => ({ id: c.id, atSec: c.atSec!, n: i + 1 })) : undefined}
+            pins={quick && quickPoint ? [{ id: "new", x: quickPoint.x, y: quickPoint.y, n: 1, on: true }] : undefined}
+            onPoint={quick && active.media.kind !== "audio" ? (x, y) => setQuickPoint({ x, y }) : undefined}
+            onComment={active.media.status === "ready" ? () => { setQuick(!quick); setQuickPoint(null); setPanel({ playing: false }); } : undefined}
+            commenting={quick} />
+          {/* Comment right here, without going to Revisión: the moment and (with a click on the picture) the point. */}
+          {quick ? (
+            <div className="quickc">
+              <div className="quickc__head sf-small">
+                <IconMessagePlus size={13} /> Comentar {versionTag(active.media.version)}{active.media.kind === "video" ? ` en ${formatTc(time)}` : ""}
+                <span className="sf-faint">{quickPoint ? "· punto marcado" : active.media.kind !== "audio" ? "· clic en la imagen para señalar" : ""}</span>
+                <button className="quickc__x" aria-label="Cerrar" onClick={() => { setQuick(false); setQuickPoint(null); }}><IconX size={12} /></button>
+              </div>
+              <Composer node={node} mediaId={active.media.id} isVideo={active.media.kind === "video"} playhead={time} point={quickPoint} canPoint={false}
+                autoFocus compact onTyping={() => setPanel({ playing: false })} onCancel={() => { setQuick(false); setQuickPoint(null); }}
+                onSent={() => {
+                  setQuick(false);
+                  setQuickPoint(null);
+                  notify("Comentario añadido.", { label: "Ver en Revisión", run: () => { setPanel({ tab: "review" }); useStore.getState().set({ notice: null }); } });
+                }} />
+            </div>
+          ) : null}
           <MediaMeta media={active.media} take={active.foreign ? active.take : undefined} />
         </section>
       ) : null}

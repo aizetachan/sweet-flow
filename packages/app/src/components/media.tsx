@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type MouseEvent } from "react";
-import { IconMaximize, IconMusic, IconPhoto, IconPlayerPauseFilled, IconPlayerPlayFilled, IconVideo } from "@tabler/icons-react";
+import { IconMaximize, IconMessagePlus, IconMusic, IconPhoto, IconPlayerPauseFilled, IconPlayerPlayFilled, IconVideo } from "@tabler/icons-react";
 import { formatTc, round1, takeDuration, type Media, type Take } from "@sweetflow/domain";
 import { cx, Spinner } from "@sweetflow/ui";
 import { useStore } from "../state/store";
@@ -120,6 +120,8 @@ export function Player({
   markers,
   pins,
   onPoint,
+  onComment,
+  commenting,
 }: {
   media: Media;
   time: number;
@@ -134,6 +136,9 @@ export function Player({
   pins?: Array<{ id: string; x: number; y: number; n: number; on?: boolean; onClick?: () => void }>;
   /** While set, a click on the picture marks a point there (0–1) instead of playing. */
   onPoint?: (x: number, y: number) => void;
+  /** Shows a comment button on the controls (comment without going to Revisión). */
+  onComment?: () => void;
+  commenting?: boolean;
 }) {
   const dur = useDuration(media);
   const video = useRef<HTMLVideoElement>(null);
@@ -169,6 +174,12 @@ export function Player({
 
   const p = dur ? time / dur : 0;
   const box = useRef<HTMLDivElement>(null);
+  const fullscreen = () => {
+    const el = box.current;
+    if (!el) return;
+    if (document.fullscreenElement) void document.exitFullscreen();
+    else void el.requestFullscreen?.();
+  };
   return (
     <div className={cx("player", onPoint && "player--picking")} ref={box}>
       {onPoint ? (
@@ -232,12 +243,14 @@ export function Player({
             onChange={(e) => onTime(+e.target.value)} />
           </span>
           <span className="sf-mono player__tc sf-faint">{formatTc(range?.outSec ?? dur)}</span>
-          <button className="player__btn" aria-label="Pantalla completa" title="Pantalla completa" onClick={() => {
-            const el = box.current;
-            if (!el) return;
-            if (document.fullscreenElement) void document.exitFullscreen();
-            else void el.requestFullscreen?.();
-          }}><IconMaximize size={14} /></button>
+          {onComment ? <button className={cx("player__btn", commenting && "player__btn--on")} aria-label="Comentar aquí" title="Comentar en este momento" onClick={onComment}><IconMessagePlus size={14} /></button> : null}
+          <button className="player__btn" aria-label="Pantalla completa" title="Pantalla completa" onClick={fullscreen}><IconMaximize size={14} /></button>
+        </div>
+      ) : media.kind === "image" && media.url ? (
+        // A still has no timeline: just comment and full screen, bottom right.
+        <div className="player__hud player__hud--mini" onClick={(e) => e.stopPropagation()}>
+          {onComment ? <button className={cx("player__btn", commenting && "player__btn--on")} aria-label="Comentar aquí" title="Comentar la imagen" onClick={onComment}><IconMessagePlus size={14} /></button> : null}
+          <button className="player__btn" aria-label="Pantalla completa" title="Pantalla completa" onClick={fullscreen}><IconMaximize size={14} /></button>
         </div>
       ) : null}
     </div>

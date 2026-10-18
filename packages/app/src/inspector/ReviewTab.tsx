@@ -21,7 +21,8 @@ export function ReviewTab({ node }: { node: ProdNode }) {
   const { setPanel, playhead, playing, activeMediaId } = usePanel();
   const [showResolved, setShowResolved] = useState(false);
   const [point, setPoint] = useState<{ x: number; y: number } | null>(null);
-  const [picking, setPicking] = useState(false);
+  // A click on the picture marks the point by default: comment where you look, with the least clicks.
+  const [picking, setPicking] = useState(true);
   const [focus, setFocus] = useState<Id | null>(null);
 
   // What is reviewed: the version open in the panel, else what the shot is now.
@@ -51,7 +52,7 @@ export function ReviewTab({ node }: { node: ProdNode }) {
     .sort((a, b) => (a.mediaId === target?.id ? 0 : 1) - (b.mediaId === target?.id ? 0 : 1) || (a.atSec ?? 1e9) - (b.atSec ?? 1e9) || a.createdAt - b.createdAt);
   const resolvedCount = roots.filter((c) => c.resolved).length;
 
-  useEffect(() => { setPoint(null); setPicking(false); }, [node.id, target?.id]);
+  useEffect(() => { setPoint(null); setPicking(true); }, [node.id, target?.id]);
 
   const goTo = (c: Comment) => {
     setFocus(c.id);
@@ -87,9 +88,9 @@ export function ReviewTab({ node }: { node: ProdNode }) {
         </OnStage>
       ) : null}
 
-      <Composer node={node} mediaId={target?.id} isVideo={target?.kind === "video"} playhead={time}
+      <Composer node={node} mediaId={target?.id} isVideo={target?.kind === "video"} playhead={time} onTyping={() => setPanel({ playing: false })}
         point={point} picking={picking} onPick={() => setPicking(!picking)} onClearPoint={() => setPoint(null)} canPoint={!!target && target.kind !== "audio"}
-        onSent={() => setPoint(null)} />
+        onSent={() => { setPoint(null); setPicking(true); }} />
 
       <section className="sec">
         <div className="sec__head">
@@ -178,7 +179,7 @@ function MentionText({ text, members }: { text: string; members: Member[] }) {
  * mention; on a video it is tied to the current moment (switchable); «Marcar
  * punto» then a click on the picture ties it to that point.
  */
-function Composer({ node, mediaId, parentId, isVideo, playhead = 0, point, picking, onPick, onClearPoint, canPoint, compact, onSent }: {
+export function Composer({ node, mediaId, parentId, isVideo, playhead = 0, point, picking, onPick, onClearPoint, canPoint, compact, onSent, autoFocus, onTyping, onCancel }: {
   node: ProdNode;
   mediaId?: Id;
   parentId?: Id;
@@ -191,6 +192,11 @@ function Composer({ node, mediaId, parentId, isVideo, playhead = 0, point, picki
   canPoint?: boolean;
   compact?: boolean;
   onSent: () => void;
+  autoFocus?: boolean;
+  /** Called on the first key: the viewer pauses so the moment stays put. */
+  onTyping?: () => void;
+  /** Esc. */
+  onCancel?: () => void;
 }) {
   const snap = useSnap();
   const { source } = useStore();
@@ -236,10 +242,10 @@ function Composer({ node, mediaId, parentId, isVideo, playhead = 0, point, picki
   return (
     <div className={cx("composer", compact && "composer--compact")}>
       <div className="composer__field">
-        <textarea ref={ref} className="sf-textarea" rows={compact ? 1 : 2}
+        <textarea ref={ref} className="sf-textarea" rows={compact ? 1 : 2} autoFocus={autoFocus}
           placeholder={parentId ? "Responder… (@ para avisar a alguien)" : `Comentar ${codeOf(snap.production, node)}… (@ para avisar a alguien)`}
           value={text}
-          onChange={(e) => { setText(e.target.value); setCaret(e.target.selectionStart); }}
+          onChange={(e) => { if (!text) onTyping?.(); setText(e.target.value); setCaret(e.target.selectionStart); }}
           onSelect={(e) => setCaret(e.currentTarget.selectionStart)}
           onKeyDown={(e) => {
             if (matches.length) {
@@ -248,6 +254,7 @@ function Composer({ node, mediaId, parentId, isVideo, playhead = 0, point, picki
               if (e.key === "Enter" || e.key === "Tab") { e.preventDefault(); return mention(matches[pick]!); }
             }
             if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) send();
+            if (e.key === "Escape") onCancel?.();
           }} />
         {matches.length ? (
           <div className="menu mentions">
