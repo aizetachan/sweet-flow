@@ -408,12 +408,28 @@ button.tree__hint { padding: 0 14px 8px; }
 .dnd-group { background: var(--primary-soft); box-shadow: 0 0 0 2px var(--primary); }
 
 /* Groups of shots (§2.4): a stack in the row, and the bar of an open group */
-.card--group { margin: 0 8px 0 0; }
-.card--group__stack { position: absolute; inset: 0; z-index: -1; border-radius: var(--r-lg); border: 1px solid var(--line-0); background: var(--bg-2); transform: translate(5px, -5px); box-shadow: 5px -5px 0 -1px var(--bg-3), 5px -5px 0 0 var(--line-0); }
-.card--group { isolation: isolate; }
+/* The layers (z-index -1) paint behind the card, inside the row's own stacking context. */
+.lane__cards:has(.card--group) { position: relative; z-index: 0; }
 .card--group .card__code { display: inline-flex; align-items: center; gap: 5px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.group-dots { display: inline-flex; gap: 3px; }
-.group-dots span { width: 6px; height: 6px; border-radius: 50%; }
+/* Two cards behind, peeking out at the bottom, slightly narrower each time */
+.gstack { position: absolute; inset: 0; z-index: -1; border-radius: var(--r-lg); border: 1px solid var(--line-1); pointer-events: none; }
+.gstack--1 { background: var(--bg-3); transform: translateY(7px) scaleX(.94); }
+.gstack--2 { background: var(--bg-2); transform: translateY(14px) scaleX(.88); }
+.card--group:hover .gstack { border-color: var(--line-2); }
+.lane__cards:has(.card--group) { padding-bottom: 20px; }
+/* The covers fill the card, so it is as tall as a shot card with nothing left empty */
+.card--group .gmosaic { flex: 1; aspect-ratio: auto; min-height: calc((var(--card) - 16px) * 9 / 16); }
+/* Mini covers of the shots inside: up to four */
+.gmosaic { aspect-ratio: 16 / 9; display: grid; gap: 2px; border-radius: var(--r-sm); overflow: hidden; background: var(--bg-0); }
+.gmosaic--2 { grid-template-columns: 1fr 1fr; }
+.gmosaic--3 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+.gmosaic--3 .gmosaic__tile:first-child { grid-row: span 2; }
+.gmosaic--4 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+.gmosaic__tile { position: relative; min-width: 0; min-height: 0; }
+.gmosaic__tile .thumb { aspect-ratio: auto; width: 100%; height: 100%; border-radius: 0; }
+.gmosaic__tile .thumb__badge, .gmosaic__tile .thumb__job span { display: none; }
+.gmosaic__tile .thumb__empty svg { width: 14px; height: 14px; }
+.gmosaic__more { position: absolute; inset: 0; display: grid; place-items: center; background: #000a; color: #fff; font-weight: 700; font-size: 15px; }
 .lane__group { display: flex; align-items: center; gap: 8px; margin: -2px 2px 10px; padding: 6px 8px; border-radius: var(--r-md); background: var(--bg-2); }
 .lane__back { display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 8px; border-radius: var(--r-md); color: var(--fg-2); font-weight: 600; font-size: 12px; border: 1px dashed transparent; }
 .lane__back:hover { background: var(--ghost); color: var(--fg-1); }

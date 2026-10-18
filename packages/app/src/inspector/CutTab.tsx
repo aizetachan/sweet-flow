@@ -19,7 +19,7 @@ import { useSnap, useStore } from "../state/store";
 import { colorSlot } from "../state/selectors";
 import { usePanel } from "./panel";
 import { OnStage } from "./stage";
-import { Player } from "../components/media";
+import { Player, useDuration } from "../components/media";
 
 const KEEP = "__keep__";
 const NEW = "__new__";
@@ -55,7 +55,7 @@ export function CutTab({ node }: { node: ProdNode }) {
   const owner = media ? snap.nodes.find((n) => n.id === media.nodeId)! : node;
   const kids = childrenOf(snap.nodes, owner.id);
   const childLevel = p.levels[levelIndex(p, owner) + 1];
-  const dur = media?.durationSec ?? 0;
+  const dur = useDuration(media);
   const segments = useMemo(() => segmentsFromCuts(dur, cuts), [dur, cuts]);
   useEffect(() => setDrop({}), [segments.length]);
   const placed = media ? snap.takes.filter((t) => t.mediaId === media.id) : [];
@@ -115,6 +115,9 @@ export function CutTab({ node }: { node: ProdNode }) {
     });
   };
 
+  // Ruler marks that fit the length: every second for a short clip, every 10 s for a long one.
+  const tick = dur <= 8 ? 1 : dur <= 20 ? 2 : dur <= 60 ? 5 : 10;
+
   const seek = (t: number) => setPanel({ playhead: Math.max(0, Math.min(dur, t)), playing: false });
 
   return (
@@ -123,7 +126,7 @@ export function CutTab({ node }: { node: ProdNode }) {
         <select className="sf-select" value={media.id} onChange={(e) => setPanel({ activeMediaId: e.target.value, playhead: 0, playing: false })}>
           {clips.map((m) => {
             const n = snap.nodes.find((x) => x.id === m.nodeId)!;
-            return <option key={m.id} value={m.id}>{codeOf(p, n)} · {versionTag(m.version)} · {m.durationSec}s</option>;
+            return <option key={m.id} value={m.id}>{codeOf(p, n)} · {versionTag(m.version)}{m.id === media.id ? ` · ${dur}s` : m.durationSec ? ` · ${m.durationSec}s` : ""}</option>;
           })}
         </select>
         {owner.id !== node.id ? <span className="sf-small sf-muted"><IconCornerDownRight size={12} /> clip de {codeOf(p, owner)}</span> : null}
@@ -135,9 +138,9 @@ export function CutTab({ node }: { node: ProdNode }) {
 
       <div className="tl">
         <div className="tl__ruler">
-          {Array.from({ length: Math.floor(dur / 5) + 1 }, (_, i) => (
-            <span key={i} style={{ left: `${((i * 5) / dur) * 100}%` }}>{i * 5}s</span>
-          ))}
+          {dur > 0 ? Array.from({ length: Math.floor(dur / tick) + 1 }, (_, i) => (
+            <span key={i} style={{ left: `${((i * tick) / dur) * 100}%` }}>{i * tick}s</span>
+          )) : null}
         </div>
         <div className="tl__track" onMouseDown={(e) => {
           const r = e.currentTarget.getBoundingClientRect();

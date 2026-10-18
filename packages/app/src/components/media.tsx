@@ -1,14 +1,52 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { IconPhoto, IconPlayerPauseFilled, IconPlayerPlayFilled, IconVideo } from "@tabler/icons-react";
-import { formatTc, takeDuration, type Media, type Take } from "@sweetflow/domain";
+import { formatTc, round1, takeDuration, type Media, type Take } from "@sweetflow/domain";
 import { cx, Spinner } from "@sweetflow/ui";
 
 const isRealVideo = (m?: Media) => !!m?.url && m.kind === "video" && !m.url.startsWith("data:image");
 
+/** Durations read from the files themselves, by URL. */
+const probed = new Map<string, number>();
+const probing = new Map<string, Promise<number>>();
+
+function probe(url: string): Promise<number> {
+  let p = probing.get(url);
+  if (!p) {
+    p = new Promise<number>((resolve) => {
+      const v = document.createElement("video");
+      v.preload = "metadata";
+      v.muted = true;
+      v.onloadedmetadata = () => resolve(Number.isFinite(v.duration) ? round1(v.duration) : 0);
+      v.onerror = () => resolve(0);
+      v.src = url;
+    }).then((d) => (probed.set(url, d), d));
+    probing.set(url, p);
+  }
+  return p;
+}
+
+/**
+ * A video's length: what the provider said, or read from the file when it
+ * said nothing (Magnific does not always return it).
+ */
+export function useDuration(media?: Media): number {
+  const known = media?.durationSec;
+  const url = media?.kind === "video" && isRealVideo(media) ? media.url : undefined;
+  const [read, setRead] = useState(() => (url ? probed.get(url) : undefined));
+  useEffect(() => {
+    if (known || !url) return;
+    let alive = true;
+    void probe(url).then((d) => alive && setRead(d));
+    return () => { alive = false; };
+  }, [known, url]);
+  return known ?? (url ? read ?? probed.get(url) ?? 0 : 0);
+}
+
 /** Card/version thumbnail. With a take: its poster at the in-point and its own duration. */
 export function Thumb({ media, take, pending, className }: { media?: Media; take?: Take; pending?: Media; className?: string }) {
   const poster = take?.thumbUrl ?? media?.thumbUrl ?? media?.url;
-  const dur = take ? takeDuration(take) : media?.durationSec;
+  const length = useDuration(media);
+  const dur = take ? takeDuration(take) : length || undefined;
   return (
     <div className={cx("thumb", className)}>
       {poster ? (
@@ -51,7 +89,7 @@ export function Player({
   /** Optional in/out loop (preview a take). */
   range?: { inSec: number; outSec: number };
 }) {
-  const dur = media.durationSec ?? 0;
+  const dur = useDuration(media);
   const video = useRef<HTMLVideoElement>(null);
   const timeRef = useRef(time);
   timeRef.current = time;

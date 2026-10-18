@@ -181,6 +181,9 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
 
 ### 2.3 Cortar en planos y «Vídeos editados»
 
+- La línea de tiempo ocupa **todo el ancho con la duración real del vídeo**
+  (5, 20 o 30 s). Si el proveedor no la da, se lee del propio archivo. Las
+  marcas se adaptan a la duración (cada 1, 2, 5 o 10 s).
 - Cualquier plano con un vídeo se puede **cortar en planos** desde la pestaña
   **Cortar y repartir**. Se marcan los cortes con `C` o «Cortar» y, en la lista
   de tramos, se elige con cuáles quedarse (**Plano**) y cuáles no
@@ -218,9 +221,10 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
   bordes, se recoloca como siempre). Se crea «Grupo 1» en el sitio del plano de
   destino. Soltar un plano sobre un grupo lo mete dentro. Un plano de otra
   escena se mueve a esta al meterlo.
-- **En la fila,** el grupo es una tarjeta apilada con la portada de su primer
-  plano, el nombre, los códigos de sus planos, la duración, los aprobados y un
-  punto por estado.
+- **En la fila,** el grupo es una tarjeta con dos cards asomando por debajo
+  (superposición de cards). Dentro, las **portadas pequeñas de sus planos**,
+  hasta cuatro; si hay más, la cuarta lleva encima «+N» con los que faltan.
+  Debajo, solo el icono, el nombre («Grupo 1») y el número de planos.
 - **Abrir:** clic en el grupo. La fila muestra solo sus planos, con una barra:
   - **← SC010** vuelve a la fila. Soltar un plano ahí lo saca del grupo.
   - El **nombre**: clic para cambiarlo.

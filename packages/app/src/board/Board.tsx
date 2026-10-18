@@ -266,28 +266,35 @@ function UnitCard({ node }: { node: ProdNode }) {
   );
 }
 
-/** A group of shots in the row: a stack with the first shot's cover. Click to open; drop shots on it to add them. */
+/** Most mini covers a group card shows; the last one says how many more there are. */
+const GROUP_TILES = 4;
+
+/**
+ * A group of shots in the row: cards stacked behind, the covers of its shots
+ * in small (up to four; "+N" on the last when there are more), its name and
+ * how many shots. Click to open; drop shots on it to add them.
+ */
 function GroupCard({ group, onOpen }: { group: ShotGroup; onOpen: () => void }) {
   const snap = useSnap();
   const drop = useGroupDrop(group.id);
   const shots = snap.nodes.filter((n) => n.groupId === group.id && n.parentId === group.parentId).sort(byPosition);
-  const cover = shots[0] ? coverOf(snap, shots[0]) : {};
-  const total = shots.reduce((a, s) => a + durationOf(snap, s), 0);
-  const done = shots.filter((s) => statusOf(snap, s).category === "done").length;
+  const more = shots.length > GROUP_TILES ? shots.length - (GROUP_TILES - 1) : 0;
+  const tiles = shots.slice(0, GROUP_TILES);
   return (
     <div className={cx("card card--group", drop.over && "dnd-group")} {...drop.props} onClick={onOpen} title={`Abrir «${group.name}»`}>
-      <span className="card--group__stack" aria-hidden />
-      <Thumb {...cover} />
+      <span className="gstack gstack--2" aria-hidden />
+      <span className="gstack gstack--1" aria-hidden />
+      <div className={`gmosaic gmosaic--${tiles.length}`}>
+        {tiles.map((s, i) => (
+          <div key={s.id} className="gmosaic__tile" title={codeOf(snap.production, s)}>
+            <Thumb {...coverOf(snap, s)} />
+            {more && i === tiles.length - 1 ? <span className="gmosaic__more">+{more}</span> : null}
+          </div>
+        ))}
+      </div>
       <div className="card__meta">
         <span className="card__code"><IconStack2 size={12} /> {group.name}</span>
         <span className="sf-faint sf-small">{shots.length} plano{shots.length === 1 ? "" : "s"}</span>
-      </div>
-      <div className="card__title">{shots.map((s) => codeOf(snap.production, s)).join(" · ")}</div>
-      <div className="card__foot">
-        <span>{total.toFixed(1)}s</span>
-        <span>{done}/{shots.length} aprobados</span>
-        <span className="card__spacer" />
-        <span className="group-dots">{shots.slice(0, 6).map((s) => <span key={s.id} style={{ background: statusOf(snap, s).color }} />)}</span>
       </div>
     </div>
   );
