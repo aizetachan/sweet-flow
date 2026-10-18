@@ -158,16 +158,15 @@ export function ProduceTab({ node }: { node: ProdNode }) {
                   <span className="version__label" title={i.foreign ? `Tramo de ${from ? codeOf(snap.production, from) : "—"}` : undefined}>{i.foreign ? `Tramo de ${from ? codeOf(snap.production, from) : "—"}` : versionTag(m.version)}</span>
                   {isChosen ? <span className="version__chosen"><IconCheck size={10} stroke={3} /> Elegida</span> : <Avatar name={memberName(snap, m.createdBy)} size={14} />}
                 </span>
-                {ready && !m.archived && isUnit(snap.production, node) ? (
-                  // Interesting on its own: out to the row, as a shot of its own right after this one.
-                  <span className="version__acts version__acts--left" onClick={(e) => e.stopPropagation()}>
-                    <button className="version__act" title="Sacar a la fila: un plano nuevo, al lado de este, con esta versión" onClick={() => extract(i)}><IconArrowUpRight size={13} /></button>
-                  </span>
-                ) : null}
                 {ready && !m.archived ? (
-                  <span className="version__acts" onClick={(e) => e.stopPropagation()}>
-                    {!isChosen && m.kind !== "audio" ? (
-                      <button className="version__act" title="Elegir: el plano pasa a ser esta" onClick={() => choose(i)}><IconCheck size={13} /></button>
+                  // All three on the right: out to the row, choose (green while it is the chosen one), remove.
+                  <span className={cx("version__acts", isChosen && "version__acts--show")} onClick={(e) => e.stopPropagation()}>
+                    {isUnit(snap.production, node) ? (
+                      <button className="version__act" title="Sacar a la fila: un plano nuevo, al lado de este, con esta versión" onClick={() => extract(i)}><IconArrowUpRight size={13} /></button>
+                    ) : null}
+                    {m.kind !== "audio" ? (
+                      <button className={cx("version__act", isChosen && "version__act--on")} title={isChosen ? "Es la elegida del plano" : "Elegir: el plano pasa a ser esta"}
+                        onClick={() => { if (!isChosen) choose(i); }}><IconCheck size={13} stroke={isChosen ? 3 : 2} /></button>
                     ) : null}
                     <button className="version__act" disabled={!i.foreign && usedElsewhere(m)}
                       title={i.foreign ? "Quitar este tramo del plano (el vídeo original se conserva)" : usedElsewhere(m) ? "No se puede quitar: otros planos usan tramos de esta versión" : "Quitar de la galería (se conserva en la carpeta)"}

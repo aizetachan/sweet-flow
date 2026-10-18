@@ -294,7 +294,10 @@ y «Tomas» por separado):
 - **Todas las miniaturas miden lo mismo** (16:9, el formato de las
   producciones; el texto largo se corta con «…»). En un vídeo, mover el ratón
   por la miniatura lo recorre, como en las tarjetas del tablero.
-- Arriba a la izquierda de la miniatura, **sacar a la fila** (flecha): esa
+- Los botones de la miniatura van **los tres arriba a la derecha**: sacar a la
+  fila, elegir y quitar. En la elegida, el de elegir se queda **en verde**. La
+  que se está viendo en el visor solo lleva un fondo suave (sin borde azul).
+- **Sacar a la fila** (flecha): esa
   versión pasa a ser un **plano nuevo justo al lado** de este (con el código
   libre que toque, p. ej. SH0025, y el mismo título), con ella como elegida.
   Un tramo sale como plano con solo su tramo. El archivo no se mueve ni se

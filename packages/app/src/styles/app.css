@@ -328,14 +328,15 @@
 .version__chosen { flex: none; }
 .version__chosen { margin-left: auto; display: inline-flex; align-items: center; gap: 2px; padding: 0 5px; border-radius: 99px; background: var(--ok); color: #000; font-family: var(--font, inherit); font-weight: 600; font-size: 10px; }
 .version--chosen .thumb { box-shadow: 0 0 0 2px var(--ok); }
-.version__acts--left { right: auto; left: 7px; }
+.version__act--on, .version__act--on:hover:not(:disabled) { background: var(--ok); color: #000; }
 .version__acts { position: absolute; top: 7px; right: 7px; display: flex; gap: 4px; opacity: 0; transition: opacity .12s; }
 .version:hover .version__acts, .version:focus-within .version__acts { opacity: 1; }
 .version__act { width: 24px; height: 24px; display: grid; place-items: center; border: 0; border-radius: 6px; background: #000c; color: #fff; }
 .version__act:hover:not(:disabled) { background: #000; color: var(--fg-0); }
 .version__act:disabled { opacity: .4; cursor: not-allowed; }
 .version:hover { background: var(--bg-2); }
-.version--on { border-color: var(--primary); background: var(--primary-soft); }
+/* The one on the viewer: just a soft background (green is the chosen one; no blue border). */
+.version--on { background: var(--bg-2); }
 .version--archived { opacity: .45; }
 .version__tag { display: flex; align-items: center; gap: 4px; margin-top: 4px; font-size: 10.5px; color: var(--fg-3); font-family: var(--mono); }
 .version__tag .sf-avatar { margin-left: auto; }
