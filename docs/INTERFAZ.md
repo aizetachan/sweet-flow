@@ -151,6 +151,8 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
 - **Cabecera del tablero:** el título y un contador con el número de planos.
 - **Secciones** (Producción, Biblioteca, Papelera, Ajustes): barra **flotante
   centrada abajo**, para que el tablero tenga todo el ancho.
+- **Clic en una tarjeta** abre siempre su panel en **Producir** (aunque antes
+  se estuviera en Revisión o Actividad, y también al pulsar la misma otra vez).
 - **Clic derecho** en una tarjeta abre su menú, titulado «Menú» (sin repetir el
   código ni el título). El estado va como en el panel de la izquierda: la
   etiqueta, y al pulsarla se despliega la lista.

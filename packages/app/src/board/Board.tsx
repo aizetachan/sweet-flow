@@ -323,7 +323,7 @@ function UnitCard({ node, inRow, hint }: { node: ProdNode; inRow?: boolean; hint
       {...nodeDragProps(node.id)}
       draggable={!editing}
       {...(inRow ? {} : drop.props)}
-      onClick={(e) => (e.metaKey || e.ctrlKey || e.shiftKey ? toggleMulti(node.id) : select(node.id))}
+      onClick={(e) => (e.metaKey || e.ctrlKey || e.shiftKey ? toggleMulti(node.id) : select(node.id, "produce"))}
     >
       {/* The length goes under the status, not on the cover. */}
       <Thumb {...cover} preview badge={false} />
