@@ -84,7 +84,7 @@ function Group({ node }: { node: ProdNode }) {
   const filters = useStore((s) => s.filters);
   const createRow = useCreateRow();
   const trashNodes = useStore((s) => s.trashNodes);
-  const [folded, toggleFold] = useFold(node.id);
+  const [folded, toggleFold] = useFold(node.id, (sel) => descendantsOf(snap.nodes, node.id).some((d) => d.id === sel));
   if (li === rowLevel) return <Lane row={node} />;
   const kids = childrenOf(snap.nodes, node.id);
   const prog = progressOf(snap, node);
@@ -165,7 +165,7 @@ function isControl(t: EventTarget): boolean {
  * Folded sequences and scenes of the board (docs/INTERFAZ.md §2), remembered
  * per production in this browser.
  */
-function useFold(id: Id): [boolean, (e?: ReactMouseEvent) => void] {
+function useFold(id: Id, holds?: (selectedId: Id) => boolean): [boolean, (e?: ReactMouseEvent) => void] {
   const productionId = useStore((s) => s.productionId);
   const key = `sweetflow:fold:${productionId}`;
   const read = (): Id[] => {
@@ -196,6 +196,11 @@ function useFold(id: Id): [boolean, (e?: ReactMouseEvent) => void] {
     if (e && e.detail > 1) return;
     timer.current = setTimeout(flip, 220);
   };
+  // Picking something inside it (from Explorer, a link…) unfolds it, so it can be seen.
+  const selectedId = useStore((s) => s.selectedId);
+  useEffect(() => {
+    if (folded && selectedId && holds?.(selectedId)) flip();
+  }, [selectedId]); // eslint-disable-line react-hooks/exhaustive-deps
   return [folded, toggle];
 }
 
@@ -203,7 +208,7 @@ function Lane({ row }: { row: ProdNode }) {
   const showCodes = useShowCodes();
   const snap = useSnap();
   const { filters, trashNodes } = useStore();
-  const [folded, toggleFold] = useFold(row.id);
+  const [folded, toggleFold] = useFold(row.id, (sel) => snap.nodes.some((n) => n.id === sel && n.parentId === row.id));
   const p = snap.production;
   const all = childrenOf(snap.nodes, row.id);
   const active = filtersActive(filters);
@@ -217,8 +222,11 @@ function Lane({ row }: { row: ProdNode }) {
   const [openId, setOpenId] = useState<Id | null>(null);
   const selectedId = useStore((s) => s.selectedId);
   useEffect(() => {
+    // A shot of this row picked (here or from Explorer): its group opens; one outside any group brings the row back.
     const sel = all.find((u) => u.id === selectedId);
-    if (sel?.groupId && groups.some((g) => g.id === sel.groupId)) setOpenId(sel.groupId);
+    if (!sel) return;
+    if (sel.groupId && groups.some((g) => g.id === sel.groupId)) setOpenId(sel.groupId);
+    else setOpenId(null);
   }, [selectedId]); // eslint-disable-line react-hooks/exhaustive-deps
   const open = groups.find((g) => g.id === openId);
   // Back from a group: its card glows for a moment, to see where you came from.
@@ -429,12 +437,17 @@ function UnitCard({ node, inRow, hint }: { node: ProdNode; inRow?: boolean; hint
   const [editing, setEditing] = useState(false);
   const [menu, setMenu] = useState<MenuAt | null>(null);
   const [rename, setRename] = useState(0);
+  // Selected (also from Explorer): brought into view in its row.
+  const cardEl = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (selectedId === node.id) cardEl.current?.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
+  }, [selectedId, node.id]);
   // Right click on one of several selected cards acts on all of them.
   const targets = multi.includes(node.id) ? multi : [node.id];
 
   return (
     <>
-    <div
+    <div ref={cardEl}
       onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); setMenu({ x: e.clientX, y: e.clientY }); }}
       className={cx("card", selectedId === node.id && "card--on", multi.includes(node.id) && "card--multi", viewers.length > 0 && "card--watched", zone && `dnd-${zone}`)}
       data-row-item={`n:${node.id}`}

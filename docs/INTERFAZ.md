@@ -574,7 +574,11 @@ y «Tomas» por separado):
   - **Deshacer grupo:** los planos vuelven a la fila y el grupo desaparece.
   - El «+» crea el plano nuevo dentro del grupo.
   - Al seleccionar un plano que está dentro (desde Explorer o Fijados), su
-    grupo se abre solo.
+    grupo se abre solo; uno de la misma escena que no está en ningún grupo
+    vuelve a mostrar la fila. Desde Explorer no se cambia de pestaña: el plano
+    se ve seleccionado en el tablero (su escena y su secuencia se despliegan si
+    estaban plegadas, y la fila se desplaza hasta él); para trabajar en él, se
+    pasa a Producción.
 - **Los planos no cambian de código ni de nombre.** En disco, el grupo es una
   carpeta dentro de la escena (`SC010_…/Por-decidir/SH0020_…`), como en Google
   Drive: el nombre del archivo es el mismo y la ruta no se muestra. Al mover un
