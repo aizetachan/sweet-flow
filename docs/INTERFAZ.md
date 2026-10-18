@@ -127,6 +127,11 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
   (quitada el 18 oct 2026; se ajustará de otra forma). Abajo, comentarios,
   ventana aparte, quién está y responsables. El borde de la seleccionada va
   por dentro, para que no se corte al arrastrarla.
+- **Ver todos / En fila:** botón en la cabecera de cada escena. Por defecto la
+  escena es una fila con scroll horizontal; «Ver todos» la adapta al ancho y
+  baja de línea hasta que se ven todas sus tarjetas. Pulsado otra vez («En
+  fila») vuelve a ser una fila. Se recuerda por escena en este navegador.
+  Sustituye a «Keyframes vacíos», quitado el 18 oct 2026.
 - **Previsualizar vídeo:** en las tarjetas de plano con vídeo (y en las
   portadas pequeñas de un grupo), el ancho de la portada es la línea de tiempo:
   al mover el ratón a izquierda o derecha se avanza o retrocede por el vídeo,

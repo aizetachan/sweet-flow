@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
-import { IconArrowLeft, IconStack2, IconExternalLink, IconMessageCircle, IconPlus, IconFilter, IconInfoCircle, IconSearch, IconTrash, IconWand, IconX } from "@tabler/icons-react";
+import { IconArrowLeft, IconStack2, IconExternalLink, IconMessageCircle, IconPlus, IconFilter, IconInfoCircle, IconSearch, IconTrash, IconLayoutGrid, IconLayoutList, IconX } from "@tabler/icons-react";
 import {
   childrenOf,
   codeOf,
@@ -138,13 +138,12 @@ function GroupHead({ node, children }: { node: ProdNode; children: ReactNode }) 
 
 function Lane({ row }: { row: ProdNode }) {
   const snap = useSnap();
-  const { filters, source, trashNodes } = useStore();
+  const { filters, trashNodes } = useStore();
   const p = snap.production;
   const all = childrenOf(snap.nodes, row.id);
   const active = filtersActive(filters);
   const units = active ? all.filter((u) => matches(snap, u, filters)) : all;
   const unitLevel = p.levels[levelIndex(p, row) + 1]!;
-  const empty = all.filter((u) => !snap.media.some((m) => m.nodeId === u.id) && !snap.takes.some((t) => t.nodeId === u.id));
   const st = statusOf(snap, row);
   const viewers = presenceAt(snap, row.id);
   const headDrop = useNodeDrop(row, "y");
@@ -158,6 +157,9 @@ function Lane({ row }: { row: ProdNode }) {
     if (sel?.groupId && groups.some((g) => g.id === sel.groupId)) setOpenId(sel.groupId);
   }, [selectedId]); // eslint-disable-line react-hooks/exhaustive-deps
   const open = groups.find((g) => g.id === openId);
+  // All the cards visible, wrapping to the width, instead of one scrolling row (remembered per scene).
+  const [wrap, setWrapState] = useState(() => readWrap(row.id));
+  const setWrap = (v: boolean) => { setWrapState(v); writeWrap(row.id, v); };
   // After every hook: a row left empty by the filters is hidden.
   if (active && !units.length) return null;
   const inGroup = (u: ProdNode) => !!u.groupId && groups.some((g) => g.id === u.groupId);
@@ -179,25 +181,38 @@ function Lane({ row }: { row: ProdNode }) {
         <span className="sf-faint sf-small">{all.length} {unitLevel.name.toLowerCase()}s · {fmtDur(durationOf(snap, row))}</span>
         {viewers.length ? <AvatarStack names={viewers} size={18} /> : null}
         <div className="lane__spacer" />
-        {empty.length && unitLevel.canGenerate && snap.me.magnificConnected ? (
-          <Button size="sm" variant="ghost" title="Genera un keyframe para cada plano vacío a partir de su título y notas" onClick={() => {
-            for (const u of empty) {
-              source.generate({ nodeId: u.id, kind: "image", model: "Nano Banana Pro", prompt: [row.notes, u.title, u.notes].filter(Boolean).join(". ") });
-            }
-          }}>
-            <IconWand size={14} /> Keyframes vacíos ({empty.length})
-          </Button>
-        ) : null}
+        <Button size="sm" variant="ghost" className={cx(wrap && "is-on")} title={wrap ? "Volver a una sola fila con scroll" : "Ver todos los planos: la fila se adapta al ancho y baja de línea"} onClick={() => setWrap(!wrap)}>
+          {wrap ? <IconLayoutList size={14} /> : <IconLayoutGrid size={14} />} {wrap ? "En fila" : "Ver todos"}
+        </Button>
         <ShelfButton row={row} />
         <IconButton size="sm" className="head__del" label={`Mover ${codeOf(p, row)} y sus ${unitLevel.name.toLowerCase()}s a la papelera`} onClick={() => trashNodes([row.id])}><IconTrash size={14} /></IconButton>
       </div>
       {open && !active ? <GroupBar group={open} row={row} count={units.filter((u) => u.groupId === open.id).length} onClose={() => setOpenId(null)} /> : null}
-      <div className={cx("lane__cards", endDrop.over && "dnd-end")} {...endDrop.props}>
+      <div className={cx("lane__cards", wrap && "lane__cards--wrap", endDrop.over && "dnd-end")} {...endDrop.props}>
         {items.map((i) => i.el)}
         {!active ? <AddCard row={row} groupId={open?.id} /> : null}
       </div>
     </section>
   );
+}
+
+const WRAP_KEY = "sweetflow:board:wrap";
+function readWrap(rowId: Id): boolean {
+  try {
+    return (JSON.parse(localStorage.getItem(WRAP_KEY) ?? "[]") as Id[]).includes(rowId);
+  } catch {
+    return false;
+  }
+}
+function writeWrap(rowId: Id, on: boolean): void {
+  try {
+    const ids = new Set(JSON.parse(localStorage.getItem(WRAP_KEY) ?? "[]") as Id[]);
+    if (on) ids.add(rowId);
+    else ids.delete(rowId);
+    localStorage.setItem(WRAP_KEY, JSON.stringify([...ids]));
+  } catch {
+    // Only a convenience: without storage it just isn't remembered.
+  }
 }
 
 /** "+" at the end of a row: a new shot in that scene (the row grows to the right). */
