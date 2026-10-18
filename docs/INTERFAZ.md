@@ -244,6 +244,10 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
     corta en planos desde ahí (§2.3).
   - **Escena:** botón **"+ Escena"** a la derecha de la cabecera de cada
     secuencia; la crea al final de esa secuencia.
+  - **Nunca vacío:** una secuencia sin escenas (por ejemplo, si se mandan a la
+    papelera) muestra una fila con la tarjeta «+»; al pulsarla se crea su
+    primera escena con su primer plano. Crear una secuencia desde Estructura
+    también trae ya su primera escena.
   - **Secuencia:** botón **"+" cuadrado** al final del tablero, alineado a la
     izquierda (sin texto; el tooltip lo dice). La secuencia nueva trae ya su
     primera escena (SC010), así nunca hay secuencias vacías. Con la producción

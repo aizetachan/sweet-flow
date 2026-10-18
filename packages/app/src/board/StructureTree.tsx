@@ -18,8 +18,11 @@ export function StructureTree() {
         <span>{top.name}s</span>
         <IconButton label={`Nuevo ${top.name.toLowerCase()}`} size="sm" onClick={() => {
           const id = source.createNode(null, "");
+          // Like on the board: a new sequence comes with its first scene, never empty.
+          let row = id;
+          for (let li = 1; li < snap.production.levels.length - 1; li++) row = source.createNode(row, "");
           set({ scopeId: id });
-          select(id);
+          select(row);
         }}><IconPlus size={14} /></IconButton>
       </div>
       <button className={cx("tree__all", scopeId === null && "tree__all--on")} onClick={() => set({ scopeId: null })}>

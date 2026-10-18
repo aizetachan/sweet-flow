@@ -102,6 +102,8 @@ function Group({ node }: { node: ProdNode }) {
         <IconButton size="sm" className="head__del" label={`Mover ${codeOf(p, node)} y su contenido a la papelera`} onClick={() => trashNodes([node.id])}><IconTrash size={14} /></IconButton>
       </GroupHead>
       {folded ? null : kids.map((k) => <Group key={k.id} node={k} />)}
+      {/* Never empty: with nothing inside yet, the "+" card that starts its first scene with its first shot. */}
+      {!folded && !kids.length && !filtersActive(filters) ? <EmptyRow parent={node} /> : null}
     </section>
   );
 }
@@ -110,7 +112,7 @@ function Group({ node }: { node: ProdNode }) {
  * Creates a node under `parentId` and, down to the row level, its first child
  * (a new sequence comes with its first scene), then selects the row.
  */
-function useCreateRow(): (parentId: Id | null) => void {
+function useCreateRow(): (parentId: Id | null) => Id {
   const snap = useSnap();
   const { source, select } = useStore();
   return (parentId) => {
@@ -121,6 +123,7 @@ function useCreateRow(): (parentId: Id | null) => void {
     let id = source.createNode(parentId, "");
     for (; li < rowLevel; li++) id = source.createNode(id, "");
     select(id);
+    return id;
   };
 }
 
@@ -321,6 +324,30 @@ function writeWrap(rowId: Id, on: boolean): void {
   } catch {
     // Only a convenience: without storage it just isn't remembered.
   }
+}
+
+/** The row of an empty sequence: the "+" card, which makes its first scene and, in it, its first shot. */
+function EmptyRow({ parent }: { parent: ProdNode }) {
+  const snap = useSnap();
+  const createRow = useCreateRow();
+  const { source, select } = useStore();
+  const p = snap.production;
+  const shot = p.levels.at(-1)!.name.toLowerCase();
+  const label = `Nuevo ${shot} en ${codeOf(p, parent)}`;
+  return (
+    <section className="lane">
+      <div className="lane__cards">
+        <button className="card card--add" title={label} aria-label={label} onClick={() => select(source.createNode(createRow(parent.id), ""))}>
+          <span className="card__ghost" aria-hidden>
+            <span className="thumb" />
+            <span className="card__meta"><span className="card__code">SH</span><Pill color="transparent">·</Pill></span>
+            <span className="card__title">·</span>
+          </span>
+          <IconPlus size={24} stroke={1.5} className="card__plus" />
+        </button>
+      </div>
+    </section>
+  );
 }
 
 /** "+" at the end of a row: a new shot in that scene (the row grows to the right). */
