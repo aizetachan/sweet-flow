@@ -143,23 +143,27 @@
   filter: blur(1.2px);
   box-shadow: 0 0 8px 1px color-mix(in srgb, var(--primary) 22%, transparent), inset 0 0 6px color-mix(in srgb, var(--primary) 12%, transparent);
 }
-/* Selected: like a streak of light running along the edge (whiter at the top
-   left, fading into blue), a faint blue light falling inside from the top, and
-   a barely-there halo. */
+/* Selected: the edge gives off light — a bright, thin core (whiter at the top
+   left, bluer along the rest) and a blue bloom spreading out from it, plus a
+   little of that light falling inside. Kept within the row's room. */
 .card--on {
   border-color: transparent;
-  background: radial-gradient(120% 70% at 18% 0%, color-mix(in srgb, var(--primary) 13%, transparent), transparent 62%), var(--bg-2);
-  box-shadow: 0 0 10px color-mix(in srgb, var(--primary) 16%, transparent);
+  background: radial-gradient(120% 70% at 18% 0%, color-mix(in srgb, var(--primary) 12%, transparent), transparent 62%), var(--bg-2);
+  box-shadow:
+    0 0 1px 0 color-mix(in srgb, var(--primary) 80%, white 20%),
+    0 0 6px 0 color-mix(in srgb, var(--primary) 55%, transparent),
+    0 0 14px 1px color-mix(in srgb, var(--primary) 30%, transparent),
+    inset 0 0 12px color-mix(in srgb, var(--primary) 18%, transparent);
 }
 .card--on::after, .card--on:hover::after {
   opacity: 1;
   border: 0;
-  padding: 1.5px;
-  background: linear-gradient(115deg, rgb(235 240 255 / .85) 0%, color-mix(in srgb, var(--primary) 90%, white 10%) 28%, color-mix(in srgb, var(--primary) 55%, transparent) 62%, color-mix(in srgb, var(--primary) 22%, transparent) 100%);
+  padding: 1.25px;
+  background: linear-gradient(115deg, rgb(245 247 255) 0%, color-mix(in srgb, var(--primary) 55%, white 45%) 30%, color-mix(in srgb, var(--primary) 85%, white 15%) 65%, color-mix(in srgb, var(--primary) 70%, transparent) 100%);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
-  filter: blur(.7px);
+  filter: blur(.35px);
   box-shadow: none;
 }
 /* The "+" card keeps its dashed look. */

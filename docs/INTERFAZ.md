@@ -220,9 +220,9 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
   producción en este navegador.
 - **Tarjeta con el ratón encima y seleccionada:** el borde es una luz de neón
   suave (difuminada, con un halo corto), no una línea nítida. Seleccionada,
-  el borde es una estela de luz (más blanca arriba a la izquierda, que se
-  funde en azul), con una luz azul muy tenue que cae por dentro desde arriba y
-  apenas halo. La fila deja margen para que no se corte.
+  el borde **emite luz**: un núcleo fino y claro (casi blanco arriba a la
+  izquierda, más azul en el resto) y un resplandor azul que sale hacia fuera y
+  un poco hacia dentro. La fila deja margen para que no se corte.
 - **Filas de escena:** se distinguen solo por el fondo (sin borde), algo más
   oscuro que las tarjetas.
 - **Ver todos / En fila:** botón en la cabecera de cada escena. Por defecto la
