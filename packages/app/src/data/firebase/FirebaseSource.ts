@@ -476,6 +476,10 @@ export class FirebaseSource implements DataSource {
     return id;
   }
 
+  moveCommentMark(commentId: Id, mark: { point?: { x: number; y: number }; area?: { x: number; y: number; w: number; h: number } }): void {
+    this.write(updateDoc(doc(this.col("comments"), commentId), stripUndefined(mark)));
+  }
+
   deleteComment(commentId: Id): void {
     this.write(deleteDoc(doc(this.col("comments"), commentId)));
   }

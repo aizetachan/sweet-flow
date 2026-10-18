@@ -63,7 +63,7 @@ export type LogEventBody =
   | { type: "group.deleted"; id: Id }
   /** Review (docs/INTERFAZ.md §2.6): on a node, a version, a moment of a video, a point. */
   | { type: "comment.added"; comment: CommentRecord }
-  | { type: "comment.updated"; id: Id; patch: Partial<Pick<Comment, "text" | "resolved">> }
+  | { type: "comment.updated"; id: Id; patch: Partial<Pick<Comment, "text" | "resolved" | "point" | "area">> }
   | { type: "comment.deleted"; id: Id };
 
 /** What the log keeps of a media: the URL to show it is resolved by each device. */

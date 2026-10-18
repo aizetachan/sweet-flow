@@ -117,6 +117,8 @@ export interface NewComment {
   atSec?: number;
   /** A point on the image or frame, 0–1. */
   point?: { x: number; y: number };
+  /** Or an area of it, 0–1. */
+  area?: { x: number; y: number; w: number; h: number };
   mentions?: Id[];
   parentId?: Id;
 }
@@ -190,6 +192,8 @@ export interface DataSource {
   setCommentResolved(commentId: Id, resolved: boolean): void;
   /** Its author removes it (with its replies). */
   deleteComment(commentId: Id): void;
+  /** Its author moves its point or area. */
+  moveCommentMark(commentId: Id, mark: { point?: { x: number; y: number }; area?: { x: number; y: number; w: number; h: number } }): void;
 
   // collaboration & mirror
   setPresence(nodeId: Id | undefined): void;

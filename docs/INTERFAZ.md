@@ -310,18 +310,20 @@ y «Tomas» por separado):
 - **Comentar rápido desde Producir:** botón de comentario en los controles del
   visor (a la izquierda de pantalla completa; en una imagen, abajo a la
   derecha). Pausa el vídeo y abre una caja debajo, ya con el cursor: el
-  comentario va a esa versión y a ese momento; un clic en la imagen señala el
-  punto. ⌘↵ envía, Esc cierra; aviso con «Ver en Revisión». Las marcas de los
-  comentarios abiertos también se ven en esa línea de tiempo.
-- En Revisión, **el momento y «Marcar punto» están activados por defecto**: el
-  comentario queda donde esté la línea de tiempo, y un clic en la imagen marca
-  el punto sin pulsar nada antes. Al empezar a escribir, el vídeo se pausa.
+  comentario va a esa versión y a ese momento; un clic en la imagen señala un
+  punto y arrastrar, un área. ⌘↵ envía, Esc cierra; aviso con «Ver en
+  Revisión». Las marcas de la línea de tiempo solo se ven en Revisión.
+- **En un vídeo, todo comentario queda atado al momento** de la línea de tiempo
+  (no se activa ni desactiva; se muestra el tiempo). En Revisión, un clic en la
+  imagen marca un **punto** y arrastrar, un **área**, sin pulsar nada antes.
+  Al empezar a escribir, el vídeo se pausa.
+- **Quien escribió el comentario puede mover su punto o su área** arrastrándolos
+  sobre la imagen.
 - **Un comentario** va a una versión y, opcionalmente:
   - en un **vídeo**, al **momento** actual (casilla con el tiempo, activada por
     defecto). Se ve como una marca en la línea de tiempo; clic y el visor va ahí.
-  - a un **punto de la imagen o del fotograma**: «Marcar punto» y clic en el
-    visor. Se ve como una chincheta numerada (en vídeo, alrededor de su
-    momento).
+  - a un **punto** o un **área** de la imagen o del fotograma. Se ve como una
+    chincheta o un recuadro numerados (en vídeo, alrededor de su momento).
 - **Menciones:** al escribir «@» sale la gente de la producción (quien la ha
   abierto con la carpeta del equipo); flechas e Intro para elegir. El nombre
   queda resaltado y esa persona recibe el aviso.

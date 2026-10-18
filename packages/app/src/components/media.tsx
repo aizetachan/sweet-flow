@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { IconMaximize, IconMessagePlus, IconMusic, IconPhoto, IconPlayerPauseFilled, IconPlayerPlayFilled, IconVideo } from "@tabler/icons-react";
 import { formatTc, round1, takeDuration, type Media, type Take } from "@sweetflow/domain";
 import { cx, Spinner } from "@sweetflow/ui";
+import { MarkLayer, type Mark, type ShownMark } from "./marks";
 import { useStore } from "../state/store";
 
 const isRealVideo = (m?: Media) => !!m?.url && m.kind === "video" && !m.url.startsWith("data:image");
@@ -132,10 +133,10 @@ export function Player({
   range?: { inSec: number; outSec: number };
   /** Comments at moments of the video, on the timeline (a click goes there). */
   markers?: Array<{ id: string; atSec: number; n: number; resolved?: boolean }>;
-  /** Comments marked at points of the image or frame (numbered). */
-  pins?: Array<{ id: string; x: number; y: number; n: number; on?: boolean; onClick?: () => void }>;
-  /** While set, a click on the picture marks a point there (0–1) instead of playing. */
-  onPoint?: (x: number, y: number) => void;
+  /** Comments marked at points or areas of the image or frame (numbered; the author's can be moved). */
+  pins?: ShownMark[];
+  /** While set, a click on the picture marks a point there, a drag an area (0–1). */
+  onPoint?: (m: Mark) => void;
   /** Shows a comment button on the controls (comment without going to Revisión). */
   onComment?: () => void;
   commenting?: boolean;
@@ -181,17 +182,8 @@ export function Player({
     else void el.requestFullscreen?.();
   };
   return (
-    <div className={cx("player", onPoint && "player--picking")} ref={box}>
-      {onPoint ? (
-        <div className="player__pick" title="Clic donde quieras señalar" onClick={(e) => {
-          const r = e.currentTarget.getBoundingClientRect();
-          onPoint(Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)), Math.min(1, Math.max(0, (e.clientY - r.top) / r.height)));
-        }} />
-      ) : null}
-      {pins?.map((p) => (
-        <button key={p.id} className={cx("player__pin", p.on && "player__pin--on")} style={{ left: `${p.x * 100}%`, top: `${p.y * 100}%` }}
-          onClick={(e) => { e.stopPropagation(); p.onClick?.(); }} title={`Comentario ${p.n}`}>{p.n}</button>
-      ))}
+    <div className="player" ref={box}>
+      {pins?.length || onPoint ? <MarkLayer marks={pins} onMark={onPoint} /> : null}
       {media.kind === "audio" && media.status === "ready" ? (
         <div className="player__audio">
           <IconMusic size={28} stroke={1.4} />

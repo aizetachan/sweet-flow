@@ -185,6 +185,8 @@ export interface Comment {
   atSec?: number;
   /** A point marked on the image or frame, 0–1 from its top left. */
   point?: { x: number; y: number };
+  /** Or an area of it: top left and size, 0–1. */
+  area?: { x: number; y: number; w: number; h: number };
   text: string;
   /** People mentioned with @ (they are notified). */
   mentions?: Id[];

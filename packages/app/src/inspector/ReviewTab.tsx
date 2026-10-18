@@ -14,15 +14,15 @@ import { coverOf, memberName } from "../state/selectors";
 import { usePanel } from "./panel";
 import { OnStage } from "./stage";
 import { Player } from "../components/media";
+import type { Mark } from "../components/marks";
 
 export function ReviewTab({ node }: { node: ProdNode }) {
   const snap = useSnap();
   const { source } = useStore();
   const { setPanel, playhead, playing, activeMediaId } = usePanel();
   const [showResolved, setShowResolved] = useState(false);
-  const [point, setPoint] = useState<{ x: number; y: number } | null>(null);
-  // A click on the picture marks the point by default: comment where you look, with the least clicks.
-  const [picking, setPicking] = useState(true);
+  // A click on the picture marks a point, a drag an area: always on, the fewest clicks.
+  const [mark, setMark] = useState<Mark | null>(null);
   const [focus, setFocus] = useState<Id | null>(null);
 
   // What is reviewed: the version open in the panel, else what the shot is now.
@@ -52,7 +52,7 @@ export function ReviewTab({ node }: { node: ProdNode }) {
     .sort((a, b) => (a.mediaId === target?.id ? 0 : 1) - (b.mediaId === target?.id ? 0 : 1) || (a.atSec ?? 1e9) - (b.atSec ?? 1e9) || a.createdAt - b.createdAt);
   const resolvedCount = roots.filter((c) => c.resolved).length;
 
-  useEffect(() => { setPoint(null); setPicking(true); }, [node.id, target?.id]);
+  useEffect(() => setMark(null), [node.id, target?.id]);
 
   const goTo = (c: Comment) => {
     setFocus(c.id);
@@ -69,13 +69,21 @@ export function ReviewTab({ node }: { node: ProdNode }) {
               markers={target.kind === "video" ? onTarget.filter((c) => c.atSec !== undefined && (showResolved || !c.resolved)).map((c) => ({ id: c.id, atSec: c.atSec!, n: numbered.get(c.id)!, resolved: c.resolved })) : undefined}
               pins={[
                 ...onTarget
-                  .filter((c) => c.point && (showResolved || !c.resolved))
+                  .filter((c) => (c.point || c.area) && (showResolved || !c.resolved))
                   // On a video, a pin shows around its moment.
                   .filter((c) => target.kind !== "video" || c.atSec === undefined || Math.abs(c.atSec - time) < 0.6)
-                  .map((c) => ({ id: c.id, x: c.point!.x, y: c.point!.y, n: numbered.get(c.id)!, on: focus === c.id, onClick: () => goTo(c) })),
-                ...(point ? [{ id: "new", x: point.x, y: point.y, n: onTarget.length + 1, on: true }] : []),
+                  .map((c) => ({
+                    id: c.id,
+                    ...(c.area ?? c.point!),
+                    n: numbered.get(c.id)!,
+                    on: focus === c.id,
+                    onClick: () => goTo(c),
+                    // The author can drag it to a better place.
+                    ...(c.authorId === snap.me.uid ? { onMove: (m: Mark) => source.moveCommentMark(c.id, markOf(m)) } : {}),
+                  })),
+                ...(mark ? [{ id: "new", ...mark, n: onTarget.length + 1, on: true, onMove: setMark }] : []),
               ]}
-              onPoint={picking ? (x, y) => { setPoint({ x, y }); setPicking(false); } : undefined} />
+              onPoint={target.kind !== "audio" ? setMark : undefined} />
             {versions.length > 1 ? (
               <div className="review__versions">
                 <span className="sf-faint sf-small">Revisando</span>
@@ -89,8 +97,8 @@ export function ReviewTab({ node }: { node: ProdNode }) {
       ) : null}
 
       <Composer node={node} mediaId={target?.id} isVideo={target?.kind === "video"} playhead={time} onTyping={() => setPanel({ playing: false })}
-        point={point} picking={picking} onPick={() => setPicking(!picking)} onClearPoint={() => setPoint(null)} canPoint={!!target && target.kind !== "audio"}
-        onSent={() => { setPoint(null); setPicking(true); }} />
+        mark={mark} onClearMark={() => setMark(null)} canMark={!!target && target.kind !== "audio"}
+        onSent={() => setMark(null)} />
 
       <section className="sec">
         <div className="sec__head">
@@ -130,7 +138,7 @@ function Thread({ c, n, replies, node, on, other, onGo, onDelete }: {
           <button className="thread__n" title="Ir al comentario" onClick={onGo}>{n}</button>
           {m && other ? <span className="sf-faint sf-small">{versionTag(m.version)}</span> : null}
           {c.atSec !== undefined ? <button className="tc" onClick={onGo}><IconClock size={11} /> {formatTc(c.atSec)}</button> : null}
-          {c.point ? <span className="tc tc--plain" title="Señalado en la imagen"><IconMapPin size={11} /></span> : null}
+          {c.point || c.area ? <span className="tc tc--plain" title={c.area ? "Área señalada en la imagen" : "Punto señalado en la imagen"}><IconMapPin size={11} /></span> : null}
         </>
       } />
       {replies.map((r) => <CommentLine key={r.id} c={r} reply onDelete={onDelete} />)}
@@ -179,17 +187,17 @@ function MentionText({ text, members }: { text: string; members: Member[] }) {
  * mention; on a video it is tied to the current moment (switchable); «Marcar
  * punto» then a click on the picture ties it to that point.
  */
-export function Composer({ node, mediaId, parentId, isVideo, playhead = 0, point, picking, onPick, onClearPoint, canPoint, compact, onSent, autoFocus, onTyping, onCancel }: {
+export function Composer({ node, mediaId, parentId, isVideo, playhead = 0, mark, onClearMark, canMark, compact, onSent, autoFocus, onTyping, onCancel }: {
   node: ProdNode;
   mediaId?: Id;
   parentId?: Id;
   isVideo?: boolean;
   playhead?: number;
-  point?: { x: number; y: number } | null;
-  picking?: boolean;
-  onPick?: () => void;
-  onClearPoint?: () => void;
-  canPoint?: boolean;
+  /** The point or area marked on the viewer, if any. */
+  mark?: Mark | null;
+  onClearMark?: () => void;
+  /** Says how to mark (the viewer takes the clicks). */
+  canMark?: boolean;
   compact?: boolean;
   onSent: () => void;
   autoFocus?: boolean;
@@ -201,7 +209,6 @@ export function Composer({ node, mediaId, parentId, isVideo, playhead = 0, point
   const snap = useSnap();
   const { source } = useStore();
   const [text, setText] = useState("");
-  const [atTime, setAtTime] = useState(true);
   const [caret, setCaret] = useState(0);
   const [pick, setPick] = useState(0);
   const ref = useRef<HTMLTextAreaElement>(null);
@@ -232,8 +239,9 @@ export function Composer({ node, mediaId, parentId, isVideo, playhead = 0, point
       mediaId,
       parentId,
       mentions,
-      ...(!parentId && isVideo && atTime ? { atSec: Math.round(playhead * 10) / 10 } : {}),
-      ...(!parentId && point ? { point } : {}),
+      // On a video it is always tied to the moment on screen.
+      ...(!parentId && isVideo ? { atSec: Math.round(playhead * 10) / 10 } : {}),
+      ...(!parentId && mark ? markOf(mark) : {}),
     });
     setText("");
     onSent();
@@ -268,27 +276,26 @@ export function Composer({ node, mediaId, parentId, isVideo, playhead = 0, point
       </div>
       <div className="composer__row">
         {!parentId && isVideo ? (
-          <label className="sf-small sf-muted composer__tc" title="Atar el comentario a este momento del vídeo">
-            <input type="checkbox" checked={atTime} onChange={(e) => setAtTime(e.target.checked)} /> <IconClock size={12} /> {formatTc(playhead)}
-          </label>
+          <span className="sf-small sf-muted composer__tc" title="Queda en este momento del vídeo"><IconClock size={12} /> {formatTc(playhead)}</span>
         ) : null}
-        {!parentId && canPoint ? (
-          point ? (
-            <span className="composer__point sf-small">
-              <IconMapPin size={12} /> Punto marcado
-              <button aria-label="Quitar el punto" onClick={onClearPoint}><IconX size={11} /></button>
-            </span>
-          ) : (
-            <button className={cx("composer__pickbtn sf-small", picking && "is-on")} onClick={onPick} title="Señalar un punto de la imagen">
-              <IconMapPin size={12} /> {picking ? "Clic en la imagen…" : "Marcar punto"}
-            </button>
-          )
+        {!parentId && mark ? (
+          <span className="composer__point sf-small">
+            <IconMapPin size={12} /> {mark.w ? "Área marcada" : "Punto marcado"}
+            <button aria-label="Quitar la marca" onClick={onClearMark}><IconX size={11} /></button>
+          </span>
+        ) : !parentId && canMark ? (
+          <span className="sf-faint sf-small">Clic o arrastra sobre la imagen para señalar</span>
         ) : null}
         <span className="composer__spacer" />
         <Button size="sm" variant="primary" onClick={send} disabled={!text.trim()} title="Enviar (⌘↵)"><IconSend size={13} /> Enviar</Button>
       </div>
     </div>
   );
+}
+
+/** A mark as a comment keeps it: a point, or an area (with its size). */
+function markOf(m: Mark): Pick<Comment, "point" | "area"> {
+  return m.w && m.h ? { area: { x: m.x, y: m.y, w: m.w, h: m.h } } : { point: { x: m.x, y: m.y } };
 }
 
 const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

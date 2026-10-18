@@ -269,10 +269,22 @@
 .player__track { position: relative; flex: 1; min-width: 40px; display: flex; align-items: center; }
 .player__mark { position: absolute; top: 50%; z-index: 2; width: 8px; height: 8px; margin: -4px 0 0 -4px; padding: 0; border: 2px solid #000; border-radius: 50%; background: var(--warn, #f5b54a); cursor: pointer; }
 .player__mark--done { background: var(--fg-4); }
-.player__pick { position: absolute; inset: 0 0 44px 0; z-index: 3; cursor: crosshair; }
-.player--picking { box-shadow: inset 0 0 0 2px var(--primary); }
-.player__pin { position: absolute; z-index: 4; width: 22px; height: 22px; margin: -11px 0 0 -11px; padding: 0; border: 2px solid #fff; border-radius: 50% 50% 50% 0; background: var(--warn, #f5b54a); color: #000; font-size: 11px; font-weight: 700; line-height: 18px; box-shadow: 0 2px 6px #0008; cursor: pointer; }
-.player__pin--on { background: var(--primary); color: #fff; transform: scale(1.15); }
+/* Comment marks over the picture: points and areas (components/marks.tsx). */
+.marks { position: absolute; inset: 0 0 44px 0; z-index: 3; pointer-events: none; touch-action: none; }
+.marks--picking { pointer-events: auto; cursor: crosshair; }
+.mark { position: absolute; pointer-events: auto; cursor: pointer; }
+.mark--movable { cursor: grab; }
+.mark--movable:active { cursor: grabbing; }
+.mark--point { width: 22px; height: 22px; margin: -11px 0 0 -11px; border: 2px solid #fff; border-radius: 50% 50% 50% 0; background: var(--warn, #f5b54a); box-shadow: 0 2px 6px #0008; }
+.mark--area { border: 2px solid var(--warn, #f5b54a); border-radius: 4px; background: #f5b54a1f; box-shadow: 0 0 0 1px #0006; }
+.mark--draft { border-style: dashed; pointer-events: none; }
+.mark__n { position: absolute; display: grid; place-items: center; width: 18px; height: 18px; color: #000; font-size: 11px; font-weight: 700; line-height: 1; }
+.mark--point .mark__n { inset: 0; width: auto; height: auto; }
+.mark--area .mark__n { left: -2px; top: -20px; border-radius: 4px 4px 4px 0; background: var(--warn, #f5b54a); }
+.mark--on.mark--point { background: var(--primary); }
+.mark--on.mark--point .mark__n { color: #fff; }
+.mark--on.mark--area { border-color: var(--primary); background: #6b7cff22; }
+.mark--on.mark--area .mark__n { background: var(--primary); color: #fff; }
 .player__seek { flex: 1; min-width: 40px; height: 4px; appearance: none; -webkit-appearance: none; border-radius: 2px; cursor: pointer;
   background: linear-gradient(to right, var(--fg-0) var(--p, 0%), #ffffff40 var(--p, 0%)); }
 .player__seek::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%; background: var(--fg-0); }

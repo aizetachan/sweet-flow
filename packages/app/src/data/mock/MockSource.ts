@@ -397,6 +397,10 @@ export class MockSource implements DataSource {
     return c.id;
   }
 
+  moveCommentMark(commentId: Id, mark: { point?: { x: number; y: number }; area?: { x: number; y: number; w: number; h: number } }): void {
+    this.commit({ comments: this.s.comments.map((c) => (c.id === commentId ? { ...c, ...mark } : c)) });
+  }
+
   deleteComment(commentId: Id): void {
     this.commit({ comments: this.s.comments.filter((c) => c.id !== commentId && c.parentId !== commentId) });
   }
