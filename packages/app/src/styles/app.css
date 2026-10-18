@@ -675,7 +675,7 @@ button.tree__hint { padding: 0 14px 8px; }
   .drow > :nth-child(3), .drow > :nth-child(4) { display: none; }
 }
 
-.notice { display: flex; align-items: center; gap: 14px; position: fixed; left: 50%; bottom: 76px; transform: translateX(-50%); z-index: 90; padding: 9px 14px; border-radius: var(--r-lg); background: var(--bg-4); box-shadow: var(--shadow-pop); color: var(--fg-1); animation: sf-fade .15s; }
+.notice { display: flex; align-items: center; gap: 14px; position: fixed; left: 50%; bottom: 88px; transform: translateX(-50%); z-index: 90; padding: 9px 14px; border-radius: var(--r-lg); background: var(--bg-4); box-shadow: var(--shadow-pop); color: var(--fg-1); animation: sf-fade .15s; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
 
 /* ---------- dashboard shell: side menu ---------- */
@@ -758,8 +758,8 @@ button.tree__hint { padding: 0 14px 8px; }
 /* ---------- production: logo + avatar in the top bar, floating section dock ---------- */
 .topbar__logo { flex: none; width: 30px; height: 30px; border: 0; padding: 0; border-radius: 9px; display: grid; place-items: center; font-weight: 800; letter-spacing: -.04em; color: #fff; background: linear-gradient(135deg, var(--brand-300), var(--brand-700)); cursor: pointer; }
 .topbar__me { display: inline-flex; margin-left: 2px; }
-.dock { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 30; display: flex; align-items: center; gap: 2px; padding: 5px; border-radius: 14px; background: color-mix(in srgb, var(--bg-3) 88%, transparent); backdrop-filter: blur(12px); box-shadow: var(--shadow-pop); }
-.dock__item { display: flex; align-items: center; gap: 7px; height: 34px; padding: 0 12px; border: 0; border-radius: 10px; background: none; color: var(--fg-3); white-space: nowrap; }
+.dock { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); z-index: 30; display: flex; align-items: center; gap: 2px; padding: 5px; border-radius: 99px; background: color-mix(in srgb, var(--bg-3) 88%, transparent); backdrop-filter: blur(12px); box-shadow: var(--shadow-pop); }
+.dock__item { position: relative; display: flex; align-items: center; gap: 7px; height: 34px; padding: 0 14px; border: 0; border-radius: 99px; background: none; color: var(--fg-3); white-space: nowrap; }
 .dock__item:hover { background: var(--ghost); color: var(--fg-0); }
 .dock__item--on { background: var(--bg-5); color: var(--fg-0); }
 .dock__sep { width: 1px; height: 20px; margin: 0 3px; background: var(--line-1); }
@@ -794,7 +794,10 @@ button.tree__hint { padding: 0 14px 8px; }
 .head__del { opacity: 0; transition: opacity .12s; }
 .group__head:hover .head__del, .lane__head:hover .head__del, .head__del:focus-visible { opacity: 1; }
 .head__del:hover { color: var(--bad); }
-.dock__count { min-width: 18px; padding: 0 5px; border-radius: 99px; font-size: 11px; line-height: 18px; text-align: center; color: var(--fg-1); background: var(--bg-5); }
+/* Icon only (Ajustes): a round button. */
+.dock__item--icon { width: 34px; padding: 0; justify-content: center; }
+/* The trash count: a small badge up on the corner, out of the flow, so «Papelera» always takes the same room. */
+.dock__count { position: absolute; top: 1px; right: 2px; min-width: 15px; height: 15px; padding: 0 4px; border-radius: 8px; font-size: 9.5px; font-weight: 700; line-height: 15px; text-align: center; color: var(--fg-0); background: var(--bg-5); pointer-events: none; }
 .notice__action { padding: 0; border: 0; background: none; color: var(--primary); font-weight: 600; }
 .notice__action:hover { text-decoration: underline; }
 

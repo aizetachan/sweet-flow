@@ -50,9 +50,8 @@ export function Dock() {
         {trashed ? <span className="dock__count">{trashed}</span> : null}
       </button>
       <span className="dock__sep" />
-      <button className="dock__item" title="Ajustes de la producción" onClick={() => set({ modal: "levels" })}>
+      <button className="dock__item dock__item--icon" aria-label="Ajustes" title="Ajustes de la producción" onClick={() => set({ modal: "levels" })}>
         <IconSettings size={17} stroke={1.6} />
-        <span>Ajustes</span>
       </button>
     </nav>
   );
