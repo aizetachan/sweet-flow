@@ -105,8 +105,10 @@
 /* A row is told apart by its background alone (no border): a touch darker than before, for more contrast with the cards. */
 .lane__head, .group__head { cursor: pointer; }
 .lane__head--folded { margin-bottom: 0; }
-/* A folded sequence is a block like its scenes': same background, corners and padding. */
-.group__head--folded { background: #101012; border-radius: var(--r-xl); padding: 12px 14px; margin-bottom: 12px; }
+/* A folded sequence gets only the scenes' background and corners: drawn behind it,
+   so the header keeps exactly its own size, padding and position. */
+.group__head--folded { position: relative; isolation: isolate; }
+.group__head--folded::before { content: ""; position: absolute; inset: 0 -12px; z-index: -1; background: #101012; border-radius: var(--r-xl); }
 .lane { background: #101012; border: 0; border-radius: var(--r-xl); padding: 12px; margin-bottom: 12px; }
 .lane__head { display: flex; align-items: center; gap: 10px; margin: 0 2px 10px; flex-wrap: wrap; }
 .lane__code { font-weight: 700; font-variant-numeric: tabular-nums; }

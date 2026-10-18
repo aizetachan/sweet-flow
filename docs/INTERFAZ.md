@@ -209,8 +209,8 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
   En fila» y «Vídeos editados», con el mismo estilo.
 - La **barra de scroll** de una fila solo se ve mientras se desplaza.
 - **Plegar:** un clic en la cabecera de una secuencia o de una escena la
-  pliega (solo queda su cabecera, como un bloque con el mismo fondo, esquinas
-  y relleno que las escenas) o la despliega. No pliega al pulsar sus
+  pliega (solo queda su cabecera, en el mismo sitio y tamaño, con el fondo y las esquinas
+  de las escenas) o la despliega. No pliega al pulsar sus
   botones, el estado o al hacer doble clic en el título. Se recuerda por
   producción en este navegador.
 - **Filas de escena:** se distinguen solo por el fondo (sin borde), algo más
