@@ -17,6 +17,7 @@ import {
   IconMovie,
   IconPencil,
   IconDots,
+  IconLink,
   IconFolderOpen,
   IconFolderShare,
   IconPin,
@@ -28,6 +29,7 @@ import {
 } from "@tabler/icons-react";
 import { ContextMenu, type MenuAt } from "../components/ContextMenu";
 import { revealEntry } from "../data/reveal";
+import { copyEntryLink } from "../data/share";
 import type { Id } from "@sweetflow/domain";
 import { AvatarStack, Button, cx, IconButton, Segmented } from "@sweetflow/ui";
 import { isInTrash, type LibraryEntry, type LibraryState, type ProductionSummary } from "../data/library";
@@ -315,6 +317,7 @@ function EntryItem(p: EntryItemProps) {
         <>
           <button className="menu__item" onClick={p.onOpen}><IconFolderOpen size={14} /> <span className="menu__label">Abrir</span></button>
           <button className="menu__item" onClick={() => void revealEntry(p.entry.id)}><IconFolderShare size={14} /> <span className="menu__label">Mostrar en la carpeta</span></button>
+          <button className="menu__item" onClick={() => copyEntryLink(p.entry.id, p.entry.name)}><IconLink size={14} /> <span className="menu__label">Copiar enlace</span></button>
           <button className="menu__item" onClick={() => library.setPinned({ entryId: p.entry.id }, !p.pinned)}>
             {p.pinned ? <IconPinFilled size={14} /> : <IconPin size={14} />} <span className="menu__label">{p.pinned ? "Quitar de Fijados" : "Fijar en el menú lateral"}</span>
           </button>

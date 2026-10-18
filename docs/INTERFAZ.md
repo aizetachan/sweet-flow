@@ -56,8 +56,9 @@ aplicación completa con **menú lateral**:
 
 - **Menú de cada carpeta y producción:** un único botón **«⋯»** (al pasar el
   ratón) y el **clic derecho** abren el mismo menú: abrir, **mostrar en la
-  carpeta**, fijar o quitar de Fijados, cambiar el nombre (F2) y mover a la
-  papelera. Sustituye a los iconos sueltos. En la papelera: restaurar y
+  carpeta**, **copiar enlace** (`#/abrir/…`: lleva a esa carpeta o abre esa
+  producción desde el dashboard), fijar o quitar de Fijados, cambiar el nombre
+  (F2) y mover a la papelera. Sustituye a los iconos sueltos. En la papelera: restaurar y
   eliminar definitivamente. El clic derecho sobre algo no seleccionado lo
   selecciona primero, como en el Finder.
 
@@ -154,11 +155,14 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
   código ni el título). El estado va como en el panel de la izquierda: la
   etiqueta, y al pulsarla se despliega la lista.
   - **Plano:** además de lo de abajo, sobre la versión elegida del plano:
-    **copiar el vídeo / la imagen** para pegarlo en otra app (la imagen, en
-    cualquier sitio; un vídeo o audio se copia como archivo desde la app de
-    escritorio; el navegador no lo permite y lo descarga), **descargar** y
-    **copiar el enlace** (`#/plano/producción/plano/versión`): abre la app en ese
-    plano con esa versión en el visor, para quien tenga la carpeta del equipo.
+    **Copiar vídeo / imagen / audio** al portapapeles para pegarlo en otra app:
+    la imagen se copia en cualquier sitio; el vídeo o audio se copia como
+    archivo desde la app de escritorio. El navegador solo deja poner texto e
+    imágenes en el portapapeles: lo intenta igualmente y, si no, copia el enlace
+    directo al archivo (el de Magnific) y lo avisa; no descarga nada.
+    **Descargar** y **Copiar enlace** (`#/abrir/producción/plano/versión`): abre
+    la app en ese plano con esa versión en el visor, para quien tenga la carpeta
+    del equipo.
   - **Plano:** estado, cambiar el título
     (lo edita en la tarjeta), abrir en ventana aparte y mover a la papelera.
     Con varias seleccionadas, el estado y la papelera se aplican a todas.

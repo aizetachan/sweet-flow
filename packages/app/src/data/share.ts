@@ -12,23 +12,33 @@ import { folderPath, mediaFileName, codeOf, versionTag, type Id, type Media, typ
 import { useStore } from "../state/store";
 import { withTeamRoot } from "./reveal";
 
-/** A link that opens the app on `nodeId` (and `mediaId` in its viewer). */
-export function shotLink(productionId: Id, nodeId: Id, mediaId?: Id): string {
-  const parts = [productionId, nodeId, ...(mediaId ? [mediaId] : [])].map(encodeURIComponent).join("/");
-  return `${location.href.split("#")[0]}#/plano/${parts}`;
+/**
+ * A link into the app: a dashboard folder or a production (`entryId`), and in
+ * a production a shot (`nodeId`, with `mediaId` in its viewer).
+ */
+export function appLink(entryId: Id, nodeId?: Id, mediaId?: Id): string {
+  const parts = [entryId, ...(nodeId ? [nodeId] : []), ...(nodeId && mediaId ? [mediaId] : [])].map(encodeURIComponent).join("/");
+  return `${location.href.split("#")[0]}#/abrir/${parts}`;
 }
 
-/** Reads `#/plano/<production>/<node>[/<media>]`, if the address is one. */
-export function parseShotLink(hash: string): { productionId: Id; nodeId: Id; mediaId?: Id } | null {
-  const m = /^#\/plano\/([^/]+)\/([^/]+)(?:\/([^/]+))?$/.exec(hash);
+/** Reads `#/abrir/<entry>[/<node>[/<media>]]` (or an older `#/plano/…`), if the address is one. */
+export function parseAppLink(hash: string): { entryId: Id; nodeId?: Id; mediaId?: Id } | null {
+  const m = /^#\/(?:abrir|plano)\/([^/]+)(?:\/([^/]+))?(?:\/([^/]+))?$/.exec(hash);
   if (!m) return null;
-  return { productionId: decodeURIComponent(m[1]!), nodeId: decodeURIComponent(m[2]!), mediaId: m[3] ? decodeURIComponent(m[3]) : undefined };
+  const d = (x?: string) => (x ? decodeURIComponent(x) : undefined);
+  return { entryId: decodeURIComponent(m[1]!), nodeId: d(m[2]), mediaId: d(m[3]) };
+}
+
+/** Copies the link to a dashboard folder or production. */
+export function copyEntryLink(entryId: Id, name: string): void {
+  void navigator.clipboard?.writeText(appLink(entryId));
+  useStore.getState().notify(`Enlace a «${name}» copiado: lleva ahí desde el dashboard (para quien tenga la carpeta del equipo).`);
 }
 
 export function copyShotLink(node: ProdNode, media?: Media): void {
   const { productionId, snap, notify } = useStore.getState();
   if (!productionId || !snap) return;
-  void navigator.clipboard?.writeText(shotLink(productionId, node.id, media?.id));
+  void navigator.clipboard?.writeText(appLink(productionId, node.id, media?.id));
   notify(`Enlace a ${codeOf(snap.production, node)}${media ? ` ${versionTag(media.version)}` : ""} copiado: abre la app en ese plano (para quien tenga la carpeta del equipo).`);
 }
 
@@ -52,7 +62,7 @@ export function downloadMedia(node: ProdNode, media: Media): void {
 }
 
 /** Copies the media to paste it in another app (see the module comment). */
-export async function copyMedia(node: ProdNode, media: Media): Promise<void> {
+export async function copyMedia(_node: ProdNode, media: Media): Promise<void> {
   const { snap, notify, library, productionId } = useStore.getState();
   if (!snap || !media.url) return notify("Esa versión aún no tiene archivo.");
 
@@ -66,13 +76,26 @@ export async function copyMedia(node: ProdNode, media: Media): Promise<void> {
     }
   }
 
-  // A video or audio: as a file, from the desktop app; downloaded in a browser.
+  // A video or audio: as a file from the desktop app. A browser only puts text
+  // and images on the clipboard: it tries the file anyway, then copies a link to it.
   const desktop = window.sweetflow;
   const owner = [...snap.nodes, ...snap.shelf].find((n) => n.id === media.nodeId);
   const base = productionId ? library.pathOf?.(productionId) ?? null : null;
   if (!desktop?.copyFile || !media.file || !owner || base === null) {
-    downloadMedia(node, media);
-    return notify(desktop ? "Se ha descargado: aún no está en la carpeta del equipo para copiarlo." : "El navegador no deja copiar vídeos: se ha descargado. En la app de escritorio se copia para pegarlo directamente.");
+    const what = media.kind === "audio" ? "audio" : "vídeo";
+    try {
+      const blob = await (await fetch(media.url)).blob();
+      await navigator.clipboard.write([new ClipboardItem({ [blob.type || "video/mp4"]: blob })]);
+      return notify(`${what[0]!.toUpperCase()}${what.slice(1)} copiado.`);
+    } catch {
+      // The provider's own address works anywhere it is pasted; a file of this computer does not.
+      const remote = media.remote?.url;
+      if (remote) {
+        await navigator.clipboard.writeText(remote);
+        return notify(`El navegador no deja copiar el archivo de ${what}: se ha copiado su enlace directo, para pegarlo donde quieras. En la app de escritorio se copia el archivo.`);
+      }
+      return notify(`El navegador no deja copiar archivos de ${what}. Usa «Descargar» o la app de escritorio, que sí lo copia.`);
+    }
   }
   const rel = [base, folderPath(snap.production, [...snap.nodes, ...snap.shelf], owner, snap.groups), "_media", media.file].filter(Boolean).join("/");
   withTeamRoot((root) => {
@@ -82,14 +105,25 @@ export async function copyMedia(node: ProdNode, media: Media): Promise<void> {
   });
 }
 
-/** The image as PNG (the only image type every clipboard takes). */
+/** The image as PNG (the only image type every clipboard takes); any format the browser can show. */
 async function toPng(url: string): Promise<Blob> {
   const blob = await (await fetch(url)).blob();
   if (blob.type === "image/png") return blob;
-  const bitmap = await createImageBitmap(blob);
-  const canvas = document.createElement("canvas");
-  canvas.width = bitmap.width;
-  canvas.height = bitmap.height;
-  canvas.getContext("2d")!.drawImage(bitmap, 0, 0);
-  return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("no se pudo convertir"))), "image/png"));
+  const src = URL.createObjectURL(blob);
+  try {
+    const img = new Image();
+    img.decoding = "async";
+    await new Promise<void>((ok, fail) => {
+      img.onload = () => ok();
+      img.onerror = () => fail(new Error("no se pudo leer la imagen"));
+      img.src = src;
+    });
+    const canvas = document.createElement("canvas");
+    canvas.width = img.naturalWidth || 1920;
+    canvas.height = img.naturalHeight || 1080;
+    canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height);
+    return await new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("no se pudo convertir"))), "image/png"));
+  } finally {
+    URL.revokeObjectURL(src);
+  }
 }

@@ -401,13 +401,13 @@ function ShotMenu({ at, node, targets, onRename, onClose }: { at: MenuAt; node: 
           {media ? (
             <>
               <button className="menu__item" onClick={() => void copyMedia(node, media)}>
-                <IconCopy size={14} /> <span className="menu__label">{media.kind === "image" ? "Copiar la imagen" : media.kind === "audio" ? "Copiar el audio" : "Copiar el vídeo"}<span className="menu__hint">para pegarlo en otra app</span></span>
+                <IconCopy size={14} /> <span className="menu__label">{media.kind === "image" ? "Copiar imagen" : media.kind === "audio" ? "Copiar audio" : "Copiar vídeo"}</span>
               </button>
               <button className="menu__item" onClick={() => downloadMedia(node, media)}><IconDownload size={14} /> <span className="menu__label">Descargar</span></button>
             </>
           ) : null}
           <button className="menu__item" onClick={() => copyShotLink(node, media)}>
-            <IconLink size={14} /> <span className="menu__label">Copiar el enlace<span className="menu__hint">para alguien del equipo</span></span>
+            <IconLink size={14} /> <span className="menu__label">Copiar enlace</span>
           </button>
           <div className="menu__sep" />
         </>

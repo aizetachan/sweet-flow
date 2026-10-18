@@ -6,7 +6,7 @@
  */
 
 import { create } from "zustand";
-import { parseShotLink } from "../data/share";
+import { parseAppLink } from "../data/share";
 import { codeOf, type Id } from "@sweetflow/domain";
 import type { DataSource, Snapshot } from "../data/source";
 import type { Library, LibraryState, Pin } from "../data/library";
@@ -345,19 +345,31 @@ if (popped) {
     });
   }
 } else {
-  // A shot link (`#/plano/…`, docs/INTERFAZ.md §2): open that production on that shot, once the dashboard is known.
+  // A link into the app (`#/abrir/…`, docs/INTERFAZ.md §1–2): a dashboard folder, a production, or a
+  // shot in it, opened once the dashboard is known.
   const openLink = () => {
-    const link = parseShotLink(location.hash);
+    const link = parseAppLink(location.hash);
     if (!link) return;
     history.replaceState(null, "", location.href.split("#")[0]);
     const go = () => {
-      const { lib, notify } = useStore.getState();
-      if (!lib) return false;
-      if (!lib.entries.some((e) => e.id === link.productionId && e.kind === "production")) {
-        notify("Ese enlace es de una producción que no está en tu carpeta del equipo.");
+      const st = useStore.getState();
+      if (!st.lib) return false;
+      const entry = st.lib.entries.find((e) => e.id === link.entryId);
+      if (!entry) {
+        st.notify("Ese enlace es de algo que no está en tu carpeta del equipo.");
         return true;
       }
-      useStore.getState().openProduction(link.productionId, { nodeId: link.nodeId, mediaId: link.mediaId });
+      if (entry.kind === "folder") {
+        if (st.phase === "production") st.requestLeave(entry.id);
+        else st.set({ dashSection: "home", folderId: entry.id });
+        return true;
+      }
+      if (st.phase === "production" && st.productionId === entry.id) {
+        if (link.nodeId) st.select(link.nodeId);
+        if (link.mediaId) st.set({ activeMediaId: link.mediaId });
+        return true;
+      }
+      st.openProduction(entry.id, { nodeId: link.nodeId, mediaId: link.mediaId });
       return true;
     };
     if (go()) return;
