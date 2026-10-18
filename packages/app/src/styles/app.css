@@ -104,7 +104,8 @@
 .lane__spacer { flex: 1; }
 /* Room around the cards: the horizontal scroller would clip the selection ring and drop markers. */
 .lane__cards { display: flex; gap: 10px; overflow-x: auto; padding: 4px 4px 6px; margin: -4px -4px -2px; }
-.lane__cards--wrap { flex-wrap: wrap; overflow-x: visible; }
+.lane__cards--wrap { display: grid; overflow-x: visible; }
+.lane__cards--wrap > .card { width: auto; min-width: 0; }
 
 /* cards */
 .board__body { --card: 268px; }

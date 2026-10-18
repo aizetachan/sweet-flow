@@ -129,7 +129,11 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
   por dentro, para que no se corte al arrastrarla.
 - **Ver todos / En fila:** botón en la cabecera de cada escena. Por defecto la
   escena es una fila con scroll horizontal; «Ver todos» la adapta al ancho y
-  baja de línea hasta que se ven todas sus tarjetas. Pulsado otra vez («En
+  baja de línea hasta que se ven todas sus tarjetas. Las columnas se calculan
+  para **llenar el ancho exacto**, sin hueco a la derecha: las que caben del
+  tamaño elegido (S, M o L), redondeando, y las tarjetas se estiran o encogen
+  un poco. Si caben todas en una fila, no salta de línea y se ve igual que en
+  fila. Pulsado otra vez («En
   fila») vuelve a ser una fila. Se recuerda por escena en este navegador.
   Sustituye a «Keyframes vacíos», quitado el 18 oct 2026.
 - **Previsualizar vídeo:** en las tarjetas de plano con vídeo (y en las

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode, type RefObject } from "react";
 import { IconArrowLeft, IconStack2, IconExternalLink, IconMessageCircle, IconPlus, IconFilter, IconInfoCircle, IconSearch, IconTrash, IconLayoutGrid, IconLayoutList, IconX } from "@tabler/icons-react";
 import {
   childrenOf,
@@ -160,6 +160,8 @@ function Lane({ row }: { row: ProdNode }) {
   // All the cards visible, wrapping to the width, instead of one scrolling row (remembered per scene).
   const [wrap, setWrapState] = useState(() => readWrap(row.id));
   const setWrap = (v: boolean) => { setWrapState(v); writeWrap(row.id, v); };
+  const box = useRef<HTMLDivElement>(null);
+  const cols = useColumns(box, wrap);
   // After every hook: a row left empty by the filters is hidden.
   if (active && !units.length) return null;
   const inGroup = (u: ProdNode) => !!u.groupId && groups.some((g) => g.id === u.groupId);
@@ -172,6 +174,7 @@ function Lane({ row }: { row: ProdNode }) {
           ...groups.map((g) => ({ key: g.id, at: g.order, el: <GroupCard key={g.id} group={g} onOpen={() => setOpenId(g.id)} /> })),
         ].sort((a, b) => a.at - b.at);
 
+  const grid = wrap && cols > 0 && items.length + 1 > cols;
   return (
     <section className="lane">
       <div className={cx("lane__head", headDrop.zone && `dnd-${headDrop.zone}`)} {...nodeDragProps(row.id)} {...headDrop.props}>
@@ -188,12 +191,43 @@ function Lane({ row }: { row: ProdNode }) {
         <IconButton size="sm" className="head__del" label={`Mover ${codeOf(p, row)} y sus ${unitLevel.name.toLowerCase()}s a la papelera`} onClick={() => trashNodes([row.id])}><IconTrash size={14} /></IconButton>
       </div>
       {open && !active ? <GroupBar group={open} row={row} count={units.filter((u) => u.groupId === open.id).length} onClose={() => setOpenId(null)} /> : null}
-      <div className={cx("lane__cards", wrap && "lane__cards--wrap", endDrop.over && "dnd-end")} {...endDrop.props}>
+      {/* Wrapped only when they don't all fit in one row: then the columns fill the width exactly. */}
+      <div ref={box} className={cx("lane__cards", grid && "lane__cards--wrap", endDrop.over && "dnd-end")}
+        style={grid ? { gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` } : undefined} {...endDrop.props}>
         {items.map((i) => i.el)}
         {!active ? <AddCard row={row} groupId={open?.id} /> : null}
       </div>
     </section>
   );
+}
+
+/**
+ * Columns for «Ver todos»: as many cards of the chosen size (S, M, L) as fit
+ * the row's width, rounded to the nearest, so they stretch or shrink a little
+ * and fill it with nothing left over on the right.
+ */
+function useColumns(ref: RefObject<HTMLDivElement>, on: boolean): number {
+  const [cols, setCols] = useState(0);
+  useEffect(() => {
+    const el = ref.current;
+    if (!on || !el) return setCols(0);
+    const measure = () => {
+      const style = getComputedStyle(el);
+      const card = parseFloat(style.getPropertyValue("--card")) || 268;
+      const gap = parseFloat(style.columnGap) || 10;
+      const width = el.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+      setCols(Math.max(1, Math.round((width + gap) / (card + gap))));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    // The card size lives on the board: changing S/M/L changes the class there.
+    const mo = new MutationObserver(measure);
+    const board = el.closest(".board__body");
+    if (board) mo.observe(board, { attributes: true, attributeFilter: ["class"] });
+    return () => { ro.disconnect(); mo.disconnect(); };
+  }, [ref, on]);
+  return cols;
 }
 
 const WRAP_KEY = "sweetflow:board:wrap";
