@@ -217,6 +217,12 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
   duración, y la papelera (solo al pasar el ratón). A la derecha, «Ver todos /
   En fila» y «Vídeos editados», con el mismo estilo.
 - La **barra de scroll** de una fila solo se ve mientras se desplaza.
+- **Espacio de trabajo:** sin nada elegido en Explorer, el tablero se titula
+  «Espacio de trabajo» (sin número de planos).
+- **Estado de la escena** en su cabecera: un clic abre la lista de estados,
+  como en las tarjetas (no pliega la fila).
+- **Al reordenar arrastrando** una secuencia o una escena, una línea fina y
+  suave del azul de marca en el hueco de arriba o de abajo dice dónde caerá.
 - **Plegar:** un clic en la cabecera de una secuencia o de una escena la
   pliega (solo queda su cabecera, en el mismo sitio y tamaño, con el fondo y las esquinas
   de las escenas) o la despliega. No pliega al pulsar sus

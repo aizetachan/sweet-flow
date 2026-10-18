@@ -26,8 +26,7 @@ export function StructureTree() {
         }}><IconPlus size={14} /></IconButton>
       </div>
       <button className={cx("tree__all", scopeId === null && "tree__all--on")} onClick={() => set({ scopeId: null })}>
-        <IconLayoutList size={14} /> Toda la producción
-        <span className="tree__count">{snap.nodes.filter((n) => isUnit(snap.production, n)).length}</span>
+        <IconLayoutList size={14} /> Espacio de trabajo
       </button>
       <div className={cx("tree__list", rootDrop.over && "dnd-end")} {...rootDrop.props}>
         {roots.map((n) => <TreeRow key={n.id} node={n} depth={0} />)}

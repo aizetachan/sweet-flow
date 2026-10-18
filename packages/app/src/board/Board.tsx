@@ -38,8 +38,8 @@ export function Board() {
     <main className="board">
       <div className="board__head">
         <div className="board__title">
-          <h1>{scope ? <><span className="board__code">{codeOf(p, scope)}</span> {scope.title}</> : "Toda la producción"}</h1>
-          <span className="board__count" title={`${units.length} ${unitName}${units.length === 1 ? "" : "s"}`}>{units.length}</span>
+          <h1>{scope ? <><span className="board__code">{codeOf(p, scope)}</span> {scope.title}</> : "Espacio de trabajo"}</h1>
+          {scope ? <span className="board__count" title={`${units.length} ${unitName}${units.length === 1 ? "" : "s"}`}>{units.length}</span> : null}
         </div>
         <div className="board__tools">
           <Segmented<CardSize>
@@ -205,7 +205,6 @@ function Lane({ row }: { row: ProdNode }) {
   const active = filtersActive(filters);
   const units = active ? all.filter((u) => matches(snap, u, filters)) : all;
   const unitLevel = p.levels[levelIndex(p, row) + 1]!;
-  const st = statusOf(snap, row);
   const viewers = presenceAt(snap, row.id);
   const headDrop = useNodeDrop(row, "y");
 
@@ -252,7 +251,11 @@ function Lane({ row }: { row: ProdNode }) {
         <span className="lane__code">{codeOf(p, row)}</span>
         <InlineEdit className="lane__title" value={row.title} placeholder="Sin título" label="Doble clic para cambiar el título"
           onSave={(title) => useStore.getState().source.updateNode(row.id, { title })} />
-        <Pill color={st.color}>{st.name}</Pill>
+        {/* The status changes right here, like on a card: a click opens the list (the row does not fold). */}
+        <span className="lane__status" onClick={(e) => e.stopPropagation()}>
+          <StatusPicker floating statuses={p.statuses} value={row.statusId} onChange={(id) => useStore.getState().source.updateNode(row.id, { statusId: id })}
+            onEdit={() => useStore.getState().set({ modal: "statuses" })} />
+        </span>
         <HeadInfo shots={all.length} done={all.filter((u) => statusOf(snap, u).category === "done").length} seconds={durationOf(snap, row)} unit={unitLevel.name} />
         {viewers.length ? <AvatarStack names={viewers} size={18} /> : null}
         {/* Trash right after the info, shown on hover; the row's own buttons stay on the right. */}
