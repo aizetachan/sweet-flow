@@ -336,6 +336,16 @@ y «Tomas» por separado):
   versiones generadas, elegidas o quitadas, cortes, estados, notas,
   responsables, comentarios, respuestas, resueltos y comentarios llevados a
   otra versión.
+  - Arriba, un **resumen**: versiones, comentarios abiertos y resueltos, y el
+    estado actual con desde cuándo.
+  - **Categorías** para filtrar (con su número): Todo, Versiones, Revisión,
+    Estado y Plano.
+  - Lo repetido se **agrupa**: varias acciones iguales de la misma persona en
+    poco tiempo son una línea («generó 3 versiones (v001–v003) con Nano Banana
+    Pro», «dejó 4 comentarios», «cambió el estado: En curso → Aprobado»).
+  - Separado **por días** (Hoy, Ayer, 17 oct…), con la hora en cada línea.
+- Los comentarios se muestran **siempre en el orden en que se escribieron**;
+  no cambian de posición.
 - La etiqueta de un **área** es la misma chincheta; si el área está pegada al
   borde de arriba o de la izquierda, la etiqueta va dentro para no cortarse.
 - En la lista, cada comentario lleva **la misma chincheta** que en la imagen

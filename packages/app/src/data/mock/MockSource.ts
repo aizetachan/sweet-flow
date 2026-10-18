@@ -287,7 +287,8 @@ export class MockSource implements DataSource {
       media: [...this.s.media, m],
       me,
       members: this.s.members.map((x) => (x.uid === me.uid ? me : x)),
-      activity: [this.log("generate", `lanzó ${a.kind === "video" ? `un vídeo de ${a.durationSec}s` : a.kind === "audio" ? `un audio de ${a.durationSec}s` : "una imagen"}`, a.nodeId), ...this.s.activity],
+      // Same wording as the local log's history (data/local/activity.ts), so the Actividad tab groups it alike.
+      activity: [this.log("generate", `generó v${String(version).padStart(3, "0")} (${a.kind === "video" ? "un vídeo" : a.kind === "audio" ? "un audio" : "una imagen"} con ${a.model})`, a.nodeId), ...this.s.activity],
     });
     this.runJob(m.id, a.kind === "video" ? 7000 : 3500);
   }

@@ -40,7 +40,8 @@ export function ReviewTab({ node }: { node: ProdNode }) {
   const onTarget = roots.filter((c) => c.mediaId === target?.id);
   const visible = roots
     .filter((c) => showResolved || !c.resolved)
-    .sort((a, b) => (a.mediaId === target?.id ? 0 : 1) - (b.mediaId === target?.id ? 0 : 1) || (a.atSec ?? 1e9) - (b.atSec ?? 1e9) || a.createdAt - b.createdAt);
+    // In the order they were written, always: they never change places.
+    .sort((a, b) => a.createdAt - b.createdAt);
   const resolvedCount = roots.filter((c) => c.resolved).length;
 
   useEffect(() => setMark(null), [node.id, target?.id]);
@@ -126,7 +127,7 @@ function Thread({ c, replies, node, on, other, onGo, onDelete }: {
   const m = c.mediaId ? snap.media.find((x) => x.id === c.mediaId) : undefined;
   // Newer versions of this shot it can be taken to (worked on there).
   const newer = m ? snap.media.filter((x) => x.nodeId === node.id && x.id !== m.id && !x.archived && x.status === "ready" && x.createdAt > m.createdAt).sort((a, b) => b.createdAt - a.createdAt) : [];
-  const trail = (c.history ?? []).map((h) => snap.media.find((x) => x.id === h.mediaId)).filter(Boolean).map((x) => versionTag(x!.version));
+  const trail = (c.history ?? []).map((h) => snap.media.find((x) => x.id === h.mediaId)).filter(Boolean).map((x) => mediaLabel(x!));
   const takeTo = (id: Id) => {
     const to = snap.media.find((x) => x.id === id);
     source.moveCommentToVersion(c.id, id);
@@ -140,7 +141,7 @@ function Thread({ c, replies, node, on, other, onGo, onDelete }: {
       <CommentLine c={c} onDelete={onDelete} head={
         <>
           {/* Where it has been: v001 → v002 when it was worked on in a newer version. */}
-          {trail.length && m ? <span className="tc tc--plain" title="Versiones por las que ha pasado">{[...trail, versionTag(m.version)].join(" → ")}</span> : m && other ? <span className="sf-faint sf-small">{versionTag(m.version)}</span> : null}
+          {trail.length && m ? <span className="tc tc--plain" title="Versiones por las que ha pasado">{[...trail, mediaLabel(m)].join(" → ")}</span> : m && other ? <span className="sf-faint sf-small">{versionTag(m.version)}</span> : null}
           {c.atSec !== undefined ? <button className="tc" onClick={onGo}><IconClock size={11} /> {formatTc(c.atSec)}</button> : null}
           {c.point || c.area ? <span className="tc tc--plain" title={c.area ? "Área señalada en la imagen" : "Punto señalado en la imagen"}><IconMapPin size={11} /></span> : null}
         </>
