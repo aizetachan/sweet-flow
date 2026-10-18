@@ -928,12 +928,15 @@ button.topbar__me { position: relative; padding: 0; border: 0; border-radius: 50
   0% { border-color: color-mix(in srgb, var(--primary) 70%, transparent); box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--primary) 60%, transparent), 0 0 16px 3px color-mix(in srgb, var(--primary) 28%, transparent); }
 }
 .insp__shelved { display: flex; align-items: center; gap: 6px; margin: 0 14px 8px; padding: 7px 10px; border-radius: var(--r-md); background: var(--bg-3); color: var(--fg-2); font-size: 12px; }
-/* Right edge of the left panel: drag to narrow it (down to 80%) or widen it back. */
+/* Right edge of the left panel: drag to narrow it (down to 60%) or widen it back; a click snaps it. */
 .workspace { position: relative; }
 .side__resize { position: absolute; top: 0; left: calc(var(--side-max) * var(--side-k, 1) - 4px); bottom: 0; width: 8px; z-index: 5; cursor: col-resize; touch-action: none; }
 .side__resize::after { content: ""; position: absolute; top: 0; bottom: 0; left: 3px; width: 2px; background: transparent; transition: background .15s; }
 .side__resize:hover::after, .side__resize.is-on::after { background: var(--primary); }
 @media (max-width: 720px) { .side__resize { display: none; } }
 .workspace--resizing { cursor: col-resize; user-select: none; }
+/* A click on the edge: the width glides to its new place. */
+.workspace--snapping { transition: grid-template-columns .24s ease; }
+.workspace--snapping .side__resize { transition: left .24s ease; }
 .imp__kinds { align-self: stretch; display: grid; grid-template-columns: repeat(3, 1fr); }
 .imp__kinds .gen__kind { width: auto; }

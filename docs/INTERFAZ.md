@@ -100,9 +100,10 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
 (así, con muchos planos, el tablero tiene la pantalla ancha):
 
 - **Ancho de la columna:** se arrastra su borde derecho para estrecharla hasta
-  un 20 % (el máximo es el ancho de siempre); el contenido se adapta. Se
-  recuerda en este ordenador; doble clic en el borde la devuelve al ancho
-  completo.
+  un 40 % (el mínimo es el 60 % del ancho de siempre, que es el máximo); el
+  contenido se adapta. **Un clic en el borde** la lleva de golpe (con una
+  transición corta): del máximo al mínimo y del mínimo al máximo; en medio, al
+  extremo más cercano. Se recuerda en este ordenador.
 
 - **Producción** (primera pestaña): el panel de trabajo de la escena o el plano
   seleccionado. Muestra el código de lo seleccionado.
