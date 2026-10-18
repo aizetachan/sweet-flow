@@ -50,6 +50,11 @@ export function Pill({ color, children, title }: { color?: string; children: Rea
 }
 
 const PALETTE = ["#5b72f5", "#e0559b", "#2fb38a", "#d8913f", "#8f6ee8", "#2aa9c9", "#c9564f"];
+/** The colour of someone's avatar (from their name): marks and timeline dots use it too. */
+export function avatarColor(s: string): string {
+  return hue(s);
+}
+
 function hue(s: string): string {
   let h = 0;
   for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;

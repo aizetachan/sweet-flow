@@ -5,10 +5,10 @@
  * someone of the production: they get it in their notifications.
  */
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { IconArrowBackUp, IconCheck, IconClock, IconMapPin, IconSend, IconTrash, IconX } from "@tabler/icons-react";
 import { codeOf, formatTc, versionTag, type Comment, type Id, type Member, type ProdNode } from "@sweetflow/domain";
-import { Avatar, Button, cx, IconButton } from "@sweetflow/ui";
+import { Avatar, avatarColor, Button, cx, IconButton } from "@sweetflow/ui";
 import { useSnap, useStore } from "../state/store";
 import { coverOf, memberName } from "../state/selectors";
 import { usePanel } from "./panel";
@@ -35,17 +35,8 @@ export function ReviewTab({ node }: { node: ProdNode }) {
 
   const all = snap.comments.filter((c) => c.nodeId === node.id);
   const roots = all.filter((c) => !c.parentId);
-  // Numbers per version, in the order they were written: they label pins and timeline marks.
-  const numbered = useMemo(() => {
-    const map = new Map<Id, number>();
-    const byMedia = new Map<string, Comment[]>();
-    for (const c of [...roots].sort((a, b) => a.createdAt - b.createdAt)) {
-      const k = c.mediaId ?? "";
-      byMedia.set(k, [...(byMedia.get(k) ?? []), c]);
-    }
-    for (const list of byMedia.values()) list.forEach((c, i) => map.set(c.id, i + 1));
-    return map;
-  }, [roots]);
+  // Marks carry who left them (initial and colour), not numbers that go out of order.
+  const who = (uid: Id) => memberName(snap, uid);
   const onTarget = roots.filter((c) => c.mediaId === target?.id);
   const visible = roots
     .filter((c) => showResolved || !c.resolved)
@@ -66,7 +57,9 @@ export function ReviewTab({ node }: { node: ProdNode }) {
           <section className="sec sec--viewer">
             <Player media={target} time={time} playing={playing} range={range}
               onTime={(t) => setPanel({ playhead: t })} onPlaying={(v) => setPanel({ playing: v })}
-              markers={target.kind === "video" ? onTarget.filter((c) => c.atSec !== undefined && (showResolved || !c.resolved)).map((c) => ({ id: c.id, atSec: c.atSec!, n: numbered.get(c.id)!, resolved: c.resolved })) : undefined}
+              markers={target.kind === "video" ? onTarget.filter((c) => c.atSec !== undefined && (showResolved || !c.resolved)).map((c) => ({
+                id: c.id, atSec: c.atSec!, color: avatarColor(who(c.authorId)), title: `${who(c.authorId)}: ${c.text.slice(0, 60)}`, on: focus === c.id, onClick: () => setFocus(c.id), resolved: c.resolved,
+              })) : undefined}
               pins={[
                 ...onTarget
                   .filter((c) => (c.point || c.area) && (showResolved || !c.resolved))
@@ -75,13 +68,14 @@ export function ReviewTab({ node }: { node: ProdNode }) {
                   .map((c) => ({
                     id: c.id,
                     ...(c.area ?? c.point!),
-                    n: numbered.get(c.id)!,
+                    label: initial(who(c.authorId)),
+                    color: avatarColor(who(c.authorId)),
                     on: focus === c.id,
                     onClick: () => goTo(c),
                     // The author can drag it to a better place.
                     ...(c.authorId === snap.me.uid ? { onMove: (m: Mark) => source.moveCommentMark(c.id, markOf(m)) } : {}),
                   })),
-                ...(mark ? [{ id: "new", ...mark, n: onTarget.length + 1, on: true, onMove: setMark }] : []),
+                ...(mark ? [{ id: "new", ...mark, label: initial(snap.me.displayName), on: true, onMove: setMark }] : []),
               ]}
               onPoint={target.kind !== "audio" ? setMark : undefined} />
             {versions.length > 1 ? (
@@ -98,7 +92,7 @@ export function ReviewTab({ node }: { node: ProdNode }) {
 
       <Composer node={node} mediaId={target?.id} isVideo={target?.kind === "video"} playhead={time} onTyping={() => setPanel({ playing: false })}
         mark={mark} onClearMark={() => setMark(null)} canMark={!!target && target.kind !== "audio"}
-        onSent={() => setMark(null)} />
+        onSent={() => setMark(null)} onCancel={() => setMark(null)} />
 
       <section className="sec">
         <div className="sec__head">
@@ -108,7 +102,7 @@ export function ReviewTab({ node }: { node: ProdNode }) {
         {visible.length === 0 ? <p className="note">Sin comentarios abiertos. Lo que escribas lo verá el equipo; con @ avisas a alguien.</p> : null}
         <div className="threads">
           {visible.map((c) => (
-            <Thread key={c.id} c={c} n={numbered.get(c.id)!} replies={all.filter((r) => r.parentId === c.id).sort((a, b) => a.createdAt - b.createdAt)}
+            <Thread key={c.id} c={c} replies={all.filter((r) => r.parentId === c.id).sort((a, b) => a.createdAt - b.createdAt)}
               node={node} on={focus === c.id} other={c.mediaId !== target?.id} onGo={() => goTo(c)} onDelete={(id) => source.deleteComment(id)} />
           ))}
         </div>
@@ -117,9 +111,8 @@ export function ReviewTab({ node }: { node: ProdNode }) {
   );
 }
 
-function Thread({ c, n, replies, node, on, other, onGo, onDelete }: {
+function Thread({ c, replies, node, on, other, onGo, onDelete }: {
   c: Comment;
-  n: number;
   replies: Comment[];
   node: ProdNode;
   on: boolean;
@@ -132,10 +125,11 @@ function Thread({ c, n, replies, node, on, other, onGo, onDelete }: {
   const [replying, setReplying] = useState(false);
   const m = c.mediaId ? snap.media.find((x) => x.id === c.mediaId) : undefined;
   return (
-    <div className={cx("thread", c.resolved && "thread--resolved", on && "thread--on")}>
+    // A click anywhere on it (not on its buttons) goes to its frame and lights its mark.
+    <div className={cx("thread", c.resolved && "thread--resolved", on && "thread--on")}
+      onClick={(e) => { if (!(e.target as HTMLElement).closest("button, textarea, input, a")) onGo(); }}>
       <CommentLine c={c} onDelete={onDelete} head={
         <>
-          <button className="thread__n" title="Ir al comentario" onClick={onGo}>{n}</button>
           {m && other ? <span className="sf-faint sf-small">{versionTag(m.version)}</span> : null}
           {c.atSec !== undefined ? <button className="tc" onClick={onGo}><IconClock size={11} /> {formatTc(c.atSec)}</button> : null}
           {c.point || c.area ? <span className="tc tc--plain" title={c.area ? "Área señalada en la imagen" : "Punto señalado en la imagen"}><IconMapPin size={11} /></span> : null}
@@ -149,7 +143,7 @@ function Thread({ c, n, replies, node, on, other, onGo, onDelete }: {
         </button>
       </div>
       {replying ? (
-        <Composer node={node} parentId={c.id} mediaId={c.mediaId} compact onSent={() => setReplying(false)} />
+        <Composer node={node} parentId={c.id} mediaId={c.mediaId} compact autoFocus onSent={() => setReplying(false)} onCancel={() => setReplying(false)} />
       ) : null}
     </div>
   );
@@ -262,7 +256,7 @@ export function Composer({ node, mediaId, parentId, isVideo, playhead = 0, mark,
               if (e.key === "Enter" || e.key === "Tab") { e.preventDefault(); return mention(matches[pick]!); }
             }
             if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) send();
-            if (e.key === "Escape") onCancel?.();
+            if (e.key === "Escape") { setText(""); onCancel?.(); }
           }} />
         {matches.length ? (
           <div className="menu mentions">
@@ -287,6 +281,10 @@ export function Composer({ node, mediaId, parentId, isVideo, playhead = 0, mark,
           <span className="sf-faint sf-small">Clic o arrastra sobre la imagen para señalar</span>
         ) : null}
         <span className="composer__spacer" />
+        {/* Changed your mind: nothing is kept, neither the text nor the mark. */}
+        {text.trim() || mark || compact ? (
+          <Button size="sm" variant="ghost" title="Descartar (Esc)" onClick={() => { setText(""); onCancel?.(); }}>Cancelar</Button>
+        ) : null}
         <Button size="sm" variant="primary" onClick={send} disabled={!text.trim()} title="Enviar (⌘↵)"><IconSend size={13} /> Enviar</Button>
       </div>
     </div>
@@ -297,6 +295,8 @@ export function Composer({ node, mediaId, parentId, isVideo, playhead = 0, mark,
 function markOf(m: Mark): Pick<Comment, "point" | "area"> {
   return m.w && m.h ? { area: { x: m.x, y: m.y, w: m.w, h: m.h } } : { point: { x: m.x, y: m.y } };
 }
+
+const initial = (name: string) => name.trim().slice(0, 1).toUpperCase() || "·";
 
 const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 

@@ -132,7 +132,7 @@ export function Player({
   /** Optional in/out loop (preview a take). */
   range?: { inSec: number; outSec: number };
   /** Comments at moments of the video, on the timeline (a click goes there). */
-  markers?: Array<{ id: string; atSec: number; n: number; resolved?: boolean }>;
+  markers?: Array<{ id: string; atSec: number; color?: string; title?: string; on?: boolean; onClick?: () => void; resolved?: boolean }>;
   /** Comments marked at points or areas of the image or frame (numbered; the author's can be moved). */
   pins?: ShownMark[];
   /** While set, a click on the picture marks a point there, a drag an area (0–1). */
@@ -225,8 +225,9 @@ export function Player({
             const b = range?.outSec ?? dur;
             if (!b || m.atSec < a || m.atSec > b) return null;
             return (
-              <button key={m.id} className={cx("player__mark", m.resolved && "player__mark--done")} style={{ left: `${((m.atSec - a) / (b - a)) * 100}%` }}
-                title={`Comentario ${m.n} · ${formatTc(m.atSec)}`} onClick={() => { onPlaying(false); onTime(m.atSec); }} />
+              <button key={m.id} className={cx("player__mark", m.resolved && "player__mark--done", m.on && "player__mark--on")}
+                style={{ left: `${((m.atSec - a) / (b - a)) * 100}%`, ...(m.color && !m.resolved ? { background: m.color } : {}) }}
+                title={`${m.title ?? "Comentario"} · ${formatTc(m.atSec)}`} onClick={() => { onPlaying(false); onTime(m.atSec); m.onClick?.(); }} />
             );
           })}
           <input className="player__seek" type="range" aria-label="Línea de tiempo"

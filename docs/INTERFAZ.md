@@ -206,6 +206,8 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
   duración, y la papelera (solo al pasar el ratón). A la derecha, «Ver todos /
   En fila» y «Vídeos editados», con el mismo estilo.
 - La **barra de scroll** de una fila solo se ve mientras se desplaza.
+- **Filas de escena:** se distinguen solo por el fondo (sin borde), algo más
+  oscuro que las tarjetas.
 - **Ver todos / En fila:** botón en la cabecera de cada escena. Por defecto la
   escena es una fila con scroll horizontal; «Ver todos» la adapta al ancho y
   baja de línea hasta que se ven todas sus tarjetas. Las columnas se calculan
@@ -319,16 +321,22 @@ y «Tomas» por separado):
   Al empezar a escribir, el vídeo se pausa.
 - **Quien escribió el comentario puede mover su punto o su área** arrastrándolos
   sobre la imagen.
+- **Cancelar** (o Esc) descarta el comentario a medias: ni el texto ni su marca
+  se guardan.
+- **Sin números:** cada marca (punto, área y su puntito en la línea de tiempo)
+  lleva la inicial y el color de quien comentó, así borrar uno no descoloca los
+  demás. **Clic en un comentario** (en cualquier parte) lleva el visor a su
+  fotograma y resalta su marca; clic en una marca, al revés.
 - **Un comentario** va a una versión y, opcionalmente:
   - en un **vídeo**, al **momento** actual (casilla con el tiempo, activada por
     defecto). Se ve como una marca en la línea de tiempo; clic y el visor va ahí.
   - a un **punto** o un **área** de la imagen o del fotograma. Se ve como una
-    chincheta o un recuadro numerados (en vídeo, alrededor de su momento).
+    chincheta o un recuadro con la inicial de quien lo dejó (en vídeo,
+    alrededor de su momento).
 - **Menciones:** al escribir «@» sale la gente de la producción (quien la ha
   abierto con la carpeta del equipo); flechas e Intro para elegir. El nombre
   queda resaltado y esa persona recibe el aviso.
-- **Hilos:** cada comentario lleva su número (el de su chincheta y su marca),
-  **Responder** (las respuestas cuelgan del comentario) y **Resolver / Reabrir**.
+- **Hilos:** **Responder** (las respuestas cuelgan del comentario) y **Resolver / Reabrir**.
   Los resueltos se ocultan («Ver resueltos»). Quien lo escribió puede borrarlo.
 - **Avisos:** campana en la barra superior con el número sin leer: comentarios
   que te mencionan y respuestas a los tuyos, de la producción abierta. Clic y

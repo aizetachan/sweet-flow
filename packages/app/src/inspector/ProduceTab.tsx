@@ -99,7 +99,7 @@ export function ProduceTab({ node }: { node: ProdNode }) {
         <section className="sec sec--viewer">
           <Player media={active.media} time={time} playing={playing} range={active.foreign ? active.take : undefined}
             onTime={(t) => setPanel({ playhead: t })} onPlaying={(v) => setPanel({ playing: v })}
-            pins={quick && quickPoint ? [{ id: "new", ...quickPoint, n: 1, on: true, onMove: setQuickPoint }] : undefined}
+            pins={quick && quickPoint ? [{ id: "new", ...quickPoint, label: snap.me.displayName.trim().slice(0, 1).toUpperCase(), on: true, onMove: setQuickPoint }] : undefined}
             onPoint={quick && active.media.kind !== "audio" ? setQuickPoint : undefined}
             onComment={active.media.status === "ready" ? () => { setQuick(!quick); setQuickPoint(null); setPanel({ playing: false }); } : undefined}
             commenting={quick} />

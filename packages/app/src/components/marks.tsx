@@ -17,7 +17,9 @@ export interface Mark {
 
 export interface ShownMark extends Mark {
   id: string;
-  n: number;
+  /** Who left it: their initial on their colour (no numbers that go out of order). */
+  label: string;
+  color?: string;
   on?: boolean;
   onClick?: () => void;
   /** Present when it can be moved (the author's). */
@@ -44,7 +46,10 @@ function rel(e: PointerEvent, box: HTMLElement): { x: number; y: number } {
 
 export function MarkLayer({ marks, onMark }: { marks?: ShownMark[]; onMark?: (m: Mark) => void }) {
   const box = useRef<HTMLDivElement>(null);
-  const [draft, setDraft] = useState<{ from: { x: number; y: number }; to: { x: number; y: number } } | null>(null);
+  const [draft, setDraftState] = useState<{ from: { x: number; y: number }; to: { x: number; y: number } } | null>(null);
+  // Also in a ref: a very quick click lifts before the state has updated.
+  const live = useRef<typeof draft>(null);
+  const setDraft = (d: typeof draft) => { live.current = d; setDraftState(d); };
   const [moving, setMoving] = useState<{ id: string; dx: number; dy: number; start: { x: number; y: number }; moved: boolean } | null>(null);
 
   const area = draft && { x: Math.min(draft.from.x, draft.to.x), y: Math.min(draft.from.y, draft.to.y), w: Math.abs(draft.to.x - draft.from.x), h: Math.abs(draft.to.y - draft.from.y) };
@@ -57,21 +62,27 @@ export function MarkLayer({ marks, onMark }: { marks?: ShownMark[]; onMark?: (m:
         const p = rel(e, box.current!);
         setDraft({ from: p, to: p });
       } : undefined}
-      onPointerMove={(e) => { if (draft) setDraft({ ...draft, to: rel(e, box.current!) }); }}
-      onPointerUp={() => {
-        if (draft && area && onMark) onMark(area.w > MIN_AREA && area.h > MIN_AREA ? area : { x: draft.from.x, y: draft.from.y });
+      onPointerMove={(e) => { if (live.current) setDraft({ ...live.current, to: rel(e, box.current!) }); }}
+      onPointerUp={(e) => {
+        const d = live.current;
+        if (d && onMark) {
+          const to = rel(e, box.current!);
+          const a = { x: Math.min(d.from.x, to.x), y: Math.min(d.from.y, to.y), w: Math.abs(to.x - d.from.x), h: Math.abs(to.y - d.from.y) };
+          onMark(a.w > MIN_AREA && a.h > MIN_AREA ? a : { x: d.from.x, y: d.from.y });
+        }
         setDraft(null);
       }}>
       {marks?.map((m) => {
         const dx = moving?.id === m.id ? moving.dx : 0;
         const dy = moving?.id === m.id ? moving.dy : 0;
         const isArea = !!m.w && !!m.h;
+        const tint = m.on ? "var(--primary)" : m.color;
         const style = isArea
-          ? { left: `${(m.x + dx) * 100}%`, top: `${(m.y + dy) * 100}%`, width: `${m.w! * 100}%`, height: `${m.h! * 100}%` }
-          : { left: `${(m.x + dx) * 100}%`, top: `${(m.y + dy) * 100}%` };
+          ? { left: `${(m.x + dx) * 100}%`, top: `${(m.y + dy) * 100}%`, width: `${m.w! * 100}%`, height: `${m.h! * 100}%`, ...(tint ? { borderColor: tint } : {}) }
+          : { left: `${(m.x + dx) * 100}%`, top: `${(m.y + dy) * 100}%`, ...(tint ? { background: tint } : {}) };
         return (
           <div key={m.id} className={cx("mark", isArea ? "mark--area" : "mark--point", m.on && "mark--on", m.onMove && "mark--movable")} style={style}
-            title={m.onMove ? `Comentario ${m.n} · arrastra para moverlo` : `Comentario ${m.n}`}
+            title={m.onMove ? "Tu comentario · arrastra para moverlo" : "Ver el comentario"}
             // The mark handles its own drag, so the layer never covers the viewer when not marking.
             onPointerDown={(e) => {
               e.stopPropagation();
@@ -93,7 +104,7 @@ export function MarkLayer({ marks, onMark }: { marks?: ShownMark[]; onMark?: (m:
               } else m.onClick?.();
               setMoving(null);
             }}>
-            <span className="mark__n">{m.n}</span>
+            <span className="mark__n" style={m.color && !m.on ? { background: m.color } : undefined}>{m.label}</span>
           </div>
         );
       })}
