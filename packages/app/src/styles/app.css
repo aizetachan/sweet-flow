@@ -143,24 +143,27 @@
   filter: blur(1.2px);
   box-shadow: 0 0 8px 1px color-mix(in srgb, var(--primary) 22%, transparent), inset 0 0 6px color-mix(in srgb, var(--primary) 12%, transparent);
 }
-/* Selected: a neon tube — the same all the way round: a light core, the
-   light spilling into the card from its edges, and a blue bloom outside. A
-   bit softer than a real sign. Kept within the row's room. */
+/* Selected: a neon tube in the reference's blues — a thin edge as fine as
+   the hover's, lit (light blue, never white), glowing electric blue around it
+   and a little into the card, which takes a faint blue tint. */
 .card--on {
-  --neon: color-mix(in srgb, var(--primary) 82%, #38bdf8 18%);
+  --neon-edge: #6cb6ff;
+  --neon: 47 125 255;      /* #2f7dff */
+  --neon-deep: 22 72 216;  /* #1648d8 */
   border-color: transparent;
+  background: linear-gradient(rgb(var(--neon-deep) / .07), rgb(var(--neon-deep) / .07)), var(--bg-2);
   box-shadow:
-    0 0 3px 0 var(--neon),
-    0 0 10px 1px color-mix(in srgb, var(--neon) 55%, transparent),
-    0 0 18px 3px color-mix(in srgb, var(--neon) 22%, transparent),
-    inset 0 0 6px 0 color-mix(in srgb, var(--neon) 55%, transparent),
-    inset 0 0 22px 2px color-mix(in srgb, var(--neon) 16%, transparent);
+    0 0 2px 0 rgb(var(--neon) / .9),
+    0 0 8px 1px rgb(var(--neon) / .45),
+    0 0 18px 3px rgb(var(--neon-deep) / .3),
+    inset 0 0 6px rgb(var(--neon) / .35),
+    inset 0 0 18px rgb(var(--neon-deep) / .18);
 }
 .card--on::after, .card--on:hover::after {
   opacity: 1;
-  border: 1.5px solid color-mix(in srgb, var(--neon) 40%, white 60%);
-  filter: blur(.3px);
-  box-shadow: none;
+  border: 1px solid var(--neon-edge);
+  filter: blur(.4px);
+  box-shadow: 0 0 3px rgb(var(--neon) / .8), inset 0 0 3px rgb(var(--neon) / .5);
 }
 /* The "+" card keeps its dashed look. */
 .card--add::after { display: none; }
