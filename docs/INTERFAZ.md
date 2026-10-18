@@ -141,8 +141,8 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
     (lo edita en la tarjeta), abrir en ventana aparte y mover a la papelera.
     Con varias seleccionadas, el estado y la papelera se aplican a todas.
   - **Grupo:** estado de sus planos («Varios» si no es el mismo), cambiar el nombre, abrir el grupo,
-    deshacer el grupo (los planos vuelven a la fila) y mover a la papelera con
-    sus planos.
+    deshacer el grupo (los planos vuelven a la fila) y mover a la papelera
+    (con sus planos dentro).
 - **Tarjeta de plano:** portada (sin etiqueta de duración encima); código y estado (**clic en el estado** abre
   la lista para cambiarlo ahí mismo, sin seleccionar la tarjeta); debajo, el título y, a la
   derecha (bajo el estado), la **duración del vídeo** (la del tramo si es un

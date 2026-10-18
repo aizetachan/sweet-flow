@@ -399,9 +399,9 @@ function GroupMenu({ at, group, shots, onRename, onOpen, onClose }: { at: MenuAt
       <div className="menu__sep" />
       <button className="menu__item" onClick={onRename}><IconPencil size={14} /> <span className="menu__label">Cambiar el nombre</span></button>
       <button className="menu__item" onClick={onOpen}><IconStack2 size={14} /> <span className="menu__label">Abrir el grupo</span></button>
-      <button className="menu__item" onClick={() => source.dissolveGroup(group.id)}><IconArrowBackUp size={14} /> <span className="menu__label">Deshacer el grupo<span className="menu__hint">Los planos vuelven a la fila</span></span></button>
+      <button className="menu__item" onClick={() => source.dissolveGroup(group.id)}><IconArrowBackUp size={14} /> <span className="menu__label">Deshacer el grupo</span></button>
       <button className="menu__item menu__item--danger" onClick={() => trashNodes(shots.map((s) => s.id))}>
-        <IconTrash size={14} /> <span className="menu__label">Mover a la papelera con sus planos</span>
+        <IconTrash size={14} /> <span className="menu__label">Mover a la papelera</span>
       </button>
     </ContextMenu>
   );
