@@ -330,7 +330,8 @@
 .version--chosen .thumb { box-shadow: 0 0 0 2px var(--ok); }
 .version__act.version__act--on, .version__act.version__act--on:hover:not(:disabled) { background: var(--ok); color: #000; }
 .version__acts { position: absolute; top: 7px; right: 7px; display: flex; gap: 4px; opacity: 0; transition: opacity .12s; }
-.version:hover .version__acts, .version:focus-within .version__acts { opacity: 1; }
+/* Shown on hover, or when reached with the keyboard: a mouse click must not leave them stuck. */
+.version:hover .version__acts, .version:has(:focus-visible) .version__acts { opacity: 1; }
 .version__act { width: 24px; height: 24px; display: grid; place-items: center; border: 0; border-radius: 6px; background: #000c; color: #fff; }
 .version__act:hover:not(:disabled) { background: #000; color: var(--fg-0); }
 .version__act:disabled { opacity: .4; cursor: not-allowed; }
