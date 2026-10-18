@@ -61,7 +61,7 @@ import {
   type Segment,
   type StatusDef,
 } from "@sweetflow/domain";
-import type { DataSource, GenerateArgs, Placement, Snapshot } from "../source";
+import type { DataSource, GenerateArgs, NewComment, Placement, Snapshot } from "../source";
 import type { Generator, GenerationRequest } from "../generation";
 import type { ProductionFiles } from "../folder/ProductionFiles";
 import type { LogStore } from "./store";
@@ -261,12 +261,12 @@ export class LocalSource implements DataSource {
       groups: s.groups,
       media: s.media.map((m) => this.withUrl(m, s)),
       takes: s.takes,
-      comments: [],
+      comments: s.comments,
       assets: [],
       activity: [],
       presence: [],
       mirror: { status: this.saveError ? "offline" : pending ? "syncing" : "synced", rootPath: this.store.label, pending },
-      features: { generation: !!this.generator, review: false, presence: false, team: false, takes: true },
+      features: { generation: !!this.generator, review: true, presence: false, team: false, takes: true },
     };
     for (const l of this.listeners) l(this.snapshot);
   }
@@ -584,11 +584,22 @@ export class LocalSource implements DataSource {
 
   // ---------- not available yet in local mode ----------
 
-  addComment(_nodeId: Id, _text: string, _mediaId?: Id, _atSec?: number): void {
-    notYet("comentar");
+  // ---------- review ----------
+
+  addComment(n: NewComment): Id {
+    const id = this.newId("c");
+    const clean = Object.fromEntries(Object.entries(n).filter(([, v]) => v !== undefined && !(Array.isArray(v) && !v.length))) as NewComment;
+    this.write([{ type: "comment.added", comment: { ...clean, id, authorId: this.me.uid, resolved: false, createdAt: this.now() } }]);
+    return id;
   }
-  setCommentResolved(_commentId: Id, _resolved: boolean): void {
-    notYet("resolver comentarios");
+
+  setCommentResolved(commentId: Id, resolved: boolean): void {
+    const c = this.loaded().comments.find((x) => x.id === commentId);
+    if (c && c.resolved !== resolved) this.write([{ type: "comment.updated", id: commentId, patch: { resolved } }]);
+  }
+
+  deleteComment(commentId: Id): void {
+    if (this.loaded().comments.some((x) => x.id === commentId)) this.write([{ type: "comment.deleted", id: commentId }]);
   }
   setPresence(_nodeId: Id | undefined): void {
     // Presence needs real time (stage C).

@@ -11,7 +11,7 @@
 
 import { parseStamp, type Stamp } from "./clock";
 import { byNumber, splitTrash } from "./tree";
-import type { Id, LevelDef, Media, Member, Millis, ProdNode, Production, ShotGroup, StatusDef, Take } from "./types";
+import type { Comment, Id, LevelDef, Media, Member, Millis, ProdNode, Production, ShotGroup, StatusDef, Take } from "./types";
 
 /** Bump when an event's shape changes incompatibly. */
 export const LOG_VERSION = 1;
@@ -60,10 +60,15 @@ export type LogEventBody =
   /** Groups of shots inside a scene; shots join and leave with `node.updated` (groupId). */
   | { type: "group.created"; group: GroupRecord }
   | { type: "group.updated"; id: Id; patch: Partial<Pick<ShotGroup, "name" | "order">> }
-  | { type: "group.deleted"; id: Id };
+  | { type: "group.deleted"; id: Id }
+  /** Review (docs/INTERFAZ.md §2.6): on a node, a version, a moment of a video, a point. */
+  | { type: "comment.added"; comment: CommentRecord }
+  | { type: "comment.updated"; id: Id; patch: Partial<Pick<Comment, "text" | "resolved">> }
+  | { type: "comment.deleted"; id: Id };
 
 /** What the log keeps of a media: the URL to show it is resolved by each device. */
 export type MediaRecord = Omit<Media, "productionId" | "url" | "thumbUrl">;
+export type CommentRecord = Omit<Comment, "productionId">;
 export type GroupRecord = Omit<ShotGroup, "productionId">;
 export type TakeRecord = Omit<Take, "productionId" | "thumbUrl">;
 export type MediaPatch = Partial<Pick<Media, "status" | "progress" | "archived" | "error" | "file" | "remote" | "width" | "height" | "durationSec">>;
@@ -96,6 +101,8 @@ export interface LogState {
   takes: Take[];
   /** Groups of shots whose scene still exists. */
   groups: ShotGroup[];
+  /** Comments whose node still exists. */
+  comments: Comment[];
   members: Member[];
   conflicts: NumberConflict[];
   /** Highest stamp folded; feed it to `hlcObserve` before writing new events. */
@@ -163,6 +170,9 @@ const TYPES = new Set<string>([
   "group.created",
   "group.updated",
   "group.deleted",
+  "comment.added",
+  "comment.updated",
+  "comment.deleted",
 ]);
 
 function isLogEvent(e: unknown): e is LogEvent {
@@ -211,6 +221,7 @@ export function foldLog(events: LogEvent[]): LogState {
   const media = new Map<Id, MediaRecord>();
   const takes = new Map<Id, TakeRecord>();
   const groups = new Map<Id, GroupRecord>();
+  const comments = new Map<Id, CommentRecord>();
 
   for (const e of sorted) {
     const at = wallOf(e.at);
@@ -312,6 +323,17 @@ export function foldLog(events: LogEvent[]): LogState {
       case "group.deleted":
         groups.delete(e.id);
         break;
+      case "comment.added":
+        if (!comments.has(e.comment.id)) comments.set(e.comment.id, e.comment);
+        break;
+      case "comment.updated": {
+        const c = comments.get(e.id);
+        if (c) comments.set(e.id, { ...c, ...e.patch });
+        break;
+      }
+      case "comment.deleted":
+        comments.delete(e.id);
+        break;
       case "media.added":
         if (!media.has(e.media.id)) media.set(e.media.id, e.media);
         break;
@@ -337,7 +359,11 @@ export function foldLog(events: LogEvent[]): LogState {
   const mediaIds = new Set(kept.map((m) => m.id));
   const keptTakes = [...takes.values()].filter((t) => nodeIds.has(t.nodeId) && mediaIds.has(t.mediaId)).map((t) => ({ ...t, productionId }));
   const keptGroups = [...groups.values()].filter((g) => nodeIds.has(g.parentId)).map((g) => ({ ...g, productionId }));
-  return { production, nodes: live, media: kept, takes: keptTakes, groups: keptGroups, members: [...members.values()], conflicts, lastStamp: sorted.at(-1)?.at ?? null };
+  // A reply goes with its thread.
+  const keptComments = [...comments.values()]
+    .filter((c) => nodeIds.has(c.nodeId) && (!c.parentId || comments.has(c.parentId)))
+    .map((c) => ({ ...c, productionId }));
+  return { production, nodes: live, media: kept, takes: keptTakes, groups: keptGroups, comments: keptComments, members: [...members.values()], conflicts, lastStamp: sorted.at(-1)?.at ?? null };
 }
 
 /** Drop nodes whose parent is missing (deleted, or never synced). */

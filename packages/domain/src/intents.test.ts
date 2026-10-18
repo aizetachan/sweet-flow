@@ -311,4 +311,16 @@ describe("structure intents", () => {
     // Codes never changed.
     expect(state().nodes.filter((n) => n.parentId === sc).map((n) => `${n.title}${n.number}`).sort()).toEqual(["A10", "B20", "C30", "D40"]);
   });
+
+  it("keeps comments with replies, resolves them and drops a thread with its root", () => {
+    const { run, state } = session();
+    const sh = run((s) => planCreateNode(s.production!, s.nodes, null, "csh")).nodeId!;
+    const base = { nodeId: sh, authorId: "u", resolved: false, createdAt: 1 };
+    run(() => ({ events: [{ type: "comment.added", comment: { ...base, id: "c1", text: "Más luz @Ana", mentions: ["u_ana"], atSec: 4.2, point: { x: 0.5, y: 0.4 } } }] }));
+    run(() => ({ events: [{ type: "comment.added", comment: { ...base, id: "c2", text: "Hecho", parentId: "c1", authorId: "u_ana" } }] }));
+    run(() => ({ events: [{ type: "comment.updated", id: "c1", patch: { resolved: true } }] }));
+    expect(state().comments).toMatchObject([{ id: "c1", resolved: true, mentions: ["u_ana"], atSec: 4.2, productionId: "p" }, { id: "c2", parentId: "c1" }]);
+    run(() => ({ events: [{ type: "comment.deleted", id: "c1" }] }));
+    expect(state().comments).toEqual([]);
+  });
 });

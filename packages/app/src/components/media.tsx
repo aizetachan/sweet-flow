@@ -117,6 +117,9 @@ export function Player({
   onTime,
   onPlaying,
   range,
+  markers,
+  pins,
+  onPoint,
 }: {
   media: Media;
   time: number;
@@ -125,6 +128,12 @@ export function Player({
   onPlaying: (p: boolean) => void;
   /** Optional in/out loop (preview a take). */
   range?: { inSec: number; outSec: number };
+  /** Comments at moments of the video, on the timeline (a click goes there). */
+  markers?: Array<{ id: string; atSec: number; n: number; resolved?: boolean }>;
+  /** Comments marked at points of the image or frame (numbered). */
+  pins?: Array<{ id: string; x: number; y: number; n: number; on?: boolean; onClick?: () => void }>;
+  /** While set, a click on the picture marks a point there (0–1) instead of playing. */
+  onPoint?: (x: number, y: number) => void;
 }) {
   const dur = useDuration(media);
   const video = useRef<HTMLVideoElement>(null);
@@ -161,7 +170,17 @@ export function Player({
   const p = dur ? time / dur : 0;
   const box = useRef<HTMLDivElement>(null);
   return (
-    <div className="player" ref={box}>
+    <div className={cx("player", onPoint && "player--picking")} ref={box}>
+      {onPoint ? (
+        <div className="player__pick" title="Clic donde quieras señalar" onClick={(e) => {
+          const r = e.currentTarget.getBoundingClientRect();
+          onPoint(Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)), Math.min(1, Math.max(0, (e.clientY - r.top) / r.height)));
+        }} />
+      ) : null}
+      {pins?.map((p) => (
+        <button key={p.id} className={cx("player__pin", p.on && "player__pin--on")} style={{ left: `${p.x * 100}%`, top: `${p.y * 100}%` }}
+          onClick={(e) => { e.stopPropagation(); p.onClick?.(); }} title={`Comentario ${p.n}`}>{p.n}</button>
+      ))}
       {media.kind === "audio" && media.status === "ready" ? (
         <div className="player__audio">
           <IconMusic size={28} stroke={1.4} />
@@ -197,10 +216,21 @@ export function Player({
             {playing ? <IconPlayerPauseFilled size={14} /> : <IconPlayerPlayFilled size={14} />}
           </button>
           <span className="sf-mono player__tc">{formatTc(time)}</span>
+          <span className="player__track">
+          {markers?.map((m) => {
+            const a = range?.inSec ?? 0;
+            const b = range?.outSec ?? dur;
+            if (!b || m.atSec < a || m.atSec > b) return null;
+            return (
+              <button key={m.id} className={cx("player__mark", m.resolved && "player__mark--done")} style={{ left: `${((m.atSec - a) / (b - a)) * 100}%` }}
+                title={`Comentario ${m.n} · ${formatTc(m.atSec)}`} onClick={() => { onPlaying(false); onTime(m.atSec); }} />
+            );
+          })}
           <input className="player__seek" type="range" aria-label="Línea de tiempo"
             min={range?.inSec ?? 0} max={range?.outSec ?? (dur || 0.1)} step={0.05} value={Math.min(Math.max(time, range?.inSec ?? 0), range?.outSec ?? dur)}
             style={{ ["--p" as string]: `${(((time - (range?.inSec ?? 0)) / Math.max(0.1, (range?.outSec ?? dur) - (range?.inSec ?? 0))) * 100).toFixed(2)}%` }}
             onChange={(e) => onTime(+e.target.value)} />
+          </span>
           <span className="sf-mono player__tc sf-faint">{formatTc(range?.outSec ?? dur)}</span>
           <button className="player__btn" aria-label="Pantalla completa" title="Pantalla completa" onClick={() => {
             const el = box.current;

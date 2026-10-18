@@ -107,6 +107,20 @@ export interface Placement {
   target: { nodeId: Id } | { newChildOf: Id };
 }
 
+/** A comment as written (docs/INTERFAZ.md §2.6). */
+export interface NewComment {
+  nodeId: Id;
+  text: string;
+  /** The version it is about. */
+  mediaId?: Id;
+  /** The moment of a video. */
+  atSec?: number;
+  /** A point on the image or frame, 0–1. */
+  point?: { x: number; y: number };
+  mentions?: Id[];
+  parentId?: Id;
+}
+
 export interface DataSource {
   subscribe(cb: (s: Snapshot) => void): () => void;
   /** Stop listeners and timers when the production is closed. */
@@ -171,8 +185,11 @@ export interface DataSource {
   removeTake(takeId: Id): void;
 
   // review
-  addComment(nodeId: Id, text: string, mediaId?: Id, atSec?: number): void;
+  /** A comment, or a reply (`parentId`); returns its id. */
+  addComment(c: NewComment): Id;
   setCommentResolved(commentId: Id, resolved: boolean): void;
+  /** Its author removes it (with its replies). */
+  deleteComment(commentId: Id): void;
 
   // collaboration & mirror
   setPresence(nodeId: Id | undefined): void;

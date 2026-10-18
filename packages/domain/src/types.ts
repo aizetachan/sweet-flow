@@ -183,7 +183,13 @@ export interface Comment {
   mediaId?: Id;
   /** Timecode within the media. */
   atSec?: number;
+  /** A point marked on the image or frame, 0–1 from its top left. */
+  point?: { x: number; y: number };
   text: string;
+  /** People mentioned with @ (they are notified). */
+  mentions?: Id[];
+  /** The comment it answers (a thread); replies are never resolved on their own. */
+  parentId?: Id;
   authorId: Id;
   resolved: boolean;
   createdAt: Millis;

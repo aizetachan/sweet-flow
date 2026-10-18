@@ -169,6 +169,13 @@ Anotadas el 15 oct 2026, pendientes de que el usuario elija orden:
 - Voz (TTS) con elección de voz; referencia de vídeo para la música; movimiento de cámara y multiplano en Seedance.
 - Subir a Magnific una imagen local para usarla como referencia.
 
+### Revisión: siguientes pasos
+
+- Avisos de todas las producciones en el dashboard (hoy, los de la abierta).
+- Aviso del sistema operativo en la app de escritorio; email (necesita un servicio externo).
+- Acceso por carpetas o producciones: hoy quien tiene la carpeta del equipo ve todo; limitar quién entra y a quién se puede mencionar.
+- Dibujar sobre el fotograma (además del punto).
+
 ### Compartir: siguientes pasos
 
 - **Enlace para la app de escritorio:** protocolo `sweetflow://plano/…` registrado por la app, para que el enlace la abra directamente (hoy el enlace es la dirección de la app web).

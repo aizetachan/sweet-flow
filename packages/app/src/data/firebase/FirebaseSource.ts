@@ -67,7 +67,7 @@ import {
 } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
 import { getDownloadURL, ref as storageRef } from "firebase/storage";
-import { ALL_FEATURES, type DataSource, type GenerateArgs, type MirrorState, type Placement, type Snapshot } from "../source";
+import { ALL_FEATURES, type DataSource, type GenerateArgs, type MirrorState, type NewComment, type Placement, type Snapshot } from "../source";
 import { createClient, type FirebaseClient } from "./client";
 import { readFirebaseConfig } from "./config";
 import { NotImplemented } from "./errors";
@@ -469,10 +469,15 @@ export class FirebaseSource implements DataSource {
 
   // ---------- review ----------
 
-  addComment(nodeId: Id, text: string, mediaId?: Id, atSec?: number): void {
+  addComment(n: NewComment): Id {
     const id = this.newId("comments");
-    const c: Comment = stripUndefined({ id, productionId: this.prodId(), nodeId, mediaId, atSec, text, authorId: this.uid(), resolved: false, createdAt: Date.now() });
+    const c: Comment = stripUndefined({ ...n, id, productionId: this.prodId(), authorId: this.uid(), resolved: false, createdAt: Date.now() });
     this.write(setDoc(doc(this.col("comments"), id), c));
+    return id;
+  }
+
+  deleteComment(commentId: Id): void {
+    this.write(deleteDoc(doc(this.col("comments"), commentId)));
   }
 
   setCommentResolved(commentId: Id, resolved: boolean): void {

@@ -37,7 +37,7 @@ import {
   type StatusDef,
   type Take,
 } from "@sweetflow/domain";
-import { ALL_FEATURES, type DataSource, type GenerateArgs, type Placement, type Snapshot } from "../source";
+import { ALL_FEATURES, type DataSource, type GenerateArgs, type NewComment, type Placement, type Snapshot } from "../source";
 import { frame, type Mood } from "./frames";
 import { buildSeed, newId } from "./seed";
 
@@ -391,9 +391,14 @@ export class MockSource implements DataSource {
 
   // ---------- review ----------
 
-  addComment(nodeId: Id, text: string, mediaId?: Id, atSec?: number): void {
-    const c = { id: newId("c"), productionId: this.s.production.id, nodeId, mediaId, atSec, text, authorId: this.s.me.uid, resolved: false, createdAt: Date.now() };
-    this.commit({ comments: [...this.s.comments, c] }, true);
+  addComment(n: NewComment): Id {
+    const c = { ...n, id: newId("c"), productionId: this.s.production.id, authorId: this.s.me.uid, resolved: false, createdAt: Date.now() };
+    this.commit({ comments: [...this.s.comments, c], activity: [this.log("comment", n.parentId ? "respondió a un comentario" : "comentó", n.nodeId), ...this.s.activity] }, true);
+    return c.id;
+  }
+
+  deleteComment(commentId: Id): void {
+    this.commit({ comments: this.s.comments.filter((c) => c.id !== commentId && c.parentId !== commentId) });
   }
 
   setCommentResolved(commentId: Id, resolved: boolean): void {

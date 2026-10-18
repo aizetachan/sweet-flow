@@ -299,6 +299,30 @@ y «Tomas» por separado):
 - Por dentro, elegir es la «toma» del plano y quitar es «archivar»: los
   nombres ya no se ven.
 
+### 2.6 Revisión: comentarios, menciones y avisos
+
+- **Pestaña Revisión** del plano: el visor de la versión que se revisa (la
+  elegida o la abierta; con varias, un selector «Revisando v00N»), la caja para
+  escribir y los comentarios.
+- **Un comentario** va a una versión y, opcionalmente:
+  - en un **vídeo**, al **momento** actual (casilla con el tiempo, activada por
+    defecto). Se ve como una marca en la línea de tiempo; clic y el visor va ahí.
+  - a un **punto de la imagen o del fotograma**: «Marcar punto» y clic en el
+    visor. Se ve como una chincheta numerada (en vídeo, alrededor de su
+    momento).
+- **Menciones:** al escribir «@» sale la gente de la producción (quien la ha
+  abierto con la carpeta del equipo); flechas e Intro para elegir. El nombre
+  queda resaltado y esa persona recibe el aviso.
+- **Hilos:** cada comentario lleva su número (el de su chincheta y su marca),
+  **Responder** (las respuestas cuelgan del comentario) y **Resolver / Reabrir**.
+  Los resueltos se ocultan («Ver resueltos»). Quien lo escribió puede borrarlo.
+- **Avisos:** campana en la barra superior con el número sin leer: comentarios
+  que te mencionan y respuestas a los tuyos, de la producción abierta. Clic y
+  lleva al plano, a la versión y al momento. Llegan cuando la carpeta del
+  equipo se sincroniza (no al instante). Lo leído se recuerda en este
+  ordenador; «Marcar todo como leído».
+- La tarjeta del plano muestra el número de comentarios abiertos.
+
 ### 2.1 Reordenar arrastrando
 
 - En el árbol y en las filas del tablero se **selecciona y arrastra** cualquier
