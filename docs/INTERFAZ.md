@@ -142,6 +142,12 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
   (quitada el 18 oct 2026; se ajustará de otra forma). Abajo, comentarios,
   ventana aparte, quién está y responsables. El borde de la seleccionada va
   por dentro, para que no se corte al arrastrarla.
+- **Duraciones:** la de un plano es la de su toma elegida o, si no tiene, la
+  de su propio vídeo (una imagen cuenta 0). Una escena suma sus planos y una
+  secuencia sus escenas. Si el proveedor no dio la duración de un vídeo, se lee
+  del archivo la primera vez que se ve y queda guardada.
+- **Renombrar o mover** una secuencia, escena o plano mueve sus carpetas en el
+  disco, pero las portadas que se ven no cambian ni se quedan en blanco.
 - **Ver todos / En fila:** botón en la cabecera de cada escena. Por defecto la
   escena es una fila con scroll horizontal; «Ver todos» la adapta al ancho y
   baja de línea hasta que se ven todas sus tarjetas. Las columnas se calculan

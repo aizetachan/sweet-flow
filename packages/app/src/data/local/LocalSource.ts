@@ -196,7 +196,12 @@ export class LocalSource implements DataSource {
     if (this.files && p && bodies.some((b) => b.type.startsWith("node.") || b.type.startsWith("group.") || b.type === "levels.set")) {
       const after = this.state!.nodes;
       const files = this.files;
-      this.filing = this.filing.then(() => files.follow(p, before, after, groupsBefore, this.state!.groups)).catch((err) => console.error("[carpeta] no se pudieron mover las carpetas", err));
+      const groupsAfter = this.state!.groups;
+      this.filing = this.filing
+        .then(() => files.follow(p, before, after, groupsBefore, groupsAfter))
+        .catch((err) => console.error("[carpeta] no se pudieron mover las carpetas", err))
+        // Files read while their folder was moving are found now.
+        .then(() => this.emit());
     }
   }
 
@@ -272,7 +277,7 @@ export class LocalSource implements DataSource {
     let url: string | undefined;
     if (m.file && this.files && node && s.production) {
       const path = this.files.mediaPath(s.production, s.nodes, node, m.file, s.groups);
-      if (path) url = this.files.url(path, () => this.emit());
+      if (path) url = this.files.url(path, () => this.emit(), `${m.id}/${m.file}`);
     }
     const remote = m.remote?.url ?? m.remote?.previewUrl;
     url ??= remote && this.generator ? this.generator.viewUrl(remote) : undefined;
@@ -476,7 +481,7 @@ export class LocalSource implements DataSource {
     const file = mediaFileName(codeOf(s.production, node), m.kind, m.version, extensionOf(blob.type, url, m.kind));
     const path = this.files.mediaPath(s.production, s.nodes, node, file, s.groups);
     if (!path) return null;
-    await this.files.saveMedia(path, blob);
+    await this.files.saveMedia(path, blob, `${m.id}/${file}`);
     return file;
   }
 
@@ -490,6 +495,11 @@ export class LocalSource implements DataSource {
       // Never reached the provider: it can't be picked up.
       else this.updateMedia(m.id, { status: "failed", error: "Se interrumpió antes de llegar a Magnific." });
     }
+  }
+
+  noteDuration(mediaId: Id, durationSec: number): void {
+    const m = this.state?.media.find((x) => x.id === mediaId);
+    if (m && !m.durationSec && durationSec > 0) this.updateMedia(mediaId, { durationSec });
   }
 
   setArchived(mediaId: Id, archived: boolean): void {

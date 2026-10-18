@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { IconPhoto, IconPlayerPauseFilled, IconPlayerPlayFilled, IconVideo } from "@tabler/icons-react";
 import { formatTc, round1, takeDuration, type Media, type Take } from "@sweetflow/domain";
 import { cx, Spinner } from "@sweetflow/ui";
+import { useStore } from "../state/store";
 
 const isRealVideo = (m?: Media) => !!m?.url && m.kind === "video" && !m.url.startsWith("data:image");
 
@@ -36,7 +37,11 @@ export function useDuration(media?: Media): number {
   useEffect(() => {
     if (known || !url) return;
     let alive = true;
-    void probe(url).then((d) => alive && setRead(d));
+    void probe(url).then((d) => {
+      if (alive) setRead(d);
+      // Recorded once, so the scene's and sequence's totals count it.
+      if (d > 0 && media) useStore.getState().source.noteDuration?.(media.id, d);
+    });
     return () => { alive = false; };
   }, [known, url]);
   return known ?? (url ? read ?? probed.get(url) ?? 0 : 0);

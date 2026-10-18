@@ -12,7 +12,11 @@ import { joinPath, type FolderFs } from "./fs";
 export const MEDIA_DIR = "_media";
 
 export class ProductionFiles {
-  /** Object URLs of files already read, by path. */
+  /**
+   * Object URLs of files already read, by the file's own key (the media), not
+   * its path: renaming or moving a node moves its folder, and what is on
+   * screen must not go blank meanwhile.
+   */
   private urls = new Map<string, string>();
   private loading = new Set<string>();
 
@@ -32,26 +36,31 @@ export class ProductionFiles {
     return dir === null ? null : joinPath(dir, MEDIA_DIR, file);
   }
 
-  async saveMedia(path: string, data: Blob): Promise<void> {
+  async saveMedia(path: string, data: Blob, key = path): Promise<void> {
     await this.fs.writeBlob(path, data);
-    const old = this.urls.get(path);
+    const old = this.urls.get(key);
     if (old) URL.revokeObjectURL(old);
-    this.urls.set(path, URL.createObjectURL(data));
+    this.urls.set(key, URL.createObjectURL(data));
   }
 
-  /** URL to show a file: at once if already read; otherwise reads it and calls `onReady`. */
-  url(path: string, onReady: () => void): string | undefined {
-    const hit = this.urls.get(path);
-    if (hit || this.loading.has(path)) return hit;
-    this.loading.add(path);
+  /**
+   * URL to show a file: at once if already read (under `key`, wherever it is
+   * now); otherwise reads it from `path` and calls `onReady`. Not there yet
+   * (its folder is being moved): tried again on the next call.
+   */
+  url(path: string, onReady: () => void, key = path): string | undefined {
+    const hit = this.urls.get(key);
+    if (hit || this.loading.has(key)) return hit;
+    this.loading.add(key);
     void this.fs
       .readBlob(path)
       .then((b) => {
-        if (b) this.urls.set(path, URL.createObjectURL(b));
-        if (b) onReady();
+        if (!b) return;
+        this.urls.set(key, URL.createObjectURL(b));
+        onReady();
       })
       .catch(() => undefined)
-      .finally(() => this.loading.delete(path));
+      .finally(() => this.loading.delete(key));
     return undefined;
   }
 

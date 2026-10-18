@@ -137,6 +137,11 @@ export interface DataSource {
   // production
   generate(args: GenerateArgs): void;
   setArchived(mediaId: Id, archived: boolean): void;
+  /**
+   * A video's length read from the file, when the provider did not give it:
+   * recorded once so scenes and sequences add it up.
+   */
+  noteDuration?(mediaId: Id, durationSec: number): void;
   placeTakes(mediaId: Id, placements: Placement[]): void;
   /**
    * Cut a shot's video into new shots: one per kept segment, in its place,

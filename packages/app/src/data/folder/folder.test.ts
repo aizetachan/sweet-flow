@@ -116,11 +116,19 @@ describe("team folder", () => {
     src.subscribe((s) => (media = s.media));
     expect(media).toMatchObject([{ status: "ready", file: "SH0010_img_v001.png", version: 1 }]);
 
+    let urls: Array<string | undefined> = [];
+    src.subscribe((s) => (urls = s.media.map((m) => m.url)));
+    expect(urls[0]).toMatch(/^blob:/);
+    const shown = urls[0];
+
     // Renaming the scene moves its folder, with the shot and its media inside.
     src.updateNode(sc, { title: "Muelle" });
+    // What is on screen keeps showing meanwhile (and after).
+    expect(urls[0]).toBe(shown);
     await src.flushed();
     await new Promise((r) => setTimeout(r, 20));
     expect([...fs.blobs.keys()]).toEqual(["Anuncio/SQ010_Apertura/SC010_Muelle/SH0010_Faro/_media/SH0010_img_v001.png"]);
+    expect(urls[0]).toBe(shown);
     src.dispose();
   });
 

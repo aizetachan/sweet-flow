@@ -44,9 +44,17 @@ export function coverOf(s: Snapshot, n: ProdNode): { media?: Media; take?: Take;
   return { media: ready[ready.length - 1], pending };
 }
 
+/**
+ * Length on screen: a shot's chosen take, or its own video (the cover); a
+ * scene or sequence adds up its shots. Images count 0.
+ */
 export function durationOf(s: Snapshot, n: ProdNode): number {
   const take = n.selectedTakeId ? s.takes.find((t) => t.id === n.selectedTakeId) : undefined;
   if (take) return takeDuration(take);
+  if (isUnit(s.production, n)) {
+    const { media } = coverOf(s, n);
+    return media?.kind === "video" ? media.durationSec ?? 0 : 0;
+  }
   return Math.round(childrenOf(s.nodes, n.id).reduce((acc, c) => acc + durationOf(s, c), 0) * 10) / 10;
 }
 
