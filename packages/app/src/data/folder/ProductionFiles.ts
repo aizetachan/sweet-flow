@@ -6,7 +6,7 @@
  * it to the rest.
  */
 
-import { folderPath, type Id, type ProdNode, type Production } from "@sweetflow/domain";
+import { folderPath, type Id, type ProdNode, type Production, type ShotGroup } from "@sweetflow/domain";
 import { joinPath, type FolderFs } from "./fs";
 
 export const MEDIA_DIR = "_media";
@@ -22,13 +22,13 @@ export class ProductionFiles {
   ) {}
 
   /** Folder of a node, from the team folder's root. */
-  nodeDir(p: Production, nodes: ProdNode[], node: ProdNode): string | null {
+  nodeDir(p: Production, nodes: ProdNode[], node: ProdNode, groups: ShotGroup[] = []): string | null {
     const base = this.base();
-    return base === null ? null : joinPath(base, folderPath(p, nodes, node));
+    return base === null ? null : joinPath(base, folderPath(p, nodes, node, groups));
   }
 
-  mediaPath(p: Production, nodes: ProdNode[], node: ProdNode, file: string): string | null {
-    const dir = this.nodeDir(p, nodes, node);
+  mediaPath(p: Production, nodes: ProdNode[], node: ProdNode, file: string, groups: ShotGroup[] = []): string | null {
+    const dir = this.nodeDir(p, nodes, node, groups);
     return dir === null ? null : joinPath(dir, MEDIA_DIR, file);
   }
 
@@ -58,16 +58,17 @@ export class ProductionFiles {
   /**
    * Makes the folders follow the tree after this device changed it: new nodes
    * get their folder, renamed/renumbered/moved ones are moved (parents first),
-   * deleted ones are removed. Nodes in the trash keep their folder.
+   * deleted ones are removed. Nodes in the trash keep their folder. Shots
+   * follow their group's folder; a group folder left empty is removed.
    */
-  async follow(p: Production, before: ProdNode[], after: ProdNode[]): Promise<void> {
+  async follow(p: Production, before: ProdNode[], after: ProdNode[], groupsBefore: ShotGroup[] = [], groupsAfter: ShotGroup[] = []): Promise<void> {
     const base = this.base();
     if (base === null) return;
     const prevById = new Map(before.map((n) => [n.id, n]));
     const nextById = new Map(after.map((n) => [n.id, n]));
-    const pathIn = (nodes: ProdNode[], n: ProdNode) => joinPath(base, folderPath(p, nodes, n));
-    const was = new Map<Id, string>(before.map((n) => [n.id, pathIn(before, n)]));
-    const is = new Map<Id, string>(after.map((n) => [n.id, pathIn(after, n)]));
+    const pathIn = (nodes: ProdNode[], n: ProdNode, groups: ShotGroup[]) => joinPath(base, folderPath(p, nodes, n, groups));
+    const was = new Map<Id, string>(before.map((n) => [n.id, pathIn(before, n, groupsBefore)]));
+    const is = new Map<Id, string>(after.map((n) => [n.id, pathIn(after, n, groupsAfter)]));
 
     for (const n of before) {
       if (nextById.has(n.id)) continue;
@@ -92,5 +93,15 @@ export class ProductionFiles {
       if (now !== to) await this.fs.move(now, to);
     }
     for (const n of byDepth) if (!was.has(n.id)) await this.fs.mkdir(is.get(n.id)!);
+    // Group folders nothing lives in any more (dissolved, renamed, emptied).
+    const dirOf = (path: string) => path.slice(0, path.lastIndexOf("/"));
+    const inUse = new Set([...is.values()].map(dirOf));
+    const old = new Set(before.filter((n) => n.groupId && was.get(n.id) !== is.get(n.id)).map((n) => dirOf(was.get(n.id)!)));
+    for (const dir of old) {
+      if (inUse.has(dir)) continue;
+      // Gone already when its scene moved; never removes anything still inside.
+      const left = await this.fs.list(dir).catch(() => null);
+      if (left && !left.length) await this.fs.remove(dir);
+    }
   }
 }

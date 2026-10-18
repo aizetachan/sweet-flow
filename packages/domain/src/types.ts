@@ -98,8 +98,26 @@ export interface ProdNode {
    * `_editados/`, its media still feeding the new shots' takes.
    */
   shelvedAt?: Millis;
+  /** Group of shots it is in, inside its scene (docs/INTERFAZ.md §2.4); null/absent: none. */
+  groupId?: Id | null;
   updatedAt: Millis;
   updatedBy: Id;
+}
+
+/**
+ * A group of shots inside a scene, like a folder (docs/INTERFAZ.md §2.4): to
+ * keep together shots still to decide or validate. A folder on disk inside
+ * the scene; its shots keep their codes and names.
+ */
+export interface ShotGroup {
+  id: Id;
+  productionId: Id;
+  /** The scene (row) it belongs to. */
+  parentId: Id;
+  name: string;
+  /** Place in the row, in the same scale as its shots' `order`. */
+  order: number;
+  createdAt: Millis;
 }
 
 export type MediaKind = "image" | "video" | "audio";

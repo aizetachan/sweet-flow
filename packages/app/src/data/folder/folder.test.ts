@@ -169,4 +169,38 @@ describe("team folder", () => {
     expect([...fs.blobs.keys()]).toEqual(["Anuncio/SQ010_Apertura/SC010_Puerto/SH0030_Faro/_media/SH0010_vid_v001.mp4"]);
     src.dispose();
   });
+
+  it("keeps a group of shots as a folder inside the scene, following renames and undo", async () => {
+    const fs = new MemoryFolderFs();
+    const lib = new FolderEntries(fs, "dev-a", () => "u1");
+    await lib.init();
+    lib.save([entry("p1", "production", "Anuncio", null)]);
+    const base = () => lib.pathOf("p1");
+    const src = new LocalSource({ store: new FolderLogStore(fs, base), files: new ProductionFiles(fs, base), deviceId: "dev-a", me, create: { id: "p1", name: "Anuncio", levels: defaultLevels(uniq), statuses: defaultStatuses(uniq) } });
+    await src.ready;
+    const sc = src.createNode(src.createNode(null, "Apertura"), "Puerto");
+    const a = src.createNode(sc, "Faro");
+    const b = src.createNode(sc, "Muelle");
+    const settle = async () => { await src.flushed(); await new Promise((r) => setTimeout(r, 20)); };
+    await settle();
+    const scene = "Anuncio/SQ010_Apertura/SC010_Puerto";
+
+    const g = src.groupShots([b], { shotId: a })!;
+    await settle();
+    expect(fs.dirs.has(`${scene}/Grupo-1/SH0010_Faro`)).toBe(true);
+    expect(fs.dirs.has(`${scene}/Grupo-1/SH0020_Muelle`)).toBe(true);
+    expect(fs.dirs.has(`${scene}/SH0010_Faro`)).toBe(false);
+
+    src.renameGroup(g, "Por decidir");
+    await settle();
+    expect(fs.dirs.has(`${scene}/Por-decidir/SH0020_Muelle`)).toBe(true);
+    expect(fs.dirs.has(`${scene}/Grupo-1`)).toBe(false);
+
+    src.dissolveGroup(g);
+    await settle();
+    expect(fs.dirs.has(`${scene}/SH0010_Faro`)).toBe(true);
+    expect(fs.dirs.has(`${scene}/SH0020_Muelle`)).toBe(true);
+    expect(fs.dirs.has(`${scene}/Por-decidir`)).toBe(false);
+    src.dispose();
+  });
 });

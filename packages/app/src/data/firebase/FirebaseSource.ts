@@ -184,6 +184,7 @@ export class FirebaseSource implements DataSource {
       // The production trash lands with stage C; until then deletes are for good.
       trash: [],
       shelf: [],
+      groups: [],
       media: l.media.map((m) => this.withUrls(m)),
       takes: l.takes,
       comments: l.comments,
@@ -346,6 +347,22 @@ export class FirebaseSource implements DataSource {
 
   unshelveNode(_nodeId: Id): number | undefined {
     throw new NotImplemented("Vídeos editados", "etapa C");
+  }
+
+  groupShots(_ids: Id[], _target: { shotId: Id } | { groupId: Id }): Id | undefined {
+    throw new NotImplemented("Grupos de planos", "etapa C");
+  }
+
+  ungroupShots(_ids: Id[]): void {
+    throw new NotImplemented("Grupos de planos", "etapa C");
+  }
+
+  dissolveGroup(_groupId: Id): void {
+    throw new NotImplemented("Grupos de planos", "etapa C");
+  }
+
+  renameGroup(_groupId: Id, _name: string): void {
+    throw new NotImplemented("Grupos de planos", "etapa C");
   }
 
   deleteNode(nodeId: Id): void {

@@ -6,7 +6,7 @@
  */
 
 import { useState, type DragEvent } from "react";
-import { childrenOf, codeOf, levelIndex, type Id, type ProdNode, type Production } from "@sweetflow/domain";
+import { childrenOf, codeOf, isUnit, levelIndex, type Id, type ProdNode, type Production } from "@sweetflow/domain";
 import { useStore } from "../state/store";
 
 const NODE_DRAG = "application/x-sweetflow-nodes";
@@ -14,7 +14,8 @@ const NODE_DRAG = "application/x-sweetflow-nodes";
 /** Ids being dragged. dataTransfer can't be read during dragover, so keep them here. */
 let dragging: Id[] = [];
 
-export type Zone = "before" | "after" | "into";
+/** `group`: the middle of a shot card, to put the dragged shots together with it (§2.4). */
+export type Zone = "before" | "after" | "into" | "group";
 
 /** Drag the multi-selection when the grabbed node is part of it, else just the node. */
 export function nodeDragProps(id: Id) {
@@ -46,7 +47,7 @@ function allowed(p: Production, nodes: ProdNode[], target: ProdNode, zone: Zone)
  * (tree rows: y; board cards: x); `into` lets the middle of the target
  * receive children.
  */
-export function useNodeDrop(target: ProdNode, axis: "x" | "y", into = false) {
+export function useNodeDrop(target: ProdNode, axis: "x" | "y", into = false, group = false) {
   const [zone, setZone] = useState<Zone | null>(null);
 
   const pickZone = (e: DragEvent): Zone | null => {
@@ -56,6 +57,7 @@ export function useNodeDrop(target: ProdNode, axis: "x" | "y", into = false) {
     const t = axis === "y" ? (e.clientY - r.top) / r.height : (e.clientX - r.left) / r.width;
     const p = snap.production;
     if (into && allowed(p, snap.nodes, target, "into") && t > 0.25 && t < 0.75) return "into";
+    if (group && t > 0.3 && t < 0.7 && canGroup(p, snap.nodes, target)) return "group";
     const z: Zone = t < 0.5 ? "before" : "after";
     if (allowed(p, snap.nodes, target, z)) return z;
     return into && allowed(p, snap.nodes, target, "into") ? "into" : null;
@@ -118,9 +120,78 @@ export function useEndDrop(parentId: Id | null) {
   };
 }
 
+/** Only shots group, and never a shot with itself. */
+function canGroup(p: Production, nodes: ProdNode[], target: ProdNode): boolean {
+  if (!dragging.length || dragging.includes(target.id) || !isUnit(p, target)) return false;
+  return dragging.every((id) => {
+    const n = nodes.find((x) => x.id === id);
+    return !!n && isUnit(p, n);
+  });
+}
+
+/** Drop target for a group card: the dragged shots go into the group. */
+export function useGroupDrop(groupId: Id) {
+  return useSimpleDrop(() => {
+    const { snap } = useStore.getState();
+    return !!snap && dragging.length > 0 && dragging.every((id) => {
+      const n = snap.nodes.find((x) => x.id === id);
+      return !!n && isUnit(snap.production, n) && n.groupId !== groupId;
+    });
+  }, () => group(dragging, { groupId }));
+}
+
+/** Drop target to take the dragged shots out of their group (the open group's back button). */
+export function useUngroupDrop(groupId: Id) {
+  return useSimpleDrop(() => {
+    const { snap } = useStore.getState();
+    return !!snap && dragging.length > 0 && dragging.every((id) => snap.nodes.find((x) => x.id === id)?.groupId === groupId);
+  }, () => {
+    const { source, set } = useStore.getState();
+    source.ungroupShots(dragging);
+    dragging = [];
+    set({ multi: [] });
+  });
+}
+
+function useSimpleDrop(ok: () => boolean, run: () => void) {
+  const [over, setOver] = useState(false);
+  return {
+    over,
+    props: {
+      onDragOver: (e: DragEvent) => {
+        if (!e.dataTransfer.types.includes(NODE_DRAG) || !ok()) return;
+        e.preventDefault();
+        e.stopPropagation();
+        e.dataTransfer.dropEffect = "move";
+        setOver(true);
+      },
+      onDragLeave: () => setOver(false),
+      onDrop: (e: DragEvent) => {
+        setOver(false);
+        if (!ok()) return;
+        e.preventDefault();
+        e.stopPropagation();
+        run();
+      },
+    },
+  };
+}
+
+function group(ids: Id[], target: { shotId: Id } | { groupId: Id }): void {
+  const { source, set, notify } = useStore.getState();
+  try {
+    source.groupShots(ids, target);
+  } catch (err) {
+    notify(err instanceof Error ? err.message : String(err));
+  }
+  dragging = [];
+  set({ multi: [] });
+}
+
 function dropOn(target: ProdNode, zone: Zone): void {
   const { snap } = useStore.getState();
   if (!snap) return;
+  if (zone === "group") return group(dragging, { shotId: target.id });
   if (zone === "into") return move(target.id, null);
   if (zone === "before") return move(target.parentId, target.id);
   const siblings = childrenOf(snap.nodes, target.parentId).filter((n) => !dragging.includes(n.id));

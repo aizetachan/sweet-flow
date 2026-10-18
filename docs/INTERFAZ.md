@@ -210,6 +210,33 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
 - El vídeo de una escena o secuencia (en la demo) se sigue **repartiendo** en
   sus planos como antes.
 
+### 2.4 Grupos de planos
+
+- Dentro de una escena se pueden **agrupar planos** para tenerlos juntos (por
+  ejemplo, varios por decidir o por terminar de validar).
+- **Crear:** se arrastra un plano y se suelta **en el centro** de otro (en los
+  bordes, se recoloca como siempre). Se crea «Grupo 1» en el sitio del plano de
+  destino. Soltar un plano sobre un grupo lo mete dentro. Un plano de otra
+  escena se mueve a esta al meterlo.
+- **En la fila,** el grupo es una tarjeta apilada con la portada de su primer
+  plano, el nombre, los códigos de sus planos, la duración, los aprobados y un
+  punto por estado.
+- **Abrir:** clic en el grupo. La fila muestra solo sus planos, con una barra:
+  - **← SC010** vuelve a la fila. Soltar un plano ahí lo saca del grupo.
+  - El **nombre**: clic para cambiarlo.
+  - **Deshacer grupo:** los planos vuelven a la fila y el grupo desaparece.
+  - El «+» crea el plano nuevo dentro del grupo.
+  - Al seleccionar un plano que está dentro (desde Estructura o Fijados), su
+    grupo se abre solo.
+- **Los planos no cambian de código ni de nombre.** En disco, el grupo es una
+  carpeta dentro de la escena (`SC010_…/Por-decidir/SH0020_…`), como en Google
+  Drive: el nombre del archivo es el mismo y la ruta no se muestra. Al mover un
+  plano a otra escena sale de su grupo. Un grupo que se queda vacío desaparece.
+- Con filtros activos se ven todos los planos que coinciden, también los que
+  están en grupos.
+- **Pendiente:** reordenar un grupo arrastrándolo, y el orden de montaje de sus
+  planos (ver ROADMAP).
+
 ## 3. Ventanas aparte
 
 - **Tamaño:** se abre como una pantalla de portátil de 13–14″ (1440×900),

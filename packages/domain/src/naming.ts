@@ -82,3 +82,16 @@ export function entryFolderNames(siblings: Array<{ id: string; name: string; cre
 export function nextMediaVersion(media: Array<{ nodeId: string; kind: string; version: number }>, nodeId: string, kind: string): number {
   return Math.max(0, ...media.filter((m) => m.nodeId === nodeId && m.kind === kind).map((m) => m.version)) + 1;
 }
+
+/**
+ * Disk names of a scene's groups of shots: `safeTitle` of each name, "-2",
+ * "-3"… on case-insensitive clashes (older group first), never one that looks
+ * like a node's code folder or the shelf.
+ */
+export function groupFolderNames(groups: Array<{ id: string; name: string; createdAt: number }>): Map<string, string> {
+  const named = groups.map((g) => {
+    const t = safeTitle(g.name) || "Grupo";
+    return { ...g, name: /^[A-Za-z]{2}\d/.test(t) ? `Grupo-${t}` : t };
+  });
+  return entryFolderNames(named);
+}

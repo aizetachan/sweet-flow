@@ -3,8 +3,8 @@
  * they run the same in the UI, in Cloud Functions and in the folder mirror.
  */
 
-import { codeFor, folderName, SHELF_DIR } from "./naming";
-import type { Id, LevelDef, ProdNode, Production } from "./types";
+import { codeFor, folderName, groupFolderNames, SHELF_DIR } from "./naming";
+import type { Id, LevelDef, ProdNode, Production, ShotGroup } from "./types";
 
 export type LevelRole = "group" | "production" | "unit";
 
@@ -75,10 +75,29 @@ export function codePath(p: Production, nodes: ProdNode[], n: ProdNode): string[
 
 /**
  * Folder path relative to the production root, identical on macOS & Windows.
- * A shelved node lives in its parent's `_editados/`.
+ * A shelved node lives in its parent's `_editados/`; a grouped shot, in its
+ * group's folder inside the scene.
  */
-export function folderPath(p: Production, nodes: ProdNode[], n: ProdNode): string {
-  return ancestorsOf(nodes, n).map((a) => (a.shelvedAt !== undefined ? `${SHELF_DIR}/${folderOf(p, a)}` : folderOf(p, a))).join("/");
+export function folderPath(p: Production, nodes: ProdNode[], n: ProdNode, groups: ShotGroup[] = []): string {
+  return ancestorsOf(nodes, n)
+    .map((a) => {
+      if (a.shelvedAt !== undefined) return `${SHELF_DIR}/${folderOf(p, a)}`;
+      const g = groupOf(groups, a);
+      return g ? `${groupDirs(groups, g.parentId).get(g.id)}/${folderOf(p, a)}` : folderOf(p, a);
+    })
+    .join("/");
+}
+
+/** The group a node is in, if it exists and belongs to the node's parent. */
+export function groupOf(groups: ShotGroup[], n: ProdNode): ShotGroup | undefined {
+  if (!n.groupId) return undefined;
+  const g = groups.find((x) => x.id === n.groupId);
+  return g && g.parentId === n.parentId ? g : undefined;
+}
+
+/** Disk names of the groups of one scene. */
+export function groupDirs(groups: ShotGroup[], parentId: Id): Map<Id, string> {
+  return groupFolderNames(groups.filter((g) => g.parentId === parentId));
 }
 
 /** Stable global sort key (depth-first order). */

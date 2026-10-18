@@ -33,6 +33,10 @@ import {
   planRestoreNode,
   planSetNumber,
   planSplitShot,
+  planGroupShots,
+  planUngroupShots,
+  planDissolveGroup,
+  planRenameGroup,
   planTrashNode,
   planUnshelveNode,
   splitTrash,
@@ -176,6 +180,7 @@ export class LocalSource implements DataSource {
   private write(bodies: LogEventBody[]): void {
     if (!bodies.length) return;
     const before = this.state?.nodes ?? [];
+    const groupsBefore = this.state?.groups ?? [];
     for (const body of bodies) {
       this.clock = hlcTick(this.clock, this.now());
       const e = { ...body, v: LOG_VERSION, at: formatStamp(this.clock, this.deviceId), userId: this.me.uid } as LogEvent;
@@ -186,10 +191,10 @@ export class LocalSource implements DataSource {
     this.save();
     // This device changed the tree: its folders on disk follow.
     const p = this.state?.production;
-    if (this.files && p && bodies.some((b) => b.type.startsWith("node.") || b.type === "levels.set")) {
+    if (this.files && p && bodies.some((b) => b.type.startsWith("node.") || b.type.startsWith("group.") || b.type === "levels.set")) {
       const after = this.state!.nodes;
       const files = this.files;
-      this.filing = this.filing.then(() => files.follow(p, before, after)).catch((err) => console.error("[carpeta] no se pudieron mover las carpetas", err));
+      this.filing = this.filing.then(() => files.follow(p, before, after, groupsBefore, this.state!.groups)).catch((err) => console.error("[carpeta] no se pudieron mover las carpetas", err));
     }
   }
 
@@ -246,6 +251,7 @@ export class LocalSource implements DataSource {
       nodes: split.live,
       trash: split.trash,
       shelf: split.shelf,
+      groups: s.groups,
       media: s.media.map((m) => this.withUrl(m, s)),
       takes: s.takes,
       comments: [],
@@ -263,7 +269,7 @@ export class LocalSource implements DataSource {
     const node = s.nodes.find((n) => n.id === m.nodeId);
     let url: string | undefined;
     if (m.file && this.files && node && s.production) {
-      const path = this.files.mediaPath(s.production, s.nodes, node, m.file);
+      const path = this.files.mediaPath(s.production, s.nodes, node, m.file, s.groups);
       if (path) url = this.files.url(path, () => this.emit());
     }
     const remote = m.remote?.url ?? m.remote?.previewUrl;
@@ -312,6 +318,25 @@ export class LocalSource implements DataSource {
 
   deleteNode(nodeId: Id): void {
     this.apply(planDeleteNode(this.loaded().nodes, nodeId));
+  }
+
+  groupShots(ids: Id[], target: { shotId: Id } | { groupId: Id }): Id | undefined {
+    const s = this.loaded();
+    const plan = planGroupShots(s.production, this.board(), s.groups, ids, target, this.newId("g"), this.now());
+    this.apply(plan);
+    return plan.groupId;
+  }
+
+  ungroupShots(ids: Id[]): void {
+    this.apply(planUngroupShots(this.board(), this.loaded().groups, ids));
+  }
+
+  dissolveGroup(groupId: Id): void {
+    this.apply(planDissolveGroup(this.board(), this.loaded().groups, groupId));
+  }
+
+  renameGroup(groupId: Id, name: string): void {
+    this.apply(planRenameGroup(this.loaded().groups, groupId, name));
   }
 
   updateNode(nodeId: Id, patch: Partial<Pick<ProdNode, "title" | "notes" | "statusId" | "assigneeIds" | "assetIds">>): void {
@@ -387,8 +412,8 @@ export class LocalSource implements DataSource {
     const s = this.loaded();
     const node = s.nodes.find((n) => n.id === args.nodeId)!;
     // The provider's folders mirror the team folder down to the node.
-    const inTeam = this.files?.nodeDir(s.production, s.nodes, node);
-    const segments = (inTeam ?? [safeTitle(s.production.name) || "Sweet-Flow", folderPath(s.production, s.nodes, node)].join("/")).split("/");
+    const inTeam = this.files?.nodeDir(s.production, s.nodes, node, s.groups);
+    const segments = (inTeam ?? [safeTitle(s.production.name) || "Sweet-Flow", folderPath(s.production, s.nodes, node, s.groups)].join("/")).split("/");
     const source = args.sourceMediaId ? s.media.find((m) => m.id === args.sourceMediaId) : undefined;
     return { kind: args.kind, prompt: args.prompt, model: args.model, durationSec: args.durationSec, startFrom: source?.remote?.id, folderPath: segments };
   }
@@ -442,7 +467,7 @@ export class LocalSource implements DataSource {
     if (!this.files || !this.generator || !node) return null;
     const blob = await this.generator.download(url);
     const file = mediaFileName(codeOf(s.production, node), m.kind, m.version, extensionOf(blob.type, url, m.kind));
-    const path = this.files.mediaPath(s.production, s.nodes, node, file);
+    const path = this.files.mediaPath(s.production, s.nodes, node, file, s.groups);
     if (!path) return null;
     await this.files.saveMedia(path, blob);
     return file;

@@ -11,13 +11,13 @@
 
 import { parseStamp, type Stamp } from "./clock";
 import { byNumber, splitTrash } from "./tree";
-import type { Id, LevelDef, Media, Member, Millis, ProdNode, Production, StatusDef, Take } from "./types";
+import type { Id, LevelDef, Media, Member, Millis, ProdNode, Production, ShotGroup, StatusDef, Take } from "./types";
 
 /** Bump when an event's shape changes incompatibly. */
 export const LOG_VERSION = 1;
 
 /** Node fields that change with last-writer-wins, one field at a time. */
-export type NodePatch = Partial<Pick<ProdNode, "title" | "notes" | "statusId" | "assigneeIds" | "assetIds" | "selectedTakeId">>;
+export type NodePatch = Partial<Pick<ProdNode, "title" | "notes" | "statusId" | "assigneeIds" | "assetIds" | "selectedTakeId" | "groupId">>;
 
 export type LogEventBody =
   | {
@@ -56,10 +56,15 @@ export type LogEventBody =
   | { type: "media.updated"; id: Id; patch: MediaPatch }
   /** A stretch of a media placed in a node (non-destructive cut). */
   | { type: "take.added"; take: TakeRecord }
-  | { type: "take.removed"; id: Id };
+  | { type: "take.removed"; id: Id }
+  /** Groups of shots inside a scene; shots join and leave with `node.updated` (groupId). */
+  | { type: "group.created"; group: GroupRecord }
+  | { type: "group.updated"; id: Id; patch: Partial<Pick<ShotGroup, "name" | "order">> }
+  | { type: "group.deleted"; id: Id };
 
 /** What the log keeps of a media: the URL to show it is resolved by each device. */
 export type MediaRecord = Omit<Media, "productionId" | "url" | "thumbUrl">;
+export type GroupRecord = Omit<ShotGroup, "productionId">;
 export type TakeRecord = Omit<Take, "productionId" | "thumbUrl">;
 export type MediaPatch = Partial<Pick<Media, "status" | "progress" | "archived" | "error" | "file" | "remote" | "width" | "height" | "durationSec">>;
 
@@ -89,6 +94,8 @@ export interface LogState {
   media: Media[];
   /** Takes whose node and media still exist. */
   takes: Take[];
+  /** Groups of shots whose scene still exists. */
+  groups: ShotGroup[];
   members: Member[];
   conflicts: NumberConflict[];
   /** Highest stamp folded; feed it to `hlcObserve` before writing new events. */
@@ -153,6 +160,9 @@ const TYPES = new Set<string>([
   "media.updated",
   "take.added",
   "take.removed",
+  "group.created",
+  "group.updated",
+  "group.deleted",
 ]);
 
 function isLogEvent(e: unknown): e is LogEvent {
@@ -200,6 +210,7 @@ export function foldLog(events: LogEvent[]): LogState {
   const members = new Map<Id, Member>();
   const media = new Map<Id, MediaRecord>();
   const takes = new Map<Id, TakeRecord>();
+  const groups = new Map<Id, GroupRecord>();
 
   for (const e of sorted) {
     const at = wallOf(e.at);
@@ -290,6 +301,17 @@ export function foldLog(events: LogEvent[]): LogState {
       case "take.removed":
         takes.delete(e.id);
         break;
+      case "group.created":
+        if (!groups.has(e.group.id)) groups.set(e.group.id, e.group);
+        break;
+      case "group.updated": {
+        const g = groups.get(e.id);
+        if (g) groups.set(e.id, { ...g, ...e.patch });
+        break;
+      }
+      case "group.deleted":
+        groups.delete(e.id);
+        break;
       case "media.added":
         if (!media.has(e.media.id)) media.set(e.media.id, e.media);
         break;
@@ -314,7 +336,8 @@ export function foldLog(events: LogEvent[]): LogState {
   const kept = [...media.values()].filter((m) => nodeIds.has(m.nodeId)).map((m) => ({ ...m, productionId }));
   const mediaIds = new Set(kept.map((m) => m.id));
   const keptTakes = [...takes.values()].filter((t) => nodeIds.has(t.nodeId) && mediaIds.has(t.mediaId)).map((t) => ({ ...t, productionId }));
-  return { production, nodes: live, media: kept, takes: keptTakes, members: [...members.values()], conflicts, lastStamp: sorted.at(-1)?.at ?? null };
+  const keptGroups = [...groups.values()].filter((g) => nodeIds.has(g.parentId)).map((g) => ({ ...g, productionId }));
+  return { production, nodes: live, media: kept, takes: keptTakes, groups: keptGroups, members: [...members.values()], conflicts, lastStamp: sorted.at(-1)?.at ?? null };
 }
 
 /** Drop nodes whose parent is missing (deleted, or never synced). */

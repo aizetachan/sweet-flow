@@ -18,6 +18,10 @@ import {
   planRestoreNode,
   planSetNumber,
   planSplitShot,
+  planGroupShots,
+  planUngroupShots,
+  planDissolveGroup,
+  planRenameGroup,
   planTrashNode,
   planUnshelveNode,
   splitTrash,
@@ -50,6 +54,7 @@ export class MockSource implements DataSource {
       ...seed,
       trash: [],
       shelf: [],
+      groups: [],
       presence: [
         { uid: "u_laura", nodeId: seed.nodes.find((n) => n.title === "La linterna se enciende")?.id, at: Date.now() },
         { uid: "u_marc", nodeId: seed.nodes.find((n) => n.title === "Mar abierto")?.id, at: Date.now() },
@@ -129,6 +134,7 @@ export class MockSource implements DataSource {
   private applyPlan(plan: Plan): Id | undefined {
     if (!plan.events.length) return plan.nodeId;
     let nodes = this.s.nodes;
+    let groups = this.s.groups;
     const stamp = { updatedAt: Date.now(), updatedBy: this.s.me.uid };
     for (const e of plan.events) {
       if (e.type === "node.created") {
@@ -137,9 +143,17 @@ export class MockSource implements DataSource {
         nodes = nodes.map((n) => (n.id === e.id ? { ...n, parentId: e.parentId, order: e.order, number: e.number ?? n.number, ...stamp } : n));
       } else if (e.type === "node.renumbered") {
         nodes = nodes.map((n) => (e.numbers[n.id] === undefined ? n : { ...n, number: e.numbers[n.id]!, ...stamp }));
+      } else if (e.type === "node.updated") {
+        nodes = nodes.map((n) => (n.id === e.id ? { ...n, ...e.patch, ...stamp } : n));
+      } else if (e.type === "group.created") {
+        groups = [...groups, { ...e.group, productionId: this.s.production.id }];
+      } else if (e.type === "group.updated") {
+        groups = groups.map((g) => (g.id === e.id ? { ...g, ...e.patch } : g));
+      } else if (e.type === "group.deleted") {
+        groups = groups.filter((g) => g.id !== e.id);
       }
     }
-    this.commit({ nodes }, true);
+    this.commit({ nodes, groups }, true);
     return plan.nodeId;
   }
 
@@ -188,6 +202,24 @@ export class MockSource implements DataSource {
       },
       true,
     );
+  }
+
+  groupShots(ids: Id[], target: { shotId: Id } | { groupId: Id }): Id | undefined {
+    const plan = planGroupShots(this.s.production, this.s.nodes, this.s.groups, ids, target, newId("g"), Date.now());
+    this.applyPlan(plan);
+    return plan.groupId;
+  }
+
+  ungroupShots(ids: Id[]): void {
+    this.applyPlan(planUngroupShots(this.s.nodes, this.s.groups, ids));
+  }
+
+  dissolveGroup(groupId: Id): void {
+    this.applyPlan(planDissolveGroup(this.s.nodes, this.s.groups, groupId));
+  }
+
+  renameGroup(groupId: Id, name: string): void {
+    this.applyPlan(planRenameGroup(this.s.groups, groupId, name));
   }
 
   updateNode(nodeId: Id, patch: Partial<ProdNode>): void {

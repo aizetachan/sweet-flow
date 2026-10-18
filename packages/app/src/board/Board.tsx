@@ -1,5 +1,5 @@
-import type { ReactNode } from "react";
-import { IconExternalLink, IconMessageCircle, IconPlus, IconFilter, IconInfoCircle, IconSearch, IconTrash, IconWand, IconX } from "@tabler/icons-react";
+import { useEffect, useState, type ReactNode } from "react";
+import { IconArrowLeft, IconStack2, IconExternalLink, IconMessageCircle, IconPlus, IconFilter, IconInfoCircle, IconSearch, IconTrash, IconWand, IconX } from "@tabler/icons-react";
 import {
   childrenOf,
   codeOf,
@@ -7,8 +7,11 @@ import {
   isUnit,
   levelIndex,
   levelOf,
+  byPosition,
+  sortValue,
   type Id,
   type ProdNode,
+  type ShotGroup,
 } from "@sweetflow/domain";
 import { AvatarStack, Button, cx, IconButton, Pill, Segmented } from "@sweetflow/ui";
 import { useSnap, useStore, type CardSize } from "../state/store";
@@ -16,7 +19,7 @@ import { colorSlot, countsOf, coverOf, durationOf, filtersActive, matches, membe
 import { Thumb } from "../components/media";
 import { Popover } from "../components/Popover";
 import { StatusPicker } from "../components/StatusPicker";
-import { nodeDragProps, useEndDrop, useNodeDrop } from "./dnd";
+import { nodeDragProps, useEndDrop, useGroupDrop, useNodeDrop, useUngroupDrop } from "./dnd";
 import { ShelfButton } from "./Shelf";
 
 export function Board() {
@@ -145,8 +148,26 @@ function Lane({ row }: { row: ProdNode }) {
   const viewers = presenceAt(snap, row.id);
   const headDrop = useNodeDrop(row, "y");
   const endDrop = useEndDrop(row.id);
+  // Groups of shots (§2.4): a card each in the row; open, the row shows what is inside.
+  const groups = snap.groups.filter((g) => g.parentId === row.id && all.some((u) => u.groupId === g.id));
+  const [openId, setOpenId] = useState<Id | null>(null);
+  const selectedId = useStore((s) => s.selectedId);
+  useEffect(() => {
+    const sel = all.find((u) => u.id === selectedId);
+    if (sel?.groupId && groups.some((g) => g.id === sel.groupId)) setOpenId(sel.groupId);
+  }, [selectedId]); // eslint-disable-line react-hooks/exhaustive-deps
+  const open = groups.find((g) => g.id === openId);
   // After every hook: a row left empty by the filters is hidden.
   if (active && !units.length) return null;
+  const inGroup = (u: ProdNode) => !!u.groupId && groups.some((g) => g.id === u.groupId);
+  const items: Array<{ key: string; at: number; el: ReactNode }> = active
+    ? units.map((u) => ({ key: u.id, at: 0, el: <UnitCard key={u.id} node={u} /> }))
+    : open
+      ? units.filter((u) => u.groupId === open.id).map((u) => ({ key: u.id, at: 0, el: <UnitCard key={u.id} node={u} /> }))
+      : [
+          ...units.filter((u) => !inGroup(u)).map((u) => ({ key: u.id, at: sortValue(u), el: <UnitCard key={u.id} node={u} /> })),
+          ...groups.map((g) => ({ key: g.id, at: g.order, el: <GroupCard key={g.id} group={g} onOpen={() => setOpenId(g.id)} /> })),
+        ].sort((a, b) => a.at - b.at);
 
   return (
     <section className="lane">
@@ -169,22 +190,28 @@ function Lane({ row }: { row: ProdNode }) {
         <ShelfButton row={row} />
         <IconButton size="sm" className="head__del" label={`Mover ${codeOf(p, row)} y sus ${unitLevel.name.toLowerCase()}s a la papelera`} onClick={() => trashNodes([row.id])}><IconTrash size={14} /></IconButton>
       </div>
+      {open && !active ? <GroupBar group={open} row={row} count={units.filter((u) => u.groupId === open.id).length} onClose={() => setOpenId(null)} /> : null}
       <div className={cx("lane__cards", endDrop.over && "dnd-end")} {...endDrop.props}>
-        {units.map((u) => <UnitCard key={u.id} node={u} />)}
-        {!active ? <AddCard row={row} /> : null}
+        {items.map((i) => i.el)}
+        {!active ? <AddCard row={row} groupId={open?.id} /> : null}
       </div>
     </section>
   );
 }
 
 /** "+" at the end of a row: a new shot in that scene (the row grows to the right). */
-function AddCard({ row }: { row: ProdNode }) {
+function AddCard({ row, groupId }: { row: ProdNode; groupId?: Id }) {
   const snap = useSnap();
   const { source, select } = useStore();
   const p = snap.production;
-  const label = `Nuevo ${p.levels[levelIndex(p, row) + 1]!.name.toLowerCase()} en ${codeOf(p, row)}`;
+  const g = groupId ? snap.groups.find((x) => x.id === groupId) : undefined;
+  const label = `Nuevo ${p.levels[levelIndex(p, row) + 1]!.name.toLowerCase()} en ${g ? `«${g.name}»` : codeOf(p, row)}`;
   return (
-    <button className="card card--add" title={label} aria-label={label} onClick={() => select(source.createNode(row.id, ""))}>
+    <button className="card card--add" title={label} aria-label={label} onClick={() => {
+      const id = source.createNode(row.id, "");
+      if (groupId) source.groupShots([id], { groupId });
+      select(id);
+    }}>
       {/* Same insides as a shot card, invisible: it always has a card's size and ratio. */}
       <span className="card__ghost" aria-hidden>
         <span className="thumb" />
@@ -201,7 +228,7 @@ function UnitCard({ node }: { node: ProdNode }) {
   const snap = useSnap();
   const { selectedId, multi, select, toggleMulti, focusPopped } = useStore();
   const apart = useStore((s) => s.popped.some((w) => w.nodeId === node.id));
-  const drop = useNodeDrop(node, "x");
+  const drop = useNodeDrop(node, "x", false, true);
   const p = snap.production;
   const st = statusOf(snap, node);
   const c = countsOf(snap, node);
@@ -235,6 +262,62 @@ function UnitCard({ node }: { node: ProdNode }) {
         {viewers.length ? <span className="card__live" title={`${viewers.join(", ")} está aquí`}><AvatarStack names={viewers} size={16} /></span> : null}
         {node.assigneeIds.length ? <AvatarStack names={node.assigneeIds.map((u) => memberName(snap, u))} size={16} max={2} /> : null}
       </div>
+    </div>
+  );
+}
+
+/** A group of shots in the row: a stack with the first shot's cover. Click to open; drop shots on it to add them. */
+function GroupCard({ group, onOpen }: { group: ShotGroup; onOpen: () => void }) {
+  const snap = useSnap();
+  const drop = useGroupDrop(group.id);
+  const shots = snap.nodes.filter((n) => n.groupId === group.id && n.parentId === group.parentId).sort(byPosition);
+  const cover = shots[0] ? coverOf(snap, shots[0]) : {};
+  const total = shots.reduce((a, s) => a + durationOf(snap, s), 0);
+  const done = shots.filter((s) => statusOf(snap, s).category === "done").length;
+  return (
+    <div className={cx("card card--group", drop.over && "dnd-group")} {...drop.props} onClick={onOpen} title={`Abrir «${group.name}»`}>
+      <span className="card--group__stack" aria-hidden />
+      <Thumb {...cover} />
+      <div className="card__meta">
+        <span className="card__code"><IconStack2 size={12} /> {group.name}</span>
+        <span className="sf-faint sf-small">{shots.length} plano{shots.length === 1 ? "" : "s"}</span>
+      </div>
+      <div className="card__title">{shots.map((s) => codeOf(snap.production, s)).join(" · ")}</div>
+      <div className="card__foot">
+        <span>{total.toFixed(1)}s</span>
+        <span>{done}/{shots.length} aprobados</span>
+        <span className="card__spacer" />
+        <span className="group-dots">{shots.slice(0, 6).map((s) => <span key={s.id} style={{ background: statusOf(snap, s).color }} />)}</span>
+      </div>
+    </div>
+  );
+}
+
+/** Bar of an open group: back to the row (drop shots there to take them out), name, undo the group. */
+function GroupBar({ group, row, count, onClose }: { group: ShotGroup; row: ProdNode; count: number; onClose: () => void }) {
+  const snap = useSnap();
+  const { source } = useStore();
+  const out = useUngroupDrop(group.id);
+  const [name, setName] = useState<string | null>(null);
+  const save = () => {
+    if (name !== null) source.renameGroup(group.id, name);
+    setName(null);
+  };
+  return (
+    <div className="lane__group">
+      <button className={cx("lane__back", out.over && "dnd-group")} {...out.props} onClick={onClose} title={`Volver a ${codeOf(snap.production, row)}. Suelta aquí un plano para sacarlo del grupo.`}>
+        <IconArrowLeft size={14} /> {codeOf(snap.production, row)}
+      </button>
+      <IconStack2 size={14} className="sf-faint" />
+      {name === null ? (
+        <button className="lane__gname" title="Cambiar el nombre" onClick={() => setName(group.name)}>{group.name}</button>
+      ) : (
+        <input className="sf-input lane__gname-in" autoFocus value={name} onChange={(e) => setName(e.target.value)} onBlur={save}
+          onKeyDown={(e) => { if (e.key === "Enter") save(); if (e.key === "Escape") setName(null); }} />
+      )}
+      <span className="sf-faint sf-small">{count} plano{count === 1 ? "" : "s"} · arrastra un plano a «{codeOf(snap.production, row)}» para sacarlo</span>
+      <span className="lane__spacer" />
+      <Button size="sm" variant="ghost" title="Los planos vuelven a la fila; el grupo desaparece" onClick={() => { source.dissolveGroup(group.id); onClose(); }}>Deshacer grupo</Button>
     </div>
   );
 }

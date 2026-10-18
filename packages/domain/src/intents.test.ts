@@ -16,6 +16,11 @@ import {
   planSetNumber,
   planTrashNode,
   planSplitShot,
+  planGroupShots,
+  planUngroupShots,
+  planDissolveGroup,
+  planRenameGroup,
+  planMoveNodes as moveNodes,
   planUnshelveNode,
   folderPath,
   splitTrash,
@@ -240,5 +245,40 @@ describe("structure intents", () => {
     run(() => ({ events: [{ type: "media.added", media: { id: "mv", nodeId: a, kind: "video", origin: "generated", archived: false, createdBy: "u", createdAt: 1, version: 1, status: "ready", progress: 100, durationSec: 9 } }] }));
     run((s) => planSplitShot(s.production!, s.nodes, { id: "mv", nodeId: a }, [{ inSec: 0, outSec: 3 }, { inSec: 3, outSec: 6 }, { inSec: 6, outSec: 9 }], id, "u", 5));
     expect(childrenOf(splitTrash(state().nodes).live, sc).map((n) => n.number)).toEqual([10, 20, 30, 11]);
+  });
+
+  it("groups shots in a scene: a folder on disk, codes unchanged, out again when emptied", () => {
+    const { run, state } = session();
+    const sq = run((s) => planCreateNode(s.production!, s.nodes, null, "q")).nodeId!;
+    const sc = run((s) => planCreateNode(s.production!, s.nodes, sq, "c", "Puerto")).nodeId!;
+    const sc2 = run((s) => planCreateNode(s.production!, s.nodes, sq, "c2")).nodeId!;
+    const a = run((s) => planCreateNode(s.production!, s.nodes, sc, "a", "Faro")).nodeId!;
+    const b = run((s) => planCreateNode(s.production!, s.nodes, sc, "b", "Muelle")).nodeId!;
+    const c = run((s) => planCreateNode(s.production!, s.nodes, sc2, "c3", "Barca")).nodeId!;
+
+    // Drag b onto a: a new group in a's place with both.
+    const g = (run((s) => planGroupShots(s.production!, s.nodes, s.groups, [b], { shotId: a }, "g1", 1)) as Plan & { groupId?: string }).groupId!;
+    let s = state();
+    expect(s.groups).toMatchObject([{ id: g, parentId: sc, name: "Grupo 1" }]);
+    expect(folderPath(s.production!, s.nodes, s.nodes.find((n) => n.id === b)!, s.groups)).toBe("SQ010/SC010_Puerto/Grupo-1/SH0020_Muelle");
+
+    // A shot from another scene joins: it moves into the scene (keeps its code if free).
+    run((st) => planGroupShots(st.production!, st.nodes, st.groups, [c], { groupId: g }, "unused", 2));
+    s = state();
+    expect(s.nodes.find((n) => n.id === c)).toMatchObject({ parentId: sc, groupId: g, number: 30 });
+
+    run((st) => planRenameGroup(st.groups, g, "Por decidir"));
+    expect(folderPath(state().production!, state().nodes, state().nodes.find((n) => n.id === a)!, state().groups)).toBe("SQ010/SC010_Puerto/Por-decidir/SH0010_Faro");
+
+    // Moved to another scene: it leaves the group.
+    run((st) => moveNodes(st.production!, st.nodes, [c], sc2, null));
+    expect(state().nodes.find((n) => n.id === c)?.groupId).toBeNull();
+
+    run((st) => planUngroupShots(st.nodes, st.groups, [a]));
+    expect(state().groups).toHaveLength(1);
+    run((st) => planDissolveGroup(st.nodes, st.groups, g));
+    s = state();
+    expect(s.groups).toEqual([]);
+    expect(s.nodes.filter((n) => n.parentId === sc).map((n) => [n.number, n.groupId ?? null])).toEqual([[10, null], [20, null]]);
   });
 });

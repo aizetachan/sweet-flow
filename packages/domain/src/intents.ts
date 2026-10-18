@@ -11,9 +11,9 @@
 
 import { codeFor } from "./naming";
 import type { LogEventBody, NodePatch } from "./log";
-import { byNumber, childrenOf, descendantsOf, levelIndex, nextNumber, numberBetween, sortValue, splitTrash } from "./tree";
+import { byNumber, byPosition, childrenOf, descendantsOf, groupOf, isUnit, levelIndex, nextNumber, numberBetween, sortValue, splitTrash } from "./tree";
 import type { Segment } from "./cuts";
-import type { Id, Media, Millis, ProdNode, Production } from "./types";
+import type { Id, Media, Millis, ProdNode, Production, ShotGroup } from "./types";
 
 export interface Plan {
   events: LogEventBody[];
@@ -96,6 +96,8 @@ export function planMoveNodes(p: Production, nodes: ProdNode[], ids: Id[], paren
     taken.add(number ?? n.number);
     return { type: "node.moved", id: n.id, parentId, order, ...(number === undefined ? {} : { number }) };
   });
+  // A group belongs to its scene: a shot moved to another scene leaves it.
+  for (const n of moving) if (n.groupId && n.parentId !== parentId) events.push({ type: "node.updated", id: n.id, patch: { groupId: null } });
   return { events };
 }
 
@@ -216,7 +218,7 @@ export function planSplitShot(
     events.push(
       { type: "node.created", node: { id, parentId: original.parentId, levelId: original.levelId, number: numbers[i]!, title: original.title, statusId: firstStatus(p), order: lo + ((hi - lo) * i) / k } },
       { type: "take.added", take: { id: takeId, nodeId: id, mediaId: media.id, inSec: seg.inSec, outSec: seg.outSec, createdBy: by, createdAt: now } },
-      { type: "node.updated", id, patch: { selectedTakeId: takeId } },
+      { type: "node.updated", id, patch: { selectedTakeId: takeId, ...(original.groupId ? { groupId: original.groupId } : {}) } },
     );
   });
   events.push({ type: "node.shelved", id: original.id });
@@ -237,4 +239,88 @@ function firstStatus(p: Production): Id {
   const s = [...p.statuses].filter((x) => !x.archived).sort((a, b) => a.order - b.order)[0];
   if (!s) throw new Error("La producción no tiene estados");
   return s.id;
+}
+
+// ---------- groups of shots (docs/INTERFAZ.md §2.4) ----------
+
+/**
+ * Put shots `ids` together with `target`: a shot (a new group with both, in
+ * the target's place; or the target's group if it is already in one) or an
+ * existing group. Shots from another scene move into it first.
+ * `nodes`: the board's. Returns the group id in `groupId`.
+ */
+export function planGroupShots(
+  p: Production,
+  nodes: ProdNode[],
+  groups: ShotGroup[],
+  ids: Id[],
+  target: { shotId: Id } | { groupId: Id },
+  newGroupId: Id,
+  now: Millis,
+): Plan & { groupId?: Id } {
+  let group: ShotGroup | undefined;
+  let shot: ProdNode | undefined;
+  if ("groupId" in target) group = groups.find((g) => g.id === target.groupId);
+  else {
+    shot = nodes.find((n) => n.id === target.shotId);
+    if (shot) group = groupOf(groups, shot);
+  }
+  const parentId = group?.parentId ?? shot?.parentId;
+  if (!parentId) return EMPTY;
+  const moving = ids
+    .map((id) => nodes.find((n) => n.id === id))
+    .filter((n): n is ProdNode => !!n && n.id !== shot?.id && isUnit(p, n) && (!group || n.groupId !== group.id));
+  if (!moving.length) return EMPTY;
+
+  const events: LogEventBody[] = [];
+  // From other scenes: into this one first (codes as in any move).
+  const outside = moving.filter((n) => n.parentId !== parentId).map((n) => n.id);
+  if (outside.length) events.push(...planMoveNodes(p, nodes, outside, parentId, null).events.filter((e) => e.type === "node.moved"));
+
+  let groupId = group?.id;
+  const join: ProdNode[] = [...moving];
+  if (!groupId) {
+    groupId = newGroupId;
+    const taken = new Set(groups.filter((g) => g.parentId === parentId).map((g) => g.name.toLowerCase()));
+    let k = 1;
+    while (taken.has(`grupo ${k}`)) k++;
+    events.push({ type: "group.created", group: { id: groupId, parentId, name: `Grupo ${k}`, order: sortValue(shot!), createdAt: now } });
+    join.unshift(shot!);
+  }
+  for (const n of join) events.push({ type: "node.updated", id: n.id, patch: { groupId } });
+  return { events, groupId };
+}
+
+/** Take shots out of their group, right after it in the row; an emptied group goes. */
+export function planUngroupShots(nodes: ProdNode[], groups: ShotGroup[], ids: Id[]): Plan {
+  const events: LogEventBody[] = [];
+  const leaving = new Map<Id, number>();
+  for (const id of ids) {
+    const n = nodes.find((x) => x.id === id);
+    const g = n ? groupOf(groups, n) : undefined;
+    if (!n || !g) continue;
+    const i = leaving.get(g.id) ?? 0;
+    leaving.set(g.id, i + 1);
+    events.push({ type: "node.updated", id, patch: { groupId: null } }, { type: "node.moved", id, parentId: n.parentId, order: g.order + (i + 1) / 1000 });
+  }
+  for (const [gid, count] of leaving) {
+    const left = nodes.filter((n) => n.groupId === gid).length - count;
+    if (left <= 0) events.push({ type: "group.deleted", id: gid });
+  }
+  return { events };
+}
+
+/** Undo a group: its shots back on the row where the group was. */
+export function planDissolveGroup(nodes: ProdNode[], groups: ShotGroup[], groupId: Id): Plan {
+  const g = groups.find((x) => x.id === groupId);
+  if (!g) return EMPTY;
+  const members = nodes.filter((n) => n.groupId === groupId).sort(byPosition);
+  const plan = planUngroupShots(nodes, groups, members.map((n) => n.id));
+  return { events: plan.events.some((e) => e.type === "group.deleted") ? plan.events : [...plan.events, { type: "group.deleted", id: groupId }] };
+}
+
+export function planRenameGroup(groups: ShotGroup[], groupId: Id, name: string): Plan {
+  const g = groups.find((x) => x.id === groupId);
+  const clean = name.trim();
+  return g && clean && clean !== g.name ? { events: [{ type: "group.updated", id: groupId, patch: { name: clean } }] } : EMPTY;
 }

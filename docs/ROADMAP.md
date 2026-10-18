@@ -163,7 +163,7 @@ Anotadas el 15 oct 2026, pendientes de que el usuario elija orden:
 - **Lotes y créditos:** estimación antes de lanzar y registro real por usuario, producción y nodo.
 - **Referencias del desglose:** reparto, props y localizaciones en el prompt y como referencias de biblioteca.
 
-### Grupos de planos (pilas) — siguiente
+### Grupos de planos (pilas) ✅ (INTERFAZ §2.4)
 
 Decidido el 18 oct 2026: dentro de una escena se pueden agrupar planos para
 tenerlos juntos (por ejemplo, varios por decidir o por validar). Al arrastrar
@@ -172,6 +172,7 @@ la fila muestra lo que hay dentro.
 - Es una **carpeta en disco** dentro de la escena. Los planos de dentro
   **mantienen su código y su nombre**; el grupo no se muestra en su ruta, como
   en Google Drive.
+- **Pendiente:** arrastrar la tarjeta del grupo para reordenarlo en la fila.
 - **Anotado para más adelante:** el orden de montaje de los planos de un grupo
   (en qué orden entran en el montaje final). De momento no hace falta.
 

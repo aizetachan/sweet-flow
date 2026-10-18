@@ -20,6 +20,7 @@ import type {
   ProdNode,
   Production,
   Segment,
+  ShotGroup,
   StatusDef,
   Take,
   Workspace,
@@ -38,6 +39,8 @@ export interface Snapshot {
   trash: ProdNode[];
   /** Shots set aside in their scene's «Vídeos editados» (docs/INTERFAZ.md §2.3). */
   shelf: ProdNode[];
+  /** Groups of shots inside each scene (docs/INTERFAZ.md §2.4). */
+  groups: ShotGroup[];
   media: Media[];
   takes: Take[];
   comments: Comment[];
@@ -108,6 +111,16 @@ export interface DataSource {
   restoreNode(nodeId: Id): number | undefined;
   /** Delete for good (from the trash), with everything inside. */
   deleteNode(nodeId: Id): void;
+  /**
+   * Put shots together: onto a shot (a new group with both, in its place) or
+   * into a group. Shots from another scene move into it. Returns the group id.
+   */
+  groupShots(ids: Id[], target: { shotId: Id } | { groupId: Id }): Id | undefined;
+  /** Out of their group, right after it in the row (an emptied group goes). */
+  ungroupShots(ids: Id[]): void;
+  /** Undo a group: its shots back on the row. */
+  dissolveGroup(groupId: Id): void;
+  renameGroup(groupId: Id, name: string): void;
   updateNode(nodeId: Id, patch: Partial<Pick<ProdNode, "title" | "notes" | "statusId" | "assigneeIds" | "assetIds">>): void;
 
   // configuration
