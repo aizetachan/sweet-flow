@@ -221,9 +221,10 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
   bordes, se recoloca como siempre). Se crea «Grupo 1» en el sitio del plano de
   destino. Soltar un plano sobre un grupo lo mete dentro. Un plano de otra
   escena se mueve a esta al meterlo.
-- **En la fila,** el grupo es una tarjeta con dos cards asomando por debajo
-  (superposición de cards). Dentro, las **portadas pequeñas de sus planos**,
-  hasta cuatro; si hay más, la cuarta lleva encima «+N» con los que faltan.
+- **En la fila,** el grupo es una tarjeta normal (sin cards detrás) con las
+  **portadas pequeñas de sus planos**, cada una en 16:9 como la portada de un
+  plano, de dos en dos y hasta cuatro. Si hay más, la cuarta lleva encima «+N»
+  con los que faltan.
   Debajo, solo el icono, el nombre («Grupo 1») y el número de planos.
 - **Abrir:** clic en el grupo. La fila muestra solo sus planos, con una barra:
   - **← SC010** vuelve a la fila. Soltar un plano ahí lo saca del grupo.

@@ -270,9 +270,9 @@ function UnitCard({ node }: { node: ProdNode }) {
 const GROUP_TILES = 4;
 
 /**
- * A group of shots in the row: cards stacked behind, the covers of its shots
- * in small (up to four; "+N" on the last when there are more), its name and
- * how many shots. Click to open; drop shots on it to add them.
+ * A group of shots in the row: a normal card with the covers of its shots
+ * in small, each 16:9 like a shot's (up to four; "+N" on the last when there
+ * are more), its name and how many shots. Click to open; drop shots on it to add them.
  */
 function GroupCard({ group, onOpen }: { group: ShotGroup; onOpen: () => void }) {
   const snap = useSnap();
@@ -282,8 +282,6 @@ function GroupCard({ group, onOpen }: { group: ShotGroup; onOpen: () => void }) 
   const tiles = shots.slice(0, GROUP_TILES);
   return (
     <div className={cx("card card--group", drop.over && "dnd-group")} {...drop.props} onClick={onOpen} title={`Abrir «${group.name}»`}>
-      <span className="gstack gstack--2" aria-hidden />
-      <span className="gstack gstack--1" aria-hidden />
       <div className={`gmosaic gmosaic--${tiles.length}`}>
         {tiles.map((s, i) => (
           <div key={s.id} className="gmosaic__tile" title={codeOf(snap.production, s)}>
