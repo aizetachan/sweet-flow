@@ -105,4 +105,29 @@ describe("LocalSource", () => {
     const src = new LocalSource({ store: new MemoryLogStore(), deviceId: "a", me: member("u", "U"), newId });
     await expect(src.ready).rejects.toThrow("ninguna producción");
   });
+
+  it("keeps comments and the node's whole history in the log", async () => {
+    const store = new MemoryLogStore();
+    const { src, snap } = open(store, "a");
+    await src.ready;
+    const sh = src.createNode(null, "Faro");
+    src.updateNode(sh, { statusId: statuses[2]!.id });
+    const c = src.addComment({ nodeId: sh, text: "Más luz @b", mentions: ["u_b"], atSec: 2.5, area: { x: 0.1, y: 0.1, w: 0.3, h: 0.2 } });
+    src.addComment({ nodeId: sh, text: "Hecho", parentId: c });
+    src.setCommentResolved(c, true);
+    await src.flushed();
+    expect(snap().comments.map((x) => [x.text, x.resolved, x.parentId ?? null])).toEqual([["Más luz @b", true, null], ["Hecho", false, c]]);
+    const texts = snap().activity.filter((a) => a.nodeId === sh).map((a) => a.text);
+    expect(texts).toEqual([
+      "creó SQ010",
+      `cambió el estado a ${statuses[2]!.name}`,
+      "comentó una versión: «Más luz @b»",
+      "respondió: «Hecho»",
+      "resolvió un comentario",
+    ]);
+    // Reopened from disk: the same.
+    const again = open(store, "b");
+    await again.src.ready;
+    expect(again.snap().comments).toHaveLength(2);
+  });
 });

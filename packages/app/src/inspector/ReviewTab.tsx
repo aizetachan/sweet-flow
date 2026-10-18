@@ -7,7 +7,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { IconArrowBackUp, IconArrowForwardUp, IconCheck, IconClock, IconMapPin, IconSend, IconTrash, IconX } from "@tabler/icons-react";
-import { codeOf, formatTc, versionTag, type Comment, type Id, type Member, type ProdNode } from "@sweetflow/domain";
+import { codeOf, formatTc, versionTag, type Comment, type Id, type Media, type Member, type ProdNode } from "@sweetflow/domain";
 import { Avatar, avatarColor, Button, cx, IconButton } from "@sweetflow/ui";
 import { useSnap, useStore } from "../state/store";
 import { coverOf, memberName } from "../state/selectors";
@@ -151,22 +151,10 @@ function Thread({ c, replies, node, on, other, onGo, onDelete }: {
         <button className="link sf-small" onClick={() => source.setCommentResolved(c.id, !c.resolved)}>
           <IconCheck size={12} /> {c.resolved ? "Reabrir" : "Resolver"}
         </button>
-        {newer.length === 1 ? (
-          <button className="link sf-small" title="Se ha trabajado en una versión nueva: el comentario y su conversación pasan ahí" onClick={() => takeTo(newer[0]!.id)}>
-            <IconArrowForwardUp size={12} /> Llevar a {versionTag(newer[0]!.version)}
-          </button>
-        ) : newer.length > 1 ? (
-          <label className="link sf-small thread__to" title="Se ha trabajado en una versión nueva: el comentario y su conversación pasan ahí">
-            <IconArrowForwardUp size={12} /> Llevar a
-            <select value="" onChange={(e) => e.target.value && takeTo(e.target.value)}>
-              <option value="">versión…</option>
-              {newer.map((x) => <option key={x.id} value={x.id}>{versionTag(x.version)}</option>)}
-            </select>
-          </label>
-        ) : null}
       </div>
       {replying ? (
-        <Composer node={node} parentId={c.id} mediaId={c.mediaId} compact autoFocus onSent={() => setReplying(false)} onCancel={() => setReplying(false)} />
+        <Composer node={node} parentId={c.id} mediaId={c.mediaId} compact autoFocus onSent={() => setReplying(false)} onCancel={() => setReplying(false)}
+          versions={m && newer.length ? [m, ...[...newer].reverse()] : undefined} onVersion={(id) => { if (id !== c.mediaId) takeTo(id); }} />
       ) : null}
     </div>
   );
@@ -209,7 +197,7 @@ function MentionText({ text, members }: { text: string; members: Member[] }) {
  * mention; on a video it is tied to the current moment (switchable); «Marcar
  * punto» then a click on the picture ties it to that point.
  */
-export function Composer({ node, mediaId, parentId, isVideo, playhead = 0, mark, onClearMark, canMark, compact, onSent, autoFocus, onTyping, onCancel }: {
+export function Composer({ node, mediaId, parentId, isVideo, playhead = 0, mark, onClearMark, canMark, compact, onSent, autoFocus, onTyping, onCancel, versions, onVersion }: {
   node: ProdNode;
   mediaId?: Id;
   parentId?: Id;
@@ -227,11 +215,18 @@ export function Composer({ node, mediaId, parentId, isVideo, playhead = 0, mark,
   onTyping?: () => void;
   /** Esc. */
   onCancel?: () => void;
+  /**
+   * Replying, when the shot has newer versions: which one the thread goes on
+   * in. Picking a newer one takes the comment there when the reply is sent.
+   */
+  versions?: Media[];
+  onVersion?: (mediaId: Id) => void;
 }) {
   const snap = useSnap();
   const { source } = useStore();
   const [text, setText] = useState("");
   const [caret, setCaret] = useState(0);
+  const [onMedia, setOnMedia] = useState(mediaId);
   const [pick, setPick] = useState(0);
   const ref = useRef<HTMLTextAreaElement>(null);
   // Who can be mentioned: everyone who works on this production (they have its folder).
@@ -255,10 +250,12 @@ export function Composer({ node, mediaId, parentId, isVideo, playhead = 0, mark,
     const body = text.trim();
     if (!body) return;
     const mentions = snap.members.filter((m) => m.uid !== snap.me.uid && body.includes(`@${m.displayName}`)).map((m) => m.uid);
+    // Worked on in a newer version: the thread goes there first, and the reply with it.
+    if (onMedia && onMedia !== mediaId) onVersion?.(onMedia);
     source.addComment({
       nodeId: node.id,
       text: body,
-      mediaId,
+      mediaId: onMedia,
       parentId,
       mentions,
       // On a video it is always tied to the moment on screen.
@@ -297,6 +294,14 @@ export function Composer({ node, mediaId, parentId, isVideo, playhead = 0, mark,
         ) : null}
       </div>
       <div className="composer__row">
+        {versions?.length ? (
+          <label className={cx("composer__ver sf-small", onMedia !== mediaId && "is-on")} title="¿Se ha trabajado en una versión nueva? Elígela: el comentario y su conversación pasan a ella al enviar">
+            <IconArrowForwardUp size={12} /> En
+            <select value={onMedia} onChange={(e) => setOnMedia(e.target.value)}>
+              {versions.map((v) => <option key={v.id} value={v.id}>{versionTag(v.version)}{v.id === mediaId ? " (la de este comentario)" : " (nueva)"}</option>)}
+            </select>
+          </label>
+        ) : null}
         {!parentId && isVideo ? (
           <span className="sf-small sf-muted composer__tc" title="Queda en este momento del vídeo"><IconClock size={12} /> {formatTc(playhead)}</span>
         ) : null}

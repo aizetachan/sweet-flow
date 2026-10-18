@@ -44,6 +44,7 @@ import {
   planUpdateNode,
   serializeEvent,
   ZERO_HLC,
+  type Activity,
   type Hlc,
   type Id,
   type LevelDef,
@@ -65,6 +66,7 @@ import type { DataSource, GenerateArgs, NewComment, Placement, Snapshot } from "
 import type { Generator, GenerationRequest } from "../generation";
 import type { ProductionFiles } from "../folder/ProductionFiles";
 import type { LogStore } from "./store";
+import { activityFrom } from "./activity";
 
 export interface LocalSourceOptions {
   store: LogStore;
@@ -263,12 +265,19 @@ export class LocalSource implements DataSource {
       takes: s.takes,
       comments: s.comments,
       assets: [],
-      activity: [],
+      activity: this.activity(s),
       presence: [],
       mirror: { status: this.saveError ? "offline" : pending ? "syncing" : "synced", rootPath: this.store.label, pending },
       features: { generation: !!this.generator, review: true, presence: false, team: false, takes: true },
     };
     for (const l of this.listeners) l(this.snapshot);
+  }
+
+  /** The history of every node, from the log (recomputed only when events change). */
+  private activityCache: { count: number; list: Activity[] } = { count: -1, list: [] };
+  private activity(s: LogState): Activity[] {
+    if (this.activityCache.count !== this.events.size) this.activityCache = { count: this.events.size, list: activityFrom([...this.events.values()], s) };
+    return this.activityCache.list;
   }
 
   /** Where to show a media from: its file in the team folder, or the provider's copy. */

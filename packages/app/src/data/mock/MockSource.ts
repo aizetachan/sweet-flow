@@ -398,9 +398,14 @@ export class MockSource implements DataSource {
   }
 
   moveCommentToVersion(commentId: Id, mediaId: Id): void {
-    this.commit({ comments: this.s.comments.map((c) => (c.id !== commentId || c.mediaId === mediaId ? c : {
-      ...c, mediaId, history: [...(c.history ?? []), ...(c.mediaId ? [{ mediaId: c.mediaId, at: Date.now(), by: this.s.me.uid }] : [])],
-    })) });
+    const c0 = this.s.comments.find((c) => c.id === commentId);
+    const tag = (id?: Id) => { const m = this.s.media.find((x) => x.id === id); return m ? `v${String(m.version).padStart(3, "0")}` : "una versión"; };
+    this.commit({
+      comments: this.s.comments.map((c) => (c.id !== commentId || c.mediaId === mediaId ? c : {
+        ...c, mediaId, history: [...(c.history ?? []), ...(c.mediaId ? [{ mediaId: c.mediaId, at: Date.now(), by: this.s.me.uid }] : [])],
+      })),
+      activity: c0 ? [this.log("comment", `llevó un comentario de ${tag(c0.mediaId)} a ${tag(mediaId)}`, c0.nodeId), ...this.s.activity] : this.s.activity,
+    });
   }
 
   moveCommentMark(commentId: Id, mark: { point?: { x: number; y: number }; area?: { x: number; y: number; w: number; h: number } }): void {

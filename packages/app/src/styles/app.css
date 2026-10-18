@@ -283,9 +283,12 @@
 .mark--point .mark__n { inset: 0; width: auto; height: auto; border-radius: inherit; }
 /* The same mark in the list, with who left it */
 .cpin { flex: none; display: grid; place-items: center; border-radius: 50% 50% 50% 0; color: #fff; font-weight: 700; line-height: 1; text-shadow: 0 1px 1px #0005; }
-.thread__to { display: inline-flex; align-items: center; gap: 3px; }
-.thread__to select { background: none; border: 0; color: inherit; font: inherit; cursor: pointer; }
-.mark--area .mark__n { left: -2px; top: -20px; border-radius: 4px 4px 4px 0; background: var(--warn, #f5b54a); }
+.composer__ver { display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 7px; border-radius: 6px; background: var(--ghost); color: var(--fg-2); }
+.composer__ver.is-on { background: var(--primary-soft); color: var(--fg-0); }
+.composer__ver select { background: none; border: 0; color: inherit; font: inherit; cursor: pointer; padding: 0; }
+/* The same pin as the comments: three round corners, the bottom left one a point. */
+.mark--area .mark__n { left: -2px; top: -24px; width: 22px; height: 22px; border-radius: 50% 50% 50% 0; background: var(--warn, #f5b54a); box-shadow: 0 2px 6px #0008; }
+.mark--label-in .mark__n { left: 4px; top: 4px; }
 .mark--on.mark--point { background: var(--primary); }
 .mark--on.mark--point .mark__n { color: #fff; }
 .mark--on.mark--area { border-color: var(--primary); background: #6b7cff22; }

@@ -81,7 +81,8 @@ export function MarkLayer({ marks, onMark }: { marks?: ShownMark[]; onMark?: (m:
           ? { left: `${(m.x + dx) * 100}%`, top: `${(m.y + dy) * 100}%`, width: `${m.w! * 100}%`, height: `${m.h! * 100}%`, ...(tint ? { borderColor: tint } : {}) }
           : { left: `${(m.x + dx) * 100}%`, top: `${(m.y + dy) * 100}%`, ...(tint ? { background: tint } : {}) };
         return (
-          <div key={m.id} className={cx("mark", isArea ? "mark--area" : "mark--point", m.on && "mark--on", m.onMove && "mark--movable")} style={style}
+          // An area's label sits above its top left corner; too close to the top or the left, it goes inside so it is never cut.
+          <div key={m.id} className={cx("mark", isArea ? "mark--area" : "mark--point", isArea && (m.y + dy < 0.09) && "mark--label-in", isArea && (m.x + dx < 0.02) && "mark--label-in", m.on && "mark--on", m.onMove && "mark--movable")} style={style}
             title={m.onMove ? "Tu comentario · arrastra para moverlo" : "Ver el comentario"}
             // The mark handles its own drag, so the layer never covers the viewer when not marking.
             onPointerDown={(e) => {
