@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { ImportDialog } from "./components/ImportDialog";
-import { isUnit } from "@sweetflow/domain";
 import { Button, cx, Modal, Spinner } from "@sweetflow/ui";
-import { useSnap, useStore } from "./state/store";
+import { useStore } from "./state/store";
 import { Dock, Topbar } from "./shell/Shell";
 import { Splash } from "./shell/Splash";
 import { Dashboard } from "./dashboard/Dashboard";
@@ -132,10 +131,8 @@ function Workspace({ children }: { children: ReactNode }) {
 }
 
 function SidePanel() {
-  const snap = useSnap();
   const sideTab = useStore((s) => s.sideTab);
   const set = useStore((s) => s.set);
-  const units = snap.nodes.filter((n) => isUnit(snap.production, n)).length;
   return (
     <aside className="side">
       <div className="sidetabs" role="tablist">
@@ -143,8 +140,7 @@ function SidePanel() {
           Producción
         </button>
         <button role="tab" aria-selected={sideTab === "structure"} className={cx("sidetabs__tab", sideTab === "structure" && "sidetabs__tab--on")} onClick={() => set({ sideTab: "structure" })}>
-          Estructura
-          <span className="sidetabs__count">{units}</span>
+          Explorer
         </button>
       </div>
       {sideTab === "work" ? <DockedInspector /> : <StructureTree />}

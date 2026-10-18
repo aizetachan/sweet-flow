@@ -107,7 +107,7 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
 
 - **Producción** (primera pestaña): el panel de trabajo de la escena o el plano
   seleccionado.
-- **Estructura:** el árbol. Un clic selecciona sin salir del árbol; doble clic
+- **Explorer** (antes «Explorer», sin número): el árbol. Un clic selecciona sin salir del árbol; doble clic
   (o seleccionar en el tablero) abre la pestaña Producción. **Doble clic en el
   título** (también «Sin título») lo edita ahí mismo. Los **grupos de planos**
   se ven como en el tablero: una fila con su nombre (doble clic para
@@ -139,7 +139,7 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
     (renombrada cerrada), manda el del dashboard.
   - Justo a su derecha, el botón de **información** (antes en la cabecera del
     tablero): secuencias, escenas y planos, aprobados, minutos montados y
-    planos por estado; de la parte elegida en Estructura, si hay una.
+    planos por estado; de la parte elegida en Explorer, si hay una.
   - El botón de **filtros** va dentro del buscador, a la derecha, con el número
     de filtros activos. Abre un panel estrecho: **estado** (se elige uno; por
     defecto «Seleccionar estado», con una × para quitarlo), **responsable** y
@@ -185,7 +185,7 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
 - **Visor de vídeo:** controles de siempre: reproducir/pausa, la **línea de
   tiempo** para ir a cualquier punto, el tiempo y pantalla completa. En un
   plano hecho de un tramo, la línea recorre solo su tramo.
-- **Sin nada seleccionado, la columna muestra Estructura** (al abrir la
+- **Sin nada seleccionado, la columna muestra Explorer** (al abrir la
   producción, al cerrar el panel, al deseleccionar o al mandar lo abierto a la
   papelera), para que nunca quede vacía. Al seleccionar algo pasa a Producción.
 - **Tarjeta de plano:** portada (sin etiqueta de duración encima). Arriba, el
@@ -268,7 +268,7 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
     secuencia; la crea al final de esa secuencia.
   - **Nunca vacío:** una secuencia sin escenas (por ejemplo, si se mandan a la
     papelera) muestra una fila con la tarjeta «+»; al pulsarla se crea su
-    primera escena con su primer plano. Crear una secuencia desde Estructura
+    primera escena con su primer plano. Crear una secuencia desde Explorer
     también trae ya su primera escena.
   - **Secuencia:** botón **"+" cuadrado** al final del tablero, alineado a la
     izquierda (sin texto; el tooltip lo dice). La secuencia nueva trae ya su
@@ -474,7 +474,7 @@ y «Tomas» por separado):
     pasar el ratón.
   - Tecla **Supr** (o borrar) con lo seleccionado en el tablero o el árbol;
     con selección múltiple, todo lo seleccionado. Nunca mientras se escribe.
-  - En el árbol de Estructura.
+  - En el árbol de Explorer.
 - **Papelera** en la barra de secciones de abajo, con el número de elementos.
   Lista cada elemento con su código, título, dónde estaba, qué contiene y
   cuándo se quitó:
@@ -554,7 +554,7 @@ y «Tomas» por separado):
   - El **nombre** es texto, como los demás títulos: doble clic para cambiarlo.
   - **Deshacer grupo:** los planos vuelven a la fila y el grupo desaparece.
   - El «+» crea el plano nuevo dentro del grupo.
-  - Al seleccionar un plano que está dentro (desde Estructura o Fijados), su
+  - Al seleccionar un plano que está dentro (desde Explorer o Fijados), su
     grupo se abre solo.
 - **Los planos no cambian de código ni de nombre.** En disco, el grupo es una
   carpeta dentro de la escena (`SC010_…/Por-decidir/SH0020_…`), como en Google
