@@ -6,7 +6,6 @@ import {
   descendantsOf,
   isUnit,
   levelIndex,
-  levelOf,
   byPosition,
   sortValue,
   takeDuration,
@@ -59,6 +58,17 @@ export function Board() {
 
 const fmtDur = (s: number) => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")}`;
 
+/** Next to a sequence's or scene's title: how many shots and how long; the approved ones only if any. */
+function HeadInfo({ shots, done, seconds, unit }: { shots: number; done: number; seconds: number; unit: string }) {
+  const name = unit.toLowerCase();
+  return (
+    <span className="sf-faint sf-small">
+      {shots} {name}{shots === 1 ? "" : "s"} · {fmtDur(seconds)}
+      {done ? <span className="head__done"> · {done} aprobado{done === 1 ? "" : "s"}</span> : null}
+    </span>
+  );
+}
+
 /** Folders above the lane level render as headed groups; the lane level renders lanes. */
 function Group({ node }: { node: ProdNode }) {
   const snap = useSnap();
@@ -78,7 +88,7 @@ function Group({ node }: { node: ProdNode }) {
         <span className="group__code">{codeOf(p, node)}</span>
         <InlineEdit className="group__title" value={node.title} placeholder="Sin título" label="Doble clic para cambiar el título"
           onSave={(title) => useStore.getState().source.updateNode(node.id, { title })} />
-        <span className="sf-faint sf-small">{levelOf(p, node).name} · {prog.done}/{prog.total} aprobados · {fmtDur(durationOf(snap, node))}</span>
+        <HeadInfo shots={prog.total} done={prog.done} seconds={durationOf(snap, node)} unit={p.levels.at(-1)!.name} />
         <span className="group__spacer" />
         {!filtersActive(filters) ? (
           <Button size="sm" variant="ghost" title={`Nueva ${childLevel.name.toLowerCase()} al final de ${codeOf(p, node)}`} onClick={() => createRow(node.id)}>
@@ -180,7 +190,7 @@ function Lane({ row }: { row: ProdNode }) {
         <InlineEdit className="lane__title" value={row.title} placeholder="Sin título" label="Doble clic para cambiar el título"
           onSave={(title) => useStore.getState().source.updateNode(row.id, { title })} />
         <Pill color={st.color}>{st.name}</Pill>
-        <span className="sf-faint sf-small">{all.length} {unitLevel.name.toLowerCase()}s · {fmtDur(durationOf(snap, row))}</span>
+        <HeadInfo shots={all.length} done={all.filter((u) => statusOf(snap, u).category === "done").length} seconds={durationOf(snap, row)} unit={unitLevel.name} />
         {viewers.length ? <AvatarStack names={viewers} size={18} /> : null}
         <div className="lane__spacer" />
         <Button size="sm" variant="ghost" className={cx(wrap && "is-on")} title={wrap ? "Volver a una sola fila con scroll" : "Ver todos los planos: la fila se adapta al ancho y baja de línea"} onClick={() => setWrap(!wrap)}>

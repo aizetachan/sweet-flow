@@ -137,6 +137,7 @@
 .card__status .picker__btn { padding: 0; background: none; border: 0; }
 .lane__title.inline-edit, .group__title.inline-edit { display: inline-block; max-width: 40%; }
 .lane__title.inline-edit__in, .group__title.inline-edit__in { width: 260px; height: 26px; }
+.head__done { color: var(--ok); }
 .card__len { flex: none; margin-top: -3px; font-size: 11px; color: var(--fg-3); font-variant-numeric: tabular-nums; }
 .card__foot { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--fg-3); min-height: 16px; }
 .card__comments { display: inline-flex; align-items: center; gap: 3px; color: var(--warn); }
