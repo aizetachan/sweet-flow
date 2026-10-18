@@ -8,12 +8,12 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { IconArrowBackUp, IconArrowForwardUp, IconCheck, IconClock, IconMapPin, IconSend, IconTrash, IconX } from "@tabler/icons-react";
 import { codeOf, formatTc, versionTag, type Comment, type Id, type Media, type Member, type ProdNode } from "@sweetflow/domain";
-import { Avatar, avatarColor, Button, cx, IconButton } from "@sweetflow/ui";
+import { Avatar, avatarColor, Button, cx, IconButton, Modal } from "@sweetflow/ui";
 import { useSnap, useStore } from "../state/store";
 import { coverOf, memberName } from "../state/selectors";
 import { usePanel } from "./panel";
 import { OnStage } from "./stage";
-import { Player } from "../components/media";
+import { Player, Thumb } from "../components/media";
 import type { Mark } from "../components/marks";
 
 export function ReviewTab({ node }: { node: ProdNode }) {
@@ -82,7 +82,7 @@ export function ReviewTab({ node }: { node: ProdNode }) {
               <div className="review__versions">
                 <span className="sf-faint sf-small">Revisando</span>
                 <select className="sf-select" value={target.id} onChange={(e) => setPanel({ activeMediaId: e.target.value, playhead: 0, playing: false })}>
-                  {versions.map((m) => <option key={m.id} value={m.id}>{versionTag(m.version)}{m.id === cover.media?.id ? " · elegida" : ""}</option>)}
+                  {versions.map((m) => <option key={m.id} value={m.id}>{mediaLabel(m)}{m.id === cover.media?.id ? " · elegida" : ""}</option>)}
                 </select>
               </div>
             ) : null}
@@ -179,6 +179,39 @@ function CommentLine({ c, head, reply, onDelete }: { c: Comment; head?: ReactNod
   );
 }
 
+/** «Imagen v001», «Vídeo v002»: versions count per kind, so the kind tells two v001 apart. */
+function mediaLabel(m?: Media): string {
+  if (!m) return "—";
+  return `${m.kind === "video" ? "Vídeo" : m.kind === "audio" ? "Audio" : "Imagen"} ${versionTag(m.version)}`;
+}
+
+/**
+ * Which version the thread goes on: the shot's versions in a medium-size
+ * window, as a gallery, to pick the right one seeing it.
+ */
+function VersionPicker({ versions, current, picked, onPick, onClose }: { versions: Media[]; current?: Id; picked?: Id; onPick: (id: Id) => void; onClose: () => void }) {
+  const snap = useSnap();
+  return (
+    <Modal title="¿En qué versión sigue este comentario?" onClose={onClose} width={720}>
+      <p className="sf-muted modal-lead">Si se ha trabajado en una versión nueva, elígela: al enviar, el comentario y su conversación pasan a ella.</p>
+      <div className="vpick">
+        {[...versions].sort((a, b) => b.createdAt - a.createdAt).map((v) => (
+          <button key={v.id} className={cx("vpick__item", v.id === picked && "vpick__item--on")} onClick={() => onPick(v.id)}>
+            <Thumb media={v} preview badge={false} />
+            <span className="vpick__meta">
+              <b>{mediaLabel(v)}</b>
+              {v.id === current ? <span className="vpick__tag">La de este comentario</span> : null}
+            </span>
+            <span className="sf-faint sf-small">
+              {v.generation?.model ?? "Subido"} · {memberName(snap, v.createdBy)} · {new Date(v.createdAt).toLocaleString("es-ES", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+            </span>
+          </button>
+        ))}
+      </div>
+    </Modal>
+  );
+}
+
 /** The comment mark (three round corners, the bottom left one a point) with who left it: the same as on the picture. */
 function CommentPin({ name, size }: { name: string; size: number }) {
   return <span className="cpin" title={name} style={{ width: size, height: size, fontSize: size * 0.46, background: avatarColor(name) }}>{initial(name)}</span>;
@@ -227,6 +260,7 @@ export function Composer({ node, mediaId, parentId, isVideo, playhead = 0, mark,
   const [text, setText] = useState("");
   const [caret, setCaret] = useState(0);
   const [onMedia, setOnMedia] = useState(mediaId);
+  const [choosing, setChoosing] = useState(false);
   const [pick, setPick] = useState(0);
   const ref = useRef<HTMLTextAreaElement>(null);
   // Who can be mentioned: everyone who works on this production (they have its folder).
@@ -295,12 +329,13 @@ export function Composer({ node, mediaId, parentId, isVideo, playhead = 0, mark,
       </div>
       <div className="composer__row">
         {versions?.length ? (
-          <label className={cx("composer__ver sf-small", onMedia !== mediaId && "is-on")} title="¿Se ha trabajado en una versión nueva? Elígela: el comentario y su conversación pasan a ella al enviar">
-            <IconArrowForwardUp size={12} /> En
-            <select value={onMedia} onChange={(e) => setOnMedia(e.target.value)}>
-              {versions.map((v) => <option key={v.id} value={v.id}>{versionTag(v.version)}{v.id === mediaId ? " (la de este comentario)" : " (nueva)"}</option>)}
-            </select>
-          </label>
+          <button className={cx("composer__ver sf-small", onMedia !== mediaId && "is-on")} title="¿Se ha trabajado en una versión nueva? Elígela: el comentario y su conversación pasan a ella al enviar"
+            onClick={() => setChoosing(true)}>
+            <IconArrowForwardUp size={12} /> En {mediaLabel(versions.find((v) => v.id === onMedia))}{onMedia !== mediaId ? " (nueva)" : ""}
+          </button>
+        ) : null}
+        {choosing && versions ? (
+          <VersionPicker versions={versions} current={mediaId} picked={onMedia} onPick={(id) => { setOnMedia(id); setChoosing(false); }} onClose={() => setChoosing(false)} />
         ) : null}
         {!parentId && isVideo ? (
           <span className="sf-small sf-muted composer__tc" title="Queda en este momento del vídeo"><IconClock size={12} /> {formatTc(playhead)}</span>

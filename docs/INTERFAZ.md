@@ -324,7 +324,10 @@ y «Tomas» por separado):
 - **Resolver** lo da por hecho y cierra el hilo; **Responder** sigue la
   conversación para aterrizar el feedback. Si se ha trabajado en una versión
   nueva del plano, en la **caja de respuesta** (junto a Enviar) se elige esa
-  versión («En v002 (nueva)»): al enviar, el comentario pasa a ella con su
+  versión: «En Vídeo v001» abre una ventana de tamaño medio con la galería de
+  versiones del plano (miniatura, tipo, modelo, quién y cuándo; la del
+  comentario marcada) para elegir viéndola. Las versiones se cuentan por tipo,
+  por eso se nombran «Imagen v002», «Vídeo v001». al enviar, el comentario pasa a ella con su
   conversación, su momento y su marca; queda registrado de dónde venía
   («v001 → v002») y se sigue comentando sobre la nueva, para el equipo y para
   el cliente.
