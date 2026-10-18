@@ -153,6 +153,12 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
 - **Clic derecho** en una tarjeta abre su menú, titulado «Menú» (sin repetir el
   código ni el título). El estado va como en el panel de la izquierda: la
   etiqueta, y al pulsarla se despliega la lista.
+  - **Plano:** además de lo de abajo, sobre la versión elegida del plano:
+    **copiar el vídeo / la imagen** para pegarlo en otra app (la imagen, en
+    cualquier sitio; un vídeo o audio se copia como archivo desde la app de
+    escritorio; el navegador no lo permite y lo descarga), **descargar** y
+    **copiar el enlace** (`#/plano/producción/plano/versión`): abre la app en ese
+    plano con esa versión en el visor, para quien tenga la carpeta del equipo.
   - **Plano:** estado, cambiar el título
     (lo edita en la tarjeta), abrir en ventana aparte y mover a la papelera.
     Con varias seleccionadas, el estado y la papelera se aplican a todas.

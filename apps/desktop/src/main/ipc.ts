@@ -1,6 +1,7 @@
 /** IPC handlers backing `window.sweetflow` (see shared/api.ts). */
 
-import { BrowserWindow, dialog, ipcMain, shell, type IpcMainInvokeEvent, type OpenDialogOptions } from "electron";
+import { BrowserWindow, clipboard, dialog, ipcMain, shell, type IpcMainInvokeEvent, type OpenDialogOptions } from "electron";
+import { existsSync } from "node:fs";
 import path from "node:path";
 import { IPC } from "../shared/api";
 import { isAppUrl } from "./env";
@@ -24,5 +25,22 @@ export function registerIpc(): void {
     assertTrusted(e);
     if (typeof target !== "string" || !path.isAbsolute(target)) throw new Error("Ruta no válida");
     shell.showItemInFolder(path.normalize(target));
+  });
+
+  // The file itself on the clipboard (not its contents), as Finder / Explorer copy does.
+  ipcMain.handle(IPC.copyFile, (e, target: unknown) => {
+    assertTrusted(e);
+    if (typeof target !== "string" || !path.isAbsolute(target)) throw new Error("Ruta no válida");
+    const file = path.normalize(target);
+    if (!existsSync(file)) throw new Error("El archivo no está en el disco (¿aún se está sincronizando?)");
+    if (process.platform === "darwin") {
+      const esc = file.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      const plist = `<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><array><string>${esc}</string></array></plist>`;
+      clipboard.writeBuffer("NSFilenamesPboardType", Buffer.from(plist));
+    } else if (process.platform === "win32") {
+      clipboard.writeBuffer("FileNameW", Buffer.from(`${file}\0`, "ucs2"));
+    } else {
+      clipboard.writeText(`file://${file}`);
+    }
   });
 }

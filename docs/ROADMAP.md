@@ -169,6 +169,14 @@ Anotadas el 15 oct 2026, pendientes de que el usuario elija orden:
 - Voz (TTS) con elección de voz; referencia de vídeo para la música; movimiento de cámara y multiplano en Seedance.
 - Subir a Magnific una imagen local para usarla como referencia.
 
+### Compartir: siguientes pasos
+
+- **Enlace para la app de escritorio:** protocolo `sweetflow://plano/…` registrado por la app, para que el enlace la abra directamente (hoy el enlace es la dirección de la app web).
+- **Vista previa para invitados sin acceso** (un enlace que se abre en cualquier navegador). Necesita alojar el archivo en un sitio público. Opciones:
+  1. **Enlace compartido de Dropbox** (cuando conectemos su API): el vídeo ya está ahí; «cualquiera con el enlace», con caducidad.
+  2. **Magnific:** sus creaciones y proyectos se pueden compartir (`projects_share`); sirve si el invitado tiene cuenta.
+  3. **Página de revisión propia** (más adelante, con servidor): vídeo, versión y comentarios del invitado, con caducidad y contraseña.
+
 ### Menú contextual: más adelante
 
 - **Compartir el enlace** de un plano o un grupo (abre la producción en ese

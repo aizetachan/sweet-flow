@@ -13,11 +13,14 @@ export interface SweetflowApi {
   pickFolder(): Promise<string | null>;
   /** Shows a file or folder in Finder / Explorer. */
   revealInFolder(path: string): Promise<void>;
+  /** Puts a file on the system clipboard, as Finder / Explorer copy does, to paste it in another app. */
+  copyFile(path: string): Promise<void>;
 }
 
 export const IPC = {
   pickFolder: "sf:pick-folder",
   revealInFolder: "sf:reveal-in-folder",
+  copyFile: "sf:copy-file",
 } as const;
 
 /** Passed to the renderer through `additionalArguments` (preload is sandboxed). */

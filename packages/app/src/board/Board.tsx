@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode, type RefObject } from "react";
-import { IconNote, IconArrowBackUp, IconArrowLeft, IconPencil, IconStack2, IconExternalLink, IconMessageCircle, IconPlus, IconFilter, IconSearch, IconTrash, IconLayoutGrid, IconLayoutList, IconX } from "@tabler/icons-react";
+import { IconCopy, IconDownload, IconLink, IconNote, IconArrowBackUp, IconArrowLeft, IconPencil, IconStack2, IconExternalLink, IconMessageCircle, IconPlus, IconFilter, IconSearch, IconTrash, IconLayoutGrid, IconLayoutList, IconX } from "@tabler/icons-react";
 import {
   childrenOf,
   codeOf,
@@ -20,6 +20,7 @@ import { countsOf, coverOf, durationOf, filtersActive, matches, memberName, pres
 import { Thumb, useDuration } from "../components/media";
 import { Popover } from "../components/Popover";
 import { ContextMenu, type MenuAt } from "../components/ContextMenu";
+import { copyMedia, copyShotLink, downloadMedia } from "../data/share";
 import { StatusPicker } from "../components/StatusPicker";
 import { groupDragProps, nodeDragProps, useNodeDrop, useRowDrop, useUngroupDrop, type RowHint } from "./dnd";
 import { ShelfButton } from "./Shelf";
@@ -385,6 +386,8 @@ function ShotMenu({ at, node, targets, onRename, onClose }: { at: MenuAt; node: 
   const many = targets.length > 1;
   const nodes = targets.map((id) => snap.nodes.find((n) => n.id === id)).filter((n): n is ProdNode => !!n);
   const same = nodes.every((n) => n.statusId === nodes[0]?.statusId) ? nodes[0]?.statusId ?? null : null;
+  // What the shot is now: its chosen version (or its latest).
+  const media = coverOf(snap, node).media;
   return (
     <ContextMenu at={at} onClose={onClose}>
       <div className="menu__title">{many ? `Menú · ${targets.length} planos` : "Menú"}</div>
@@ -394,6 +397,19 @@ function ShotMenu({ at, node, targets, onRename, onClose }: { at: MenuAt; node: 
         <>
           <button className="menu__item" onClick={onRename}><IconPencil size={14} /> <span className="menu__label">Cambiar el título</span></button>
           <button className="menu__item" onClick={() => popOut(node.id)}><IconExternalLink size={14} /> <span className="menu__label">Abrir en ventana aparte</span></button>
+          <div className="menu__sep" />
+          {media ? (
+            <>
+              <button className="menu__item" onClick={() => void copyMedia(node, media)}>
+                <IconCopy size={14} /> <span className="menu__label">{media.kind === "image" ? "Copiar la imagen" : media.kind === "audio" ? "Copiar el audio" : "Copiar el vídeo"}<span className="menu__hint">para pegarlo en otra app</span></span>
+              </button>
+              <button className="menu__item" onClick={() => downloadMedia(node, media)}><IconDownload size={14} /> <span className="menu__label">Descargar</span></button>
+            </>
+          ) : null}
+          <button className="menu__item" onClick={() => copyShotLink(node, media)}>
+            <IconLink size={14} /> <span className="menu__label">Copiar el enlace<span className="menu__hint">para alguien del equipo</span></span>
+          </button>
+          <div className="menu__sep" />
         </>
       ) : null}
       <button className="menu__item menu__item--danger" onClick={() => trashNodes(targets)}>

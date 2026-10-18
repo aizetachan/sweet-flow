@@ -13,6 +13,7 @@ const api: SweetflowApi = {
   platform: process.platform as SweetflowApi["platform"],
   pickFolder: () => ipcRenderer.invoke(IPC.pickFolder) as Promise<string | null>,
   revealInFolder: (path) => ipcRenderer.invoke(IPC.revealInFolder, path) as Promise<void>,
+  copyFile: (path) => ipcRenderer.invoke(IPC.copyFile, path) as Promise<void>,
 };
 
 contextBridge.exposeInMainWorld("sweetflow", api);

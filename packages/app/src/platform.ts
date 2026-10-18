@@ -8,6 +8,8 @@ export interface DesktopBridge {
   readonly platform: "darwin" | "win32" | "linux";
   pickFolder(): Promise<string | null>;
   revealInFolder(path: string): Promise<void>;
+  /** Older desktop builds lack it. */
+  copyFile?(path: string): Promise<void>;
 }
 
 declare global {

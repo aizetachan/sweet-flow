@@ -6,6 +6,7 @@
  */
 
 import { create } from "zustand";
+import { parseShotLink } from "../data/share";
 import { codeOf, type Id } from "@sweetflow/domain";
 import type { DataSource, Snapshot } from "../data/source";
 import type { Library, LibraryState, Pin } from "../data/library";
@@ -101,7 +102,7 @@ interface Store extends UiState {
   setFilters: (patch: Partial<Filters>) => void;
   toggleCollapsed: (id: Id) => void;
   /** `nodeId`: select that node once the production has loaded. */
-  openProduction: (id: Id, opts?: { windowNodeId?: Id; source?: DataSource; nodeId?: Id }) => void;
+  openProduction: (id: Id, opts?: { windowNodeId?: Id; source?: DataSource; nodeId?: Id; mediaId?: Id }) => void;
   /** Go to a pinned folder, production, scene or shot. */
   openPin: (pin: Pin) => void;
   closeProduction: (folderId?: Id | null) => void;
@@ -210,6 +211,7 @@ export const useStore = create<Store>((set, get) => ({
       queueMicrotask(() => {
         if (snap.nodes.some((n) => n.id === nodeId)) {
           get().select(nodeId);
+          if (opts?.mediaId) set({ activeMediaId: opts.mediaId });
         } else if (snap.trash.some((n) => n.id === nodeId)) {
           get().notify("Ese elemento está en la papelera de la producción.");
         } else {
@@ -343,6 +345,26 @@ if (popped) {
     });
   }
 } else {
+  // A shot link (`#/plano/…`, docs/INTERFAZ.md §2): open that production on that shot, once the dashboard is known.
+  const openLink = () => {
+    const link = parseShotLink(location.hash);
+    if (!link) return;
+    history.replaceState(null, "", location.href.split("#")[0]);
+    const go = () => {
+      const { lib, notify } = useStore.getState();
+      if (!lib) return false;
+      if (!lib.entries.some((e) => e.id === link.productionId && e.kind === "production")) {
+        notify("Ese enlace es de una producción que no está en tu carpeta del equipo.");
+        return true;
+      }
+      useStore.getState().openProduction(link.productionId, { nodeId: link.nodeId, mediaId: link.mediaId });
+      return true;
+    };
+    if (go()) return;
+    const off = useStore.subscribe((s) => s.lib && go() && off());
+  };
+  openLink();
+  window.addEventListener("hashchange", openLink);
   hostWindows(
     { productionId: () => useStore.getState().productionId, source: () => useStore.getState().source },
     (list) => useStore.setState({ popped: list }),
