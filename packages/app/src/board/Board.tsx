@@ -88,7 +88,7 @@ function Group({ node }: { node: ProdNode }) {
   const childLevel = p.levels[li + 1]!;
   return (
     <section className="group">
-      <GroupHead node={node} onToggle={toggleFold}>
+      <GroupHead node={node} onToggle={toggleFold} folded={folded}>
         <span className="group__code">{codeOf(p, node)}</span>
         <InlineEdit className="group__title" value={node.title} placeholder="Sin título" label="Doble clic para cambiar el título"
           onSave={(title) => useStore.getState().source.updateNode(node.id, { title })} />
@@ -141,10 +141,10 @@ function AddBar({ big }: { big?: boolean }) {
   );
 }
 
-function GroupHead({ node, children, onToggle }: { node: ProdNode; children: ReactNode; onToggle: (e: ReactMouseEvent) => void }) {
+function GroupHead({ node, children, onToggle, folded }: { node: ProdNode; children: ReactNode; onToggle: (e: ReactMouseEvent) => void; folded?: boolean }) {
   const drop = useNodeDrop(node, "y", true);
   return (
-    <div className={cx("group__head", drop.zone && `dnd-${drop.zone}`)} {...nodeDragProps(node.id)} {...drop.props} onClick={(e) => { if (!isControl(e.target)) onToggle(e); }}>
+    <div className={cx("group__head", folded && "group__head--folded", drop.zone && `dnd-${drop.zone}`)} {...nodeDragProps(node.id)} {...drop.props} onClick={(e) => { if (!isControl(e.target)) onToggle(e); }}>
       {children}
     </div>
   );
