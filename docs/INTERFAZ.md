@@ -134,11 +134,13 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
 - **Cabecera del tablero:** el título y un contador con el número de planos.
 - **Secciones** (Producción, Biblioteca, Papelera, Ajustes): barra **flotante
   centrada abajo**, para que el tablero tenga todo el ancho.
-- **Clic derecho** en una tarjeta abre su menú:
-  - **Plano:** estado (la lista, con el actual marcado), cambiar el título
+- **Clic derecho** en una tarjeta abre su menú, titulado «Menú» (sin repetir el
+  código ni el título). El estado va como en el panel de la izquierda: la
+  etiqueta, y al pulsarla se despliega la lista.
+  - **Plano:** estado, cambiar el título
     (lo edita en la tarjeta), abrir en ventana aparte y mover a la papelera.
     Con varias seleccionadas, el estado y la papelera se aplican a todas.
-  - **Grupo:** estado de todos sus planos, cambiar el nombre, abrir el grupo,
+  - **Grupo:** estado de sus planos («Varios» si no es el mismo), cambiar el nombre, abrir el grupo,
     deshacer el grupo (los planos vuelven a la fila) y mover a la papelera con
     sus planos.
 - **Tarjeta de plano:** portada (sin etiqueta de duración encima); código y estado (**clic en el estado** abre

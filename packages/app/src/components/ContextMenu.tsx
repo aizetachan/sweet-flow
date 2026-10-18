@@ -1,7 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { IconCheck } from "@tabler/icons-react";
-import type { Id, StatusDef } from "@sweetflow/domain";
 
 export interface MenuAt {
   x: number;
@@ -47,21 +45,5 @@ export function ContextMenu({ at, onClose, children }: { at: MenuAt; onClose: ()
       {children}
     </div>,
     document.body,
-  );
-}
-
-/** The statuses as menu items, with a tick on `current` (null: mixed or none). */
-export function StatusItems({ statuses, current, onPick }: { statuses: StatusDef[]; current: Id | null; onPick: (id: Id) => void }) {
-  const list = statuses.filter((s) => !s.archived).sort((a, b) => a.order - b.order);
-  return (
-    <>
-      {list.map((s) => (
-        <button key={s.id} className="menu__item" onClick={() => onPick(s.id)}>
-          <span className="sf-pill__dot" style={{ background: s.color }} />
-          <span className="menu__label">{s.name}</span>
-          {s.id === current ? <IconCheck size={13} /> : null}
-        </button>
-      ))}
-    </>
   );
 }

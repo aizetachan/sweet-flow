@@ -12,13 +12,14 @@ import {
   type Id,
   type ProdNode,
   type ShotGroup,
+  type StatusDef,
 } from "@sweetflow/domain";
 import { AvatarStack, Button, cx, IconButton, Pill, Segmented } from "@sweetflow/ui";
 import { useSnap, useStore, type CardSize } from "../state/store";
 import { countsOf, coverOf, durationOf, filtersActive, matches, memberName, presenceAt, progressOf, statusOf } from "../state/selectors";
 import { Thumb, useDuration } from "../components/media";
 import { Popover } from "../components/Popover";
-import { ContextMenu, StatusItems, type MenuAt } from "../components/ContextMenu";
+import { ContextMenu, type MenuAt } from "../components/ContextMenu";
 import { StatusPicker } from "../components/StatusPicker";
 import { groupDragProps, nodeDragProps, useNodeDrop, useRowDrop, useUngroupDrop, type RowHint } from "./dnd";
 import { ShelfButton } from "./Shelf";
@@ -349,6 +350,17 @@ function UnitCard({ node, inRow, hint }: { node: ProdNode; inRow?: boolean; hint
 /** Most mini covers a group card shows; the last one says how many more there are. */
 const GROUP_TILES = 4;
 
+/** The status in a menu, as in the work panel: the label, and a click opens the list. Mixed: "Varios". */
+function StatusRow({ statuses, current, onPick, label = "Estado" }: { statuses: StatusDef[]; current: Id | null; onPick: (id: Id) => void; label?: string }) {
+  return (
+    <div className="ctxmenu__status">
+      <span className="sf-muted sf-small">{label}</span>
+      <StatusPicker floating statuses={statuses} value={current} placeholder={current ? undefined : "Varios"} onChange={onPick}
+        onEdit={() => useStore.getState().set({ modal: "statuses" })} />
+    </div>
+  );
+}
+
 /** Right-click menu of shot cards: status, title, open apart, trash (§2). */
 function ShotMenu({ at, node, targets, onRename, onClose }: { at: MenuAt; node: ProdNode; targets: Id[]; onRename: () => void; onClose: () => void }) {
   const snap = useSnap();
@@ -359,9 +371,8 @@ function ShotMenu({ at, node, targets, onRename, onClose }: { at: MenuAt; node: 
   const same = nodes.every((n) => n.statusId === nodes[0]?.statusId) ? nodes[0]?.statusId ?? null : null;
   return (
     <ContextMenu at={at} onClose={onClose}>
-      <div className="menu__title">{many ? `${targets.length} planos` : `${codeOf(p, node)}${node.title ? ` · ${node.title}` : ""}`}</div>
-      <div className="menu__title ctxmenu__sub">Estado</div>
-      <StatusItems statuses={p.statuses} current={same} onPick={(id) => { for (const n of nodes) source.updateNode(n.id, { statusId: id }); }} />
+      <div className="menu__title">{many ? `Menú · ${targets.length} planos` : "Menú"}</div>
+      <StatusRow statuses={p.statuses} current={same} onPick={(id) => { for (const n of nodes) source.updateNode(n.id, { statusId: id }); }} />
       <div className="menu__sep" />
       {!many ? (
         <>
@@ -383,9 +394,8 @@ function GroupMenu({ at, group, shots, onRename, onOpen, onClose }: { at: MenuAt
   const same = shots.every((n) => n.statusId === shots[0]?.statusId) ? shots[0]?.statusId ?? null : null;
   return (
     <ContextMenu at={at} onClose={onClose}>
-      <div className="menu__title">{group.name} · {shots.length} plano{shots.length === 1 ? "" : "s"}</div>
-      <div className="menu__title ctxmenu__sub">Estado de todos sus planos</div>
-      <StatusItems statuses={snap.production.statuses} current={same} onPick={(id) => { for (const n of shots) source.updateNode(n.id, { statusId: id }); }} />
+      <div className="menu__title">Menú</div>
+      <StatusRow label="Estado de sus planos" statuses={snap.production.statuses} current={same} onPick={(id) => { for (const n of shots) source.updateNode(n.id, { statusId: id }); }} />
       <div className="menu__sep" />
       <button className="menu__item" onClick={onRename}><IconPencil size={14} /> <span className="menu__label">Cambiar el nombre</span></button>
       <button className="menu__item" onClick={onOpen}><IconStack2 size={14} /> <span className="menu__label">Abrir el grupo</span></button>
