@@ -106,7 +106,7 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
   extremo más cercano. Se recuerda en este ordenador.
 
 - **Producción** (primera pestaña): el panel de trabajo de la escena o el plano
-  seleccionado. Muestra el código de lo seleccionado.
+  seleccionado.
 - **Estructura:** el árbol. Un clic selecciona sin salir del árbol; doble clic
   (o seleccionar en el tablero) abre la pestaña Producción. **Doble clic en el
   título** (también «Sin título») lo edita ahí mismo. Los **grupos de planos**

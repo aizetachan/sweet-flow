@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { ImportDialog } from "./components/ImportDialog";
-import { codeOf, isUnit } from "@sweetflow/domain";
+import { isUnit } from "@sweetflow/domain";
 import { Button, cx, Modal, Spinner } from "@sweetflow/ui";
 import { useSnap, useStore } from "./state/store";
 import { Dock, Topbar } from "./shell/Shell";
@@ -134,17 +134,13 @@ function Workspace({ children }: { children: ReactNode }) {
 function SidePanel() {
   const snap = useSnap();
   const sideTab = useStore((s) => s.sideTab);
-  const selectedId = useStore((s) => s.selectedId);
   const set = useStore((s) => s.set);
-  // A shot in «Vídeos editados» can be open too (picked from that list).
-  const node = snap.nodes.find((n) => n.id === selectedId) ?? snap.shelf.find((n) => n.id === selectedId);
   const units = snap.nodes.filter((n) => isUnit(snap.production, n)).length;
   return (
     <aside className="side">
       <div className="sidetabs" role="tablist">
         <button role="tab" aria-selected={sideTab === "work"} className={cx("sidetabs__tab", sideTab === "work" && "sidetabs__tab--on")} onClick={() => set({ sideTab: "work" })}>
           Producción
-          {node ? <span className="sidetabs__badge">{codeOf(snap.production, node)}</span> : null}
         </button>
         <button role="tab" aria-selected={sideTab === "structure"} className={cx("sidetabs__tab", sideTab === "structure" && "sidetabs__tab--on")} onClick={() => set({ sideTab: "structure" })}>
           Estructura
