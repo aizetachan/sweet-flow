@@ -3,14 +3,12 @@ import {
   IconCopy,
   IconExternalLink,
   IconLayoutSidebarLeftExpand,
-  IconPin,
-  IconPinFilled,
   IconPlus,
   IconSparkles,
   IconTrash,
   IconX,
 } from "@tabler/icons-react";
-import { ancestorsOf, codeOf, folderPath, levelOf, roleOf, type ProdNode } from "@sweetflow/domain";
+import { ancestorsOf, codeOf, folderPath, levelOf, type ProdNode } from "@sweetflow/domain";
 import { Avatar, Button, cx, IconButton, Tabs } from "@sweetflow/ui";
 import { useSnap, useStore, type FloatingPanel, type PanelTab } from "../state/store";
 import { coverOf, presenceAt } from "../state/selectors";
@@ -25,8 +23,11 @@ import { ActivityTab } from "./ActivityTab";
 
 const ASSET_LABEL = { cast: "Reparto", prop: "Prop", location: "Localización", style: "Estilo" } as const;
 
-/** Pin a scene or shot to the dashboard's side menu; keeps the pinned code and title current. */
-function PinButton({ node }: { node: ProdNode }) {
+/**
+ * A scene or shot pinned in the dashboard's side menu keeps its code and title
+ * current while it is open here (pinning itself is done from the dashboard).
+ */
+function PinLabelSync({ node }: { node: ProdNode }) {
   const snap = useSnap();
   const { library, productionId } = useStore();
   const pins = useStore((s) => s.lib?.prefs.pins);
@@ -35,12 +36,7 @@ function PinButton({ node }: { node: ProdNode }) {
   useEffect(() => {
     if (pin && pinned) library.setPinned(pin, true);
   }, [pinned, pin?.code, pin?.title, pin?.level]); // eslint-disable-line react-hooks/exhaustive-deps
-  if (!pin) return null;
-  return (
-    <IconButton label={pinned ? "Quitar de Fijados" : "Fijar en el menú lateral del inicio"} size="sm" onClick={() => library.setPinned(pin, !pinned)}>
-      {pinned ? <IconPinFilled size={14} className="accent" /> : <IconPin size={14} />}
-    </IconButton>
-  );
+  return null;
 }
 
 /** The work panel in its column, bound to the selection. */
@@ -173,7 +169,7 @@ function InspectorBody({ floatKey, onDragHandle }: { floatKey?: string; onDragHa
   const content = (
     <>
       <div className="insp__top">
-        {/* Row 1: code + title, close on the right. */}
+        {/* Row 1: code + title, status, then the actions and close. */}
         <div className={cx("nhead__row nhead__row--title", onDragHandle && "insp__drag")} onPointerDown={onDragHandle}>
           <CodeEditor node={node} />
           <input
@@ -182,13 +178,19 @@ function InspectorBody({ floatKey, onDragHandle }: { floatKey?: string; onDragHa
             placeholder={`Título del ${levelOf(p, node).name.toLowerCase()}`}
             onChange={(e) => source.updateNode(node.id, { title: e.target.value })}
           />
+          <StatusPicker statuses={p.statuses} value={node.statusId} onChange={(id) => source.updateNode(node.id, { statusId: id })} onEdit={() => set({ modal: "statuses" })} />
           {panel.mode === "floating" && floatKey ? (
             <IconButton label="Acoplar al panel lateral" size="sm" onClick={() => dockPanel(floatKey)}><IconLayoutSidebarLeftExpand size={14} /></IconButton>
           ) : null}
           {panel.mode !== "window" ? (
             <IconButton label={`Mover ${codeOf(p, node)} a la papelera (Supr)`} size="sm" onClick={() => trashNodes([node.id])}><IconTrash size={14} /></IconButton>
           ) : null}
-          {panel.mode !== "window" ? <PinButton node={node} /> : null}
+          <PinLabelSync node={node} />
+          {/* Its folder path, to paste in the Finder or send (it says sequence, scene and shot). */}
+          <IconButton label={`Copiar la ruta: ${path}`} size="sm" onClick={() => {
+            void navigator.clipboard?.writeText(path);
+            useStore.getState().notify(`Ruta de ${codeOf(p, node)} copiada.`);
+          }}><IconCopy size={14} /></IconButton>
           {panel.mode !== "window" ? (
             <IconButton
               label="Abrir en una ventana aparte (puedes llevarla a otro monitor)"
@@ -204,21 +206,6 @@ function InspectorBody({ floatKey, onDragHandle }: { floatKey?: string; onDragHa
             size="sm"
             onClick={() => (panel.mode === "window" ? window.close() : floatKey ? closeFloating(floatKey) : select(null))}
           ><IconX size={14} /></IconButton>
-        </div>
-        {/* Row 2: where it is, open apart, copy folder path; status on the right. */}
-        <div className="insp__meta">
-          <span className="insp__crumbs">
-            {ancestorsOf(snap.nodes, node).map((a, i, arr) => (
-              <span key={a.id}>
-                <button className="link" onClick={() => panel.setPanel({ nodeId: a.id })}>{codeOf(p, a)}</button>
-                {i < arr.length - 1 ? <span className="sf-faint"> / </span> : null}
-              </span>
-            ))}
-            <span className="sf-faint"> · {levelOf(p, node).name}{roleOf(p, node) === "production" ? " · punto de producción" : roleOf(p, node) === "group" ? " · montaje" : ""}</span>
-          </span>
-          <IconButton label={`Copiar la ruta de la carpeta: ${path}`} size="sm" onClick={() => void navigator.clipboard?.writeText(path)}><IconCopy size={14} /></IconButton>
-          <span className="insp__spacer" />
-          <StatusPicker statuses={p.statuses} value={node.statusId} onChange={(id) => source.updateNode(node.id, { statusId: id })} onEdit={() => set({ modal: "statuses" })} />
         </div>
         <NodeHeader node={node} />
       </div>

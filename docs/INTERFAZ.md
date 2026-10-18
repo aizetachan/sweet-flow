@@ -102,10 +102,11 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
 
 - El **tablero** es la vista general: se va actualizando solo mientras se genera
   y mientras el equipo trabaja.
-- **Cabecera del panel:** primera fila con el código (número editable), el
-  título, ventana aparte y cerrar; debajo, la ubicación
-  (`SQ010 / SC010 / SH0040 · Plano`), copiar la ruta de la carpeta y, pegado a
-  la derecha, el estado. **El estado es solo la etiqueta**: al hacer clic se
+- **Cabecera del panel:** una sola fila con el código (número editable), el
+  título, el estado, papelera, **copiar la ruta** (secuencia, escena y plano,
+  para el Finder o para enviarla), ventana aparte y cerrar. La fila de la
+  ubicación y la chincheta de Fijados se quitaron el 18 oct 2026 (se fija
+  desde el dashboard). **El estado es solo la etiqueta**: al hacer clic se
   despliega la lista. Todo lo nuevo empieza en **Pendiente**.
 - **Barra superior:** logo (vuelve al inicio) y migas de pan a la izquierda; a
   la derecha, el **buscador** (en el tablero), quién está en la producción y
