@@ -107,7 +107,7 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
 
 - **Producción** (primera pestaña): el panel de trabajo de la escena o el plano
   seleccionado.
-- **Explorer** (antes «Explorer», sin número): el árbol. Un clic selecciona sin salir del árbol; doble clic
+- **Explorer** (antes «Estructura», sin número): el árbol. Un clic selecciona sin salir del árbol; doble clic
   (o seleccionar en el tablero) abre la pestaña Producción. **Doble clic en el
   título** (también «Sin título») lo edita ahí mismo. Los **grupos de planos**
   se ven como en el tablero: una fila con su nombre (doble clic para
