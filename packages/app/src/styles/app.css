@@ -132,6 +132,9 @@
 .card__title { color: var(--fg-2); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: -3px; }
 .card__row { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
 .card__row .card__title { flex: 1; min-width: 0; }
+.card__row .card__codeline { flex: 0 1 auto; }
+.card__row { align-items: center; min-height: 20px; margin-top: -3px; }
+.card__row .card__title, .card__row .card__len { margin-top: 0; }
 .card__name { flex: 1; min-width: 0; font-weight: 700; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--fg-0); }
 .card__name.inline-edit__in { font-weight: 600; }
 .card__meta .card__status { flex: none; }

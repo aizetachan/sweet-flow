@@ -279,7 +279,6 @@ function AddCard({ row, groupId, hint }: { row: ProdNode; groupId?: Id; hint?: R
         <span className="thumb" />
         <span className="card__meta"><span className="card__code">SH</span><Pill color="transparent">·</Pill></span>
         <span className="card__title">·</span>
-        <span className="card__foot">·</span>
       </span>
       <IconPlus size={24} stroke={1.5} className="card__plus" />
     </button>
@@ -328,20 +327,18 @@ function UnitCard({ node, inRow, hint }: { node: ProdNode; inRow?: boolean; hint
             onEdit={() => useStore.getState().set({ modal: "statuses" })} />
         </span>
       </div>
+      {/* Second line: code and who is on it on the left; notes and length on the right. No third line. */}
       <div className="card__row">
-        <span className="card__title">{codeOf(p, node)}</span>
-        <CardLength cover={cover} />
-      </div>
-      <div className="card__foot">
+        <span className="card__title card__codeline">{codeOf(p, node)}</span>
+        {node.assigneeIds.length ? <AvatarStack names={node.assigneeIds.map((u) => memberName(snap, u))} size={16} max={2} /> : null}
         {c.comments ? <span className="card__comments"><IconMessageCircle size={12} /> {c.comments}</span> : null}
-        <span className="card__spacer" />
         {apart ? (
           <button className="apart" title="Abierto en una ventana aparte: ir a la ventana" onClick={(e) => { e.stopPropagation(); focusPopped(node.id); }}>
             <IconExternalLink size={12} />
           </button>
         ) : null}
         {viewers.length ? <span className="card__live" title={`${viewers.join(", ")} está aquí`}><AvatarStack names={viewers} size={16} /></span> : null}
-        {node.assigneeIds.length ? <AvatarStack names={node.assigneeIds.map((u) => memberName(snap, u))} size={16} max={2} /> : null}
+        <span className="card__spacer" />
         {/* It has notes: the icon says so, and opens them without the panel. */}
         {node.notes.trim() ? (
           <button className="card__note" title={node.notes} aria-label="Ver las notas" draggable={false}
@@ -349,6 +346,7 @@ function UnitCard({ node, inRow, hint }: { node: ProdNode; inRow?: boolean; hint
             <IconNote size={13} />
           </button>
         ) : null}
+        <CardLength cover={cover} />
       </div>
     </div>
     {menu ? <ShotMenu at={menu} node={node} targets={targets} onRename={() => setRename((n) => n + 1)} onClose={() => setMenu(null)} /> : null}

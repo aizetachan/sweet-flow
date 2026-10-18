@@ -149,8 +149,8 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
 - **Notas** (acción, diálogo, dirección; base del prompt): ya no hay caja en el
   panel. A la derecha del código, un botón **«Notas»** abre una ventana modal
   para escribirlas (se guardan al escribir; resaltado si hay alguna). Si un
-  plano tiene notas, su tarjeta muestra el **icono de nota** abajo a la
-  derecha, bajo la duración: al pulsarlo se abren sin abrir el panel.
+  plano tiene notas, su tarjeta muestra el **icono de nota** a la izquierda de
+  la duración: al pulsarlo se abren sin abrir el panel.
 - **Visor de vídeo:** controles de siempre: reproducir/pausa, la **línea de
   tiempo** para ir a cualquier punto, el tiempo y pantalla completa. En un
   plano hecho de un tramo, la línea recorre solo su tramo.
@@ -162,7 +162,10 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
   estado (**clic en él** abre la lista para cambiarlo ahí mismo, sin
   seleccionar la tarjeta). Debajo, el **código**, más discreto, y a la derecha
   la **duración del vídeo** (la del tramo si es un plano cortado; «N/A» si es
-  una imagen; «—» si aún no tiene nada). No muestra
+  una imagen; «—» si aún no tiene nada). En esa misma segunda línea, tras el
+  código, los **responsables**, los comentarios, la ventana aparte y quién está
+  mirando; a la izquierda de la duración, el **icono de nota**. No hay tercera
+  línea: la tarjeta es más baja. No muestra
   el número de versiones (hay un vídeo por plano) ni franja de color arriba
   (quitada el 18 oct 2026; se ajustará de otra forma). Abajo, comentarios,
   ventana aparte, quién está y responsables. El borde de la seleccionada va
