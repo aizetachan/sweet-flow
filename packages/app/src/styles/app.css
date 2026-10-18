@@ -36,7 +36,8 @@
 
 /* ---------- workspace ---------- */
 /* Left column (work panel | structure tabs) and the board (docs/INTERFAZ.md §2). */
-.workspace { flex: 1; min-height: 0; display: grid; grid-template-columns: 440px minmax(0, 1fr); }
+/* The left panel: its full width (--side-max) times how much of it the person keeps (--side-k, 0.8–1, dragging its right edge). */
+.workspace { --side-max: 440px; flex: 1; min-height: 0; display: grid; grid-template-columns: calc(var(--side-max) * var(--side-k, 1)) minmax(0, 1fr); }
 .side { display: flex; flex-direction: column; min-height: 0; background: var(--bg-1); border-right: 1px solid var(--line-0); }
 .side > .insp, .side > .tree { flex: 1; min-height: 0; border: 0; }
 .sidetabs { flex: none; display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin: 10px 12px 2px; padding: 3px; border-radius: var(--r-md); background: var(--bg-3); }
@@ -513,10 +514,10 @@
 .online { display: inline-flex; align-items: center; gap: 6px; color: var(--ok); }
 
 @media (max-width: 1280px) {
-  .workspace { grid-template-columns: 380px minmax(0, 1fr); }
+  .workspace { --side-max: 380px; }
 }
 @media (max-width: 1040px) {
-  .workspace { grid-template-columns: 330px minmax(0, 1fr); }
+  .workspace { --side-max: 330px; }
 }
 @media (max-width: 720px) {
     .workspace { grid-template-columns: 1fr; grid-template-rows: minmax(0, 45%) minmax(0, 1fr); }
@@ -838,3 +839,59 @@ button.topbar__me { position: relative; padding: 0; border: 0; border-radius: 50
 /* Icon-only buttons: no browser padding, so the icon sits exactly in the middle. */
 .card__note, .version__act, .player__btn, .player__play, .gen__ref-x, .apart, .picker__clear, .filters__clear, .trow__caret { padding: 0; line-height: 0; }
 .card__note > svg, .version__act > svg, .player__btn > svg, .player__play > svg, .gen__ref-x > svg, .apart > svg { display: block; }
+
+/* «Importar» (docs/INTERFAZ.md §2.0) */
+.imp__top { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+.imp { display: flex; flex-direction: column; gap: 10px; }
+.imp__bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.imp__search { position: relative; flex: 1; min-width: 200px; display: flex; align-items: center; color: var(--fg-3); }
+.imp__search svg { position: absolute; left: 10px; pointer-events: none; }
+.imp__search .sf-input { width: 100%; padding-left: 30px; }
+.imp__crumbs { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; font-size: 12.5px; }
+.imp__crumbs .link { color: var(--fg-3); }
+.imp__crumbs .link.is-on { color: var(--fg-0); font-weight: 600; }
+.imp__crumb { display: inline-flex; align-items: center; gap: 4px; }
+.imp__folders { display: flex; gap: 6px; flex-wrap: wrap; }
+.imp__folder { display: inline-flex; align-items: center; gap: 6px; height: var(--ctl); padding: 0 10px; border: 1px solid var(--line-1); border-radius: var(--r-md); background: var(--bg-3); color: var(--fg-1); font-size: 12.5px; }
+.imp__folder:hover { background: var(--bg-4); }
+.imp__grid { max-height: 46vh; }
+.imp__thumb { position: relative; display: grid; place-items: center; overflow: hidden; border-radius: var(--r-md); background: var(--bg-1); color: var(--fg-3); }
+.imp__thumb img { width: 100%; height: 100%; object-fit: cover; }
+.imp__n { position: absolute; top: 6px; left: 6px; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; background: var(--primary); color: #fff; font-size: 11px; font-weight: 700; display: grid; place-items: center; }
+.imp__dur { position: absolute; right: 6px; bottom: 6px; padding: 1px 5px; border-radius: 4px; background: #000a; color: #fff; font-size: 10.5px; }
+.imp__name { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--fg-1); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.imp__name svg { flex: none; color: var(--fg-3); }
+.imp__more { display: flex; justify-content: center; padding: 4px; }
+.imp__foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 10px; border-top: 1px solid var(--line-0); }
+.imp__drop { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; min-height: 260px; border: 1.5px dashed var(--line-2); border-radius: var(--r-xl); color: var(--fg-2); text-align: center; }
+.imp__drop--over { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 8%, transparent); }
+/* Files dragged over a row or a gallery. */
+.files-over { outline: 1.5px dashed var(--primary); outline-offset: 4px; border-radius: var(--r-xl); }
+.ctxmenu .menu__hint { margin-left: auto; padding-left: 16px; font-size: 11px; color: var(--fg-4); }
+.gal__import { display: inline-flex; align-items: center; gap: 4px; margin-right: auto; margin-left: 10px; color: var(--fg-2); }
+.shelf__row { cursor: pointer; }
+.shelf__item--on { background: var(--ghost-2, var(--bg-4)); }
+/* A group's card: its name like a shot's title, with the stack icon; the mosaic always as tall as a cover. */
+.card__gname { flex: 1; min-width: 0; display: flex; align-items: center; gap: 5px; min-height: 22px; color: var(--fg-2); }
+.card__gname svg { flex: none; }
+.gmosaic { aspect-ratio: 16 / 9; grid-template-rows: 1fr 1fr; overflow: hidden; }
+.gmosaic--1 { grid-template-rows: 1fr; }
+.gmosaic__tile .thumb { height: 100%; aspect-ratio: auto; }
+/* Back from a group: it appears a little bigger with a soft, dark neon border and settles to its size; the light goes out as it lands. */
+.card--glow { animation: card-glow 1.1s cubic-bezier(.2, .7, .3, 1); }
+@keyframes card-glow {
+  0% { transform: scale(1.04); border-color: color-mix(in srgb, var(--primary) 70%, transparent); box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--primary) 60%, transparent), 0 0 16px 3px color-mix(in srgb, var(--primary) 28%, transparent); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 transparent, 0 0 0 0 transparent; }
+}
+@media (prefers-reduced-motion: reduce) { .card--glow { animation-name: card-glow-flat; } }
+@keyframes card-glow-flat {
+  0% { border-color: color-mix(in srgb, var(--primary) 70%, transparent); box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--primary) 60%, transparent), 0 0 16px 3px color-mix(in srgb, var(--primary) 28%, transparent); }
+}
+.insp__shelved { display: flex; align-items: center; gap: 6px; margin: 0 14px 8px; padding: 7px 10px; border-radius: var(--r-md); background: var(--bg-3); color: var(--fg-2); font-size: 12px; }
+/* Right edge of the left panel: drag to narrow it (down to 80%) or widen it back. */
+.workspace { position: relative; }
+.side__resize { position: absolute; top: 0; left: calc(var(--side-max) * var(--side-k, 1) - 4px); bottom: 0; width: 8px; z-index: 5; cursor: col-resize; touch-action: none; }
+.side__resize::after { content: ""; position: absolute; top: 0; bottom: 0; left: 3px; width: 2px; background: transparent; transition: background .15s; }
+.side__resize:hover::after, .side__resize.is-on::after { background: var(--primary); }
+@media (max-width: 720px) { .side__resize { display: none; } }
+.workspace--resizing { cursor: col-resize; user-select: none; }

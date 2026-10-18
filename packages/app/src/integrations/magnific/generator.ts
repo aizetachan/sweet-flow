@@ -10,6 +10,8 @@
  */
 
 import type { GenerationPoll, GenerationRequest, Generator } from "../../data/generation";
+import type { BrowsePage, BrowseQuery, RemoteCreation } from "../../data/source";
+import type { MediaKind } from "@sweetflow/domain";
 import { isConnected } from "./auth";
 import { callTool, fileUrl } from "./mcp";
 import { nearest, specOf } from "../../data/models";
@@ -77,6 +79,53 @@ export class MagnificGenerator implements Generator {
   viewUrl(url: string): string {
     // Images and video play straight from Magnific; only downloads need the relay.
     return url;
+  }
+
+  /** Creations (newest first) and folders, to import (docs/INTERFAZ.md §2.0). Reading costs no credits. */
+  async browse(q: BrowseQuery): Promise<BrowsePage> {
+    const page = q.page ?? 1;
+    const perPage = 24;
+    const [found, folders] = await Promise.all([
+      callTool("creations_search", {
+        full: true,
+        perPage,
+        page,
+        ...(q.folder ? { from: "folder", reference: q.folder } : {}),
+        ...(q.kind ? { fileType: q.kind } : {}),
+        ...(q.search?.trim() ? { query: q.search.trim() } : {}),
+      }),
+      page === 1 && !q.search?.trim()
+        ? callTool("folders_list", q.folder ? { parentReference: q.folder } : {}).catch(() => null)
+        : Promise.resolve(null),
+    ]);
+    const d = (found.data ?? {}) as { items?: Array<Record<string, unknown>>; pagination?: { currentPage?: number; lastPage?: number } };
+    const items = (d.items ?? []).flatMap((c): RemoteCreation[] => {
+      const kind = kindOf(c);
+      const url = str(c.url);
+      const id = str(c.identifier);
+      if (!kind || !url || !id || String(c.status ?? "completed") !== "completed") return [];
+      const meta = (c.metadata ?? {}) as Record<string, unknown>;
+      const created = str(c.createdAt);
+      return [{
+        provider: this.provider,
+        id,
+        name: str(c.name) ?? str(meta.prompt) ?? id,
+        kind,
+        url,
+        thumbUrl: str(c.thumbnailUrl) ?? str(c.previewUrl) ?? (kind === "image" ? url : undefined),
+        durationSec: num(meta.duration),
+        width: num(meta.width),
+        height: num(meta.height),
+        folder: str(c.folderReference),
+        createdAt: created ? Date.parse(created) : undefined,
+      }];
+    });
+    const fl = ((folders?.data ?? {}) as { items?: Array<{ reference?: string; name?: string }> }).items ?? [];
+    return {
+      items,
+      folders: fl.flatMap((f) => (f.reference ? [{ id: f.reference, name: f.name ?? "Carpeta" }] : [])),
+      more: (d.pagination?.currentPage ?? page) < (d.pagination?.lastPage ?? page),
+    };
   }
 
   // ---------- internals ----------
@@ -177,6 +226,14 @@ export class MagnificGenerator implements Generator {
 }
 
 // ---------- reading Magnific's answers ----------
+
+function kindOf(c: Record<string, unknown>): MediaKind | undefined {
+  const k = String(c.kind ?? c.type ?? "").toLowerCase();
+  if (k.includes("video")) return "video";
+  if (k.includes("audio") || k.includes("music") || k.includes("sound")) return "audio";
+  if (k.includes("image")) return "image";
+  return undefined;
+}
 
 const str = (v: unknown) => (typeof v === "string" && v ? v : undefined);
 const num = (v: unknown) => (typeof v === "number" ? v : typeof v === "string" && v.trim() && !isNaN(+v) ? +v : undefined);

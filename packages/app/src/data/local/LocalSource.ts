@@ -37,6 +37,9 @@ import {
   planSplitTakeShot,
   planGroupShots,
   planPlaceInRow,
+  planCreateInRow,
+  planShotsFromEdited,
+  lastMadeFrom,
   planUngroupShots,
   planDissolveGroup,
   planRenameGroup,
@@ -64,7 +67,7 @@ import {
   type Segment,
   type StatusDef,
 } from "@sweetflow/domain";
-import type { DataSource, GenerateArgs, NewComment, Placement, Snapshot } from "../source";
+import { importKind, type BrowsePage, type BrowseQuery, type DataSource, type GenerateArgs, type ImportItem, type NewComment, type Placement, type Snapshot } from "../source";
 import type { Generator, GenerationRequest } from "../generation";
 import type { ProductionFiles } from "../folder/ProductionFiles";
 import type { LogStore } from "./store";
@@ -603,11 +606,92 @@ export class LocalSource implements DataSource {
     return plan.nodeIds;
   }
 
+  shotsFromEdited(nodeId: Id, mediaId: Id, segments: Segment[]): Id[] {
+    const s = this.loaded();
+    const original = s.nodes.find((n) => n.id === nodeId && n.shelvedAt !== undefined);
+    if (!original) return [];
+    const live = this.board();
+    const plan = planShotsFromEdited(s.production, live, original, lastMadeFrom(live, s.takes, original, mediaId), { id: mediaId }, segments, this.newId, this.me.uid, this.now());
+    this.apply(plan);
+    return plan.nodeIds;
+  }
+
   unshelveNode(nodeId: Id): number | undefined {
     const s = this.loaded();
     const plan = planUnshelveNode(s.production, s.nodes, nodeId);
     this.apply(plan);
     return plan.renumbered;
+  }
+
+  // ---------- importing ----------
+
+  importMedia(nodeId: Id, item: ImportItem): Id {
+    const s = this.loaded();
+    const kind = importKind(item);
+    if (!kind) throw new Error("Solo se pueden importar imágenes, vídeos y audios.");
+    if (!s.nodes.some((n) => n.id === nodeId)) throw new Error("Ese plano ya no existe.");
+    const id = this.newId("m");
+    const c = "creation" in item ? item.creation : undefined;
+    this.write([{
+      type: "media.added",
+      media: {
+        id,
+        nodeId,
+        kind,
+        version: nextMediaVersion(s.media, nodeId, kind),
+        origin: "uploaded",
+        // Being copied into the shot's folder.
+        status: "rendering",
+        progress: 10,
+        archived: false,
+        ...(c ? { remote: { provider: c.provider, id: c.id, url: c.url, previewUrl: c.thumbUrl, folder: c.folder }, durationSec: c.durationSec, width: c.width, height: c.height } : {}),
+        createdBy: this.me.uid,
+        createdAt: this.now(),
+      },
+    }]);
+    void this.copyIn(id, item);
+    return id;
+  }
+
+  /** Copies an imported file into the node's `_media/` (from the computer, or downloaded from the provider). */
+  private async copyIn(id: Id, item: ImportItem): Promise<void> {
+    try {
+      const m = this.loaded().media.find((x) => x.id === id);
+      if (!m) return;
+      if ("creation" in item) {
+        // Without a team folder it is shown from the provider.
+        const file = this.files && this.generator ? await this.saveFile(m, item.creation.url) : null;
+        return this.updateMedia(id, { status: "ready", progress: 100, ...(file ? { file } : {}) });
+      }
+      const s = this.loaded();
+      const node = s.nodes.find((n) => n.id === m.nodeId);
+      if (!this.files || !node) return this.updateMedia(id, { status: "failed", error: "Hace falta la carpeta del equipo para guardar el archivo." });
+      const file = mediaFileName(codeOf(s.production, node), m.kind, m.version, extensionOf(item.file.type, item.file.name, m.kind));
+      const path = this.files.mediaPath(s.production, s.nodes, node, file, s.groups);
+      if (!path) return this.updateMedia(id, { status: "failed", error: "Hace falta la carpeta del equipo para guardar el archivo." });
+      await this.files.saveMedia(path, item.file, `${id}/${file}`);
+      this.updateMedia(id, { status: "ready", progress: 100, file });
+    } catch (err) {
+      console.error("[importar] ha fallado", err);
+      this.updateMedia(id, { status: "failed", error: err instanceof Error ? err.message : String(err) });
+    }
+  }
+
+  importShots(rowId: Id, items: ImportItem[], before: RowItem | null, groupId: Id | null): Id[] {
+    const ids: Id[] = [];
+    for (const item of items) {
+      if (!importKind(item)) continue;
+      const s = this.loaded();
+      const id = this.apply(planCreateInRow(s.production, this.board(), s.groups, rowId, before, groupId, this.newId("n")))!;
+      this.importMedia(id, item);
+      ids.push(id);
+    }
+    return ids;
+  }
+
+  async browseCreations(q: BrowseQuery): Promise<BrowsePage> {
+    if (!this.generator?.browse) throw new Error("No hay ninguna cuenta de Magnific conectada.");
+    return this.generator.browse(q);
   }
 
   // ---------- not available yet in local mode ----------

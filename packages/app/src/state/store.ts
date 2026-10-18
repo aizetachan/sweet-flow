@@ -7,7 +7,7 @@
 
 import { create } from "zustand";
 import { parseAppLink } from "../data/share";
-import { codeOf, type Id } from "@sweetflow/domain";
+import { codeOf, type Id, type RowItem } from "@sweetflow/domain";
 import type { DataSource, Snapshot } from "../data/source";
 import type { Library, LibraryState, Pin } from "../data/library";
 import { createLibrary } from "../data";
@@ -77,6 +77,8 @@ interface UiState {
   modal: null | "levels" | "statuses" | "invite" | "team" | "notes";
   /** The node whose notes the `notes` modal shows. */
   notesFor: Id | null;
+  /** The «Importar» window: as versions of a shot, or as new shots in a row. */
+  importTo: ImportTarget | null;
   collapsed: Record<Id, boolean>;
   floating: FloatingPanel[];
   /** Short message at the bottom of the screen (e.g. a code changed on move). */
@@ -88,6 +90,9 @@ interface UiState {
   /** Asking to confirm leaving the production with windows open; holds where to go. */
   leaveAsk: { folderId?: Id | null } | null;
 }
+
+/** Where an import lands (docs/INTERFAZ.md §2.0). */
+export type ImportTarget = { nodeId: Id } | { rowId: Id; before: RowItem | null; groupId: Id | null };
 
 interface Store extends UiState {
   library: Library;
@@ -171,6 +176,7 @@ export const useStore = create<Store>((set, get) => ({
   playing: false,
   filters: { query: "", statusIds: [], assigneeId: null, assetId: null },
   modal: null,
+  importTo: null,
   notesFor: null,
   collapsed: {},
   floating: [],

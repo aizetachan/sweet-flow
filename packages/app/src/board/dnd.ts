@@ -8,6 +8,7 @@
 import { useState, type DragEvent } from "react";
 import { childrenOf, codeOf, isUnit, levelIndex, type Id, type ProdNode, type Production, type RowItem } from "@sweetflow/domain";
 import { useStore } from "../state/store";
+import { hasFiles, runImport } from "../components/ImportDialog";
 
 const NODE_DRAG = "application/x-sweetflow-nodes";
 
@@ -280,7 +281,7 @@ export function useRowDrop(rowId: Id, openGroupId: Id | null) {
     });
   };
 
-  const pick = (e: DragEvent): RowHint | null => {
+  const pick = (e: DragEvent, files = false): RowHint | null => {
     const box = e.currentTarget as HTMLElement;
     const items = [...box.querySelectorAll<HTMLElement>("[data-row-item]")];
     if (!items.length) return null;
@@ -290,8 +291,8 @@ export function useRowDrop(rowId: Id, openGroupId: Id | null) {
       if (key === "end") return { key, zone: "before" };
       const r = over.getBoundingClientRect();
       const fx = (e.clientX - r.left) / r.width;
-      if (!draggingGroup && key.startsWith("g:") && fx > 0.25 && fx < 0.75) return { key, zone: "into" };
-      if (!draggingGroup && key.startsWith("n:") && !dragging.includes(key.slice(2)) && fx > 0.3 && fx < 0.7) {
+      if (!files && !draggingGroup && key.startsWith("g:") && fx > 0.25 && fx < 0.75) return { key, zone: "into" };
+      if (!files && !draggingGroup && key.startsWith("n:") && !dragging.includes(key.slice(2)) && fx > 0.3 && fx < 0.7) {
         const cover = over.querySelector(".thumb")?.getBoundingClientRect();
         if (cover && e.clientY >= cover.top && e.clientY <= cover.bottom) return { key, zone: "group" };
       }
@@ -309,6 +310,14 @@ export function useRowDrop(rowId: Id, openGroupId: Id | null) {
     if (right) return { key: right.dataset.rowItem!, zone: "before" };
     const last = line.at(-1);
     return last ? { key: last.dataset.rowItem!, zone: "after" } : { key: "end", zone: "before" };
+  };
+
+  /** Where a drop lands in the row, as the item it goes before (null: the end). */
+  const beforeOf = (h: RowHint, box: HTMLElement): RowItem | null => {
+    const toItem = (key: string): RowItem | null => (key === "end" ? null : key.startsWith("g:") ? { groupId: key.slice(2) } : { nodeId: key.slice(2) });
+    if (h.zone !== "after") return toItem(h.key);
+    const keys = [...box.querySelectorAll<HTMLElement>("[data-row-item]")].map((el) => el.dataset.rowItem!);
+    return toItem(keys[keys.indexOf(h.key) + 1] ?? "end");
   };
 
   const drop = (h: RowHint, box: HTMLElement) => {
@@ -349,6 +358,16 @@ export function useRowDrop(rowId: Id, openGroupId: Id | null) {
     hint,
     props: {
       onDragOver: (e: DragEvent) => {
+        // Files from the computer: each one a new shot where it is dropped (docs/INTERFAZ.md §2.0).
+        if (hasFiles(e.dataTransfer)) {
+          const h = pick(e, true);
+          if (!h) return setHint(null);
+          e.preventDefault();
+          e.stopPropagation();
+          e.dataTransfer.dropEffect = "copy";
+          setHint((old) => (old && old.key === h.key && old.zone === h.zone ? old : h));
+          return;
+        }
         if (!e.dataTransfer.types.includes(NODE_DRAG) || !ok()) return;
         const h = pick(e);
         if (!h) return setHint(null);
@@ -362,6 +381,14 @@ export function useRowDrop(rowId: Id, openGroupId: Id | null) {
       },
       onDrop: (e: DragEvent) => {
         setHint(null);
+        if (hasFiles(e.dataTransfer)) {
+          const h = pick(e, true);
+          if (!h) return;
+          e.preventDefault();
+          e.stopPropagation();
+          runImport({ rowId, before: beforeOf(h, e.currentTarget as HTMLElement), groupId: openGroupId }, [...e.dataTransfer.files].map((file) => ({ file })));
+          return;
+        }
         if (!ok()) return;
         const h = pick(e);
         if (!h) return;

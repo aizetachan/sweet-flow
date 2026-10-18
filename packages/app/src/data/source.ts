@@ -76,6 +76,56 @@ export interface MirrorState {
   pending: number;
 }
 
+/** Something to bring in: a file from the computer, or a creation already at the provider. */
+export type ImportItem = { file: File } | { creation: RemoteCreation };
+
+/** A creation at the provider (Magnific), as listed to import it. */
+export interface RemoteCreation {
+  provider: string;
+  id: string;
+  name: string;
+  kind: MediaKind;
+  /** Full file. */
+  url: string;
+  thumbUrl?: string;
+  durationSec?: number;
+  width?: number;
+  height?: number;
+  folder?: string;
+  createdAt?: number;
+}
+
+export interface RemoteFolder {
+  id: string;
+  name: string;
+}
+
+export interface BrowseQuery {
+  /** Inside this folder (null: the latest creations, everywhere). */
+  folder: string | null;
+  search?: string;
+  kind?: MediaKind;
+  page?: number;
+}
+
+export interface BrowsePage {
+  items: RemoteCreation[];
+  /** Folders inside `folder` (the top level when null). */
+  folders: RemoteFolder[];
+  more: boolean;
+}
+
+/** Kind of a file from the computer, by its type (null: not an image, video or audio). */
+export function kindOfFile(f: File): MediaKind | null {
+  if (f.type.startsWith("video/")) return "video";
+  if (f.type.startsWith("image/")) return "image";
+  if (f.type.startsWith("audio/")) return "audio";
+  return null;
+}
+
+export const importName = (i: ImportItem) => ("file" in i ? i.file.name : i.creation.name);
+export const importKind = (i: ImportItem) => ("file" in i ? kindOfFile(i.file) : i.creation.kind);
+
 export interface GenerateArgs {
   nodeId: Id;
   kind: MediaKind;
@@ -183,12 +233,25 @@ export interface DataSource {
   splitIntoShots(mediaId: Id, segments: Segment[]): Id[];
   /** Cut again a shot made of a stretch: it keeps the first segment, the rest become shots after it. */
   splitTakeShot(nodeId: Id, segments: Segment[]): Id[];
+  /**
+   * Edit a video kept in «Vídeos editados»: each segment a new shot of its
+   * scene, after the last shot made from it; the original stays there.
+   */
+  shotsFromEdited(nodeId: Id, mediaId: Id, segments: Segment[]): Id[];
   /** A version taken out to the row: a new shot right after `nodeId` with it as its take. Returns the new shot. */
   extractToRow(nodeId: Id, mediaId: Id, segment?: Segment): Id | undefined;
   /** Back to the row from «Vídeos editados»; returns the new number if its code was taken. */
   unshelveNode(nodeId: Id): number | undefined;
   selectTake(nodeId: Id, takeId: Id): void;
   removeTake(takeId: Id): void;
+
+  // importing (docs/INTERFAZ.md §2.0): what the person already has, from Magnific or the computer
+  /** A new version of `nodeId` from a file or a Magnific creation. Returns the media id. */
+  importMedia(nodeId: Id, item: ImportItem): Id;
+  /** One new shot per item, placed in the row before `before` (the end when null), each with it as v001. Returns the new shots. */
+  importShots(rowId: Id, items: ImportItem[], before: RowItem | null, groupId: Id | null): Id[];
+  /** This person's creations at the provider (Magnific), to import; absent when there is no provider. */
+  browseCreations?(q: BrowseQuery): Promise<BrowsePage>;
 
   // review
   /** A comment, or a reply (`parentId`); returns its id. */

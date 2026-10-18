@@ -7,6 +7,7 @@
 
 import type { MediaKind } from "@sweetflow/domain";
 import type { RefType } from "./models";
+import type { BrowsePage, BrowseQuery } from "./source";
 
 export interface GenerationRequest {
   kind: MediaKind;
@@ -51,5 +52,7 @@ export interface Generator {
   download(url: string): Promise<Blob>;
   /** A URL this page can show for one of the provider's files. */
   viewUrl(url: string): string;
+  /** This person's creations and folders there, to import them. */
+  browse?(q: BrowseQuery): Promise<BrowsePage>;
 }
 

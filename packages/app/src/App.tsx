@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import { ImportDialog } from "./components/ImportDialog";
 import { codeOf, isUnit } from "@sweetflow/domain";
 import { Button, cx, Modal, Spinner } from "@sweetflow/ui";
 import { useSnap, useStore } from "./state/store";
@@ -42,10 +43,10 @@ function Production() {
         <Topbar />
         {view === "board" ? (
           // Work panel and structure share the left column; the board gets the rest (docs/INTERFAZ.md §2).
-          <div className="workspace">
+          <Workspace>
             <SidePanel />
             <Board />
-          </div>
+          </Workspace>
         ) : view === "library" ? <LibraryView /> : <TrashView />}
       </div>
       <Dock />
@@ -53,6 +54,57 @@ function Production() {
       <LeaveConfirm />
       <DeleteKey />
       <Modals />
+      <ImportDialog />
+    </div>
+  );
+}
+
+/** How much of the left panel's width is kept (docs/INTERFAZ.md §3): 80–100 %, remembered on this computer. */
+const SIDE_KEY = "sweetflow:side-k";
+const MIN_K = 0.8;
+function readK(): number {
+  try {
+    const v = Number(localStorage.getItem(SIDE_KEY));
+    return v >= MIN_K && v <= 1 ? v : 1;
+  } catch {
+    return 1;
+  }
+}
+
+function Workspace({ children }: { children: ReactNode }) {
+  const [k, setK] = useState(readK);
+  const [dragging, setDragging] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  const resize = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const ws = box.current;
+    if (!ws) return;
+    e.preventDefault();
+    const max = parseFloat(getComputedStyle(ws).getPropertyValue("--side-max")) || 440;
+    const left = ws.getBoundingClientRect().left;
+    setDragging(true);
+    let last = k;
+    const move = (ev: PointerEvent) => {
+      last = Math.min(1, Math.max(MIN_K, (ev.clientX - left) / max));
+      setK(last);
+    };
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      setDragging(false);
+      try {
+        localStorage.setItem(SIDE_KEY, String(Math.round(last * 1000) / 1000));
+      } catch {
+        // Only a convenience.
+      }
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  };
+  return (
+    <div ref={box} className={cx("workspace", dragging && "workspace--resizing")} style={{ "--side-k": k } as CSSProperties}>
+      {children}
+      <div className={cx("side__resize", dragging && "is-on")} role="separator" aria-orientation="vertical" aria-label="Ancho del panel" title="Arrastra para cambiar el ancho del panel · doble clic: ancho completo"
+        onPointerDown={resize} onDoubleClick={() => { setK(1); try { localStorage.setItem(SIDE_KEY, "1"); } catch { /* convenience */ } }} />
     </div>
   );
 }
@@ -62,7 +114,8 @@ function SidePanel() {
   const sideTab = useStore((s) => s.sideTab);
   const selectedId = useStore((s) => s.selectedId);
   const set = useStore((s) => s.set);
-  const node = snap.nodes.find((n) => n.id === selectedId);
+  // A shot in «Vídeos editados» can be open too (picked from that list).
+  const node = snap.nodes.find((n) => n.id === selectedId) ?? snap.shelf.find((n) => n.id === selectedId);
   const units = snap.nodes.filter((n) => isUnit(snap.production, n)).length;
   return (
     <aside className="side">

@@ -61,7 +61,8 @@ export function activityFrom(events: LogEvent[], s: LogState): Activity[] {
         add(e.at, wall, e.id, "structure", e.userId, "lo restauró de la papelera");
         break;
       case "media.added":
-        add(e.at, wall, e.media.nodeId, "generate", e.userId, `generó ${versionTag(e.media.version)} (${KIND[e.media.kind]}${e.media.generation?.model ? ` con ${e.media.generation.model}` : ""})`);
+        if (e.media.origin === "uploaded") add(e.at, wall, e.media.nodeId, "generate", e.userId, `importó ${versionTag(e.media.version)} (${KIND[e.media.kind]} ${e.media.remote ? "de Magnific" : "del ordenador"})`);
+        else add(e.at, wall, e.media.nodeId, "generate", e.userId, `generó ${versionTag(e.media.version)} (${KIND[e.media.kind]}${e.media.generation?.model ? ` con ${e.media.generation.model}` : ""})`);
         break;
       case "media.updated":
         if (e.patch.status === "failed") add(e.at, wall, media.get(e.id)?.nodeId, "generate", e.userId, `${ver(e.id)} no se pudo generar`);

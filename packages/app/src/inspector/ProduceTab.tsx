@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
+  IconFileImport,
   IconArchiveOff, IconArrowUpRight, IconAspectRatio, IconMessagePlus, IconBolt, IconCheck, IconClock, IconCut, IconMusic, IconPhoto, IconPhotoDown, IconPhotoScan,
   IconPhotoUp, IconPlus, IconRepeat, IconSparkles, IconTrash, IconVideo, IconVolume, IconVolumeOff, IconWand, IconX,
 } from "@tabler/icons-react";
@@ -25,6 +26,7 @@ import { modelsFor, nearest, REF_LABEL, specOf, type GenKind, type RefType } fro
 import type { GenerateArgs } from "../data/source";
 import { Popover } from "../components/Popover";
 import { Composer } from "./ReviewTab";
+import { hasFiles, runImport } from "../components/ImportDialog";
 import type { Mark } from "../components/marks";
 import { Player, Thumb } from "../components/media";
 
@@ -97,8 +99,13 @@ export function ProduceTab({ node }: { node: ProdNode }) {
   };
 
   const time = active?.take && active.foreign ? Math.max(playhead, active.take.inSec) : playhead;
+  // Files dropped anywhere on the panel: new versions of this shot (docs/INTERFAZ.md §2.0).
+  const [filesOver, setFilesOver] = useState(false);
   return (
-    <div className="tab">
+    <div className={cx("tab", filesOver && "files-over")}
+      onDragOver={(e) => { if (!hasFiles(e.dataTransfer)) return; e.preventDefault(); e.dataTransfer.dropEffect = "copy"; setFilesOver(true); }}
+      onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setFilesOver(false); }}
+      onDrop={(e) => { if (!hasFiles(e.dataTransfer)) return; e.preventDefault(); setFilesOver(false); runImport({ nodeId: node.id }, [...e.dataTransfer.files].map((file) => ({ file }))); }}>
       {level.canGenerate ? <GenerateBox node={node} /> : (
         <p className="note">En este nivel no se genera: agrupa y conserva los montajes de sus {snap.production.levels[snap.production.levels.indexOf(level) + 1]?.name.toLowerCase()}s.</p>
       )}
@@ -137,6 +144,8 @@ export function ProduceTab({ node }: { node: ProdNode }) {
       <section className="sec">
         <div className="sec__head">
           <h4>Galería</h4>
+          <button className="link sf-small gal__import" title="Una versión nueva desde Magnific o desde el ordenador (también puedes soltar archivos aquí)"
+            onClick={() => useStore.getState().set({ importTo: { nodeId: node.id } })}><IconFileImport size={13} /> Importar</button>
           {archivedCount ? (
             <button className="link sf-small" onClick={() => setShowArchived(!showArchived)}>
               {showArchived ? "Ocultar las quitadas" : `Ver las quitadas (${archivedCount})`}

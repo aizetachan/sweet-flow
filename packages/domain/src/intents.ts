@@ -503,3 +503,75 @@ export function planSplitTakeShot(
   });
   return { events, nodeIds, nodeId: node.id };
 }
+
+/**
+ * A new shot dropped at a place in a row (importing, docs/INTERFAZ.md §2.0):
+ * created right before `before` (the end when null), inside `groupId` if
+ * given, with the code in the gap before the one it lands in front of
+ * (020 → 015), or the next free one.
+ */
+export function planCreateInRow(p: Production, nodes: ProdNode[], groups: ShotGroup[], rowId: Id, before: RowItem | null, groupId: Id | null, newId: Id): Plan {
+  const created = planCreateNode(p, nodes, rowId, newId);
+  const ev = created.events[0];
+  if (!ev || ev.type !== "node.created" || (!before && !groupId)) return created;
+  const level = p.levels.find((l) => l.id === ev.node.levelId)!;
+  const siblings = childrenOf(nodes, rowId);
+  const next = !before ? undefined
+    : "nodeId" in before ? siblings.find((n) => n.id === before.nodeId)
+    : [...siblings].filter((n) => n.groupId === before.groupId).sort(byNumber)[0];
+  if (next) {
+    const prev = [...siblings].sort(byNumber).filter((n) => n.number < next.number).at(-1);
+    const number = prev ? numberBetween(prev, next, level.step) : next.number >= 2 ? Math.floor(next.number / 2) : null;
+    if (number !== null && !siblings.some((n) => n.number === number)) ev.node = { ...ev.node, number, title: defaultTitle(p, level, number) };
+  }
+  const node = ev.node as ProdNode;
+  const placed = planPlaceInRow(p, [...nodes, node], groups, [{ nodeId: newId }], rowId, before, groupId);
+  return { nodeId: newId, events: [ev, ...placed.events] };
+}
+
+/**
+ * Edit a video kept in «Vídeos editados» (docs/INTERFAZ.md §2.3): each
+ * segment becomes a new shot of its scene, with that stretch as its take,
+ * right after `afterId` (the last shot already made from it) or at the end
+ * of the row. The original stays where it is. `segments` are in the video's
+ * own time.
+ */
+export function planShotsFromEdited(
+  p: Production,
+  nodes: ProdNode[],
+  original: ProdNode,
+  afterId: Id | null,
+  media: Pick<Media, "id">,
+  segments: Segment[],
+  newId: (prefix: string) => Id,
+  by: Id,
+  now: Millis,
+): Plan & { nodeIds: Id[] } {
+  const live = nodes.filter((n) => n.shelvedAt === undefined && n.id !== original.id);
+  const events: LogEventBody[] = [];
+  const nodeIds: Id[] = [];
+  let after = afterId && live.some((n) => n.id === afterId) ? afterId : null;
+  for (const seg of segments) {
+    const base = after ? planInsertAfter(p, live, after, newId("n")) : planCreateNode(p, live, original.parentId, newId("n"));
+    const created = base.events[0];
+    if (!base.nodeId || !created || created.type !== "node.created") continue;
+    const node = { ...created.node, title: original.title } as ProdNode;
+    const takeId = newId("tk");
+    events.push(
+      { ...created, node },
+      { type: "take.added", take: { id: takeId, nodeId: node.id, mediaId: media.id, inSec: seg.inSec, outSec: seg.outSec, createdBy: by, createdAt: now } },
+      { type: "node.updated", id: node.id, patch: { selectedTakeId: takeId } },
+    );
+    live.push(node);
+    nodeIds.push(node.id);
+    after = node.id;
+  }
+  return { events, nodeIds };
+}
+
+/** The last shot of the row (by position) whose chosen take is a stretch of `mediaId`: where shots edited from it go after. */
+export function lastMadeFrom(nodes: ProdNode[], takes: Take[], original: ProdNode, mediaId: Id): Id | null {
+  const mine = new Set(takes.filter((t) => t.mediaId === mediaId).map((t) => t.id));
+  const row = childrenOf(nodes.filter((n) => n.shelvedAt === undefined && n.trashedAt === undefined), original.parentId);
+  return row.filter((n) => n.selectedTakeId && mine.has(n.selectedTakeId)).at(-1)?.id ?? null;
+}

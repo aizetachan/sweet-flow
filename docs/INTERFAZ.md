@@ -99,6 +99,11 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
 **Columna izquierda con dos pestañas y el tablero a todo el ancho restante**
 (así, con muchos planos, el tablero tiene la pantalla ancha):
 
+- **Ancho de la columna:** se arrastra su borde derecho para estrecharla hasta
+  un 20 % (el máximo es el ancho de siempre); el contenido se adapta. Se
+  recuerda en este ordenador; doble clic en el borde la devuelve al ancho
+  completo.
+
 - **Producción** (primera pestaña): el panel de trabajo de la escena o el plano
   seleccionado. Muestra el código de lo seleccionado.
 - **Estructura:** el árbol. Un clic selecciona sin salir del árbol; doble clic
@@ -294,6 +299,25 @@ derecha en la ventana aparte). De arriba abajo:
 - **Generar** con el coste real en créditos (`simulate_cost`), por el número
   de versiones. Cada versión es un v00N del plano.
 
+### 2.0.2 Importar (Magnific u ordenador)
+
+Para meter algo que ya se tiene, sin generar (no gasta créditos):
+- **Plano nuevo:** el «+» de la fila abre un menú con **Plano nuevo** e
+  **Importar…**. También se pueden **soltar archivos sobre la fila**: cada uno
+  es un plano nuevo justo donde se suelta (con el código del hueco, p. ej.
+  SH0015 entre SH0010 y SH0020; dentro del grupo si está abierto).
+- **Versión de un plano:** «Importar» junto a «Galería», o **soltar archivos
+  sobre el panel** del plano: cada uno entra como su siguiente versión.
+- La ventana **Importar** tiene dos pestañas:
+  - **De Magnific:** las creaciones de la persona (recientes primero), con
+    buscador, tipo (vídeo por defecto) y sus carpetas. Se eligen una o varias;
+    el número indica el orden en que entran.
+  - **Del ordenador:** soltar o elegir archivos.
+- El archivo se guarda en la carpeta `_media` del plano como su versión
+  (`origin: uploaded`). Lo que viene de Magnific guarda además su referencia
+  (sirve como referencia o imagen inicial sin subirlo). Lo del ordenador no se
+  sube a Magnific. En Actividad: «importó v001 (un vídeo de Magnific)».
+
 ### 2.0.1 Galería del plano (bajo Generar)
 
 Una sola **galería** con todo lo que puede ser el plano (ya no hay «Versiones»
@@ -468,6 +492,11 @@ y «Tomas» por separado):
   número de originales. Solo aparece cuando hay alguno. Lista cada original con
   su duración y en qué planos se cortó:
   - Clic en la miniatura: ver el vídeo completo.
+  - **Clic en el resto de la fila:** se abre en el panel de la izquierda, como
+    al seleccionar una tarjeta (con un aviso de que está en «Vídeos editados»).
+    En **Editar** se marcan tramos y cada uno sale como un **plano nuevo** de
+    la escena, después del último plano que ya salió de ese vídeo. El original
+    se queda en «Vídeos editados».
   - **Devolver a la fila:** vuelve como plano (si su código se usa ya, recibe
     el siguiente libre y se avisa). Los planos cortados se quedan.
   - **Descartar:** a la papelera de la producción (con Deshacer). Mientras
@@ -492,10 +521,16 @@ y «Tomas» por separado):
   **portadas pequeñas de sus planos**, cada una en 16:9 como la portada de un
   plano, de dos en dos y hasta cuatro. Si hay más, la cuarta lleva encima «+N»
   con los que faltan.
-  Debajo, solo el icono, el nombre («Grupo 1») y el número de planos.
+  El mosaico ocupa siempre lo mismo que una portada. Debajo, **la misma
+  composición que un plano**: el nombre con el icono (con el peso del título)
+  y, en la segunda línea, el número de planos y, a la derecha, su duración
+  sumada.
 - **Abrir:** clic en el grupo. La fila muestra solo sus planos, con una barra:
-  - **← SC010** vuelve a la fila. Soltar un plano ahí lo saca del grupo.
-  - El **nombre**: clic para cambiarlo.
+  - **← Volver** vuelve a la fila. Soltar un plano ahí lo saca del grupo. Al
+    volver, la tarjeta del grupo aparece en vista algo más grande, con un
+    borde de neón suave y oscuro, y se encoge a su tamaño mientras la luz se
+    apaga (algo más de un segundo).
+  - El **nombre** es texto, como los demás títulos: doble clic para cambiarlo.
   - **Deshacer grupo:** los planos vuelven a la fila y el grupo desaparece.
   - El «+» crea el plano nuevo dentro del grupo.
   - Al seleccionar un plano que está dentro (desde Estructura o Fijados), su

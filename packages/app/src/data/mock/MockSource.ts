@@ -22,6 +22,9 @@ import {
   planSplitTakeShot,
   planGroupShots,
   planPlaceInRow,
+  planCreateInRow,
+  planShotsFromEdited,
+  lastMadeFrom,
   planUngroupShots,
   planDissolveGroup,
   planRenameGroup,
@@ -39,7 +42,7 @@ import {
   type StatusDef,
   type Take,
 } from "@sweetflow/domain";
-import { ALL_FEATURES, type DataSource, type GenerateArgs, type NewComment, type Placement, type Snapshot } from "../source";
+import { ALL_FEATURES, importKind, type BrowsePage, type BrowseQuery, type DataSource, type GenerateArgs, type ImportItem, type NewComment, type Placement, type RemoteCreation, type Snapshot } from "../source";
 import { frame, type Mood } from "./frames";
 import { buildSeed, newId } from "./seed";
 
@@ -315,6 +318,71 @@ export class MockSource implements DataSource {
     setTimeout(tick, 500);
   }
 
+  // ---------- importing ----------
+
+  importMedia(nodeId: Id, item: ImportItem): Id {
+    const kind = importKind(item);
+    if (!kind) throw new Error("Solo se pueden importar imágenes, vídeos y audios.");
+    const version = Math.max(0, ...this.s.media.filter((m) => m.nodeId === nodeId && m.kind === kind).map((m) => m.version)) + 1;
+    const c = "creation" in item ? item.creation : undefined;
+    const url = c ? c.url : URL.createObjectURL((item as { file: File }).file);
+    const m: Media = {
+      id: newId("m"),
+      productionId: this.s.production.id,
+      nodeId,
+      kind,
+      version,
+      origin: "uploaded",
+      status: "rendering",
+      progress: 40,
+      durationSec: c?.durationSec,
+      width: c?.width,
+      height: c?.height,
+      archived: false,
+      ...(c ? { remote: { provider: c.provider, id: c.id, url: c.url, previewUrl: c.thumbUrl, folder: c.folder } } : {}),
+      createdBy: this.s.me.uid,
+      createdAt: Date.now(),
+    };
+    const what = kind === "video" ? "un vídeo" : kind === "audio" ? "un audio" : "una imagen";
+    this.commit({
+      media: [...this.s.media, m],
+      activity: [this.log("generate", `importó v${String(version).padStart(3, "0")} (${what} ${c ? "de Magnific" : "del ordenador"})`, nodeId), ...this.s.activity],
+    });
+    // The copy into the shot's folder, in the demo a moment.
+    setTimeout(() => {
+      const thumbUrl = kind === "image" ? url : c?.thumbUrl;
+      this.commit({ media: this.s.media.map((x) => (x.id === m.id ? { ...x, status: "ready", progress: 100, url, thumbUrl } : x)) }, true);
+    }, 600);
+    return m.id;
+  }
+
+  importShots(rowId: Id, items: ImportItem[], before: RowItem | null, groupId: Id | null): Id[] {
+    const ids: Id[] = [];
+    for (const item of items) {
+      if (!importKind(item)) continue;
+      const id = this.applyPlan(planCreateInRow(this.s.production, this.s.nodes, this.s.groups, rowId, before, groupId, newId("n")))!;
+      this.commit({ activity: [this.log("structure", "creó plano", id), ...this.s.activity] });
+      this.importMedia(id, item);
+      ids.push(id);
+    }
+    return ids;
+  }
+
+  /** A pretend Magnific library for the demo: a few folders and creations. */
+  async browseCreations(q: BrowseQuery): Promise<BrowsePage> {
+    await new Promise((r) => setTimeout(r, 250));
+    const folders = q.folder ? [] : [{ id: "f-mareas", name: "Mareas" }, { id: "f-refs", name: "Referencias" }];
+    const names = ["Faro bajo la lluvia", "Muelle al amanecer", "Barca en la niebla", "Ola rompiendo", "Gaviotas sobre el puerto", "Cocina de Elena", "Tormenta en alta mar", "Linterna encendida", "Playa al atardecer", "Red de pesca", "Calle del pueblo", "Noche estrellada"];
+    const all: RemoteCreation[] = names.map((name, i) => {
+      const kind = i % 3 === 2 ? "image" : "video";
+      const url = frame(`magnific-${i}`, MOODS[i % MOODS.length]!);
+      return { provider: "magnific", id: `demo-${i}`, name, kind, url, thumbUrl: url, durationSec: kind === "video" ? 5 + (i % 4) : undefined, width: 1920, height: 1080, folder: i % 2 ? "f-mareas" : "f-refs", createdAt: Date.now() - i * 3_600_000 };
+    });
+    const term = q.search?.trim().toLowerCase();
+    const items = all.filter((c) => (!q.folder || c.folder === q.folder) && (!q.kind || c.kind === q.kind) && (!term || c.name.toLowerCase().includes(term)));
+    return { items, folders, more: false };
+  }
+
   setArchived(mediaId: Id, archived: boolean): void {
     if (archived && this.s.takes.some((t) => t.mediaId === mediaId)) return; // protected: in use
     this.commit({ media: this.s.media.map((m) => (m.id === mediaId ? { ...m, archived } : m)) }, true);
@@ -399,6 +467,22 @@ export class MockSource implements DataSource {
       else if (e.type === "node.updated") nodes = nodes.map((n) => (n.id === e.id ? { ...n, ...e.patch } : n));
     }
     this.commit({ nodes, takes, activity: [this.log("take", `volvió a cortar en ${plan.nodeIds.length} planos`, nodeId), ...this.s.activity] }, true);
+    return plan.nodeIds;
+  }
+
+  shotsFromEdited(nodeId: Id, mediaId: Id, segments: Segment[]): Id[] {
+    const original = this.s.shelf.find((n) => n.id === nodeId);
+    if (!original) return [];
+    const now = Date.now();
+    const plan = planShotsFromEdited(this.s.production, this.s.nodes, original, lastMadeFrom(this.s.nodes, this.s.takes, original, mediaId), { id: mediaId }, segments, newId, this.s.me.uid, now);
+    let nodes = this.s.nodes;
+    const takes: Take[] = [...this.s.takes];
+    for (const e of plan.events) {
+      if (e.type === "node.created") nodes = [...nodes, { ...e.node, productionId: this.s.production.id, notes: "", assigneeIds: [], assetIds: [], updatedAt: now, updatedBy: this.s.me.uid }];
+      else if (e.type === "take.added") takes.push({ ...e.take, productionId: this.s.production.id });
+      else if (e.type === "node.updated") nodes = nodes.map((n) => (n.id === e.id ? { ...n, ...e.patch } : n));
+    }
+    this.commit({ nodes, takes, activity: [this.log("take", `sacó ${plan.nodeIds.length} plano${plan.nodeIds.length === 1 ? "" : "s"} de su vídeo`, nodeId), ...this.s.activity] }, true);
     return plan.nodeIds;
   }
 

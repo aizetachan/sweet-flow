@@ -32,6 +32,7 @@ export function ShelfButton({ row }: { row: ProdNode }) {
 function ShelfList({ row, items }: { row: ProdNode; items: ProdNode[] }) {
   const snap = useSnap();
   const { source, notify, select } = useStore();
+  const selectedId = useStore((s) => s.selectedId);
   const p = snap.production;
   const [watching, setWatching] = useState<string | null>(null);
   const [time, setTime] = useState(0);
@@ -47,8 +48,9 @@ function ShelfList({ row, items }: { row: ProdNode; items: ProdNode[] }) {
         const shots = snap.nodes.filter((s) => snap.takes.some((t) => t.nodeId === s.id && t.mediaId === fed?.id));
         const open = watching === n.id && fed;
         return (
-          <div key={n.id} className="shelf__item">
-            <div className="shelf__row">
+          <div key={n.id} className={cx("shelf__item", selectedId === n.id && "shelf__item--on")}>
+            {/* A click opens it in the panel on the left, like a card (it stays in «Vídeos editados»). */}
+            <div className="shelf__row" onClick={(e) => { if (!(e.target as HTMLElement).closest("button")) select(n.id); }} title="Abrir en el panel">
               <button className="shelf__thumb" title="Ver el vídeo completo" onClick={() => { setWatching(open ? null : n.id); setTime(0); setPlaying(false); }}>
                 <Thumb media={fed} />
                 <span className="shelf__play"><IconPlayerPlay size={14} /></span>

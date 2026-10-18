@@ -3,6 +3,7 @@ import {
   IconCopy,
   IconExternalLink,
   IconLayoutSidebarLeftExpand,
+  IconMovie,
   IconNote,
   IconPlus,
   IconSparkles,
@@ -45,7 +46,7 @@ export function DockedInspector() {
   const snap = useSnap();
   const selectedId = useStore((s) => s.selectedId);
   const popped = useStore((s) => s.popped);
-  const node = snap.nodes.find((n) => n.id === selectedId);
+  const node = snap.nodes.find((n) => n.id === selectedId) ?? snap.shelf.find((n) => n.id === selectedId);
   if (!node) {
     return (
       <div className="insp insp--empty">
@@ -147,7 +148,7 @@ function InspectorBody({ floatKey, onDragHandle }: { floatKey?: string; onDragHa
   const snap = useSnap();
   const panel = usePanel();
   const { select, dockPanel, closeFloating, popOut, source, set, trashNodes } = useStore();
-  const node = snap.nodes.find((n) => n.id === panel.nodeId);
+  const node = snap.nodes.find((n) => n.id === panel.nodeId) ?? snap.shelf.find((n) => n.id === panel.nodeId);
   const p = snap.production;
   // A popped window wide enough: tabs on the left, the viewer on the right (docs/INTERFAZ.md §3).
   const wide = useWide(panel.mode === "window");
@@ -238,6 +239,9 @@ function InspectorBody({ floatKey, onDragHandle }: { floatKey?: string; onDragHa
           { id: "activity", label: "Actividad" },
         ]}
       />
+      {node.shelvedAt !== undefined ? (
+        <div className="insp__shelved"><IconMovie size={13} /> Está en «Vídeos editados»{node.parentId ? ` de ${codeOf(p, snap.nodes.find((n) => n.id === node.parentId) ?? node)}` : ""}: en Editar puedes sacar más planos de su vídeo.</div>
+      ) : null}
       <div className="insp__body">
         {tab === "produce" ? (features.generation ? <ProduceTab node={node} /> : <ComingSoon what="Generar imágenes y vídeo, versiones y tomas" />) : null}
         {tab === "cut" ? <CutTab node={node} /> : null}

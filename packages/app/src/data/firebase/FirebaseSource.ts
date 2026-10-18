@@ -67,7 +67,7 @@ import {
 } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
 import { getDownloadURL, ref as storageRef } from "firebase/storage";
-import { ALL_FEATURES, type DataSource, type GenerateArgs, type MirrorState, type NewComment, type Placement, type Snapshot } from "../source";
+import { ALL_FEATURES, type DataSource, type GenerateArgs, type ImportItem, type MirrorState, type NewComment, type Placement, type Snapshot } from "../source";
 import { createClient, type FirebaseClient } from "./client";
 import { readFirebaseConfig } from "./config";
 import { NotImplemented } from "./errors";
@@ -352,6 +352,18 @@ export class FirebaseSource implements DataSource {
 
   splitTakeShot(_nodeId: Id, _segments: Segment[]): Id[] {
     throw new NotImplemented("Volver a cortar un plano", "etapa C");
+  }
+
+  shotsFromEdited(_nodeId: Id, _mediaId: Id, _segments: Segment[]): Id[] {
+    throw new NotImplemented("Editar un vídeo editado", "etapa C");
+  }
+
+  importMedia(_nodeId: Id, _item: ImportItem): Id {
+    throw new NotImplemented("Importar", "etapa C");
+  }
+
+  importShots(_rowId: Id, _items: ImportItem[], _before: RowItem | null, _groupId: Id | null): Id[] {
+    throw new NotImplemented("Importar", "etapa C");
   }
 
   unshelveNode(_nodeId: Id): number | undefined {

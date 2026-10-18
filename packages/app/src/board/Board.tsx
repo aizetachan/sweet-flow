@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode, type RefObject } from "react";
-import { IconCopy, IconDownload, IconLink, IconNote, IconArrowBackUp, IconArrowLeft, IconPencil, IconStack2, IconExternalLink, IconMessageCircle, IconPlus, IconFilter, IconSearch, IconTrash, IconLayoutGrid, IconLayoutList, IconX } from "@tabler/icons-react";
+import { IconFileImport, IconCopy, IconDownload, IconLink, IconNote, IconArrowBackUp, IconArrowLeft, IconPencil, IconStack2, IconExternalLink, IconMessageCircle, IconPlus, IconFilter, IconSearch, IconTrash, IconLayoutGrid, IconLayoutList, IconX } from "@tabler/icons-react";
 import {
   childrenOf,
   codeOf,
@@ -218,6 +218,13 @@ function Lane({ row }: { row: ProdNode }) {
     if (sel?.groupId && groups.some((g) => g.id === sel.groupId)) setOpenId(sel.groupId);
   }, [selectedId]); // eslint-disable-line react-hooks/exhaustive-deps
   const open = groups.find((g) => g.id === openId);
+  // Back from a group: its card glows for a moment, to see where you came from.
+  const [glowId, setGlowId] = useState<Id | null>(null);
+  useEffect(() => {
+    if (!glowId) return;
+    const t = setTimeout(() => setGlowId(null), 1100);
+    return () => clearTimeout(t);
+  }, [glowId]);
   // All the cards visible, wrapping to the width, instead of one scrolling row (remembered per scene).
   const [wrap, setWrapState] = useState(() => readWrap(row.id));
   const setWrap = (v: boolean) => { setWrapState(v); writeWrap(row.id, v); };
@@ -234,7 +241,7 @@ function Lane({ row }: { row: ProdNode }) {
       ? units.filter((u) => u.groupId === open.id).map((u) => ({ key: u.id, at: 0, el: <UnitCard key={u.id} node={u} inRow hint={hintOf(`n:${u.id}`)} /> }))
       : [
           ...units.filter((u) => !inGroup(u)).map((u) => ({ key: u.id, at: sortValue(u), el: <UnitCard key={u.id} node={u} inRow hint={hintOf(`n:${u.id}`)} /> })),
-          ...groups.map((g) => ({ key: g.id, at: g.order, el: <GroupCard key={g.id} group={g} hint={hintOf(`g:${g.id}`)} onOpen={() => setOpenId(g.id)} /> })),
+          ...groups.map((g) => ({ key: g.id, at: g.order, el: <GroupCard key={g.id} group={g} glow={glowId === g.id} hint={hintOf(`g:${g.id}`)} onOpen={() => setOpenId(g.id)} /> })),
         ].sort((a, b) => a.at - b.at);
 
   const grid = wrap && cols > 0 && items.length + 1 > cols;
@@ -257,7 +264,7 @@ function Lane({ row }: { row: ProdNode }) {
         <ShelfButton row={row} />
       </div>
       {folded ? null : <>
-      {open && !active ? <GroupBar group={open} row={row} count={units.filter((u) => u.groupId === open.id).length} onClose={() => setOpenId(null)} /> : null}
+      {open && !active ? <GroupBar group={open} row={row} count={units.filter((u) => u.groupId === open.id).length} onClose={() => { setGlowId(open.id); setOpenId(null); }} /> : null}
       {/* Wrapped only when they don't all fit in one row: then the columns fill the width exactly. */}
       <div ref={box} className={cx("lane__cards", grid && "lane__cards--wrap")} onScroll={showScrollbar}
         style={grid ? { gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` } : undefined} {...rowDrop.props}>
@@ -330,14 +337,15 @@ function writeWrap(rowId: Id, on: boolean): void {
 function EmptyRow({ parent }: { parent: ProdNode }) {
   const snap = useSnap();
   const createRow = useCreateRow();
-  const { source, select } = useStore();
+  const { source, select, set } = useStore();
+  const [menu, setMenu] = useState<MenuAt | null>(null);
   const p = snap.production;
   const shot = p.levels.at(-1)!.name.toLowerCase();
   const label = `Nuevo ${shot} en ${codeOf(p, parent)}`;
   return (
     <section className="lane">
       <div className="lane__cards">
-        <button className="card card--add" title={label} aria-label={label} onClick={() => select(source.createNode(createRow(parent.id), ""))}>
+        <button className="card card--add" title={label} aria-label={label} onClick={(e) => setMenu({ x: e.clientX, y: e.clientY })}>
           <span className="card__ghost" aria-hidden>
             <span className="thumb" />
             <span className="card__meta"><span className="card__code">SH</span><Pill color="transparent">·</Pill></span>
@@ -346,6 +354,11 @@ function EmptyRow({ parent }: { parent: ProdNode }) {
           <IconPlus size={24} stroke={1.5} className="card__plus" />
         </button>
       </div>
+      {menu ? (
+        <AddMenu at={menu} onClose={() => setMenu(null)}
+          onNew={() => select(source.createNode(createRow(parent.id), ""))}
+          onImport={() => set({ importTo: { rowId: createRow(parent.id), before: null, groupId: null } })} />
+      ) : null}
     </section>
   );
 }
@@ -353,16 +366,14 @@ function EmptyRow({ parent }: { parent: ProdNode }) {
 /** "+" at the end of a row: a new shot in that scene (the row grows to the right). */
 function AddCard({ row, groupId, hint }: { row: ProdNode; groupId?: Id; hint?: RowHint["zone"] }) {
   const snap = useSnap();
-  const { source, select } = useStore();
+  const { source, select, set } = useStore();
   const p = snap.production;
   const g = groupId ? snap.groups.find((x) => x.id === groupId) : undefined;
   const label = `Nuevo ${p.levels[levelIndex(p, row) + 1]!.name.toLowerCase()} en ${g ? `«${g.name}»` : codeOf(p, row)}`;
+  const [menu, setMenu] = useState<MenuAt | null>(null);
   return (
-    <button className={cx("card card--add", hint && `dnd-${hint}`)} data-row-item="end" title={label} aria-label={label} onClick={() => {
-      const id = source.createNode(row.id, "");
-      if (groupId) source.groupShots([id], { groupId });
-      select(id);
-    }}>
+    <>
+    <button className={cx("card card--add", hint && `dnd-${hint}`)} data-row-item="end" title={label} aria-label={label} onClick={(e) => setMenu({ x: e.clientX, y: e.clientY })}>
       {/* Same insides as a shot card, invisible: it always has a card's size and ratio. */}
       <span className="card__ghost" aria-hidden>
         <span className="thumb" />
@@ -371,6 +382,26 @@ function AddCard({ row, groupId, hint }: { row: ProdNode; groupId?: Id; hint?: R
       </span>
       <IconPlus size={24} stroke={1.5} className="card__plus" />
     </button>
+    {menu ? (
+      <AddMenu at={menu} onClose={() => setMenu(null)}
+        onNew={() => {
+          const id = source.createNode(row.id, "");
+          if (groupId) source.groupShots([id], { groupId });
+          select(id);
+        }}
+        onImport={() => set({ importTo: { rowId: row.id, before: null, groupId: groupId ?? null } })} />
+    ) : null}
+    </>
+  );
+}
+
+/** What the "+" offers: an empty shot, or shots from what you already have (docs/INTERFAZ.md §2.0). */
+function AddMenu({ at, onClose, onNew, onImport }: { at: MenuAt; onClose: () => void; onNew: () => void; onImport: () => void }) {
+  return (
+    <ContextMenu at={at} onClose={onClose}>
+      <button className="menu__item" onClick={onNew}><IconPlus size={14} /> <span className="menu__label">Plano nuevo</span></button>
+      <button className="menu__item" onClick={onImport}><IconFileImport size={14} /> <span className="menu__label">Importar…</span><span className="menu__hint">Magnific u ordenador</span></button>
+    </ContextMenu>
   );
 }
 
@@ -518,6 +549,13 @@ function GroupMenu({ at, group, shots, onRename, onOpen, onClose }: { at: MenuAt
   );
 }
 
+/** A group's length: its shots' added up (— while none has video yet). */
+function GroupLength({ shots }: { shots: ProdNode[] }) {
+  const snap = useSnap();
+  const sec = Math.round(shots.reduce((t, s) => t + durationOf(snap, s), 0) * 10) / 10;
+  return <span className="card__len" title="Duración de sus planos">{sec ? `${sec}s` : "—"}</span>;
+}
+
 /** The length of a shot's video, under its status: its stretch, or the whole clip; N/A for an image. */
 function CardLength({ cover }: { cover: ReturnType<typeof coverOf> }) {
   const clip = useDuration(cover.media);
@@ -532,7 +570,7 @@ function CardLength({ cover }: { cover: ReturnType<typeof coverOf> }) {
  * in small, each 16:9 like a shot's (up to four; "+N" on the last when there
  * are more), its name and how many shots. Click to open; drop shots on it to add them.
  */
-function GroupCard({ group, hint, onOpen }: { group: ShotGroup; hint?: RowHint["zone"]; onOpen: () => void }) {
+function GroupCard({ group, hint, onOpen, glow }: { group: ShotGroup; hint?: RowHint["zone"]; onOpen: () => void; glow?: boolean }) {
   const snap = useSnap();
   const shots = snap.nodes.filter((n) => n.groupId === group.id && n.parentId === group.parentId).sort(byPosition);
   const source = useStore((s) => s.source);
@@ -543,9 +581,14 @@ function GroupCard({ group, hint, onOpen }: { group: ShotGroup; hint?: RowHint["
   const tiles = shots.slice(0, GROUP_TILES);
   const [menu, setMenu] = useState<MenuAt | null>(null);
   const [rename, setRename] = useState(0);
+  const el = useRef<HTMLDivElement>(null);
+  // Back from it: in view, wherever the row was scrolled to.
+  useEffect(() => {
+    if (glow) el.current?.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
+  }, [glow]);
   return (
     <>
-    <div onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); setMenu({ x: e.clientX, y: e.clientY }); }} className={cx("card card--group", hint && `dnd-${hint === "into" ? "group" : hint}`)} data-row-item={`g:${group.id}`} {...groupDragProps(group.id)} draggable={!editing} onClick={(e) => {
+    <div ref={el} onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); setMenu({ x: e.clientX, y: e.clientY }); }} className={cx("card card--group", glow && "card--glow", hint && `dnd-${hint === "into" ? "group" : hint}`)} data-row-item={`g:${group.id}`} {...groupDragProps(group.id)} draggable={!editing} onClick={(e) => {
       // The second click of a double click waits for the rename instead.
       if (editing || e.detail > 1) return;
       if (opening.current) clearTimeout(opening.current);
@@ -559,12 +602,17 @@ function GroupCard({ group, hint, onOpen }: { group: ShotGroup; hint?: RowHint["
           </div>
         ))}
       </div>
+      {/* Same two lines as a shot's card: the name with the weight; under it, how many shots and their length. */}
       <div className="card__meta">
-        <span className="card__code"><IconStack2 size={12} />
-          <InlineEdit value={group.name} placeholder="Grupo" label="Doble clic para cambiar el nombre" onEditing={setEditing} startSignal={rename}
+        <span className="card__gname"><IconStack2 size={13} />
+          <InlineEdit className="card__name" value={group.name} placeholder="Grupo" label="Doble clic para cambiar el nombre" onEditing={setEditing} startSignal={rename}
             onStart={() => { if (opening.current) clearTimeout(opening.current); }} onSave={(name) => source.renameGroup(group.id, name)} />
         </span>
-        <span className="sf-faint sf-small">{shots.length} plano{shots.length === 1 ? "" : "s"}</span>
+      </div>
+      <div className="card__row">
+        <span className="card__title card__codeline">{shots.length} plano{shots.length === 1 ? "" : "s"}</span>
+        <span className="card__spacer" />
+        <GroupLength shots={shots} />
       </div>
     </div>
     {menu ? <GroupMenu at={menu} group={group} shots={shots} onRename={() => setRename((n) => n + 1)} onOpen={onOpen} onClose={() => setMenu(null)} /> : null}

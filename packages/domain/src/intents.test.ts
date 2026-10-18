@@ -21,6 +21,8 @@ import {
   planDissolveGroup,
   planRenameGroup,
   planPlaceInRow,
+  planCreateInRow,
+  planShotsFromEdited,
   planExtractVersion,
   planSplitTakeShot,
   planMoveNodes as moveNodes,
@@ -285,6 +287,22 @@ describe("structure intents", () => {
     expect(s.nodes.filter((n) => n.parentId === sc).map((n) => [n.number, n.groupId ?? null])).toEqual([[10, null], [20, null]]);
   });
 
+  it("creates an imported shot where it is dropped, with the code in the gap", () => {
+    const { run, state } = session();
+    const sq = run((s) => planCreateNode(s.production!, s.nodes, null, "q")).nodeId!;
+    const sc = run((s) => planCreateNode(s.production!, s.nodes, sq, "c")).nodeId!;
+    const [a, b] = ["a", "b"].map((t) => run((s) => planCreateNode(s.production!, s.nodes, sc, `i${t}`, t.toUpperCase())).nodeId!) as [string, string];
+    const g = (run((s) => planGroupShots(s.production!, s.nodes, s.groups, [b], { shotId: a }, "ig", 1)) as Plan & { groupId?: string }).groupId!;
+    // Before the first shot of the group (A, 010): 005; at the end: 030; inside the group, after A: 015.
+    const first = run((s) => planCreateInRow(s.production!, s.nodes, s.groups, sc, { groupId: g }, null, "n1")).nodeId!;
+    const last = run((s) => planCreateInRow(s.production!, s.nodes, s.groups, sc, null, null, "n2")).nodeId!;
+    const inside = run((s) => planCreateInRow(s.production!, s.nodes, s.groups, sc, { nodeId: b }, g, "n3")).nodeId!;
+    const n = (id: string) => state().nodes.find((x) => x.id === id)!;
+    expect([n(first).number, n(first).groupId ?? null]).toEqual([5, null]);
+    expect([n(last).number, n(last).groupId ?? null]).toEqual([30, null]);
+    expect([n(inside).number, n(inside).groupId]).toEqual([15, g]);
+  });
+
   it("reorders a row with groups: shots and groups by what the row shows, joining and leaving groups", () => {
     const { run, state } = session();
     const sq = run((s) => planCreateNode(s.production!, s.nodes, null, "q")).nodeId!;
@@ -356,5 +374,23 @@ describe("structure intents", () => {
     const row = childrenOf(splitTrash(s.nodes).live, sc);
     expect(row.map((n) => `${n.number}:${n.title}`)).toEqual(["10:Faro", "15:Faro", "20:Muelle"]);
     expect(row.slice(0, 2).map((n) => { const t = s.takes.find((x) => x.id === n.selectedTakeId)!; return `${t.mediaId}@${t.inSec}-${t.outSec}`; })).toEqual(["mt@0-4", "mt@6-10"]);
+  });
+
+  it("edits a video in «Vídeos editados»: new shots after the last one made from it, the original stays", () => {
+    const { run, state } = session();
+    const sq = run((s) => planCreateNode(s.production!, s.nodes, null, "q")).nodeId!;
+    const sc = run((s) => planCreateNode(s.production!, s.nodes, sq, "c")).nodeId!;
+    const a = run((s) => planCreateNode(s.production!, s.nodes, sc, "ea", "Faro")).nodeId!;
+    run((s) => planCreateNode(s.production!, s.nodes, sc, "eb", "Muelle"));
+    run(() => ({ events: [{ type: "media.added", media: { id: "me", nodeId: a, kind: "video", origin: "generated", archived: false, createdBy: "u", createdAt: 1, version: 1, status: "ready", progress: 100, durationSec: 20 } }] }));
+    const cut = run((s) => planSplitShot(s.production!, s.nodes, { id: "me", nodeId: a }, [{ inSec: 0, outSec: 5 }], id, "u", 2)) as Plan & { nodeIds: string[] };
+    const original = state().nodes.find((n) => n.id === a)!;
+    expect(original.shelvedAt).toBeDefined();
+    run((s) => planShotsFromEdited(s.production!, s.nodes, original, cut.nodeIds[0]!, { id: "me" }, [{ inSec: 8, outSec: 12 }, { inSec: 15, outSec: 20 }], id, "u", 3));
+    const s = state();
+    const row = childrenOf(splitTrash(s.nodes).live, sc).filter((n) => n.shelvedAt === undefined);
+    expect(row.map((n) => `${n.number}:${n.title}`)).toEqual(["10:Faro", "15:Faro", "17:Faro", "20:Muelle"]);
+    expect(row.slice(1, 3).map((n) => { const t = s.takes.find((x) => x.id === n.selectedTakeId)!; return `${t.mediaId}@${t.inSec}-${t.outSec}`; })).toEqual(["me@8-12", "me@15-20"]);
+    expect(s.nodes.find((n) => n.id === a)!.shelvedAt).toBeDefined();
   });
 });
