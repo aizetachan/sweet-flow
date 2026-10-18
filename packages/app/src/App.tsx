@@ -21,6 +21,8 @@ export function App() {
   return (
     <>
       {phase === "window" ? <PoppedWindow /> : phase === "production" ? <Production /> : <Dashboard />}
+      {/* Notices show everywhere: in the dashboard too. */}
+      {phase !== "window" ? <Notice /> : null}
       {splash ? <Splash ready={!!lib} onDone={() => setSplash(false)} /> : null}
     </>
   );
@@ -48,7 +50,6 @@ function Production() {
       </div>
       <Dock />
       <FloatingInspectors />
-      <Notice />
       <LeaveConfirm />
       <DeleteKey />
       <Modals />

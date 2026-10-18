@@ -4,6 +4,7 @@ import {
   IconChevronRight,
   IconHome,
   IconInfoCircle,
+  IconFolderShare,
   IconFolder,
   IconFolderOff,
   IconLayoutBoard,
@@ -20,6 +21,7 @@ import { memberName } from "../state/selectors";
 import { useLibraryTrail } from "../dashboard/Dashboard";
 import { BoardFilters, ProductionInfo } from "../board/Board";
 import { useState } from "react";
+import { revealEntry } from "../data/reveal";
 import { Popover } from "../components/Popover";
 import { useMagnific } from "../integrations/magnific/useMagnific";
 
@@ -97,6 +99,9 @@ export function Topbar() {
         </div>
       ) : null}
 
+      <IconButton label="Mostrar la carpeta de la producción en el ordenador" onClick={() => void revealEntry(productionId)}>
+        <IconFolderShare size={17} stroke={1.6} />
+      </IconButton>
       <AccountMenu />
     </header>
   );

@@ -54,6 +54,13 @@ aplicación completa con **menú lateral**:
   Si lo fijado se ha borrado, desaparece de la lista y se avisa.
 - **Ajustes** y, abajo, **tu avatar** con tu nombre (abre tu perfil).
 
+- **Menú de cada carpeta y producción:** un único botón **«⋯»** (al pasar el
+  ratón) y el **clic derecho** abren el mismo menú: abrir, **mostrar en la
+  carpeta**, fijar o quitar de Fijados, cambiar el nombre (F2) y mover a la
+  papelera. Sustituye a los iconos sueltos. En la papelera: restaurar y
+  eliminar definitivamente. El clic derecho sobre algo no seleccionado lo
+  selecciona primero, como en el Finder.
+
 ### 1.1 Ajustes
 
 Se gestionan desde el dashboard:
@@ -113,6 +120,12 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
 - **Barra superior:** logo (vuelve al inicio) y migas de pan a la izquierda; a
   la derecha, el **buscador** (en el tablero), quién está en la producción y
   **tu avatar**.
+  - Entre el buscador y el avatar, **mostrar la carpeta** (icono de carpeta con
+    flecha): abre la carpeta de la producción en el Finder / Explorador. En la
+    app de escritorio la primera vez pide localizar una vez la carpeta del
+    equipo en el ordenador (el acceso a carpetas no da su ruta completa) y la
+    recuerda. En el navegador no se puede abrir el Finder: copia la ruta y lo
+    avisa. Con los datos en el navegador, avisa de que no hay carpeta.
   - El **nombre de la producción** en las migas es el mismo que tiene su
     tarjeta en el dashboard: si se cambia fuera, cambia dentro, y con **doble
     clic** se cambia dentro y fuera a la vez. Al abrirla, si eran distintos

@@ -16,6 +16,9 @@ import {
   IconList,
   IconMovie,
   IconPencil,
+  IconDots,
+  IconFolderOpen,
+  IconFolderShare,
   IconPin,
   IconPinFilled,
   IconPlus,
@@ -23,6 +26,8 @@ import {
   IconTrash,
   IconTrashX,
 } from "@tabler/icons-react";
+import { ContextMenu, type MenuAt } from "../components/ContextMenu";
+import { revealEntry } from "../data/reveal";
 import type { Id } from "@sweetflow/domain";
 import { AvatarStack, Button, cx, IconButton, Segmented } from "@sweetflow/ui";
 import { isInTrash, type LibraryEntry, type LibraryState, type ProductionSummary } from "../data/library";
@@ -251,6 +256,7 @@ function EntryItem(p: EntryItemProps) {
   const library = useStore((s) => s.library);
   const drop = useDropInto(p.entry.id);
   const [armed, setArmed] = useArmed();
+  const [menu, setMenu] = useState<MenuAt | null>(null);
   const isFolder = p.entry.kind === "folder";
   const inTrash = p.section === "trash";
   const s = p.summary;
@@ -271,6 +277,13 @@ function EntryItem(p: EntryItemProps) {
       if (e.key === "F2" && p.editable && !inTrash) p.onStartRename();
     },
     tabIndex: 0,
+    onContextMenu: (e: React.MouseEvent) => {
+      if (!p.editable) return;
+      e.preventDefault();
+      // Right click on something not picked picks it, like in Finder.
+      if (!p.picked) p.onPick(false);
+      setMenu({ x: e.clientX, y: e.clientY });
+    },
     ...(canDrop ? drop.props : {}),
   };
 
@@ -283,14 +296,35 @@ function EntryItem(p: EntryItemProps) {
       </IconButton>
     </span>
   ) : (
+    // One «⋯» instead of several icons: it opens the same menu as a right click.
     <span className="dentry__acts" onClick={(e) => e.stopPropagation()}>
-      <IconButton size="sm" label={p.pinned ? "Quitar de Fijados" : "Fijar en el menú lateral"} onClick={() => library.setPinned({ entryId: p.entry.id }, !p.pinned)}>
-        {p.pinned ? <IconPinFilled size={13} className="dentry__star" /> : <IconPin size={13} />}
-      </IconButton>
-      <IconButton size="sm" label="Renombrar (F2)" onClick={p.onStartRename}><IconPencil size={13} /></IconButton>
-      <IconButton size="sm" label="Mover a la papelera" onClick={() => library.trash(p.dragIds)}><IconTrash size={13} /></IconButton>
+      <IconButton size="sm" label="Más opciones" onClick={(e) => {
+        const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+        setMenu({ x: r.right - 220, y: r.bottom + 4 });
+      }}><IconDots size={15} /></IconButton>
     </span>
   );
+  const menuEl = menu && p.editable ? (
+    <ContextMenu at={menu} onClose={() => setMenu(null)}>
+      {inTrash ? (
+        <>
+          <button className="menu__item" onClick={() => library.restore(p.dragIds)}><IconArrowBackUp size={14} /> <span className="menu__label">Restaurar</span></button>
+          <button className="menu__item menu__item--danger" onClick={() => void library.deleteForever(p.dragIds)}><IconTrashX size={14} /> <span className="menu__label">Eliminar definitivamente</span></button>
+        </>
+      ) : (
+        <>
+          <button className="menu__item" onClick={p.onOpen}><IconFolderOpen size={14} /> <span className="menu__label">Abrir</span></button>
+          <button className="menu__item" onClick={() => void revealEntry(p.entry.id)}><IconFolderShare size={14} /> <span className="menu__label">Mostrar en la carpeta</span></button>
+          <button className="menu__item" onClick={() => library.setPinned({ entryId: p.entry.id }, !p.pinned)}>
+            {p.pinned ? <IconPinFilled size={14} /> : <IconPin size={14} />} <span className="menu__label">{p.pinned ? "Quitar de Fijados" : "Fijar en el menú lateral"}</span>
+          </button>
+          <button className="menu__item" onClick={p.onStartRename}><IconPencil size={14} /> <span className="menu__label">Cambiar el nombre<span className="menu__hint">F2</span></span></button>
+          <div className="menu__sep" />
+          <button className="menu__item menu__item--danger" onClick={() => library.trash(p.dragIds)}><IconTrash size={14} /> <span className="menu__label">Mover a la papelera</span></button>
+        </>
+      )}
+    </ContextMenu>
+  ) : null;
   const star = p.pinned && !inTrash ? <IconPinFilled size={12} className="dentry__star dentry__star--badge" /> : null;
 
   if (p.layout === "list") {
@@ -306,6 +340,7 @@ function EntryItem(p: EntryItemProps) {
         <span>{!inTrash && s?.members.length ? <AvatarStack names={s.members} size={18} max={3} /> : null}</span>
         <span className="sf-faint sf-small">{ago(p.when)}</span>
         {actions}
+        {menuEl}
       </div>
     );
   }
@@ -336,6 +371,7 @@ function EntryItem(p: EntryItemProps) {
         )}
       </div>
       {actions}
+      {menuEl}
     </div>
   );
 }

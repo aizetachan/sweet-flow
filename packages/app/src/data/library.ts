@@ -122,6 +122,8 @@ export interface Library {
   setProfile(p: Profile): void;
   /** DataSource of a production. Caller disposes it when leaving. */
   open(id: Id): DataSource;
+  /** Where an entry's folder is, inside the team folder (folder mode only). */
+  pathOf?(id: Id): string | null;
 }
 
 /** Entry ids inside `rootIds` (themselves included), at any depth. */
@@ -160,6 +162,8 @@ interface EntryLibraryOptions {
   logStoreFor: (productionId: Id) => LogStore;
   /** The production's folders in the team folder (folder mode only). */
   filesFor?: (productionId: Id) => ProductionFiles;
+  /** An entry's folder inside the team folder (folder mode only). */
+  pathOf?: (id: Id) => string | null;
   generator?: Generator;
   deviceId: Id;
   /** Productions handled outside the log (the demo episode). */
@@ -310,6 +314,10 @@ class EntryLibrary implements Library {
     this.me = { ...this.me, displayName, email: p.email.trim() };
     this.o.profile.save(this.me);
     this.emit();
+  }
+
+  pathOf(id: Id): string | null {
+    return this.o.pathOf?.(id) ?? null;
   }
 
   open(id: Id): DataSource {
@@ -530,6 +538,7 @@ export async function folderLibrary(fs: FolderFs, generator?: Generator): Promis
     },
     logStoreFor: (id) => new FolderLogStore(fs, () => entries.pathOf(id)),
     filesFor: (id) => new ProductionFiles(fs, () => entries.pathOf(id)),
+    pathOf: (id) => entries.pathOf(id),
     generator,
     deviceId: me.deviceId,
   });

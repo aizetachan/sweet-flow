@@ -41,7 +41,8 @@ export function ContextMenu({ at, onClose, children }: { at: MenuAt; onClose: ()
   return createPortal(
     <div ref={ref} className="menu ctxmenu" role="menu" style={{ left: pos.x, top: pos.y }}
       onClick={(e) => { e.stopPropagation(); if ((e.target as HTMLElement).closest(".menu__item")) onClose(); }}
-      onContextMenu={(e) => e.preventDefault()}>
+      onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); }}
+      onDoubleClick={(e) => e.stopPropagation()}>
       {children}
     </div>,
     document.body,
