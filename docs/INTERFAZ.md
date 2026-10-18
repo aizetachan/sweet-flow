@@ -124,7 +124,10 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
   ubicación y la chincheta de Fijados se quitaron el 18 oct 2026 (se fija
   desde el dashboard). **El estado es solo la etiqueta**: al hacer clic se
   despliega la lista. Todo lo nuevo empieza en **Pendiente**.
-- **Barra superior:** logo (vuelve al inicio) y migas de pan a la izquierda; a
+- **Barra superior:** logo (vuelve al inicio) y, a la izquierda, solo
+  **Inicio › nombre de la producción** (con el botón de información). Las
+  carpetas intermedias no se muestran: «Inicio» vuelve a la carpeta del
+  dashboard donde está la producción. A
   la derecha, el **buscador** (en el tablero), quién está en la producción y
   **tu avatar**.
   - Entre el buscador y el avatar, **mostrar la carpeta** (icono de carpeta con

@@ -69,13 +69,9 @@ export function Topbar() {
     <header className="topbar">
       <button className="topbar__logo" title="Volver al inicio" onClick={() => requestLeave()}>sf</button>
       <nav className="crumbs crumbs--top" aria-label="Ubicación">
-        <button className="crumbs__btn" onClick={() => requestLeave(null)} title="Volver al inicio"><IconHome size={14} /> Inicio</button>
-        {trail.map((f) => (
-          <span key={f.id} className="crumbs__item">
-            <IconChevronRight size={13} className="sf-faint" />
-            <button className="crumbs__btn" onClick={() => requestLeave(f.id)}>{f.name}</button>
-          </span>
-        ))}
+        {/* Only home and the production: going back lands in the folder it is in, so the folders in between are not needed. */}
+        <button className="crumbs__btn" onClick={() => requestLeave(trail.at(-1)?.id ?? null)}
+          title={trail.length ? `Volver a «${trail.at(-1)!.name}»` : "Volver al inicio"}><IconHome size={14} /> Inicio</button>
         <span className="crumbs__item">
           <IconChevronRight size={13} className="sf-faint" />
           <ProductionName />
