@@ -134,7 +134,14 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
 - **Cabecera del tablero:** el título y un contador con el número de planos.
 - **Secciones** (Producción, Biblioteca, Papelera, Ajustes): barra **flotante
   centrada abajo**, para que el tablero tenga todo el ancho.
-- **Tarjeta de plano:** portada; código y estado (**clic en el estado** abre
+- **Clic derecho** en una tarjeta abre su menú:
+  - **Plano:** estado (la lista, con el actual marcado), cambiar el título
+    (lo edita en la tarjeta), abrir en ventana aparte y mover a la papelera.
+    Con varias seleccionadas, el estado y la papelera se aplican a todas.
+  - **Grupo:** estado de todos sus planos, cambiar el nombre, abrir el grupo,
+    deshacer el grupo (los planos vuelven a la fila) y mover a la papelera con
+    sus planos.
+- **Tarjeta de plano:** portada (sin etiqueta de duración encima); código y estado (**clic en el estado** abre
   la lista para cambiarlo ahí mismo, sin seleccionar la tarjeta); debajo, el título y, a la
   derecha (bajo el estado), la **duración del vídeo** (la del tramo si es un
   plano cortado; «N/A» si es una imagen; «—» si aún no tiene nada). No muestra

@@ -163,6 +163,13 @@ Anotadas el 15 oct 2026, pendientes de que el usuario elija orden:
 - **Lotes y créditos:** estimación antes de lanzar y registro real por usuario, producción y nodo.
 - **Referencias del desglose:** reparto, props y localizaciones en el prompt y como referencias de biblioteca.
 
+### Menú contextual: más adelante
+
+- **Compartir el enlace** de un plano o un grupo (abre la producción en ese
+  punto), cuando haya equipo conectado.
+- Otras opciones posibles: duplicar un plano, moverlo a otra escena, copiar la
+  ruta de su carpeta.
+
 ### Grupos de planos (pilas) ✅ (INTERFAZ §2.4)
 
 Decidido el 18 oct 2026: dentro de una escena se pueden agrupar planos para

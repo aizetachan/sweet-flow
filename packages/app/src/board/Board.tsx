@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode, type RefObject } from "react";
-import { IconArrowLeft, IconStack2, IconExternalLink, IconMessageCircle, IconPlus, IconFilter, IconSearch, IconTrash, IconLayoutGrid, IconLayoutList, IconX } from "@tabler/icons-react";
+import { IconArrowBackUp, IconArrowLeft, IconPencil, IconStack2, IconExternalLink, IconMessageCircle, IconPlus, IconFilter, IconSearch, IconTrash, IconLayoutGrid, IconLayoutList, IconX } from "@tabler/icons-react";
 import {
   childrenOf,
   codeOf,
@@ -18,6 +18,7 @@ import { useSnap, useStore, type CardSize } from "../state/store";
 import { countsOf, coverOf, durationOf, filtersActive, matches, memberName, presenceAt, progressOf, statusOf } from "../state/selectors";
 import { Thumb, useDuration } from "../components/media";
 import { Popover } from "../components/Popover";
+import { ContextMenu, StatusItems, type MenuAt } from "../components/ContextMenu";
 import { StatusPicker } from "../components/StatusPicker";
 import { groupDragProps, nodeDragProps, useNodeDrop, useRowDrop, useUngroupDrop, type RowHint } from "./dnd";
 import { ShelfButton } from "./Shelf";
@@ -297,9 +298,15 @@ function UnitCard({ node, inRow, hint }: { node: ProdNode; inRow?: boolean; hint
   const viewers = presenceAt(snap, node.id);
   const source = useStore((s) => s.source);
   const [editing, setEditing] = useState(false);
+  const [menu, setMenu] = useState<MenuAt | null>(null);
+  const [rename, setRename] = useState(0);
+  // Right click on one of several selected cards acts on all of them.
+  const targets = multi.includes(node.id) ? multi : [node.id];
 
   return (
+    <>
     <div
+      onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); setMenu({ x: e.clientX, y: e.clientY }); }}
       className={cx("card", selectedId === node.id && "card--on", multi.includes(node.id) && "card--multi", viewers.length > 0 && "card--watched", zone && `dnd-${zone}`)}
       data-row-item={`n:${node.id}`}
       {...nodeDragProps(node.id)}
@@ -307,7 +314,8 @@ function UnitCard({ node, inRow, hint }: { node: ProdNode; inRow?: boolean; hint
       {...(inRow ? {} : drop.props)}
       onClick={(e) => (e.metaKey || e.ctrlKey || e.shiftKey ? toggleMulti(node.id) : select(node.id))}
     >
-      <Thumb {...cover} preview />
+      {/* The length goes under the status, not on the cover. */}
+      <Thumb {...cover} preview badge={false} />
       <div className="card__meta">
         <span className="card__code">{codeOf(p, node)}</span>
         {/* The status changes right here: a click opens the list (the card is not selected). */}
@@ -318,7 +326,7 @@ function UnitCard({ node, inRow, hint }: { node: ProdNode; inRow?: boolean; hint
       </div>
       <div className="card__row">
         <InlineEdit className="card__title" value={node.title} placeholder="Sin título" label="Doble clic para escribir el título"
-          onEditing={setEditing} onSave={(title) => source.updateNode(node.id, { title })} />
+          onEditing={setEditing} startSignal={rename} onSave={(title) => source.updateNode(node.id, { title })} />
         <CardLength cover={cover} />
       </div>
       <div className="card__foot">
@@ -333,11 +341,61 @@ function UnitCard({ node, inRow, hint }: { node: ProdNode; inRow?: boolean; hint
         {node.assigneeIds.length ? <AvatarStack names={node.assigneeIds.map((u) => memberName(snap, u))} size={16} max={2} /> : null}
       </div>
     </div>
+    {menu ? <ShotMenu at={menu} node={node} targets={targets} onRename={() => setRename((n) => n + 1)} onClose={() => setMenu(null)} /> : null}
+    </>
   );
 }
 
 /** Most mini covers a group card shows; the last one says how many more there are. */
 const GROUP_TILES = 4;
+
+/** Right-click menu of shot cards: status, title, open apart, trash (§2). */
+function ShotMenu({ at, node, targets, onRename, onClose }: { at: MenuAt; node: ProdNode; targets: Id[]; onRename: () => void; onClose: () => void }) {
+  const snap = useSnap();
+  const { source, trashNodes, popOut } = useStore();
+  const p = snap.production;
+  const many = targets.length > 1;
+  const nodes = targets.map((id) => snap.nodes.find((n) => n.id === id)).filter((n): n is ProdNode => !!n);
+  const same = nodes.every((n) => n.statusId === nodes[0]?.statusId) ? nodes[0]?.statusId ?? null : null;
+  return (
+    <ContextMenu at={at} onClose={onClose}>
+      <div className="menu__title">{many ? `${targets.length} planos` : `${codeOf(p, node)}${node.title ? ` · ${node.title}` : ""}`}</div>
+      <div className="menu__title ctxmenu__sub">Estado</div>
+      <StatusItems statuses={p.statuses} current={same} onPick={(id) => { for (const n of nodes) source.updateNode(n.id, { statusId: id }); }} />
+      <div className="menu__sep" />
+      {!many ? (
+        <>
+          <button className="menu__item" onClick={onRename}><IconPencil size={14} /> <span className="menu__label">Cambiar el título</span></button>
+          <button className="menu__item" onClick={() => popOut(node.id)}><IconExternalLink size={14} /> <span className="menu__label">Abrir en ventana aparte</span></button>
+        </>
+      ) : null}
+      <button className="menu__item menu__item--danger" onClick={() => trashNodes(targets)}>
+        <IconTrash size={14} /> <span className="menu__label">{many ? `Mover los ${targets.length} a la papelera` : "Mover a la papelera"}</span>
+      </button>
+    </ContextMenu>
+  );
+}
+
+/** Right-click menu of group cards: the status of all its shots, its name, undo it, or trash it with its shots. */
+function GroupMenu({ at, group, shots, onRename, onOpen, onClose }: { at: MenuAt; group: ShotGroup; shots: ProdNode[]; onRename: () => void; onOpen: () => void; onClose: () => void }) {
+  const snap = useSnap();
+  const { source, trashNodes } = useStore();
+  const same = shots.every((n) => n.statusId === shots[0]?.statusId) ? shots[0]?.statusId ?? null : null;
+  return (
+    <ContextMenu at={at} onClose={onClose}>
+      <div className="menu__title">{group.name} · {shots.length} plano{shots.length === 1 ? "" : "s"}</div>
+      <div className="menu__title ctxmenu__sub">Estado de todos sus planos</div>
+      <StatusItems statuses={snap.production.statuses} current={same} onPick={(id) => { for (const n of shots) source.updateNode(n.id, { statusId: id }); }} />
+      <div className="menu__sep" />
+      <button className="menu__item" onClick={onRename}><IconPencil size={14} /> <span className="menu__label">Cambiar el nombre</span></button>
+      <button className="menu__item" onClick={onOpen}><IconStack2 size={14} /> <span className="menu__label">Abrir el grupo</span></button>
+      <button className="menu__item" onClick={() => source.dissolveGroup(group.id)}><IconArrowBackUp size={14} /> <span className="menu__label">Deshacer el grupo<span className="menu__hint">Los planos vuelven a la fila</span></span></button>
+      <button className="menu__item menu__item--danger" onClick={() => trashNodes(shots.map((s) => s.id))}>
+        <IconTrash size={14} /> <span className="menu__label">Mover a la papelera con sus planos</span>
+      </button>
+    </ContextMenu>
+  );
+}
 
 /** The length of a shot's video, under its status: its stretch, or the whole clip; N/A for an image. */
 function CardLength({ cover }: { cover: ReturnType<typeof coverOf> }) {
@@ -362,8 +420,11 @@ function GroupCard({ group, hint, onOpen }: { group: ShotGroup; hint?: RowHint["
   const opening = useRef<ReturnType<typeof setTimeout> | null>(null);
   const more = shots.length > GROUP_TILES ? shots.length - (GROUP_TILES - 1) : 0;
   const tiles = shots.slice(0, GROUP_TILES);
+  const [menu, setMenu] = useState<MenuAt | null>(null);
+  const [rename, setRename] = useState(0);
   return (
-    <div className={cx("card card--group", hint && `dnd-${hint === "into" ? "group" : hint}`)} data-row-item={`g:${group.id}`} {...groupDragProps(group.id)} draggable={!editing} onClick={(e) => {
+    <>
+    <div onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); setMenu({ x: e.clientX, y: e.clientY }); }} className={cx("card card--group", hint && `dnd-${hint === "into" ? "group" : hint}`)} data-row-item={`g:${group.id}`} {...groupDragProps(group.id)} draggable={!editing} onClick={(e) => {
       // The second click of a double click waits for the rename instead.
       if (editing || e.detail > 1) return;
       if (opening.current) clearTimeout(opening.current);
@@ -372,19 +433,21 @@ function GroupCard({ group, hint, onOpen }: { group: ShotGroup; hint?: RowHint["
       <div className={`gmosaic gmosaic--${tiles.length}`}>
         {tiles.map((s, i) => (
           <div key={s.id} className="gmosaic__tile" title={codeOf(snap.production, s)}>
-            <Thumb {...coverOf(snap, s)} preview />
+            <Thumb {...coverOf(snap, s)} preview badge={false} />
             {more && i === tiles.length - 1 ? <span className="gmosaic__more">+{more}</span> : null}
           </div>
         ))}
       </div>
       <div className="card__meta">
         <span className="card__code"><IconStack2 size={12} />
-          <InlineEdit value={group.name} placeholder="Grupo" label="Doble clic para cambiar el nombre" onEditing={setEditing}
+          <InlineEdit value={group.name} placeholder="Grupo" label="Doble clic para cambiar el nombre" onEditing={setEditing} startSignal={rename}
             onStart={() => { if (opening.current) clearTimeout(opening.current); }} onSave={(name) => source.renameGroup(group.id, name)} />
         </span>
         <span className="sf-faint sf-small">{shots.length} plano{shots.length === 1 ? "" : "s"}</span>
       </div>
     </div>
+    {menu ? <GroupMenu at={menu} group={group} shots={shots} onRename={() => setRename((n) => n + 1)} onOpen={onOpen} onClose={() => setMenu(null)} /> : null}
+    </>
   );
 }
 
@@ -421,7 +484,7 @@ function GroupBar({ group, row, count, onClose }: { group: ShotGroup; row: ProdN
  * Text that becomes an input on double click (Enter or leaving saves,
  * Escape cancels). Used for a card's title and a group's name.
  */
-export function InlineEdit({ value, placeholder, label, className, onSave, onEditing, onStart }: {
+export function InlineEdit({ value, placeholder, label, className, onSave, onEditing, onStart, startSignal }: {
   value: string;
   placeholder: string;
   label: string;
@@ -429,8 +492,16 @@ export function InlineEdit({ value, placeholder, label, className, onSave, onEdi
   onSave: (v: string) => void;
   onEditing?: (on: boolean) => void;
   onStart?: () => void;
+  /** Changing it (to anything but 0) starts editing, as a double click would: from a menu. */
+  startSignal?: number;
 }) {
   const [draft, setDraft] = useState<string | null>(null);
+  useEffect(() => {
+    if (!startSignal) return;
+    onStart?.();
+    setDraft(value);
+    onEditing?.(true);
+  }, [startSignal]); // eslint-disable-line react-hooks/exhaustive-deps
   const begin = (e: ReactMouseEvent) => {
     e.stopPropagation();
     onStart?.();

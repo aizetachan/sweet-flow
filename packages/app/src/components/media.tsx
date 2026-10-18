@@ -53,7 +53,7 @@ export function useDuration(media?: Media): number {
  * timeline — moving the mouse left and right scrubs through it, silently
  * (only its stretch, for a take); leaving goes back to the first frame.
  */
-export function Thumb({ media, take, pending, className, preview }: { media?: Media; take?: Take; pending?: Media; className?: string; preview?: boolean }) {
+export function Thumb({ media, take, pending, className, preview, badge = true }: { media?: Media; take?: Take; pending?: Media; className?: string; preview?: boolean; /** The camera + length tag on the cover. */ badge?: boolean }) {
   const poster = take?.thumbUrl ?? media?.thumbUrl ?? media?.url;
   const length = useDuration(media);
   const dur = take ? takeDuration(take) : length || undefined;
@@ -89,7 +89,7 @@ export function Thumb({ media, take, pending, className, preview }: { media?: Me
         <div className="thumb__empty">{pending ? null : <IconPhoto size={20} stroke={1.5} />}</div>
       )}
       {at !== null ? <span className="thumb__scrub" style={{ width: `${at * 100}%` }} /> : null}
-      {media?.kind === "video" ? (
+      {badge && media?.kind === "video" ? (
         <span className="thumb__badge" title={take ? "Duración del tramo" : "Duración del clip"}><IconVideo size={11} /> {dur ? `${dur}s` : ""}</span>
       ) : null}
       {pending ? (
