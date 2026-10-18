@@ -390,44 +390,65 @@ export class LocalSource implements DataSource {
     if (!this.generator) return notYet("generar");
     const s = this.loaded();
     if (!s.nodes.some((n) => n.id === args.nodeId)) return;
-    const id = this.newId("m");
     const now = this.now();
-    this.write([
-      {
-        type: "media.added",
-        media: {
-          id,
-          nodeId: args.nodeId,
-          kind: args.kind,
-          version: nextMediaVersion(s.media, args.nodeId, args.kind),
-          origin: "generated",
-          status: "queued",
-          progress: 0,
-          archived: false,
-          generation: {
-            provider: this.generator.provider,
-            model: args.model,
-            prompt: args.prompt,
-            params: { durationSec: args.durationSec, deviceId: this.deviceId },
-            sourceMediaId: args.sourceMediaId,
-            launchedBy: this.me.uid,
-          },
-          createdBy: this.me.uid,
-          createdAt: now,
+    // The model's settings travel with each version, to resume it after a reload.
+    const { nodeId: _n, kind: _k, prompt: _p, model: _m, sourceMediaId: _s, count, ...settings } = args;
+    const first = nextMediaVersion(s.media, args.nodeId, args.kind);
+    // One version per result asked for (one job each).
+    const ids = Array.from({ length: Math.max(1, Math.min(8, count ?? 1)) }, () => this.newId("m"));
+    this.write(ids.map((id, i) => ({
+      type: "media.added" as const,
+      media: {
+        id,
+        nodeId: args.nodeId,
+        kind: args.kind,
+        version: first + i,
+        origin: "generated" as const,
+        status: "queued" as const,
+        progress: 0,
+        archived: false,
+        generation: {
+          provider: this.generator!.provider,
+          model: args.model,
+          prompt: args.prompt,
+          params: { ...settings, deviceId: this.deviceId },
+          sourceMediaId: args.sourceMediaId,
+          launchedBy: this.me.uid,
         },
+        createdBy: this.me.uid,
+        createdAt: now,
       },
-    ]);
-    void this.runJob(id);
+    })));
+    for (const id of ids) void this.runJob(id);
   }
 
-  private request(args: Pick<GenerateArgs, "nodeId" | "kind" | "prompt" | "model" | "durationSec" | "sourceMediaId">): GenerationRequest {
+  private request(args: GenerateArgs): GenerationRequest {
     const s = this.loaded();
     const node = s.nodes.find((n) => n.id === args.nodeId)!;
     // The provider's folders mirror the team folder down to the node.
     const inTeam = this.files?.nodeDir(s.production, s.nodes, node, s.groups);
     const segments = (inTeam ?? [safeTitle(s.production.name) || "Sweet-Flow", folderPath(s.production, s.nodes, node, s.groups)].join("/")).split("/");
-    const source = args.sourceMediaId ? s.media.find((m) => m.id === args.sourceMediaId) : undefined;
-    return { kind: args.kind, prompt: args.prompt, model: args.model, durationSec: args.durationSec, startFrom: source?.remote?.id, folderPath: segments };
+    // What the provider knows our media by (only what it generated has an id there).
+    const remote = (id?: Id) => (id ? s.media.find((m) => m.id === id)?.remote?.id : undefined);
+    const references = (args.references ?? []).flatMap((r) => {
+      const id = remote(r.mediaId);
+      return id ? [{ type: r.type, id }] : [];
+    });
+    return {
+      kind: args.kind,
+      prompt: args.prompt,
+      model: args.model,
+      durationSec: args.durationSec,
+      startFrom: remote(args.sourceMediaId),
+      endOn: remote(args.endMediaId),
+      references,
+      aspectRatio: args.aspectRatio,
+      resolution: args.resolution,
+      sound: args.sound,
+      instrumental: args.instrumental,
+      loop: args.loop,
+      folderPath: segments,
+    };
   }
 
   private updateMedia(id: Id, patch: MediaPatch): void {
@@ -445,7 +466,8 @@ export class LocalSource implements DataSource {
       if (!m) return;
       if (!m.remote) {
         const g = m.generation!;
-        const started = await gen.start(this.request({ nodeId: m.nodeId, kind: m.kind, prompt: g.prompt, model: g.model, durationSec: g.params?.durationSec as number | undefined, sourceMediaId: g.sourceMediaId }));
+        const settings = (g.params ?? {}) as Partial<GenerateArgs>;
+        const started = await gen.start(this.request({ ...settings, nodeId: m.nodeId, kind: m.kind, prompt: g.prompt, model: g.model, sourceMediaId: g.sourceMediaId }));
         this.updateMedia(id, { status: "rendering", progress: 5, remote: { provider: gen.provider, id: started.id, folder: started.folder } });
       }
       for (;;) {
@@ -581,8 +603,8 @@ function notYet(what: string): void {
 }
 
 function extensionOf(type: string, url: string, kind: Media["kind"]): string {
-  const known: Record<string, string> = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp", "video/mp4": "mp4", "video/quicktime": "mov", "video/webm": "webm" };
+  const known: Record<string, string> = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp", "video/mp4": "mp4", "video/quicktime": "mov", "video/webm": "webm", "audio/mpeg": "mp3", "audio/mp3": "mp3", "audio/wav": "wav", "audio/x-wav": "wav", "audio/ogg": "ogg" };
   if (known[type]) return known[type]!;
   const m = /\.([a-z0-9]{3,4})(?:[?#]|$)/i.exec(url);
-  return m ? m[1]!.toLowerCase() : kind === "video" ? "mp4" : "png";
+  return m ? m[1]!.toLowerCase() : kind === "video" ? "mp4" : kind === "audio" ? "mp3" : "png";
 }

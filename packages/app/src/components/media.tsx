@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type MouseEvent } from "react";
-import { IconPhoto, IconPlayerPauseFilled, IconPlayerPlayFilled, IconVideo } from "@tabler/icons-react";
+import { IconMusic, IconPhoto, IconPlayerPauseFilled, IconPlayerPlayFilled, IconVideo } from "@tabler/icons-react";
 import { formatTc, round1, takeDuration, type Media, type Take } from "@sweetflow/domain";
 import { cx, Spinner } from "@sweetflow/ui";
 import { useStore } from "../state/store";
@@ -81,7 +81,9 @@ export function Thumb({ media, take, pending, className, preview, badge = true }
     : {};
   return (
     <div className={cx("thumb", playable && "thumb--preview", className)} {...hover}>
-      {poster ? (
+      {media?.kind === "audio" && media.status === "ready" ? (
+        <div className="thumb__empty thumb__audio"><IconMusic size={20} stroke={1.5} /></div>
+      ) : poster ? (
         isRealVideo(media) && !take?.thumbUrl ? (
           <video ref={video} src={`${media!.url}#t=${start}`} muted playsInline preload="metadata" />
         ) : <img src={poster} alt="" draggable={false} />
@@ -159,7 +161,12 @@ export function Player({
   const p = dur ? time / dur : 0;
   return (
     <div className="player">
-      {isRealVideo(media) ? (
+      {media.kind === "audio" && media.status === "ready" ? (
+        <div className="player__audio">
+          <IconMusic size={28} stroke={1.4} />
+          {media.url && !media.url.startsWith("data:image") ? <audio src={media.url} controls preload="metadata" /> : <span className="sf-faint sf-small">Audio de ejemplo (demo)</span>}
+        </div>
+      ) : isRealVideo(media) ? (
         <video ref={video} src={media.url} onEnded={() => onPlaying(false)} onTimeUpdate={(e) => {
           const t = e.currentTarget.currentTime;
           // A take plays only its stretch.

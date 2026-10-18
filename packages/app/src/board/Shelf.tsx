@@ -8,7 +8,7 @@
 import { useState } from "react";
 import { IconArrowBackUp, IconMovie, IconPlayerPlay, IconTrash } from "@tabler/icons-react";
 import { codeOf, type ProdNode } from "@sweetflow/domain";
-import { cx, IconButton } from "@sweetflow/ui";
+import { Button, cx, IconButton } from "@sweetflow/ui";
 import { useSnap, useStore } from "../state/store";
 import { Player, Thumb } from "../components/media";
 import { Popover } from "../components/Popover";
@@ -19,9 +19,10 @@ export function ShelfButton({ row }: { row: ProdNode }) {
   if (!items.length) return null;
   return (
     <Popover align="right" className="shelf" button={({ open, toggle }) => (
-      <button className={cx("shelf__btn", open && "is-on")} title={`Vídeos editados de ${codeOf(snap.production, row)}: los originales que se cortaron en planos`} onClick={toggle}>
-        <IconMovie size={14} stroke={1.7} /> Vídeos editados <span className="shelf__count">{items.length}</span>
-      </button>
+      // Same look as the row's «Ver todos / En fila».
+      <Button size="sm" variant="ghost" className={cx(open && "is-on")} title={`Vídeos editados de ${codeOf(snap.production, row)}: los originales que se cortaron en planos`} onClick={toggle}>
+        <IconMovie size={14} /> Vídeos editados <span className="shelf__count">{items.length}</span>
+      </Button>
     )}>
       <ShelfList row={row} items={items} />
     </Popover>

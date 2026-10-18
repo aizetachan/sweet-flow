@@ -12,19 +12,8 @@
 import type { GenerationPoll, GenerationRequest, Generator } from "../../data/generation";
 import { isConnected } from "./auth";
 import { callTool, fileUrl } from "./mcp";
+import { nearest, specOf } from "../../data/models";
 
-const IMAGE_MODELS: Record<string, string> = {
-  "Nano Banana Pro": "imagen-nano-banana-2",
-  "Recraft V4.1": "recraft-v4-1",
-  "Seedream 5 Pro": "seedream-5-pro",
-};
-
-/** Video models and what each needs (from video_models_list, 16 oct 2026). */
-const VIDEO_MODELS: Record<string, { slug: string; resolution: string; durations: number[] }> = {
-  "Seedance 2.5": { slug: "bytedance-seedance-pro-2.5", resolution: "720p", durations: range(4, 30) },
-  "Kling 2.5": { slug: "kling-25", resolution: "1080p", durations: [5, 10] },
-  "Seedance 2.0 Fast": { slug: "bytedance-seedance-fast-2.0", resolution: "720p", durations: range(4, 15) },
-};
 
 const DONE = new Set(["completed", "complete", "done", "success", "succeeded", "finished", "ready"]);
 const FAILED = new Set(["failed", "error", "errored", "cancelled", "canceled", "rejected"]);
@@ -100,23 +89,55 @@ export class MagnificGenerator implements Generator {
     return id;
   }
 
+  /** The tool and its arguments, with only what the model allows (data/models.ts). */
   private call(req: GenerationRequest, folder: string | undefined): { tool: string; args: Record<string, unknown> } {
     const at = folder ? { folderReference: folder } : {};
+    const m = specOf(req.kind === "audio" ? "audio" : req.kind === "video" ? "video" : "image", req.model);
+    const ratio = req.aspectRatio && m.aspectRatios.includes(req.aspectRatio) ? req.aspectRatio : m.aspectRatios[0];
+    const resolution = m.resolutions ? (req.resolution && m.resolutions.includes(req.resolution) ? req.resolution : m.resolutions[0]) : undefined;
+    const duration = m.durations ? nearest(m.durations, req.durationSec ?? m.durations[0]!) : undefined;
+    const refs = m.references ? (req.references ?? []).filter((r) => m.references!.types.includes(r.type)).slice(0, m.references.max) : [];
+
+    if (req.kind === "audio") {
+      if (m.audio === "sfx") return { tool: "audio_sfx_generate", args: { prompt: req.prompt, durationSeconds: duration ?? 5, ...(m.loop && req.loop ? { loop: true } : {}), ...at } };
+      return {
+        tool: "audio_music_generate",
+        args: { prompt: req.prompt, model: m.slug, ...(m.durations && m.durations.length > 1 ? { durationSeconds: duration } : {}), ...(m.instrumental && req.instrumental ? { instrumental: true } : {}), ...at },
+      };
+    }
+
     if (req.kind === "video") {
-      const m = VIDEO_MODELS[req.model];
-      const duration = m ? nearest(m.durations, req.durationSec ?? 5) : req.durationSec;
+      // Start/end frames and references exclude each other.
+      const frames = !refs.length && m.startFrame && req.startFrom
+        ? { keyframes: { start: { type: "image", url: req.startFrom }, ...(m.endFrame && req.endOn ? { end: { type: "image", url: req.endOn } } : {}) } }
+        : {};
       return {
         tool: "video_generate",
         args: {
           prompt: req.prompt,
-          aspectRatio: "16:9",
-          ...(m ? { slug: m.slug, resolution: m.resolution, duration } : duration ? { duration } : {}),
-          ...(req.startFrom ? { keyframes: { start: { type: "image", url: req.startFrom } } } : {}),
+          aspectRatio: ratio,
+          ...(m.slug ? { slug: m.slug, duration } : duration ? { duration } : {}),
+          ...(resolution ? { resolution } : {}),
+          ...(m.sound ? { withSoundEffects: !!req.sound } : {}),
+          ...frames,
+          ...(refs.length ? { references: refs.map((r) => ({ type: r.type, url: r.id })) } : {}),
           ...at,
         },
       };
     }
-    return { tool: "images_generate", args: { prompt: req.prompt, mode: IMAGE_MODELS[req.model] ?? "auto", aspectRatio: "16:9", count: 1, ...at } };
+
+    return {
+      tool: "images_generate",
+      args: {
+        prompt: req.prompt,
+        mode: m.slug ?? "auto",
+        aspectRatio: ratio,
+        count: 1,
+        ...(resolution ? { resolution } : {}),
+        ...(refs.length ? { references: refs.map((r) => ({ type: r.type, identifier: r.id })) } : {}),
+        ...at,
+      },
+    };
   }
 
   /** Reference of the Magnific folder for `path`, creating what is missing. */
@@ -157,10 +178,6 @@ export class MagnificGenerator implements Generator {
 
 // ---------- reading Magnific's answers ----------
 
-function range(a: number, b: number): number[] {
-  return Array.from({ length: b - a + 1 }, (_, i) => a + i);
-}
-const nearest = (list: number[], v: number) => list.reduce((best, x) => (Math.abs(x - v) < Math.abs(best - v) ? x : best), list[0]!);
 const str = (v: unknown) => (typeof v === "string" && v ? v : undefined);
 const num = (v: unknown) => (typeof v === "number" ? v : typeof v === "string" && v.trim() && !isNaN(+v) ? +v : undefined);
 

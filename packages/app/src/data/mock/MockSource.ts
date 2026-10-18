@@ -261,6 +261,11 @@ export class MockSource implements DataSource {
   // ---------- production ----------
 
   generate(a: GenerateArgs): void {
+    // One version per result asked for.
+    for (let i = 0; i < Math.max(1, Math.min(8, a.count ?? 1)); i++) this.generateOne(a);
+  }
+
+  private generateOne(a: GenerateArgs): void {
     const version = Math.max(0, ...this.s.media.filter((m) => m.nodeId === a.nodeId && m.kind === a.kind).map((m) => m.version)) + 1;
     const m: Media = {
       id: newId("m"),
@@ -271,7 +276,7 @@ export class MockSource implements DataSource {
       origin: "generated",
       status: "queued",
       progress: 3,
-      durationSec: a.kind === "video" ? a.durationSec ?? 5 : undefined,
+      durationSec: a.kind !== "image" ? a.durationSec ?? 5 : undefined,
       archived: false,
       generation: { provider: "magnific", model: a.model, prompt: a.prompt, sourceMediaId: a.sourceMediaId, launchedBy: this.s.me.uid, credits: a.kind === "video" ? 45 : 8 },
       createdBy: this.s.me.uid,
@@ -282,7 +287,7 @@ export class MockSource implements DataSource {
       media: [...this.s.media, m],
       me,
       members: this.s.members.map((x) => (x.uid === me.uid ? me : x)),
-      activity: [this.log("generate", `lanzó ${a.kind === "video" ? `un vídeo de ${a.durationSec}s` : "una imagen"}`, a.nodeId), ...this.s.activity],
+      activity: [this.log("generate", `lanzó ${a.kind === "video" ? `un vídeo de ${a.durationSec}s` : a.kind === "audio" ? `un audio de ${a.durationSec}s` : "una imagen"}`, a.nodeId), ...this.s.activity],
     });
     this.runJob(m.id, a.kind === "video" ? 7000 : 3500);
   }

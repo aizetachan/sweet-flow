@@ -6,6 +6,7 @@
  */
 
 import type { MediaKind } from "@sweetflow/domain";
+import type { RefType } from "./models";
 
 export interface GenerationRequest {
   kind: MediaKind;
@@ -15,6 +16,15 @@ export interface GenerationRequest {
   durationSec?: number;
   /** Provider id of an image to start the video from. */
   startFrom?: string;
+  /** Provider id of an image to end it on. */
+  endOn?: string;
+  /** Provider ids of what guides it. */
+  references?: Array<{ type: RefType; id: string }>;
+  aspectRatio?: string;
+  resolution?: string;
+  sound?: boolean;
+  instrumental?: boolean;
+  loop?: boolean;
   /**
    * Where to keep it at the provider, mirroring the team folder down to the
    * node: dashboard folders, production, SQ, SC, SH (decided 16 oct 2026).
@@ -43,8 +53,3 @@ export interface Generator {
   viewUrl(url: string): string;
 }
 
-/** Models offered in the generate box, per kind. The provider maps them to its own. */
-export const MODELS: Record<"image" | "video", string[]> = {
-  image: ["Nano Banana Pro", "Recraft V4.1", "Seedream 5 Pro", "Auto (Magnific elige)"],
-  video: ["Seedance 2.5", "Kling 2.5", "Seedance 2.0 Fast", "Auto (Magnific elige)"],
-};

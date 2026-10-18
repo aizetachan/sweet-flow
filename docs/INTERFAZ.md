@@ -160,6 +160,9 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
   del archivo la primera vez que se ve y queda guardada.
 - **Renombrar o mover** una secuencia, escena o plano mueve sus carpetas en el
   disco, pero las portadas que se ven no cambian ni se quedan en blanco.
+- **Cabecera de escena:** a la izquierda, código, título, estado, planos y
+  duración, y la papelera (solo al pasar el ratón). A la derecha, «Ver todos /
+  En fila» y «Vídeos editados», con el mismo estilo.
 - **Ver todos / En fila:** botón en la cabecera de cada escena. Por defecto la
   escena es una fila con scroll horizontal; «Ver todos» la adapta al ancho y
   baja de línea hasta que se ven todas sus tarjetas. Las columnas se calculan
@@ -203,6 +206,35 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
   se trabaja (Producir · Cortar y repartir · Revisión · Actividad).
 - Volver al dashboard desde la barra superior (las migas de pan sustituyen al
   selector de producción actual).
+
+### 2.0 Generar (pestaña Producir)
+
+Como el generador de Magnific, pero con el visor y las versiones debajo (o a la
+derecha en la ventana aparte). De arriba abajo:
+- **Imagen · Vídeo · Audio.**
+- **Modelo.** Cada uno ofrece **solo lo que permite** (catálogo de Magnific del
+  18 oct 2026, en `data/models.ts`):
+  - Imagen: Nano Banana Pro, Seedream 5 Pro, Recraft V4.1, Nano Banana 2 Lite,
+    GPT 2, Auto.
+  - Vídeo: Auto, Seedance 2.5, Seedance 2.0, Seedance 2.0 Fast, Kling 2.5,
+    MiniMax H3 Max y H3 Max Turbo.
+  - Audio: ElevenLabs Music v2 y v1, Google Lyria 3 Pro y 3, y efectos de
+    sonido (ElevenLabs).
+- **Referencias** (si el modelo las admite), con el contador «n/máx»:
+  - Imagen: **Estilo** y **Añadir** (imágenes). Recraft solo admite estilo.
+  - Vídeo: **Imagen inicial**, **Imagen final** (con inicial) y **Añadir**
+    (imágenes, vídeos, audio). Los fotogramas y las referencias no se
+    combinan: al usar uno, el otro se desactiva con el motivo.
+  - Se eligen de lo que ya hay en la producción (primero este plano, luego su
+    escena, luego el resto). Solo lo generado con Magnific se puede mandar.
+- **Prompt.** Vacío usa el de la secuencia, escena y plano.
+- **Ajustes del modelo**, en pastillas: número de versiones (−/+), duración,
+  proporción, resolución, sonido ON/OFF (vídeos con sonido), instrumental
+  (música ElevenLabs) o bucle (efectos). Cambiar de modelo conserva lo que el
+  nuevo permite y ajusta lo demás. La duración de vídeo no pasa del máximo del
+  nivel (Ajustes › Niveles; en los planos, 15 s por defecto).
+- **Generar** con el coste real en créditos (`simulate_cost`), por el número
+  de versiones. Cada versión es un v00N del plano.
 
 ### 2.1 Reordenar arrastrando
 

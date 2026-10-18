@@ -163,6 +163,12 @@ Anotadas el 15 oct 2026, pendientes de que el usuario elija orden:
 - **Lotes y créditos:** estimación antes de lanzar y registro real por usuario, producción y nodo.
 - **Referencias del desglose:** reparto, props y localizaciones en el prompt y como referencias de biblioteca.
 
+### Generar: siguientes pasos
+
+- Leer el catálogo de modelos de Magnific en vivo (ahora es una copia del 18 oct 2026 en `data/models.ts`).
+- Voz (TTS) con elección de voz; referencia de vídeo para la música; movimiento de cámara y multiplano en Seedance.
+- Subir a Magnific una imagen local para usarla como referencia.
+
 ### Menú contextual: más adelante
 
 - **Compartir el enlace** de un plano o un grupo (abre la producción en ese

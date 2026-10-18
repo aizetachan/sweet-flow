@@ -194,12 +194,13 @@ function Lane({ row }: { row: ProdNode }) {
         <Pill color={st.color}>{st.name}</Pill>
         <HeadInfo shots={all.length} done={all.filter((u) => statusOf(snap, u).category === "done").length} seconds={durationOf(snap, row)} unit={unitLevel.name} />
         {viewers.length ? <AvatarStack names={viewers} size={18} /> : null}
+        {/* Trash right after the info, shown on hover; the row's own buttons stay on the right. */}
+        <IconButton size="sm" className="head__del" label={`Mover ${codeOf(p, row)} y sus ${unitLevel.name.toLowerCase()}s a la papelera`} onClick={() => trashNodes([row.id])}><IconTrash size={14} /></IconButton>
         <div className="lane__spacer" />
         <Button size="sm" variant="ghost" className={cx(wrap && "is-on")} title={wrap ? "Volver a una sola fila con scroll" : "Ver todos los planos: la fila se adapta al ancho y baja de línea"} onClick={() => setWrap(!wrap)}>
           {wrap ? <IconLayoutList size={14} /> : <IconLayoutGrid size={14} />} {wrap ? "En fila" : "Ver todos"}
         </Button>
         <ShelfButton row={row} />
-        <IconButton size="sm" className="head__del" label={`Mover ${codeOf(p, row)} y sus ${unitLevel.name.toLowerCase()}s a la papelera`} onClick={() => trashNodes([row.id])}><IconTrash size={14} /></IconButton>
       </div>
       {open && !active ? <GroupBar group={open} row={row} count={units.filter((u) => u.groupId === open.id).length} onClose={() => setOpenId(null)} /> : null}
       {/* Wrapped only when they don't all fit in one row: then the columns fill the width exactly. */}
@@ -411,7 +412,7 @@ function GroupMenu({ at, group, shots, onRename, onOpen, onClose }: { at: MenuAt
 function CardLength({ cover }: { cover: ReturnType<typeof coverOf> }) {
   const clip = useDuration(cover.media);
   const media = cover.media;
-  const label = !media ? "—" : media.kind !== "video" ? "N/A" : cover.take ? `${takeDuration(cover.take)}s` : clip ? `${clip}s` : "—";
+  const label = !media ? "—" : media.kind === "image" ? "N/A" : cover.take ? `${takeDuration(cover.take)}s` : clip || media.durationSec ? `${clip || media.durationSec}s` : "—";
   const title = !media ? "Aún no tiene vídeo" : media.kind !== "video" ? "Es una imagen: no aplica" : "Duración del vídeo";
   return <span className="card__len" title={title}>{label}</span>;
 }

@@ -7,6 +7,7 @@
  * the same contract, so screens don't change when the backend lands.
  */
 
+import type { RefType } from "./models";
 import type {
   Activity,
   Asset,
@@ -79,9 +80,25 @@ export interface GenerateArgs {
   nodeId: Id;
   kind: MediaKind;
   prompt: string;
+  /** Model name as in `data/models.ts`. */
   model: string;
   durationSec?: number;
+  /** Start frame (video). */
   sourceMediaId?: Id;
+  /** End frame (video, with a start frame). */
+  endMediaId?: Id;
+  /** Media of the production guiding it (style, images, videos, audio). */
+  references?: Array<{ type: RefType; mediaId: Id }>;
+  /** How many results (one version each). */
+  count?: number;
+  aspectRatio?: string;
+  resolution?: string;
+  /** Generated sound on a video. */
+  sound?: boolean;
+  /** Music without vocals. */
+  instrumental?: boolean;
+  /** A sound effect that loops. */
+  loop?: boolean;
 }
 
 /** Where a cut segment goes: an existing node, a new child, or stays here. */
