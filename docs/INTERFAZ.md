@@ -222,13 +222,15 @@ derecha en la ventana aparte). De arriba abajo:
     sonido (ElevenLabs).
 - **Referencias** (si el modelo las admite), con el contador «n/máx»:
   - Imagen: **Estilo** y **Añadir** (imágenes). Recraft solo admite estilo.
-  - Vídeo: **Imagen inicial**, **Imagen final** (con inicial) y **Añadir**
-    (imágenes, vídeos, audio). Los fotogramas y las referencias no se
+  - Vídeo: **Imagen inicial**, **Imagen final** (con inicial) y, debajo, una
+    fila ancha **Añadir media** con los iconos de lo que admite el modelo
+    (imagen, vídeo, audio). Solo en los modelos con referencias (Seedance
+    2.5, 2.0 y 2.0 Fast, MiniMax H3 Max); Kling, H3 Max Turbo y Auto no. Los fotogramas y las referencias no se
     combinan: al usar uno, el otro se desactiva con el motivo.
   - Se eligen de lo que ya hay en la producción (primero este plano, luego su
     escena, luego el resto). Solo lo generado con Magnific se puede mandar.
 - **Prompt.** Vacío usa el de la secuencia, escena y plano.
-- **Ajustes del modelo**, en pastillas: número de versiones (−/+), duración,
+- **Ajustes del modelo**, en pastillas sin flecha (al pulsarlas se abre la lista): número de versiones (−/+), duración,
   proporción, resolución, sonido ON/OFF (vídeos con sonido), instrumental
   (música ElevenLabs) o bucle (efectos). Cambiar de modelo conserva lo que el
   nuevo permite y ajusta lo demás. La duración de vídeo no pasa del máximo del

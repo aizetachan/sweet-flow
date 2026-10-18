@@ -214,6 +214,11 @@
 .gen__ref--on { border-style: solid; justify-content: flex-end; padding: 0; }
 .gen__ref--on .thumb { position: absolute; inset: 0; aspect-ratio: auto; height: 100%; border-radius: 0; }
 .gen__ref--on .gen__ref-label { position: relative; width: 100%; padding: 2px 4px; background: #000a; color: #fff; }
+.gen__ref--wide { width: 100%; height: 56px; flex-direction: row; justify-content: flex-start; gap: 12px; padding: 0 12px; font-size: 12px; }
+.gen__picker:has(.gen__ref--wide), .pop:has(> .gen__ref--wide) { display: flex; width: 100%; }
+.gen__media-icons { display: inline-flex; }
+.gen__media-icons span { width: 28px; height: 28px; display: grid; place-items: center; margin-left: -6px; border-radius: 50%; border: 1px solid var(--line-2); background: var(--bg-2); color: var(--fg-2); }
+.gen__media-icons span:first-child { margin-left: 0; }
 .gen__ref-x { position: absolute; top: 3px; right: 3px; width: 18px; height: 18px; display: grid; place-items: center; border-radius: 50%; background: #000b; color: #fff; }
 .gen__picker { width: 300px; }
 .gen__pick-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; max-height: 280px; overflow: auto; padding: 2px; }
@@ -221,7 +226,9 @@
 .gen__pick-empty { padding: 4px 8px 8px; margin: 0; }
 .gen__opts { display: flex; flex-wrap: wrap; gap: 6px; }
 .gen__pill { display: inline-flex; align-items: center; gap: 5px; height: 30px; padding: 0 9px; border-radius: var(--r-md); background: var(--bg-3); color: var(--fg-1); font-size: 12px; border: 0; }
-.gen__pill select { background: none; border: 0; color: inherit; font: inherit; padding: 0; outline: none; cursor: pointer; }
+/* No chevron: the pill itself opens the list, and it saves width. */
+.gen__pill select { appearance: none; -webkit-appearance: none; background: none; border: 0; color: inherit; font: inherit; padding: 0; outline: none; cursor: pointer; }
+.gen__pill:has(select) { cursor: pointer; }
 .gen__pill--on { color: var(--fg-0); background: var(--bg-4); }
 .gen__count button { width: 18px; padding: 0; border: 0; background: none; color: var(--fg-2); font-size: 14px; }
 .gen__count button:hover:not(:disabled) { color: var(--fg-0); }

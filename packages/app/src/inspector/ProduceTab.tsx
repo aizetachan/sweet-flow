@@ -263,12 +263,24 @@ function GenerateBox({ node }: { node: ProdNode }) {
               <RefSlot key={r.mediaId} label={REF_LABEL[r.type]} accept={[r.type === "audio" ? "audio" : r.type === "video" ? "video" : "image"]} node={node} value={r.mediaId}
                 onPick={() => undefined} onClear={() => setRefs(refs.filter((x) => x !== r))} />
             ))}
-            {refTypes.some((t) => t !== "style") && refs.length < (spec.references?.max ?? 0) ? (
+            {kind !== "video" && refTypes.some((t) => t !== "style") && refs.length < (spec.references?.max ?? 0) ? (
               <RefSlot label="Añadir" icon={<IconPlus size={16} />} node={node} value={null} disabled={usesFrames} disabledHint="No se combina con imagen inicial"
                 accept={refTypes.filter((t) => t !== "style").map((t) => (t === "audio" ? "audio" : t === "video" ? "video" : "image"))}
                 onPick={(id, k) => setRefs([...refs, { type: k === "video" ? "video" : k === "audio" ? "audio" : "image", mediaId: id }])} onClear={() => undefined} />
             ) : null}
           </div>
+          {/* Video: like Magnific, «Añadir media» is its own wide row under the frames, with what the model takes. */}
+          {kind === "video" && refTypes.length > 0 && refs.length < (spec.references?.max ?? 0) ? (
+            <RefSlot wide label="Añadir media" node={node} value={null} disabled={usesFrames} disabledHint="No se combina con imagen inicial ni final"
+              icon={<span className="gen__media-icons">
+                {refTypes.includes("image") ? <span><IconPhoto size={14} /></span> : null}
+                {refTypes.includes("video") ? <span><IconVideo size={14} /></span> : null}
+                {refTypes.includes("audio") ? <span><IconMusic size={14} /></span> : null}
+                <span><IconPlus size={14} /></span>
+              </span>}
+              accept={refTypes.filter((t) => t !== "style").map((t) => (t === "audio" ? "audio" : t === "video" ? "video" : "image"))}
+              onPick={(id, k) => setRefs([...refs, { type: k === "video" ? "video" : k === "audio" ? "audio" : "image", mediaId: id }])} onClear={() => undefined} />
+          ) : null}
         </>
       ) : null}
 
@@ -341,7 +353,9 @@ type Pickable = "image" | "video" | "audio";
  * Picks from what the production has: this shot, its scene, then the rest.
  * Only media the provider made can be sent to it.
  */
-function RefSlot({ label, icon, accept, node, value, disabled, disabledHint, onPick, onClear }: {
+function RefSlot({ label, icon, accept, node, value, disabled, disabledHint, onPick, onClear, wide }: {
+  /** The wide «Añadir media» row of videos. */
+  wide?: boolean;
   label: string;
   icon?: ReactNode;
   accept: Pickable[];
@@ -371,7 +385,7 @@ function RefSlot({ label, icon, accept, node, value, disabled, disabledHint, onP
     .slice(0, 48);
   return (
     <Popover className="gen__picker" button={({ open, toggle }) => (
-      <button className={cx("gen__ref", open && "is-on")} disabled={disabled} title={disabled ? disabledHint : `${label}: elegir de la producción`} onClick={toggle}>
+      <button className={cx("gen__ref", wide && "gen__ref--wide", open && "is-on")} disabled={disabled} title={disabled ? disabledHint : `${label}: elegir de la producción`} onClick={toggle}>
         {icon ?? <IconPlus size={16} />}
         <span className="gen__ref-label">{label}</span>
       </button>
