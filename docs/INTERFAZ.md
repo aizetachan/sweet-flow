@@ -120,6 +120,13 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
   el título y un contador con el número de planos.
 - **Secciones** (Producción, Biblioteca, Equipo, Ajustes): barra **flotante
   centrada abajo**, para que el tablero tenga todo el ancho.
+- **Tarjeta de plano:** portada; código y estado; debajo, el título y, a la
+  derecha (bajo el estado), la **duración del vídeo** (la del tramo si es un
+  plano cortado; «N/A» si es una imagen; «—» si aún no tiene nada). No muestra
+  el número de versiones (hay un vídeo por plano) ni franja de color arriba
+  (quitada el 18 oct 2026; se ajustará de otra forma). Abajo, comentarios,
+  ventana aparte, quién está y responsables. El borde de la seleccionada va
+  por dentro, para que no se corte al arrastrarla.
 - **Previsualizar vídeo:** en las tarjetas de plano con vídeo (y en las
   portadas pequeñas de un grupo), el ancho de la portada es la línea de tiempo:
   al mover el ratón a izquierda o derecha se avanza o retrocede por el vídeo,

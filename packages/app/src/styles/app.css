@@ -111,18 +111,21 @@
 .board__body.cards-l { --card: 536px; }
 .card { position: relative; flex: none; width: var(--card); display: flex; flex-direction: column; gap: 7px; padding: 7px; border-radius: var(--r-lg); border: 1px solid var(--line-0); background: var(--bg-2); cursor: pointer; transition: border-color .12s, transform .12s; }
 .card:hover { border-color: var(--line-2); }
-.card--on { border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary); }
+/* Inside the card, so neither the row nor the drag image cuts it */
+.card--on { border-color: var(--primary); box-shadow: inset 0 0 0 1px var(--primary); }
 .card--watched { box-shadow: 0 0 0 1px #3cd39f66; }
 /* Same size as the cards next to it; just a "+". */
 .card--add { color: var(--fg-4); border-style: dashed; width: var(--card); background: none; text-align: left; }
 .card__ghost { display: flex; flex-direction: column; gap: 7px; visibility: hidden; }
 .card__plus { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
 .card--add:hover { color: var(--fg-1); }
-.card__swatch { position: absolute; left: 7px; right: 7px; top: 7px; height: 3px; border-radius: 3px 3px 0 0; opacity: .85; }
 .card__meta { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
 .card__code { font-weight: 700; font-size: 12px; font-variant-numeric: tabular-nums; }
 .card__kind { display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; color: var(--fg-3); }
 .card__title { color: var(--fg-2); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: -3px; }
+.card__row { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.card__row .card__title { flex: 1; min-width: 0; }
+.card__len { flex: none; margin-top: -3px; font-size: 11px; color: var(--fg-3); font-variant-numeric: tabular-nums; }
 .card__foot { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--fg-3); min-height: 16px; }
 .card__comments { display: inline-flex; align-items: center; gap: 3px; color: var(--warn); }
 .card__spacer { flex: 1; }

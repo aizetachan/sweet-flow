@@ -9,14 +9,15 @@ import {
   levelOf,
   byPosition,
   sortValue,
+  takeDuration,
   type Id,
   type ProdNode,
   type ShotGroup,
 } from "@sweetflow/domain";
 import { AvatarStack, Button, cx, IconButton, Pill, Segmented } from "@sweetflow/ui";
 import { useSnap, useStore, type CardSize } from "../state/store";
-import { colorSlot, countsOf, coverOf, durationOf, filtersActive, matches, memberName, presenceAt, progressOf, statusOf } from "../state/selectors";
-import { Thumb } from "../components/media";
+import { countsOf, coverOf, durationOf, filtersActive, matches, memberName, presenceAt, progressOf, statusOf } from "../state/selectors";
+import { Thumb, useDuration } from "../components/media";
 import { Popover } from "../components/Popover";
 import { StatusPicker } from "../components/StatusPicker";
 import { nodeDragProps, useEndDrop, useGroupDrop, useNodeDrop, useUngroupDrop } from "./dnd";
@@ -246,16 +247,16 @@ function UnitCard({ node }: { node: ProdNode }) {
       onClick={(e) => (e.metaKey || e.ctrlKey || e.shiftKey ? toggleMulti(node.id) : select(node.id))}
     >
       <Thumb {...cover} preview />
-      <span className={`card__swatch seg-c${colorSlot(snap, node.id)}`} />
       <div className="card__meta">
         <span className="card__code">{codeOf(p, node)}</span>
         <Pill color={st.color}>{st.name}</Pill>
       </div>
-      <InlineEdit className="card__title" value={node.title} placeholder="Sin título" label="Doble clic para escribir el título"
-        onEditing={setEditing} onSave={(title) => source.updateNode(node.id, { title })} />
+      <div className="card__row">
+        <InlineEdit className="card__title" value={node.title} placeholder="Sin título" label="Doble clic para escribir el título"
+          onEditing={setEditing} onSave={(title) => source.updateNode(node.id, { title })} />
+        <CardLength cover={cover} />
+      </div>
       <div className="card__foot">
-        <span>{durationOf(snap, node).toFixed(1)}s</span>
-        <span title="Versiones generadas en este plano">{c.media}v</span>
         {c.comments ? <span className="card__comments"><IconMessageCircle size={12} /> {c.comments}</span> : null}
         <span className="card__spacer" />
         {apart ? (
@@ -272,6 +273,15 @@ function UnitCard({ node }: { node: ProdNode }) {
 
 /** Most mini covers a group card shows; the last one says how many more there are. */
 const GROUP_TILES = 4;
+
+/** The length of a shot's video, under its status: its stretch, or the whole clip; N/A for an image. */
+function CardLength({ cover }: { cover: ReturnType<typeof coverOf> }) {
+  const clip = useDuration(cover.media);
+  const media = cover.media;
+  const label = !media ? "—" : media.kind !== "video" ? "N/A" : cover.take ? `${takeDuration(cover.take)}s` : clip ? `${clip}s` : "—";
+  const title = !media ? "Aún no tiene vídeo" : media.kind !== "video" ? "Es una imagen: no aplica" : "Duración del vídeo";
+  return <span className="card__len" title={title}>{label}</span>;
+}
 
 /**
  * A group of shots in the row: a normal card with the covers of its shots
