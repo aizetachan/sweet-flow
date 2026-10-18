@@ -139,17 +139,17 @@
 .card::after { content: ""; position: absolute; inset: -1px; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .18s; }
 .card:hover::after {
   opacity: 1;
-  border: 1.5px solid color-mix(in srgb, var(--primary) 45%, transparent);
-  filter: blur(1.2px);
-  box-shadow: 0 0 8px 1px color-mix(in srgb, var(--primary) 22%, transparent), inset 0 0 6px color-mix(in srgb, var(--primary) 12%, transparent);
+  border: 1px solid rgb(var(--brand-300-rgb) / .45);
+  filter: blur(.4px);
+  box-shadow: 0 0 6px rgb(var(--brand-500-rgb) / .28), inset 0 0 4px rgb(var(--brand-500-rgb) / .14);
 }
 /* Selected: a neon tube in the reference's blues — a thin edge as fine as
    the hover's, lit (light blue, never white), glowing electric blue around it
    and a little into the card, which takes a faint blue tint. */
 .card--on {
-  --neon-edge: #6cb6ff;
-  --neon: 47 125 255;      /* #2f7dff */
-  --neon-deep: 22 72 216;  /* #1648d8 */
+  --neon-edge: var(--brand-300);
+  --neon: var(--brand-500-rgb);
+  --neon-deep: var(--brand-700-rgb);
   border-color: transparent;
   background: linear-gradient(rgb(var(--neon-deep) / .07), rgb(var(--neon-deep) / .07)), var(--bg-2);
   box-shadow:
@@ -598,7 +598,7 @@ button.tree__hint { padding: 0 14px 8px; }
 .dcard.is-picked, .drow.is-picked { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 10%, var(--bg-2)); }
 .dcard.is-drop, .drow.is-drop { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-soft); transform: scale(1.02); }
 .dcard__thumb, .dcard__folder { aspect-ratio: 16 / 9; border-radius: calc(var(--r-lg) - 1px) calc(var(--r-lg) - 1px) 0 0; display: grid; place-items: center; position: relative; overflow: hidden; }
-.dcard__thumb { background: radial-gradient(120% 140% at 0% 0%, #ff4fa833, transparent 55%), radial-gradient(120% 140% at 100% 100%, #5b72f533, transparent 55%), var(--bg-3); }
+.dcard__thumb { background: radial-gradient(120% 140% at 0% 0%, #ff4fa833, transparent 55%), radial-gradient(120% 140% at 100% 100%, rgb(var(--brand-500-rgb) / .2), transparent 55%), var(--bg-3); }
 .dcard__thumb img { width: 100%; height: 100%; object-fit: cover; }
 .dcard__initials { font-size: 30px; font-weight: 700; letter-spacing: -.03em; color: var(--fg-1); opacity: .85; }
 .dcard__format { position: absolute; left: 8px; bottom: 8px; padding: 2px 7px; border-radius: 99px; font-size: 11px; background: #000a; color: var(--fg-1); }
@@ -751,7 +751,7 @@ button.tree__hint { padding: 0 14px 8px; }
 .apart:hover { background: var(--primary); }
 
 /* Popped window: glow when the main window points at it. */
-.flashframe { position: fixed; inset: 0; z-index: 200; pointer-events: none; border-radius: 6px; box-shadow: inset 0 0 0 2px var(--primary), inset 0 0 60px 6px #5b72f5aa; animation: flashframe 1.8s ease-out forwards; }
+.flashframe { position: fixed; inset: 0; z-index: 200; pointer-events: none; border-radius: 6px; box-shadow: inset 0 0 0 2px var(--primary), inset 0 0 60px 6px rgb(var(--brand-500-rgb) / .66); animation: flashframe 1.8s ease-out forwards; }
 @keyframes flashframe { 0%, 35% { opacity: 1; } 100% { opacity: 0; } }
 
 /* ---------- production: logo + avatar in the top bar, floating section dock ---------- */

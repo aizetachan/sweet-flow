@@ -218,8 +218,14 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
   de las escenas) o la despliega. No pliega al pulsar sus
   botones, el estado o al hacer doble clic en el título. Se recuerda por
   producción en este navegador.
+- **Color de marca:** la paleta azul es el color corporativo: azul claro
+  `#6cb6ff` (bordes iluminados), azul `#2f7dff` (botones principales,
+  selección, foco, avisos) y azul profundo `#1648d8` (resplandores). Viven en el
+  kit como `--brand-300/500/700`; `--primary` es el azul de marca. El rosa de
+  «Generar» (`--accent`) se mantiene para crear.
 - **Tarjeta con el ratón encima y seleccionada:** el borde es una luz de neón
-  suave (difuminada, con un halo corto), no una línea nítida. Seleccionada,
+  suave en los azules de marca (difuminada, con un halo corto), no una línea
+  nítida. Seleccionada,
   el borde es un **neón azul**: tan fino como el del ratón encima, pero
   iluminado (azul claro #6cb6ff, nunca blanco), con un resplandor azul
   eléctrico (#2f7dff, #1648d8) fuera y un poco dentro, y la tarjeta con un

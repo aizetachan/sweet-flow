@@ -23,8 +23,17 @@
 
   --accent: #ff4fa8;        /* create / generate */
   --accent-soft: #ff4fa81f;
-  --primary: #5b72f5;       /* selection / CTAs */
-  --primary-soft: #5b72f526;
+  /* Brand blues (the corporate colour): light for lit edges, main for buttons
+     and selection, deep for glows. As RGB too, for glows with alpha. */
+  --brand-300: #6cb6ff;
+  --brand-500: #2f7dff;
+  --brand-700: #1648d8;
+  --brand-300-rgb: 108 182 255;
+  --brand-500-rgb: 47 125 255;
+  --brand-700-rgb: 22 72 216;
+  --primary: var(--brand-500);  /* selection / CTAs */
+  --primary-hover: #4a8fff;
+  --primary-soft: rgb(47 125 255 / .15);
   --ok: #3cd39f;
   --warn: #e6b85c;
   --bad: #ec6a6a;
@@ -70,7 +79,7 @@ button { cursor: pointer; }
 .sf-btn--ghost { background: transparent; border-color: transparent; color: var(--fg-2); }
 .sf-btn--ghost:hover:not(:disabled) { background: var(--ghost); color: var(--fg-0); }
 .sf-btn--primary { background: var(--primary); border-color: var(--primary); }
-.sf-btn--primary:hover:not(:disabled) { background: #6d82f7; }
+.sf-btn--primary:hover:not(:disabled) { background: var(--primary-hover); border-color: var(--primary-hover); }
 .sf-btn--create { background: var(--accent); border-color: var(--accent); color: #140810; font-weight: 600; }
 .sf-btn--create:hover:not(:disabled) { background: #ff6db7; }
 .sf-btn--block { width: 100%; }
