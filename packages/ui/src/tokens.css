@@ -75,8 +75,11 @@ button { cursor: pointer; }
 
 .sf-icon-btn {
   display: inline-grid; place-items: center; width: 26px; height: 26px; flex: none;
+  /* No browser padding: in a 20px box it pushed the icon off centre. */
+  padding: 0; line-height: 0;
   border: 0; border-radius: var(--r-sm); background: transparent; color: var(--fg-3);
 }
+.sf-icon-btn > svg { display: block; }
 .sf-icon-btn:hover { background: var(--ghost-2); color: var(--fg-0); }
 .sf-icon-btn--on { background: var(--ghost-2); color: var(--fg-0); }
 .sf-icon-btn--sm { width: 20px; height: 20px; }

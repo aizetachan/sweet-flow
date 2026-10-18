@@ -321,7 +321,7 @@ function EntryItem(p: EntryItemProps) {
           <button className="menu__item" onClick={() => library.setPinned({ entryId: p.entry.id }, !p.pinned)}>
             {p.pinned ? <IconPinFilled size={14} /> : <IconPin size={14} />} <span className="menu__label">{p.pinned ? "Quitar de Fijados" : "Fijar en el menú lateral"}</span>
           </button>
-          <button className="menu__item" onClick={p.onStartRename}><IconPencil size={14} /> <span className="menu__label">Cambiar el nombre<span className="menu__hint">F2</span></span></button>
+          <button className="menu__item" onClick={p.onStartRename}><IconPencil size={14} /> <span className="menu__label">Renombrar</span></button>
           <div className="menu__sep" />
           <button className="menu__item menu__item--danger" onClick={() => library.trash(p.dragIds)}><IconTrash size={14} /> <span className="menu__label">Mover a la papelera</span></button>
         </>

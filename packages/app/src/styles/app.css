@@ -719,3 +719,7 @@ button.topbar__me { position: relative; padding: 0; border: 0; border-radius: 50
 .insp__stage .player img, .insp__stage .player video { object-fit: contain; }
 .insp__stage .versions { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
 .insp__stage-empty { display: grid; place-items: center; height: 100%; min-height: 240px; }
+
+/* Icon-only buttons: no browser padding, so the icon sits exactly in the middle. */
+.card__note, .version__act, .player__btn, .player__play, .gen__ref-x, .apart, .picker__clear, .filters__clear, .trow__caret { padding: 0; line-height: 0; }
+.card__note > svg, .version__act > svg, .player__btn > svg, .player__play > svg, .gen__ref-x > svg, .apart > svg { display: block; }
