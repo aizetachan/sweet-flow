@@ -218,6 +218,9 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
   de las escenas) o la despliega. No pliega al pulsar sus
   botones, el estado o al hacer doble clic en el título. Se recuerda por
   producción en este navegador.
+- **Tarjeta con el ratón encima y seleccionada:** el borde es una luz de neón
+  suave (difuminada, con un halo corto), no una línea nítida; seleccionada,
+  algo más marcada que con el ratón. La fila deja margen para que no se corte.
 - **Filas de escena:** se distinguen solo por el fondo (sin borde), algo más
   oscuro que las tarjetas.
 - **Ver todos / En fila:** botón en la cabecera de cada escena. Por defecto la

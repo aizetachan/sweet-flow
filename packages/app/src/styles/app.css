@@ -116,7 +116,8 @@
 .lane__title { color: var(--fg-1); font-weight: 500; }
 .lane__spacer { flex: 1; }
 /* Room around the cards: the horizontal scroller would clip the selection ring and drop markers. */
-.lane__cards { display: flex; gap: 10px; overflow-x: auto; padding: 4px 4px 6px; margin: -4px -4px -2px; }
+/* Room around the cards so the neon of a selected or hovered one is never cut (the margin gives it back). */
+.lane__cards { display: flex; gap: 10px; overflow-x: auto; padding: 14px 14px 16px; margin: -14px -14px -12px; }
 /* The row's scrollbar only shows while it is being scrolled. */
 .lane__cards { scrollbar-width: thin; scrollbar-color: transparent transparent; }
 .lane__cards.is-scrolling { scrollbar-color: var(--line-2) transparent; }
@@ -133,11 +134,24 @@
 .card { position: relative; flex: none; width: var(--card); display: flex; flex-direction: column; gap: 7px; padding: 7px; border-radius: var(--r-lg); border: 1px solid var(--line-0); background: var(--bg-2); cursor: pointer; transition: border-color .12s, transform .12s; }
 .card:hover { border-color: var(--line-2); }
 /* Inside the card, so neither the row nor the drag image cuts it */
-/* Selected: a soft neon — the line plus a faint glow around it. */
-.card--on {
-  border-color: color-mix(in srgb, var(--primary) 85%, white 15%);
-  box-shadow: inset 0 0 0 1px var(--primary), 0 0 0 1px color-mix(in srgb, var(--primary) 35%, transparent), 0 0 14px 2px color-mix(in srgb, var(--primary) 22%, transparent), 0 0 32px 6px color-mix(in srgb, var(--primary) 8%, transparent);
+/* Hover and selected: a neon tube, not a sharp line — a blurred light ring drawn
+   over the border (::after), with its halo; hover softer, selected brighter. */
+.card::after { content: ""; position: absolute; inset: -1px; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .18s; }
+.card:hover::after {
+  opacity: 1;
+  border: 1.5px solid color-mix(in srgb, var(--primary) 45%, transparent);
+  filter: blur(1.2px);
+  box-shadow: 0 0 8px 1px color-mix(in srgb, var(--primary) 22%, transparent), inset 0 0 6px color-mix(in srgb, var(--primary) 12%, transparent);
 }
+.card--on { border-color: transparent; }
+.card--on::after, .card--on:hover::after {
+  opacity: 1;
+  border: 1.5px solid color-mix(in srgb, var(--primary) 62%, transparent);
+  filter: blur(1.2px);
+  box-shadow: 0 0 9px 1px color-mix(in srgb, var(--primary) 30%, transparent), inset 0 0 7px color-mix(in srgb, var(--primary) 16%, transparent);
+}
+/* The "+" card keeps its dashed look. */
+.card--add::after { display: none; }
 .card--watched { box-shadow: 0 0 0 1px #3cd39f66; }
 /* Same size as the cards next to it; just a "+". */
 .card--add { color: var(--fg-4); border-style: dashed; width: var(--card); background: none; text-align: left; }
