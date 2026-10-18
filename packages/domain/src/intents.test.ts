@@ -22,6 +22,7 @@ import {
   planRenameGroup,
   planPlaceInRow,
   planExtractVersion,
+  planSplitTakeShot,
   planMoveNodes as moveNodes,
   planUnshelveNode,
   folderPath,
@@ -338,5 +339,22 @@ describe("structure intents", () => {
     const shot = s.nodes.find((n) => n.id === shotId)!;
     expect(s.takes.find((t) => t.id === shot.selectedTakeId)).toMatchObject({ mediaId: "mx", inSec: 0, outSec: 6 });
     expect(s.media.find((m) => m.id === "mx")?.nodeId).toBe(a);
+  });
+
+  it("cuts a cut shot again: it keeps the first stretch, the rest go right after it", () => {
+    const { run, state } = session();
+    const sq = run((s) => planCreateNode(s.production!, s.nodes, null, "q")).nodeId!;
+    const sc = run((s) => planCreateNode(s.production!, s.nodes, sq, "c")).nodeId!;
+    const a = run((s) => planCreateNode(s.production!, s.nodes, sc, "ta", "Faro")).nodeId!;
+    run((s) => planCreateNode(s.production!, s.nodes, sc, "tb", "Muelle"));
+    run(() => ({ events: [{ type: "media.added", media: { id: "mt", nodeId: a, kind: "video", origin: "generated", archived: false, createdBy: "u", createdAt: 1, version: 1, status: "ready", progress: 100, durationSec: 20 } }] }));
+    const cut = run((s) => planSplitShot(s.production!, s.nodes, { id: "mt", nodeId: a }, [{ inSec: 0, outSec: 10 }], id, "u", 2)) as Plan & { nodeIds: string[] };
+    const shot = cut.nodeIds[0]!;
+    const take = state().takes.find((t) => t.nodeId === shot)!;
+    run((s) => planSplitTakeShot(s.production!, splitTrash(s.nodes).live, shot, take, [{ inSec: 0, outSec: 4 }, { inSec: 6, outSec: 10 }], id, "u", 3));
+    const s = state();
+    const row = childrenOf(splitTrash(s.nodes).live, sc);
+    expect(row.map((n) => `${n.number}:${n.title}`)).toEqual(["10:Faro", "15:Faro", "20:Muelle"]);
+    expect(row.slice(0, 2).map((n) => { const t = s.takes.find((x) => x.id === n.selectedTakeId)!; return `${t.mediaId}@${t.inSec}-${t.outSec}`; })).toEqual(["mt@0-4", "mt@6-10"]);
   });
 });

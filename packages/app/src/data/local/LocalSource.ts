@@ -34,6 +34,7 @@ import {
   planSetNumber,
   planSplitShot,
   planExtractVersion,
+  planSplitTakeShot,
   planGroupShots,
   planPlaceInRow,
   planUngroupShots,
@@ -590,6 +591,16 @@ export class LocalSource implements DataSource {
     const media = s.media.find((m) => m.id === mediaId);
     if (!media) return undefined;
     return this.apply(planExtractVersion(s.production, this.board(), nodeId, media, this.newId, this.me.uid, this.now(), segment));
+  }
+
+  splitTakeShot(nodeId: Id, segments: Segment[]): Id[] {
+    const s = this.loaded();
+    const node = s.nodes.find((n) => n.id === nodeId);
+    const take = node?.selectedTakeId ? s.takes.find((t) => t.id === node.selectedTakeId) : undefined;
+    if (!take) return [];
+    const plan = planSplitTakeShot(s.production, this.board(), nodeId, take, segments, this.newId, this.me.uid, this.now());
+    this.apply(plan);
+    return plan.nodeIds;
   }
 
   unshelveNode(nodeId: Id): number | undefined {

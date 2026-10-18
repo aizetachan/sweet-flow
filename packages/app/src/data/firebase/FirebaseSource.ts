@@ -350,6 +350,10 @@ export class FirebaseSource implements DataSource {
     throw new NotImplemented("Sacar una versión a la fila", "etapa C");
   }
 
+  splitTakeShot(_nodeId: Id, _segments: Segment[]): Id[] {
+    throw new NotImplemented("Volver a cortar un plano", "etapa C");
+  }
+
   unshelveNode(_nodeId: Id): number | undefined {
     throw new NotImplemented("Vídeos editados", "etapa C");
   }

@@ -13,7 +13,7 @@ import { codeFor } from "./naming";
 import type { LogEventBody, NodePatch } from "./log";
 import { byNumber, byPosition, childrenOf, descendantsOf, groupOf, isUnit, levelIndex, nextNumber, numberBetween, sortValue, splitTrash } from "./tree";
 import type { Segment } from "./cuts";
-import type { Id, Media, Millis, ProdNode, Production, ShotGroup } from "./types";
+import type { Id, Media, Millis, ProdNode, Production, ShotGroup, Take } from "./types";
 
 export interface Plan {
   events: LogEventBody[];
@@ -445,4 +445,61 @@ export function planExtractVersion(
       { type: "node.updated", id: base.nodeId, patch: { selectedTakeId: takeId, ...(from.groupId ? { groupId: from.groupId } : {}) } },
     ],
   };
+}
+
+/**
+ * Cut again a shot made of a stretch of another video (docs/INTERFAZ.md §2.3):
+ * it keeps the first kept segment as its take, and the others become shots
+ * right after it (codes in the gap). The original video stays where it is
+ * (in «Vídeos editados»). `segments` are in the video's own time.
+ */
+export function planSplitTakeShot(
+  p: Production,
+  nodes: ProdNode[],
+  nodeId: Id,
+  take: Pick<Take, "id" | "mediaId">,
+  segments: Segment[],
+  newId: (prefix: string) => Id,
+  by: Id,
+  now: Millis,
+): Plan & { nodeIds: Id[] } {
+  const node = nodes.find((n) => n.id === nodeId);
+  const level = node ? p.levels[levelIndex(p, node)] : undefined;
+  if (!node || !level || !segments.length) return { events: [], nodeIds: [] };
+  const siblings = childrenOf(nodes, node.parentId).filter((n) => n.id !== node.id);
+  const k = segments.length;
+  const nextCode = siblings.filter((s) => s.number > node.number).sort(byNumber)[0]?.number;
+  const gap = nextCode === undefined ? level.step * k : nextCode - node.number;
+  let numbers: number[];
+  if (gap >= k) numbers = segments.map((_, i) => node.number + Math.floor((gap * i) / k));
+  else {
+    let last = nextNumber(siblings, level.step) - level.step;
+    numbers = [node.number, ...segments.slice(1).map(() => (last += level.step))];
+  }
+  const visual = childrenOf(nodes, node.parentId);
+  const nextCard = visual[visual.indexOf(node) + 1];
+  const lo = sortValue(node);
+  const hi = nextCard ? sortValue(nextCard) : lo + ORDER_STEP * k;
+
+  const first = segments[0]!;
+  const keptId = newId("tk");
+  const events: LogEventBody[] = [
+    // This shot keeps the first stretch.
+    { type: "take.removed", id: take.id },
+    { type: "take.added", take: { id: keptId, nodeId: node.id, mediaId: take.mediaId, inSec: first.inSec, outSec: first.outSec, createdBy: by, createdAt: now } },
+    { type: "node.updated", id: node.id, patch: { selectedTakeId: keptId } },
+  ];
+  const nodeIds: Id[] = [node.id];
+  segments.slice(1).forEach((seg, j) => {
+    const i = j + 1;
+    const id = newId("n");
+    const takeId = newId("tk");
+    nodeIds.push(id);
+    events.push(
+      { type: "node.created", node: { id, parentId: node.parentId, levelId: node.levelId, number: numbers[i]!, title: node.title, statusId: firstStatus(p), order: lo + ((hi - lo) * i) / k } },
+      { type: "take.added", take: { id: takeId, nodeId: id, mediaId: take.mediaId, inSec: seg.inSec, outSec: seg.outSec, createdBy: by, createdAt: now } },
+      { type: "node.updated", id, patch: { selectedTakeId: takeId, ...(node.groupId ? { groupId: node.groupId } : {}) } },
+    );
+  });
+  return { events, nodeIds, nodeId: node.id };
 }

@@ -116,6 +116,7 @@ button { cursor: pointer; }
 
 .sf-tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line-0); }
 .sf-tab { position: relative; height: 34px; padding: 0 10px; border: 0; background: none; color: var(--fg-3); display: inline-flex; align-items: center; gap: 6px; }
+.sf-tab:disabled { opacity: .4; cursor: not-allowed; }
 .sf-tab:hover { color: var(--fg-1); }
 .sf-tab--on { color: var(--fg-0); }
 .sf-tab--on::after { content: ""; position: absolute; left: 8px; right: 8px; bottom: -1px; height: 2px; border-radius: 2px; background: var(--fg-0); }

@@ -102,12 +102,12 @@ export function Tabs<T extends string>({
 }: {
   value: T;
   onChange: (v: T) => void;
-  items: Array<{ id: T; label: ReactNode; count?: number }>;
+  items: Array<{ id: T; label: ReactNode; count?: number; disabled?: boolean; title?: string }>;
 }) {
   return (
     <div className="sf-tabs" role="tablist">
       {items.map((it) => (
-        <button key={it.id} role="tab" aria-selected={value === it.id} className={cx("sf-tab", value === it.id && "sf-tab--on")} onClick={() => onChange(it.id)}>
+        <button key={it.id} role="tab" aria-selected={value === it.id} disabled={it.disabled} title={it.title} className={cx("sf-tab", value === it.id && "sf-tab--on")} onClick={() => onChange(it.id)}>
           {it.label}
           {it.count ? <span className="sf-tab__count">{it.count}</span> : null}
         </button>

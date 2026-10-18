@@ -19,6 +19,7 @@ import {
   planSetNumber,
   planSplitShot,
   planExtractVersion,
+  planSplitTakeShot,
   planGroupShots,
   planPlaceInRow,
   planUngroupShots,
@@ -381,6 +382,24 @@ export class MockSource implements DataSource {
     }
     this.commit({ nodes, takes, activity: [this.log("take", "sacó una versión a la fila", plan.nodeId), ...this.s.activity] }, true);
     return plan.nodeId;
+  }
+
+  splitTakeShot(nodeId: Id, segments: Segment[]): Id[] {
+    const node = this.s.nodes.find((n) => n.id === nodeId);
+    const take = node?.selectedTakeId ? this.s.takes.find((t) => t.id === node.selectedTakeId) : undefined;
+    if (!take) return [];
+    const now = Date.now();
+    const plan = planSplitTakeShot(this.s.production, this.s.nodes, nodeId, take, segments, newId, this.s.me.uid, now);
+    let nodes = this.s.nodes;
+    let takes: Take[] = [...this.s.takes];
+    for (const e of plan.events) {
+      if (e.type === "node.created") nodes = [...nodes, { ...e.node, productionId: this.s.production.id, notes: "", assigneeIds: [], assetIds: [], updatedAt: now, updatedBy: this.s.me.uid }];
+      else if (e.type === "take.added") takes.push({ ...e.take, productionId: this.s.production.id });
+      else if (e.type === "take.removed") takes = takes.filter((t) => t.id !== e.id);
+      else if (e.type === "node.updated") nodes = nodes.map((n) => (n.id === e.id ? { ...n, ...e.patch } : n));
+    }
+    this.commit({ nodes, takes, activity: [this.log("take", `volvió a cortar en ${plan.nodeIds.length} planos`, nodeId), ...this.s.activity] }, true);
+    return plan.nodeIds;
   }
 
   unshelveNode(nodeId: Id): number | undefined {

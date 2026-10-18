@@ -181,6 +181,8 @@ export interface DataSource {
    * and the shot itself to its scene's «Vídeos editados». Returns the new ids.
    */
   splitIntoShots(mediaId: Id, segments: Segment[]): Id[];
+  /** Cut again a shot made of a stretch: it keeps the first segment, the rest become shots after it. */
+  splitTakeShot(nodeId: Id, segments: Segment[]): Id[];
   /** A version taken out to the row: a new shot right after `nodeId` with it as its take. Returns the new shot. */
   extractToRow(nodeId: Id, mediaId: Id, segment?: Segment): Id | undefined;
   /** Back to the row from «Vídeos editados»; returns the new number if its code was taken. */

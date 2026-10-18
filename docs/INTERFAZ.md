@@ -250,7 +250,7 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
   - Lo creado se abre en el panel y empieza en Pendiente. Con filtros activos no
     se muestran (no se sabría dónde cae).
 - El **panel de trabajo** aparece al seleccionar un plano o una escena y es donde
-  se trabaja (Producir · Cortar y repartir · Revisión · Actividad).
+  se trabaja (Producir · Editar · Revisión · Actividad).
 - Volver al dashboard desde la barra superior (las migas de pan sustituyen al
   selector de producción actual).
 
@@ -434,11 +434,16 @@ y «Tomas» por separado):
 
 ### 2.3 Cortar en planos y «Vídeos editados»
 
+- **Un plano que ya es un tramo se puede volver a cortar:** la línea de tiempo
+  es solo su tramo; se queda con el primer tramo marcado y los demás salen como
+  planos justo a su lado. El vídeo original no se toca (sigue en «Vídeos
+  editados»).
 - La línea de tiempo ocupa **todo el ancho con la duración real del vídeo**
   (5, 20 o 30 s). Si el proveedor no la da, se lee del propio archivo. Las
   marcas se adaptan a la duración (cada 1, 2, 5 o 10 s).
 - Cualquier plano con un vídeo se puede **cortar en planos** desde la pestaña
-  **Cortar y repartir**. Se marcan los cortes con `C` o «Cortar» y, en la lista
+  **Editar** (antes «Cortar y repartir»; la pestaña está siempre en los planos y
+  desactivada mientras no hay vídeo). Se marcan los cortes con `C` o «Cortar» y, en la lista
   de tramos, se elige con cuáles quedarse (**Plano**) y cuáles no
   (**Descartar**). Pueden ser varios. «Crear N planos» hace esto:
   - Cada tramo elegido pasa a ser un **plano nuevo en el sitio del original**,
@@ -502,7 +507,7 @@ y «Tomas» por separado):
   agranda.
 - **Diseño ancho** (desde 960 px de ancho): como la pantalla de producción a
   menor escala. **A la izquierda**, el panel (cabecera, pestañas Producir ·
-  Cortar y repartir · Revisión · Actividad y su contenido); **a la derecha**, el
+  Editar · Revisión · Actividad y su contenido); **a la derecha**, el
   visor grande con las versiones y sus datos debajo. En Cortar, el visor de la
   derecha es el del corte. Si el plano no tiene nada generado, el visor muestra
   su toma o lo último de su rama. Más estrecha, se ve como el panel lateral.

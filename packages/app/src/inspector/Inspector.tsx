@@ -9,7 +9,7 @@ import {
   IconTrash,
   IconX,
 } from "@tabler/icons-react";
-import { ancestorsOf, codeOf, folderPath, levelOf, type ProdNode } from "@sweetflow/domain";
+import { ancestorsOf, codeOf, folderPath, isUnit, levelOf, type ProdNode } from "@sweetflow/domain";
 import { Avatar, Button, cx, IconButton, Tabs } from "@sweetflow/ui";
 import { useSnap, useStore, type FloatingPanel, type PanelTab } from "../state/store";
 import { coverOf, presenceAt } from "../state/selectors";
@@ -162,7 +162,9 @@ function InspectorBody({ floatKey, onDragHandle }: { floatKey?: string; onDragHa
   }
 
   const comments = snap.comments.filter((c) => c.nodeId === node.id && !c.resolved).length;
-  const hasVideo = snap.media.some((m) => m.kind === "video" && m.status === "ready" && !m.archived && ancestorsOf(snap.nodes, node).some((a) => a.id === m.nodeId));
+  // A video of its own (or of its scene), or the stretch of another video it is made of.
+  const take = node.selectedTakeId ? snap.takes.find((t) => t.id === node.selectedTakeId) : undefined;
+  const hasVideo = snap.media.some((m) => m.kind === "video" && m.status === "ready" && !m.archived && (ancestorsOf(snap.nodes, node).some((a) => a.id === m.nodeId) || m.id === take?.mediaId));
   const { features } = snap;
   const tab: PanelTab = panel.tab === "cut" && !hasVideo ? "produce" : panel.tab;
   const path = folderPath(p, snap.nodes, node);
@@ -230,7 +232,8 @@ function InspectorBody({ floatKey, onDragHandle }: { floatKey?: string; onDragHa
         onChange={(v) => panel.setPanel({ tab: v })}
         items={[
           { id: "produce", label: "Producir" },
-          ...(hasVideo ? [{ id: "cut" as const, label: "Cortar y repartir" }] : []),
+          // Always there on shots (and wherever there is video): off until there is a video to edit.
+          ...(hasVideo || isUnit(p, node) ? [{ id: "cut" as const, label: "Editar", disabled: !hasVideo, title: hasVideo ? undefined : "Hace falta un vídeo para editar" }] : []),
           { id: "review", label: "Revisión", count: comments },
           { id: "activity", label: "Actividad" },
         ]}

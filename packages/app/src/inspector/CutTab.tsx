@@ -36,14 +36,17 @@ export function CutTab({ node }: { node: ProdNode }) {
   const { source } = useStore();
   const { activeMediaId, playhead, playing, setPanel, mode } = usePanel();
   const live = useRef({ playhead, playing });
-  live.current = { playhead, playing };
   const p = snap.production;
   const lineage = new Set(ancestorsOf(snap.nodes, node).map((a) => a.id));
   const clips = snap.media
     .filter((m) => m.kind === "video" && m.status === "ready" && !m.archived && lineage.has(m.nodeId))
     .sort((a, b) => b.createdAt - a.createdAt);
   const fed = (id: Id) => snap.takes.filter((t) => t.mediaId === id).length;
-  const media = clips.find((m) => m.id === activeMediaId) ?? [...clips].sort((a, b) => fed(b.id) - fed(a.id))[0];
+  // A shot made of a stretch of another video (cut before) is edited within that stretch.
+  const myTake = node.selectedTakeId ? snap.takes.find((t) => t.id === node.selectedTakeId) : undefined;
+  const takeMedia = myTake ? snap.media.find((m) => m.id === myTake.mediaId && m.kind === "video" && m.status === "ready") : undefined;
+  const inTake = !!takeMedia && takeMedia.nodeId !== node.id && isUnit(p, node);
+  const media = inTake ? takeMedia : clips.find((m) => m.id === activeMediaId) ?? [...clips].sort((a, b) => fed(b.id) - fed(a.id))[0];
   const [cuts, setCuts] = useState<number[]>([]);
   const [dest, setDest] = useState<Record<number, string>>({});
   /** Segments left out when cutting a shot into shots. */
@@ -52,10 +55,15 @@ export function CutTab({ node }: { node: ProdNode }) {
   useEffect(() => { setCuts([]); setDest({}); setDrop({}); }, [media?.id]);
 
   // Cuts are applied at the node that owns the clip; destinations are its children.
-  const owner = media ? snap.nodes.find((n) => n.id === media.nodeId)! : node;
+  const owner = inTake ? node : media ? snap.nodes.find((n) => n.id === media.nodeId)! : node;
   const kids = childrenOf(snap.nodes, owner.id);
   const childLevel = p.levels[levelIndex(p, owner) + 1];
-  const dur = useDuration(media);
+  const full = useDuration(media);
+  // In a stretch, times on the timeline count from its in-point (base); what is saved is in the video's own time.
+  const base = inTake ? myTake!.inSec : 0;
+  const dur = inTake ? round1(myTake!.outSec - myTake!.inSec) : full;
+  const ph = Math.min(dur, Math.max(0, playhead - base));
+  live.current = { playhead: playhead - base, playing };
   const segments = useMemo(() => segmentsFromCuts(dur, cuts), [dur, cuts]);
   useEffect(() => setDrop({}), [segments.length]);
   const placed = media ? snap.takes.filter((t) => t.mediaId === media.id) : [];
@@ -95,11 +103,18 @@ export function CutTab({ node }: { node: ProdNode }) {
   };
 
   // A shot's own video: the kept segments become shots, the video goes to «Vídeos editados».
-  const splitting = isUnit(p, owner) && media.nodeId === owner.id;
+  const splitting = inTake || (isUnit(p, owner) && media.nodeId === owner.id);
   const kept = segments.flatMap((s, i) => (drop[i] ? [] : [s]));
   const scene = owner.parentId ? snap.nodes.find((n) => n.id === owner.parentId) : undefined;
   const split = () => {
     const before = codeOf(p, owner);
+    if (inTake) {
+      // It keeps the first stretch; the rest go right after it. The original video is not touched.
+      const ids = source.splitTakeShot(node.id, kept.map((s) => ({ inSec: round1(s.inSec + base), outSec: round1(s.outSec + base) })));
+      if (ids.length) useStore.getState().notify(`${before} cortado en ${ids.length} plano${ids.length > 1 ? "s" : ""}: se queda con el primer tramo y los demás van a su lado.`);
+      setCuts([]);
+      return;
+    }
     const ids = source.splitIntoShots(media.id, kept);
     if (!ids.length) return;
     const { select, notify } = useStore.getState();
@@ -118,22 +133,22 @@ export function CutTab({ node }: { node: ProdNode }) {
   // Ruler marks that fit the length: every second for a short clip, every 10 s for a long one.
   const tick = dur <= 8 ? 1 : dur <= 20 ? 2 : dur <= 60 ? 5 : 10;
 
-  const seek = (t: number) => setPanel({ playhead: Math.max(0, Math.min(dur, t)), playing: false });
+  const seek = (t: number) => setPanel({ playhead: base + Math.max(0, Math.min(dur, t)), playing: false });
 
   return (
     <div className="tab">
       <div className="cut__source">
         <select className="sf-select" value={media.id} onChange={(e) => setPanel({ activeMediaId: e.target.value, playhead: 0, playing: false })}>
-          {clips.map((m) => {
+          {(inTake ? [media] : clips).map((m) => {
             const n = snap.nodes.find((x) => x.id === m.nodeId)!;
             return <option key={m.id} value={m.id}>{codeOf(p, n)} · {versionTag(m.version)}{m.id === media.id ? ` · ${dur}s` : m.durationSec ? ` · ${m.durationSec}s` : ""}</option>;
           })}
         </select>
-        {owner.id !== node.id ? <span className="sf-small sf-muted"><IconCornerDownRight size={12} /> clip de {codeOf(p, owner)}</span> : null}
+        {inTake ? <span className="sf-small sf-muted"><IconCornerDownRight size={12} /> su tramo {formatTc(myTake!.inSec)}–{formatTc(myTake!.outSec)}</span> : owner.id !== node.id ? <span className="sf-small sf-muted"><IconCornerDownRight size={12} /> clip de {codeOf(p, owner)}</span> : null}
       </div>
 
       <OnStage>
-        <Player media={media} time={playhead} playing={playing} onTime={(t) => setPanel({ playhead: t })} onPlaying={(v) => setPanel({ playing: v })} />
+        <Player media={media} time={inTake ? base + ph : playhead} playing={playing} range={inTake ? myTake : undefined} onTime={(t) => setPanel({ playhead: t })} onPlaying={(v) => setPanel({ playing: v })} />
       </OnStage>
 
       <div className="tl">
@@ -155,9 +170,9 @@ export function CutTab({ node }: { node: ProdNode }) {
             <button key={c} className="tl__cut" style={{ left: `${(c / dur) * 100}%` }} title={`Quitar corte en ${formatTc(c)}`}
               onMouseDown={(e) => { e.stopPropagation(); setCuts(cuts.filter((x) => x !== c)); }} />
           ))}
-          <div className="tl__head" style={{ left: `${(playhead / dur) * 100}%` }} />
+          <div className="tl__head" style={{ left: `${(ph / dur) * 100}%` }} />
         </div>
-        {placed.length ? (
+        {placed.length && !inTake ? (
           <div className="tl__placed" title="Tramos ya colocados de este clip">
             {placed.map((t) => {
               return (
@@ -171,9 +186,9 @@ export function CutTab({ node }: { node: ProdNode }) {
       </div>
 
       <div className="cut__bar">
-        <input className="cut__scrub" type="range" min={0} max={dur} step={0.1} value={playhead} onChange={(e) => seek(+e.target.value)} />
-        <span className="sf-mono">{formatTc(playhead)}</span>
-        <Button size="sm" onClick={() => setCuts([...cuts, round1(playhead)])} disabled={playhead <= 0 || playhead >= dur}>
+        <input className="cut__scrub" type="range" min={0} max={dur} step={0.1} value={ph} onChange={(e) => seek(+e.target.value)} />
+        <span className="sf-mono">{formatTc(ph)}</span>
+        <Button size="sm" onClick={() => setCuts([...cuts, round1(ph)])} disabled={ph <= 0 || ph >= dur}>
           <IconCut size={13} /> Cortar <span className="sf-kbd">C</span>
         </Button>
       </div>
@@ -213,6 +228,7 @@ export function CutTab({ node }: { node: ProdNode }) {
             <p className="sf-faint sf-small">
               {segments.length < 2
                 ? <>Pulsa <span className="sf-kbd">C</span> o «Cortar» donde empieza cada plano.</>
+                : inTake ? <>{codeOf(p, owner)} se queda con el primer tramo marcado y los demás salen como planos a su lado; el vídeo original no se toca.</>
                 : <>Los tramos marcados sustituyen a {codeOf(p, owner)} en la fila; el vídeo completo pasa a «Vídeos editados»{scene ? ` de ${codeOf(p, scene)}` : ""}.</>}
             </p>
           </>
