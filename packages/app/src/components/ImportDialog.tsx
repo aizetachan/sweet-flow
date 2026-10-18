@@ -4,7 +4,7 @@
  * a row or as new versions of a shot. Nothing is generated: no credits.
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { IconChevronRight, IconClock, IconFolder, IconMusic, IconPhoto, IconSearch, IconUpload, IconVideo } from "@tabler/icons-react";
 import { codeOf, formatTc, type MediaKind } from "@sweetflow/domain";
 import { Button, cx, Modal, Segmented, Spinner } from "@sweetflow/ui";
@@ -93,14 +93,13 @@ const KINDS = [
 ] as const;
 
 /**
- * Magnific: on top, the kind (icons) and the search; on the left, a list
- * with «Recientes» and every project (a small filter on top, a project's
- * folders open under it); on the right, the gallery of what is picked.
+ * Magnific: on the left, the kind (icons), a small filter and a list with
+ * «Recientes» and every project (a project's folders open under it); on the
+ * right, the gallery of what is picked.
  */
 function FromMagnific({ onImport }: { onImport: (items: ImportItem[]) => void }) {
   const source = useStore((s) => s.source);
   const [folder, setFolder] = useState<RemoteFolder | null>(null);
-  const [search, setSearch] = useState("");
   // One kind at a time; none: all of them.
   const [kind, setKind] = useState<MediaKind | null>("video");
   const [items, setItems] = useState<RemoteCreation[]>([]);
@@ -115,39 +114,33 @@ function FromMagnific({ onImport }: { onImport: (items: ImportItem[]) => void })
     let alive = true;
     setLoading(true);
     setError(null);
-    const t = setTimeout(() => {
-      source.browseCreations!({ folder: folder?.id ?? null, search, kind: kind ?? undefined, page })
-        .then((r) => {
-          if (!alive) return;
-          setItems((old) => (page === 1 ? r.items : [...old, ...r.items]));
-          setMore(r.more);
-        })
-        .catch((err) => alive && setError(err instanceof Error ? err.message : String(err)))
-        .finally(() => alive && setLoading(false));
-    }, search ? 300 : 0);
-    return () => { alive = false; clearTimeout(t); };
-  }, [source, folder, search, kind, page]);
+    source.browseCreations!({ folder: folder?.id ?? null, kind: kind ?? undefined, page })
+      .then((r) => {
+        if (!alive) return;
+        setItems((old) => (page === 1 ? r.items : [...old, ...r.items]));
+        setMore(r.more);
+      })
+      .catch((err) => alive && setError(err instanceof Error ? err.message : String(err)))
+      .finally(() => alive && setLoading(false));
+    return () => { alive = false; };
+  }, [source, folder, kind, page]);
 
   const toggle = (c: RemoteCreation) => setPicked((old) => (old.some((x) => x.id === c.id) ? old.filter((x) => x.id !== c.id) : [...old, c]));
 
   return (
     <div className="imp">
-      <div className="imp__bar">
-        <div className="gen__kinds" role="radiogroup" aria-label="Tipo">
-          {KINDS.map(({ id, label, Icon }) => (
-            <button key={id} role="radio" aria-checked={kind === id} title={kind === id ? `${label} (otra vez: todo)` : label} aria-label={label}
-              className={cx("gen__kind", kind === id && "is-on")} onClick={() => { setKind(kind === id ? null : id); setPage(1); }}>
-              <Icon size={16} stroke={1.7} />
-            </button>
-          ))}
-        </div>
-        <label className="imp__search">
-          <IconSearch size={14} />
-          <input className="sf-input" placeholder={folder ? `Buscar en «${folder.name}»` : "Buscar en tus creaciones"} value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
-        </label>
-      </div>
       <div className="imp__main">
-        <FolderList current={folder} onPick={(f) => { setFolder(f); setPage(1); }} />
+        <FolderList current={folder} onPick={(f) => { setFolder(f); setPage(1); }}
+          kinds={
+            <div className="gen__kinds imp__kinds" role="radiogroup" aria-label="Tipo">
+              {KINDS.map(({ id, label, Icon }) => (
+                <button key={id} role="radio" aria-checked={kind === id} title={kind === id ? `${label} (otra vez: todo)` : label} aria-label={label}
+                  className={cx("gen__kind", kind === id && "is-on")} onClick={() => { setKind(kind === id ? null : id); setPage(1); }}>
+                  <Icon size={16} stroke={1.7} />
+                </button>
+              ))}
+            </div>
+          } />
         <div className="imp__gallery">
           {error ? <p className="note">{/not|conect|401/i.test(error) ? "Conecta tu cuenta de Magnific (en Ajustes) para ver tus creaciones." : error}</p> : null}
           <div className="vpick imp__grid">
@@ -166,7 +159,7 @@ function FromMagnific({ onImport }: { onImport: (items: ImportItem[]) => void })
             })}
           </div>
           {loading ? <div className="imp__more"><Spinner /></div> : more ? <div className="imp__more"><Button size="sm" variant="ghost" onClick={() => setPage(page + 1)}>Ver más</Button></div> : null}
-          {!loading && !error && !items.length ? <p className="note">No hay nada aquí{search ? ` con «${search}»` : ""}.</p> : null}
+          {!loading && !error && !items.length ? <p className="note">No hay nada aquí.</p> : null}
         </div>
       </div>
       <div className="imp__foot">
@@ -180,7 +173,7 @@ function FromMagnific({ onImport }: { onImport: (items: ImportItem[]) => void })
 }
 
 /** «Recientes» and the projects, filtered as you type; the open one shows its folders under it. */
-function FolderList({ current, onPick }: { current: RemoteFolder | null; onPick: (f: RemoteFolder | null) => void }) {
+function FolderList({ current, onPick, kinds }: { current: RemoteFolder | null; onPick: (f: RemoteFolder | null) => void; kinds: ReactNode }) {
   const source = useStore((s) => s.source);
   const [projects, setProjects] = useState<RemoteFolder[] | null>(null);
   const [filter, setFilter] = useState("");
@@ -193,6 +186,7 @@ function FolderList({ current, onPick }: { current: RemoteFolder | null; onPick:
   const shown = (projects ?? []).filter((f) => !term || f.name.toLowerCase().includes(term));
   return (
     <div className="imp__side">
+      {kinds}
       <label className="imp__filter">
         <IconSearch size={12} />
         <input placeholder="Filtrar proyectos" value={filter} onChange={(e) => setFilter(e.target.value)} />

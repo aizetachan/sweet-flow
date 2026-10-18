@@ -309,10 +309,10 @@ Para meter algo que ya se tiene, sin generar (no gasta créditos):
 - **Versión de un plano:** «Importar» junto a «Galería», o **soltar archivos
   sobre el panel** del plano: cada uno entra como su siguiente versión.
 - La ventana **Importar** mide lo mismo en sus dos pestañas:
-  - **De Magnific:** arriba, el tipo (iconos de vídeo, imagen y audio; vídeo
-    por defecto; otro clic en el elegido muestra todo) y el buscador. A la
-    izquierda, una **lista**: «Recientes» y todos los proyectos de Magnific,
-    con un filtro pequeño encima; al elegir un proyecto se ve todo lo que
+  - **De Magnific:** a la izquierda, arriba, el tipo (iconos de vídeo, imagen
+    y audio; vídeo por defecto; otro clic en el elegido muestra todo); debajo,
+    un filtro pequeño y una **lista**: «Recientes» y todos los proyectos de
+    Magnific; al elegir un proyecto se ve todo lo que
     tiene (también en sus carpetas) y sus carpetas se despliegan debajo. A la
     derecha, la galería. Se eligen una o varias; el número indica el orden en
     que entran.
