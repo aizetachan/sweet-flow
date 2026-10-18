@@ -146,6 +146,11 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
   - **Grupo:** estado de sus planos («Varios» si no es el mismo), cambiar el nombre, abrir el grupo,
     deshacer el grupo (los planos vuelven a la fila) y mover a la papelera
     (con sus planos dentro).
+- **Notas** (acción, diálogo, dirección; base del prompt): ya no hay caja en el
+  panel. A la derecha del código, un botón **«Notas»** abre una ventana modal
+  para escribirlas (se guardan al escribir; resaltado si hay alguna). Si un
+  plano tiene notas, su tarjeta muestra el **icono de nota** abajo a la
+  derecha, bajo la duración: al pulsarlo se abren sin abrir el panel.
 - **Visor de vídeo:** controles de siempre: reproducir/pausa, la **línea de
   tiempo** para ir a cualquier punto, el tiempo y pantalla completa. En un
   plano hecho de un tramo, la línea recorre solo su tramo.

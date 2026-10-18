@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode, type RefObject } from "react";
-import { IconArrowBackUp, IconArrowLeft, IconPencil, IconStack2, IconExternalLink, IconMessageCircle, IconPlus, IconFilter, IconSearch, IconTrash, IconLayoutGrid, IconLayoutList, IconX } from "@tabler/icons-react";
+import { IconNote, IconArrowBackUp, IconArrowLeft, IconPencil, IconStack2, IconExternalLink, IconMessageCircle, IconPlus, IconFilter, IconSearch, IconTrash, IconLayoutGrid, IconLayoutList, IconX } from "@tabler/icons-react";
 import {
   childrenOf,
   codeOf,
@@ -342,6 +342,13 @@ function UnitCard({ node, inRow, hint }: { node: ProdNode; inRow?: boolean; hint
         ) : null}
         {viewers.length ? <span className="card__live" title={`${viewers.join(", ")} está aquí`}><AvatarStack names={viewers} size={16} /></span> : null}
         {node.assigneeIds.length ? <AvatarStack names={node.assigneeIds.map((u) => memberName(snap, u))} size={16} max={2} /> : null}
+        {/* It has notes: the icon says so, and opens them without the panel. */}
+        {node.notes.trim() ? (
+          <button className="card__note" title={node.notes} aria-label="Ver las notas" draggable={false}
+            onClick={(e) => { e.stopPropagation(); useStore.getState().set({ modal: "notes", notesFor: node.id }); }}>
+            <IconNote size={13} />
+          </button>
+        ) : null}
       </div>
     </div>
     {menu ? <ShotMenu at={menu} node={node} targets={targets} onRename={() => setRename((n) => n + 1)} onClose={() => setMenu(null)} /> : null}

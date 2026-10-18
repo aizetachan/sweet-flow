@@ -14,7 +14,27 @@ export function Modals() {
   if (modal === "statuses") return <StatusesModal onClose={close} />;
   if (modal === "invite") return <InviteModal onClose={close} />;
   if (modal === "team") return <TeamModal onClose={close} />;
+  if (modal === "notes") return <NotesModal onClose={close} />;
   return null;
+}
+
+/**
+ * A scene's or shot's notes (docs/INTERFAZ.md §2): action, dialogue, direction
+ * — the base of its prompt. Opened from «Notas» in the panel or the note icon
+ * of a card; saved as you type.
+ */
+function NotesModal({ onClose }: { onClose: () => void }) {
+  const snap = useSnap();
+  const { source, notesFor } = useStore();
+  const node = snap.nodes.find((n) => n.id === notesFor);
+  if (!node) return null;
+  return (
+    <Modal title={<>Notas · {codeFor(snap.production.levels.find((l) => l.id === node.levelId)!, node.number)}{node.title ? ` · ${node.title}` : ""}</>} onClose={onClose} width={560}>
+      <textarea className="sf-textarea notes__area" autoFocus rows={10} placeholder="Acción, diálogo, notas de dirección… (base del prompt)"
+        value={node.notes} onChange={(e) => source.updateNode(node.id, { notes: e.target.value })} />
+      <div className="modal-foot"><span className="sf-faint sf-small notes__hint">Se guarda al escribir.</span><Button variant="primary" onClick={onClose}>Listo</Button></div>
+    </Modal>
+  );
 }
 
 /**

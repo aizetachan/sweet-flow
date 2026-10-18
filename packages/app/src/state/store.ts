@@ -73,7 +73,9 @@ interface UiState {
   playing: boolean;
   filters: Filters;
   /** `team`: who works on the production (opened from the avatar menu). */
-  modal: null | "levels" | "statuses" | "invite" | "team";
+  modal: null | "levels" | "statuses" | "invite" | "team" | "notes";
+  /** The node whose notes the `notes` modal shows. */
+  notesFor: Id | null;
   collapsed: Record<Id, boolean>;
   floating: FloatingPanel[];
   /** Short message at the bottom of the screen (e.g. a code changed on move). */
@@ -167,6 +169,7 @@ export const useStore = create<Store>((set, get) => ({
   playing: false,
   filters: { query: "", statusIds: [], assigneeId: null, assetId: null },
   modal: null,
+  notesFor: null,
   collapsed: {},
   floating: [],
   notice: null,

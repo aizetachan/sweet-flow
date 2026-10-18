@@ -3,6 +3,7 @@ import {
   IconCopy,
   IconExternalLink,
   IconLayoutSidebarLeftExpand,
+  IconNote,
   IconPlus,
   IconSparkles,
   IconTrash,
@@ -216,6 +217,10 @@ function InspectorBody({ floatKey, onDragHandle }: { floatKey?: string; onDragHa
         {/* Row 2: the code, lighter, under the title; who works on it on the right. */}
         <div className="nhead__row nhead__row--code">
           <CodeEditor node={node} />
+          <button className={cx("notes__btn", node.notes.trim() && "notes__btn--on")} title={node.notes.trim() ? node.notes : "Escribir notas: acción, diálogo, dirección (base del prompt)"}
+            onClick={() => set({ modal: "notes", notesFor: node.id })}>
+            <IconNote size={13} /> Notas
+          </button>
           <span className="insp__spacer" />
           <Assignees node={node} />
         </div>
@@ -379,12 +384,6 @@ function NodeHeader({ node }: { node: ProdNode }) {
           )}
         </div>
       ) : null}
-      <textarea
-        className="sf-textarea nhead__notes"
-        placeholder="Acción, diálogo, notas de dirección… (base del prompt)"
-        value={node.notes}
-        onChange={(e) => source.updateNode(node.id, { notes: e.target.value })}
-      />
     </div>
   );
 }
