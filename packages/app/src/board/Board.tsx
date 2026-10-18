@@ -204,7 +204,7 @@ function Lane({ row }: { row: ProdNode }) {
       </div>
       {open && !active ? <GroupBar group={open} row={row} count={units.filter((u) => u.groupId === open.id).length} onClose={() => setOpenId(null)} /> : null}
       {/* Wrapped only when they don't all fit in one row: then the columns fill the width exactly. */}
-      <div ref={box} className={cx("lane__cards", grid && "lane__cards--wrap")}
+      <div ref={box} className={cx("lane__cards", grid && "lane__cards--wrap")} onScroll={showScrollbar}
         style={grid ? { gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` } : undefined} {...rowDrop.props}>
         {items.map((i) => i.el)}
         {!active ? <AddCard row={row} groupId={open?.id} hint={hintOf("end")} /> : null}
@@ -240,6 +240,15 @@ function useColumns(ref: RefObject<HTMLDivElement>, on: boolean): number {
     return () => { ro.disconnect(); mo.disconnect(); };
   }, [ref, on]);
   return cols;
+}
+
+/** While a row scrolls, its scrollbar shows; a moment after it stops, it hides again. */
+const scrollTimers = new WeakMap<HTMLElement, ReturnType<typeof setTimeout>>();
+function showScrollbar(e: { currentTarget: HTMLElement }): void {
+  const el = e.currentTarget;
+  el.classList.add("is-scrolling");
+  clearTimeout(scrollTimers.get(el));
+  scrollTimers.set(el, setTimeout(() => el.classList.remove("is-scrolling"), 900));
 }
 
 const WRAP_KEY = "sweetflow:board:wrap";

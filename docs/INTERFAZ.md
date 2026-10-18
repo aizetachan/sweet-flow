@@ -182,6 +182,7 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
 - **Cabecera de escena:** a la izquierda, código, título, estado, planos y
   duración, y la papelera (solo al pasar el ratón). A la derecha, «Ver todos /
   En fila» y «Vídeos editados», con el mismo estilo.
+- La **barra de scroll** de una fila solo se ve mientras se desplaza.
 - **Ver todos / En fila:** botón en la cabecera de cada escena. Por defecto la
   escena es una fila con scroll horizontal; «Ver todos» la adapta al ancho y
   baja de línea hasta que se ven todas sus tarjetas. Las columnas se calculan
@@ -256,6 +257,24 @@ derecha en la ventana aparte). De arriba abajo:
   nivel (Ajustes › Niveles; en los planos, 15 s por defecto).
 - **Generar** con el coste real en créditos (`simulate_cost`), por el número
   de versiones. Cada versión es un v00N del plano.
+
+### 2.0.1 Galería del plano (bajo Generar)
+
+Una sola **galería** con todo lo que puede ser el plano (ya no hay «Versiones»
+y «Tomas» por separado):
+- **Versiones** generadas aquí (v001, v002…) y **tramos** de otro vídeo
+  colocados aquí («Tramo de SC020», al cortar en planos).
+- Clic en una: se ve en el visor, con su modelo y su prompt (y «Cortar» si es
+  un vídeo).
+- Al pasar el ratón, dos botones en la miniatura:
+  - **Elegir (✓):** el plano pasa a ser esa. Es la que cuenta: portada de la
+    tarjeta, duración y montaje. La elegida lleva «Elegida» y un borde verde.
+  - **Quitar (papelera):** una versión sale de la galería pero **se conserva en
+    la carpeta** (aviso con Deshacer; «Ver las quitadas» las enseña y las
+    devuelve). Un tramo se quita del plano; el vídeo original no se toca. No se
+    puede quitar una versión de la que otros planos usan tramos.
+- Por dentro, elegir es la «toma» del plano y quitar es «archivar»: los
+  nombres ya no se ven.
 
 ### 2.1 Reordenar arrastrando
 

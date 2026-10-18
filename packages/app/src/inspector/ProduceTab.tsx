@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
-  IconArchive, IconArchiveOff, IconAspectRatio, IconBolt, IconCheck, IconClock, IconCut, IconMusic, IconPhoto, IconPhotoDown, IconPhotoScan,
+  IconArchiveOff, IconAspectRatio, IconBolt, IconCheck, IconClock, IconCut, IconMusic, IconPhoto, IconPhotoDown, IconPhotoScan,
   IconPhotoUp, IconPlus, IconRepeat, IconSparkles, IconTrash, IconVideo, IconVolume, IconVolumeOff, IconWand, IconX,
 } from "@tabler/icons-react";
 import {
@@ -14,8 +14,9 @@ import {
   type Id,
   type Media,
   type ProdNode,
+  type Take,
 } from "@sweetflow/domain";
-import { Avatar, Button, cx, IconButton, Segmented } from "@sweetflow/ui";
+import { Avatar, Button, cx, Segmented } from "@sweetflow/ui";
 import { useSnap, useStore } from "../state/store";
 import { usePanel } from "./panel";
 import { OnStage } from "./stage";
@@ -26,93 +27,146 @@ import { Popover } from "../components/Popover";
 import { Player, Thumb } from "../components/media";
 
 
+/** One thing in a shot's gallery: a version generated here, or a stretch of another video placed here. */
+interface GalleryItem {
+  key: string;
+  media: Media;
+  /** This node's take of it, if any (the chosen one is what the shot is). */
+  take?: Take;
+  /** A stretch of another node's video (cut into shots). */
+  foreign: boolean;
+}
+
 export function ProduceTab({ node }: { node: ProdNode }) {
   const snap = useSnap();
+  const { source, notify } = useStore();
   const { activeMediaId, setPanel, playhead, playing } = usePanel();
   const [showArchived, setShowArchived] = useState(false);
-  const all = snap.media.filter((m) => m.nodeId === node.id).sort((a, b) => b.createdAt - a.createdAt);
-  const own = all.filter((m) => showArchived || !m.archived);
-  const archivedCount = all.filter((m) => m.archived).length;
-  const active = own.find((m) => m.id === activeMediaId) ?? own[0];
   const level = levelOf(snap.production, node);
 
+  // The gallery (docs/INTERFAZ.md §2.0): versions generated here and stretches placed here, in one place.
+  const mine = snap.takes.filter((t) => t.nodeId === node.id);
+  const all = snap.media.filter((m) => m.nodeId === node.id).sort((a, b) => b.createdAt - a.createdAt);
+  const archivedCount = all.filter((m) => m.archived).length;
+  const items: GalleryItem[] = [
+    ...mine.flatMap((t) => {
+      const m = snap.media.find((x) => x.id === t.mediaId);
+      return m && m.nodeId !== node.id ? [{ key: `t:${t.id}`, media: m, take: t, foreign: true }] : [];
+    }),
+    ...all.filter((m) => showArchived || !m.archived).map((m) => ({ key: `m:${m.id}`, media: m, take: mine.find((t) => t.mediaId === m.id), foreign: false })),
+  ];
+  const chosen = items.find((i) => i.take && i.take.id === node.selectedTakeId);
+  const [activeKey, setActiveKey] = useState<string | null>(null);
+  useEffect(() => setActiveKey(null), [node.id]);
+  const active = items.find((i) => i.key === activeKey) ?? items.find((i) => i.media.id === activeMediaId) ?? chosen ?? items[0];
+
+  /** The shot becomes this one: its take (made whole if it had none) is the chosen one. */
+  const choose = (i: GalleryItem) => {
+    if (i.take) return source.selectTake(node.id, i.take.id);
+    source.placeTakes(i.media.id, [{ segment: { inSec: 0, outSec: i.media.durationSec ?? 0 }, target: { nodeId: node.id } }]);
+    const made = useStore.getState().snap?.takes.find((t) => t.nodeId === node.id && t.mediaId === i.media.id);
+    if (made) source.selectTake(node.id, made.id);
+  };
+  /** Out of the gallery: a stretch is taken off; a version is archived (kept in its folder), with Deshacer. */
+  const usedElsewhere = (m: Media) => snap.takes.some((t) => t.mediaId === m.id && t.nodeId !== node.id);
+  const remove = (i: GalleryItem) => {
+    if (i.foreign) {
+      if (i.take) source.removeTake(i.take.id);
+      return;
+    }
+    if (i.take) source.removeTake(i.take.id);
+    source.setArchived(i.media.id, true);
+    notify(`${versionTag(i.media.version)} fuera de la galería (se conserva en la carpeta).`, {
+      label: "Deshacer",
+      run: () => { source.setArchived(i.media.id, false); useStore.getState().set({ notice: null }); },
+    });
+  };
+
+  const time = active?.take && active.foreign ? Math.max(playhead, active.take.inSec) : playhead;
   return (
     <div className="tab">
       {level.canGenerate ? <GenerateBox node={node} /> : (
         <p className="note">En este nivel no se genera: agrupa y conserva los montajes de sus {snap.production.levels[snap.production.levels.indexOf(level) + 1]?.name.toLowerCase()}s.</p>
       )}
 
-      {/* Made from a stretch of another video (cut into shots): play that stretch. */}
-      {!own.length ? <TakeViewer node={node} /> : null}
-
-      {/* Nothing generated here: the wide window's stage shows the node's cover instead. */}
-      {own.length ? <OnStage>
+      {/* Nothing here yet: the wide window's stage shows the node's cover instead. */}
+      {items.length || archivedCount ? <OnStage>
       {active ? (
         <section className="sec sec--viewer">
-          <Player media={active} time={playhead} playing={playing} onTime={(t) => setPanel({ playhead: t })} onPlaying={(v) => setPanel({ playing: v })} />
-          <MediaMeta media={active} node={node} />
+          <Player media={active.media} time={time} playing={playing} range={active.foreign ? active.take : undefined}
+            onTime={(t) => setPanel({ playhead: t })} onPlaying={(v) => setPanel({ playing: v })} />
+          <MediaMeta media={active.media} take={active.foreign ? active.take : undefined} />
         </section>
       ) : null}
 
-      {own.length ? (
-        <section className="sec">
-          <div className="sec__head">
-            <h4>Versiones generadas aquí</h4>
-            {archivedCount ? (
-              <button className="link sf-small" onClick={() => setShowArchived(!showArchived)}>
-                {showArchived ? "Ocultar archivadas" : `Ver archivadas (${archivedCount})`}
-              </button>
-            ) : null}
-          </div>
-          <div className="versions">
-            {own.map((m) => (
-              <button key={m.id} className={cx("version", m.id === active?.id && "version--on", m.archived && "version--archived")} onClick={() => setPanel({ activeMediaId: m.id, playhead: 0, playing: false })}>
-                <Thumb media={m.status === "ready" ? m : undefined} pending={m.status === "queued" || m.status === "rendering" ? m : undefined} />
+      <section className="sec">
+        <div className="sec__head">
+          <h4>Galería</h4>
+          {archivedCount ? (
+            <button className="link sf-small" onClick={() => setShowArchived(!showArchived)}>
+              {showArchived ? "Ocultar las quitadas" : `Ver las quitadas (${archivedCount})`}
+            </button>
+          ) : null}
+        </div>
+        <div className="versions">
+          {items.map((i) => {
+            const m = i.media;
+            const isChosen = !!chosen && chosen.key === i.key;
+            const from = i.foreign ? [...snap.nodes, ...snap.shelf].find((n) => n.id === m.nodeId) : undefined;
+            const ready = m.status === "ready";
+            return (
+              <div key={i.key} className={cx("version", i.key === active?.key && "version--on", m.archived && "version--archived", isChosen && "version--chosen")}
+                onClick={() => { setActiveKey(i.key); setPanel({ activeMediaId: m.id, playhead: i.foreign && i.take ? i.take.inSec : 0, playing: false }); }}>
+                <Thumb media={ready ? m : undefined} take={i.foreign ? i.take : undefined} pending={m.status === "queued" || m.status === "rendering" ? m : undefined} badge={false} />
                 <span className="version__tag">
-                  {m.kind === "video" ? <IconVideo size={11} /> : m.kind === "audio" ? <IconMusic size={11} /> : <IconPhoto size={11} />} {versionTag(m.version)}
-                  <Avatar name={memberName(snap, m.createdBy)} size={14} />
+                  {m.kind === "video" ? <IconVideo size={11} /> : m.kind === "audio" ? <IconMusic size={11} /> : <IconPhoto size={11} />}
+                  {i.foreign ? `Tramo de ${from ? codeOf(snap.production, from) : "—"}` : versionTag(m.version)}
+                  {isChosen ? <span className="version__chosen"><IconCheck size={10} stroke={3} /> Elegida</span> : <Avatar name={memberName(snap, m.createdBy)} size={14} />}
                 </span>
-              </button>
-            ))}
-          </div>
-        </section>
-      ) : null}
+                {ready && !m.archived ? (
+                  <span className="version__acts" onClick={(e) => e.stopPropagation()}>
+                    {!isChosen && m.kind !== "audio" ? (
+                      <button className="version__act" title="Elegir: el plano pasa a ser esta" onClick={() => choose(i)}><IconCheck size={13} /></button>
+                    ) : null}
+                    <button className="version__act" disabled={!i.foreign && usedElsewhere(m)}
+                      title={i.foreign ? "Quitar este tramo del plano (el vídeo original se conserva)" : usedElsewhere(m) ? "No se puede quitar: otros planos usan tramos de esta versión" : "Quitar de la galería (se conserva en la carpeta)"}
+                      onClick={() => remove(i)}><IconTrash size={13} /></button>
+                  </span>
+                ) : m.archived ? (
+                  <span className="version__acts" onClick={(e) => e.stopPropagation()}>
+                    <button className="version__act" title="Volver a la galería" onClick={() => source.setArchived(m.id, false)}><IconArchiveOff size={13} /></button>
+                  </span>
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+      </section>
       </OnStage> : null}
-
-      <TakesHere node={node} />
     </div>
   );
 }
 
-function MediaMeta({ media, node }: { media: Media; node: ProdNode }) {
+/** What the viewer shows: version, model, who and when, credits; Cortar for a video; the prompt. */
+function MediaMeta({ media, take }: { media: Media; take?: Take }) {
   const snap = useSnap();
-  const { source } = useStore();
   const { setPanel } = usePanel();
-  const inUse = snap.takes.some((t) => t.mediaId === media.id);
-  const unit = isUnit(snap.production, node);
   const g = media.generation;
+  const from = take ? [...snap.nodes, ...snap.shelf].find((n) => n.id === media.nodeId) : undefined;
   return (
     <div className="mmeta">
       <div className="mmeta__row">
-        <span className="mmeta__v">{versionTag(media.version)}</span>
-        <span className="sf-muted sf-small">{g?.model} · {memberName(snap, media.createdBy)} · {new Date(media.createdAt).toLocaleString("es-ES", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
-        {g?.credits ? <span className="sf-faint sf-small" title={`Créditos de ${memberName(snap, g.launchedBy)}`}><IconBolt size={11} /> {g.credits}</span> : null}
+        <span className="mmeta__v">{take ? "Tramo" : versionTag(media.version)}</span>
+        <span className="sf-muted sf-small">
+          {take ? `${formatTc(take.inSec)} → ${formatTc(take.outSec)} · ${takeDuration(take)}s · de ${from ? codeOf(snap.production, from) : "—"} ${versionTag(media.version)}${from?.shelvedAt !== undefined ? " (en Vídeos editados)" : ""}` : (
+            <>{g?.model} · {memberName(snap, media.createdBy)} · {new Date(media.createdAt).toLocaleString("es-ES", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</>
+          )}
+        </span>
+        {!take && g?.credits ? <span className="sf-faint sf-small" title={`Créditos de ${memberName(snap, g.launchedBy)}`}><IconBolt size={11} /> {g.credits}</span> : null}
         <span className="mmeta__spacer" />
-        {media.status === "ready" && media.kind === "video" ? (
+        {!take && media.status === "ready" && media.kind === "video" ? (
           <Button size="sm" onClick={() => setPanel({ tab: "cut", activeMediaId: media.id })}><IconCut size={13} /> Cortar</Button>
         ) : null}
-        {media.status === "ready" && media.kind !== "audio" && (unit || media.kind === "image") ? (
-          <Button size="sm" variant="primary" onClick={() => source.placeTakes(media.id, [{ segment: { inSec: 0, outSec: media.durationSec ?? 0 }, target: { nodeId: node.id } }])}>
-            <IconCheck size={13} /> Usar como toma
-          </Button>
-        ) : null}
-        <IconButton
-          label={inUse ? "No se puede archivar: tiene tomas colocadas" : media.archived ? "Recuperar" : "Archivar (se conserva, no se replica)"}
-          disabled={inUse && !media.archived}
-          onClick={() => source.setArchived(media.id, !media.archived)}
-        >
-          {media.archived ? <IconArchiveOff size={15} /> : <IconArchive size={15} />}
-        </IconButton>
       </div>
       {g?.prompt ? <p className="mmeta__prompt">{g.prompt}</p> : null}
       {media.status === "failed" ? <p className="mmeta__error">{media.error ?? "No se ha podido generar."}</p> : null}
@@ -407,65 +461,5 @@ function RefSlot({ label, icon, accept, node, value, disabled, disabledHint, onP
         <p className="sf-faint sf-small gen__pick-empty">Aún no hay {accept.map((k) => (k === "image" ? "imágenes" : k === "video" ? "vídeos" : "audios")).join(" ni ")} generados con Magnific en la producción.</p>
       )}
     </Popover>
-  );
-}
-
-/** The chosen take of a node with no media of its own, playing just its stretch. */
-function TakeViewer({ node }: { node: ProdNode }) {
-  const snap = useSnap();
-  const take = node.selectedTakeId ? snap.takes.find((t) => t.id === node.selectedTakeId) : undefined;
-  const media = take ? snap.media.find((m) => m.id === take.mediaId) : undefined;
-  const [time, setTime] = useState(take?.inSec ?? 0);
-  const [playing, setPlaying] = useState(false);
-  useEffect(() => { setTime(take?.inSec ?? 0); setPlaying(false); }, [take?.id]); // eslint-disable-line react-hooks/exhaustive-deps
-  if (!take || !media) return null;
-  const from = [...snap.nodes, ...snap.shelf].find((n) => n.id === media.nodeId);
-  const shelved = from?.shelvedAt !== undefined;
-  return (
-    <OnStage>
-      <section className="sec sec--viewer">
-        <Player media={media} time={time} playing={playing} range={take} onTime={setTime} onPlaying={setPlaying} />
-        <div className="mmeta">
-          <div className="mmeta__row">
-            <span className="mmeta__v">Tramo</span>
-            <span className="sf-muted sf-small">
-              {media.kind === "video" ? `${formatTc(take.inSec)} → ${formatTc(take.outSec)} · ${takeDuration(take)}s · ` : ""}
-              de {from ? codeOf(snap.production, from) : "—"} {versionTag(media.version)}{shelved ? " · en Vídeos editados" : ""}
-            </span>
-          </div>
-        </div>
-      </section>
-    </OnStage>
-  );
-}
-
-function TakesHere({ node }: { node: ProdNode }) {
-  const snap = useSnap();
-  const { source } = useStore();
-  const { setPanel } = usePanel();
-  const takes = snap.takes.filter((t) => t.nodeId === node.id).sort((a, b) => b.createdAt - a.createdAt);
-  if (!takes.length) return null;
-  return (
-    <section className="sec">
-      <div className="sec__head"><h4>Tomas en {codeOf(snap.production, node)}</h4><span className="sf-faint sf-small">la elegida es la que cuenta en el montaje</span></div>
-      {takes.map((t) => {
-        const m = snap.media.find((x) => x.id === t.mediaId);
-        const from = m ? [...snap.nodes, ...snap.shelf].find((n) => n.id === m.nodeId) : undefined;
-        const on = node.selectedTakeId === t.id;
-        return (
-          <div key={t.id} className={cx("take", on && "take--on")}>
-            <button className="take__thumb" onClick={() => m && setPanel({ activeMediaId: m.nodeId === node.id ? m.id : null, playhead: t.inSec })}>
-              <Thumb media={m} take={t} />
-            </button>
-            <div className="take__meta">
-              <div>{from ? `${codeOf(snap.production, from)} ${m ? versionTag(m.version) : ""}` : "—"}</div>
-              <div className="sf-faint sf-small">{m?.kind === "video" ? `${formatTc(t.inSec)} → ${formatTc(t.outSec)} · ${takeDuration(t)}s` : "imagen"} · {memberName(snap, t.createdBy)}</div>
-            </div>
-            <Button size="sm" variant={on ? "primary" : "default"} onClick={() => source.selectTake(node.id, t.id)}>{on ? <><IconCheck size={12} /> Elegida</> : "Elegir"}</Button>
-            <IconButton size="sm" label="Quitar toma (el original se conserva)" onClick={() => source.removeTake(t.id)}><IconTrash size={13} /></IconButton>
-          </div>
-        );
-      })}
-    </section>
   );
 }

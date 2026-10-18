@@ -109,6 +109,12 @@
 .lane__spacer { flex: 1; }
 /* Room around the cards: the horizontal scroller would clip the selection ring and drop markers. */
 .lane__cards { display: flex; gap: 10px; overflow-x: auto; padding: 4px 4px 6px; margin: -4px -4px -2px; }
+/* The row's scrollbar only shows while it is being scrolled. */
+.lane__cards { scrollbar-width: thin; scrollbar-color: transparent transparent; }
+.lane__cards.is-scrolling { scrollbar-color: var(--line-2) transparent; }
+.lane__cards::-webkit-scrollbar { height: 6px; }
+.lane__cards::-webkit-scrollbar-thumb { background: transparent; border-radius: 3px; }
+.lane__cards.is-scrolling::-webkit-scrollbar-thumb { background: var(--line-2); }
 .lane__cards--wrap { display: grid; overflow-x: visible; }
 .lane__cards--wrap > .card { width: auto; min-width: 0; }
 
@@ -277,7 +283,15 @@
 .mmeta__prompt { margin: 0; font-size: 12px; color: var(--fg-3); line-height: 1.45; }
 
 .versions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-.version { padding: 3px; border: 1px solid transparent; border-radius: var(--r-md); background: none; text-align: left; }
+.version { position: relative; padding: 3px; border: 1px solid transparent; border-radius: var(--r-md); background: none; text-align: left; cursor: pointer; }
+.version__tag { white-space: nowrap; overflow: hidden; }
+.version__chosen { margin-left: auto; display: inline-flex; align-items: center; gap: 2px; padding: 0 5px; border-radius: 99px; background: var(--ok); color: #000; font-family: var(--font, inherit); font-weight: 600; font-size: 10px; }
+.version--chosen .thumb { box-shadow: 0 0 0 2px var(--ok); }
+.version__acts { position: absolute; top: 7px; right: 7px; display: flex; gap: 4px; opacity: 0; transition: opacity .12s; }
+.version:hover .version__acts, .version:focus-within .version__acts { opacity: 1; }
+.version__act { width: 24px; height: 24px; display: grid; place-items: center; border: 0; border-radius: 6px; background: #000c; color: #fff; }
+.version__act:hover:not(:disabled) { background: #000; color: var(--fg-0); }
+.version__act:disabled { opacity: .4; cursor: not-allowed; }
 .version:hover { background: var(--bg-2); }
 .version--on { border-color: var(--primary); background: var(--primary-soft); }
 .version--archived { opacity: .45; }
