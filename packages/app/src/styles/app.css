@@ -113,7 +113,6 @@
 .card:hover { border-color: var(--line-2); }
 .card--on { border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary); }
 .card--watched { box-shadow: 0 0 0 1px #3cd39f66; }
-.card--scene { background: var(--bg-3); border: 1px dashed var(--line-2); }
 /* Same size as the cards next to it; just a "+". */
 .card--add { align-items: center; justify-content: center; align-self: stretch; color: var(--fg-4); border-style: dashed; width: var(--card); min-height: 120px; background: none; }
 .card--add:hover { color: var(--fg-1); }

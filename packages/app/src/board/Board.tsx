@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { IconExternalLink, IconMessageCircle, IconPlus, IconFilter, IconInfoCircle, IconSearch, IconStack2, IconTrash, IconWand, IconX } from "@tabler/icons-react";
+import { IconExternalLink, IconMessageCircle, IconPlus, IconFilter, IconInfoCircle, IconSearch, IconTrash, IconWand, IconX } from "@tabler/icons-react";
 import {
   childrenOf,
   codeOf,
@@ -7,7 +7,6 @@ import {
   isUnit,
   levelIndex,
   levelOf,
-  roleOf,
   type Id,
   type ProdNode,
 } from "@sweetflow/domain";
@@ -169,7 +168,6 @@ function Lane({ row }: { row: ProdNode }) {
         <IconButton size="sm" className="head__del" label={`Mover ${codeOf(p, row)} y sus ${unitLevel.name.toLowerCase()}s a la papelera`} onClick={() => trashNodes([row.id])}><IconTrash size={14} /></IconButton>
       </div>
       <div className={cx("lane__cards", endDrop.over && "dnd-end")} {...endDrop.props}>
-        <SceneCard node={row} />
         {units.map((u) => <UnitCard key={u.id} node={u} />)}
         {!active ? <AddCard row={row} /> : null}
       </div>
@@ -187,40 +185,6 @@ function AddCard({ row }: { row: ProdNode }) {
     <button className="card card--add" title={label} aria-label={label} onClick={() => select(source.createNode(row.id, ""))}>
       <IconPlus size={24} stroke={1.5} />
     </button>
-  );
-}
-
-/** The scene's own production card: its long clips and how they were cut into shots. */
-function SceneCard({ node }: { node: ProdNode }) {
-  const snap = useSnap();
-  const { selectedId, select } = useStore();
-  const p = snap.production;
-  const role = roleOf(p, node);
-  const clips = snap.media.filter((m) => m.nodeId === node.id && !m.archived);
-  const cover = coverOf(snap, node);
-  // Which clip feeds the shots, and the segments it was cut into.
-  const fed = clips.find((c) => snap.takes.some((t) => t.mediaId === c.id && t.nodeId !== node.id));
-  const segs = fed ? snap.takes.filter((t) => t.mediaId === fed.id).sort((a, b) => a.inSec - b.inSec) : [];
-
-  return (
-    <div className={cx("card card--scene", selectedId === node.id && "card--on")} onClick={() => select(node.id, "produce")}>
-      <Thumb {...cover} />
-      <div className="card__meta">
-        <span className="card__code">{codeOf(p, node)}</span>
-        <span className="card__kind"><IconStack2 size={12} /> {role === "production" ? "Producción de escena" : "Montaje"}</span>
-      </div>
-      {fed && fed.durationSec ? (
-        <div className="cutstrip" title={`v${fed.version} repartido en ${segs.length} tramos`}>
-          {segs.map((t) => {
-            return <span key={t.id} className={`seg-c${colorSlot(snap, t.nodeId)}`} style={{ left: `${(t.inSec / fed.durationSec!) * 100}%`, width: `${((t.outSec - t.inSec) / fed.durationSec!) * 100}%` }} />;
-          })}
-        </div>
-      ) : null}
-      <div className="card__foot">
-        <span>{clips.length} clip{clips.length === 1 ? "" : "s"}</span>
-        {fed ? <span>{segs.length} tramos</span> : <span className="sf-faint">sin repartir</span>}
-      </div>
-    </div>
   );
 }
 
