@@ -5,6 +5,7 @@ import { useSnap, useStore } from "../state/store";
 import { progressOf, statusOf } from "../state/selectors";
 import { nodeDragProps, useEndDrop, useGroupDrop, useNodeDrop } from "./dnd";
 import { InlineEdit } from "./Board";
+import { useShowCodes } from "../state/names";
 
 export function StructureTree() {
   const snap = useSnap();
@@ -41,6 +42,7 @@ export function StructureTree() {
 }
 
 function TreeRow({ node, depth }: { node: ProdNode; depth: number }) {
+  const showCodes = useShowCodes();
   const snap = useSnap();
   const { selectedId, multi, scopeId, collapsed, toggleCollapsed, toggleMulti, select, set, source, focusPopped } = useStore();
   const apart = useStore((s) => s.popped.some((w) => w.nodeId === node.id));
@@ -76,7 +78,7 @@ function TreeRow({ node, depth }: { node: ProdNode; depth: number }) {
           </button>
         )}
         <span className="trow__dot" style={{ background: st.color }} title={st.name} />
-        <span className="trow__code">{codeOf(p, node)}</span>
+        {showCodes ? <span className="trow__code">{codeOf(p, node)}</span> : null}
         <InlineEdit className="trow__title" value={node.title} placeholder="Sin título" label="Doble clic para escribir el título"
           onSave={(title) => source.updateNode(node.id, { title })} />
         {apart ? (

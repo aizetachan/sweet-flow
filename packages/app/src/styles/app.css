@@ -64,11 +64,12 @@
 .trow__caret svg { transition: transform .12s; }
 .trow__caret.is-open svg { transform: rotate(90deg); }
 .trow__dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
-.trow__code { font-weight: 600; font-size: 12px; font-variant-numeric: tabular-nums; color: var(--fg-1); }
-.trow__title { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--fg-3); }
+/* The title is what is read (white, medium weight); the code, if shown, goes softer. */
+.trow__code { font-weight: 500; font-size: 12px; font-variant-numeric: tabular-nums; color: var(--fg-3); }
+.trow__title { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--fg-0); font-weight: 500; }
 .trow__prog { font-size: 10.5px; color: var(--fg-4); font-variant-numeric: tabular-nums; }
 .trow__gicon { flex: none; color: var(--fg-3); }
-.trow--group .trow__code { flex: 1; min-width: 0; }
+.trow--group .trow__code { flex: 1; min-width: 0; font-size: inherit; color: var(--fg-0); }
 .trow__title.inline-edit__in, .trow__code.inline-edit__in { height: 22px; }
 .crumbs__rename { height: 26px; width: 240px; }
 .modal-foot { display: flex; justify-content: flex-end; margin-top: 14px; }
@@ -954,3 +955,5 @@ button.topbar__me { position: relative; padding: 0; border: 0; border-radius: 50
 .workspace--snapping .side__resize { transition: left .24s ease; }
 .imp__kinds { align-self: stretch; display: grid; grid-template-columns: repeat(3, 1fr); }
 .imp__kinds .gen__kind { width: auto; }
+.setting { display: flex; align-items: center; gap: 10px; padding: 10px 12px; margin-bottom: 14px; border-radius: var(--r-md); background: var(--bg-3); cursor: pointer; }
+.setting input { accent-color: var(--primary); width: 15px; height: 15px; }

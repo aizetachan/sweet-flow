@@ -19,6 +19,25 @@ export function Modals() {
 }
 
 /**
+ * «Mostrar códigos» (docs/INTERFAZ.md §2): off by default, things go by their
+ * title; on, the codes (SQ010, SH0010…) show next to them. On disk the folders
+ * always carry their code. A setting of this computer.
+ */
+function ShowCodesSetting() {
+  const showCodes = useStore((s) => s.showCodes);
+  const set = useStore((s) => s.set);
+  return (
+    <label className="setting">
+      <input type="checkbox" checked={showCodes} onChange={(e) => set({ showCodes: e.target.checked })} />
+      <span>
+        <b>Mostrar códigos</b>
+        <span className="sf-faint sf-small"> · SQ010, SC010, SH0010… junto a los títulos. En el disco las carpetas siempre llevan su código.</span>
+      </span>
+    </label>
+  );
+}
+
+/**
  * A scene's or shot's notes (docs/INTERFAZ.md §2): action, dialogue, direction
  * — the base of its prompt. Opened from «Notas» in the panel or the note icon
  * of a card; saved as you type.
@@ -94,6 +113,7 @@ function LevelsModal({ onClose }: { onClose: () => void }) {
 
   return (
     <Modal title="Niveles de la producción" onClose={onClose} width={780}>
+      <ShowCodesSetting />
       <p className="sf-muted modal-lead">
         Cada nivel es una carpeta, en la app y en el disco. El último es la unidad de trabajo (las cards).
         Los niveles que <b>generan</b> son puntos de producción: una escena puede producir 30 s, cortarlos y repartirlos a sus planos.

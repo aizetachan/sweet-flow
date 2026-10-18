@@ -11,6 +11,7 @@
 import { folderPath, mediaFileName, codeOf, versionTag, type Id, type Media, type ProdNode } from "@sweetflow/domain";
 import { useStore } from "../state/store";
 import { withTeamRoot } from "./reveal";
+import { nameOf } from "../state/names";
 
 /**
  * A link into the app: a dashboard folder or a production (`entryId`), and in
@@ -39,7 +40,7 @@ export function copyShotLink(node: ProdNode, media?: Media): void {
   const { productionId, snap, notify } = useStore.getState();
   if (!productionId || !snap) return;
   void navigator.clipboard?.writeText(appLink(productionId, node.id, media?.id));
-  notify(`Enlace a ${codeOf(snap.production, node)}${media ? ` ${versionTag(media.version)}` : ""} copiado: abre la app en ese plano (para quien tenga la carpeta del equipo).`);
+  notify(`Enlace a ${nameOf(snap.production, node)}${media ? ` ${versionTag(media.version)}` : ""} copiado: abre la app en ese plano (para quien tenga la carpeta del equipo).`);
 }
 
 /** Its file name on disk (as saved in `_media/`), or one made from its code. */

@@ -22,6 +22,7 @@ import { ProduceTab } from "./ProduceTab";
 import { CutTab } from "./CutTab";
 import { ReviewTab } from "./ReviewTab";
 import { ActivityTab } from "./ActivityTab";
+import { nameOf, useShowCodes } from "../state/names";
 
 const ASSET_LABEL = { cast: "Reparto", prop: "Prop", location: "Localización", style: "Estilo" } as const;
 
@@ -73,7 +74,7 @@ function OpenElsewhere({ node }: { node: ProdNode }) {
     <div className="insp insp--empty insp--elsewhere">
       <div>
         <IconExternalLink size={26} stroke={1.5} className="accent" />
-        <h3>{codeOf(snap.production, node)} {node.title ? `· ${node.title}` : ""}</h3>
+        <h3>{nameOf(snap.production, node)}</h3>
         <p className="sf-muted">Está abierto en una ventana aparte. Trabaja en esa ventana, o tráelo aquí para cerrarla.</p>
         <div className="insp__elsewhere-acts">
           <Button variant="primary" onClick={() => focusPopped(node.id)}><IconExternalLink size={14} /> Ir a la ventana</Button>
@@ -145,6 +146,7 @@ export function WindowInspector({ nodeId }: { nodeId: string }) {
 }
 
 function InspectorBody({ floatKey, onDragHandle }: { floatKey?: string; onDragHandle?: (e: ReactPointerEvent) => void }) {
+  const showCodes = useShowCodes();
   const snap = useSnap();
   const panel = usePanel();
   const { select, dockPanel, closeFloating, popOut, source, set, trashNodes } = useStore();
@@ -187,13 +189,13 @@ function InspectorBody({ floatKey, onDragHandle }: { floatKey?: string; onDragHa
             <IconButton label="Acoplar al panel lateral" size="sm" onClick={() => dockPanel(floatKey)}><IconLayoutSidebarLeftExpand size={14} /></IconButton>
           ) : null}
           {panel.mode !== "window" ? (
-            <IconButton label={`Mover ${codeOf(p, node)} a la papelera (Supr)`} size="sm" onClick={() => trashNodes([node.id])}><IconTrash size={14} /></IconButton>
+            <IconButton label={`Mover ${nameOf(p, node)} a la papelera (Supr)`} size="sm" onClick={() => trashNodes([node.id])}><IconTrash size={14} /></IconButton>
           ) : null}
           <PinLabelSync node={node} />
           {/* Its folder path, to paste in the Finder or send (it says sequence, scene and shot). */}
           <IconButton label={`Copiar la ruta: ${path}`} size="sm" onClick={() => {
             void navigator.clipboard?.writeText(path);
-            useStore.getState().notify(`Ruta de ${codeOf(p, node)} copiada.`);
+            useStore.getState().notify(`Ruta de ${nameOf(p, node)} copiada.`);
           }}><IconCopy size={14} /></IconButton>
           {panel.mode !== "window" ? (
             <IconButton
@@ -216,9 +218,9 @@ function InspectorBody({ floatKey, onDragHandle }: { floatKey?: string; onDragHa
             }}
           ><IconX size={14} /></IconButton>
         </div>
-        {/* Row 2: the code, lighter, under the title; who works on it on the right. */}
+        {/* Row 2: the code (only with «Mostrar códigos»), lighter, under the title; who works on it on the right. */}
         <div className="nhead__row nhead__row--code">
-          <CodeEditor node={node} />
+          {showCodes ? <CodeEditor node={node} /> : null}
           <button className={cx("notes__btn", node.notes.trim() && "notes__btn--on")} title={node.notes.trim() ? node.notes : "Escribir notas: acción, diálogo, dirección (base del prompt)"}
             onClick={() => set({ modal: "notes", notesFor: node.id })}>
             <IconNote size={13} /> Notas
@@ -240,7 +242,7 @@ function InspectorBody({ floatKey, onDragHandle }: { floatKey?: string; onDragHa
         ]}
       />
       {node.shelvedAt !== undefined ? (
-        <div className="insp__shelved"><IconMovie size={13} /> Está en «Vídeos editados»{node.parentId ? ` de ${codeOf(p, snap.nodes.find((n) => n.id === node.parentId) ?? node)}` : ""}: en Editar puedes sacar más planos de su vídeo.</div>
+        <div className="insp__shelved"><IconMovie size={13} /> Está en «Vídeos editados»{node.parentId ? ` de ${nameOf(p, snap.nodes.find((n) => n.id === node.parentId) ?? node)}` : ""}: en Editar puedes sacar más planos de su vídeo.</div>
       ) : null}
       <div className="insp__body">
         {tab === "produce" ? (features.generation ? <ProduceTab node={node} /> : <ComingSoon what="Generar imágenes y vídeo, versiones y tomas" />) : null}
@@ -262,7 +264,7 @@ function StageFallback({ node }: { node: ProdNode }) {
   const snap = useSnap();
   const { playhead, playing, setPanel } = usePanel();
   const { media } = coverOf(snap, node);
-  if (!media) return <div className="insp__stage-empty sf-muted">Aún no hay nada generado en {codeOf(snap.production, node)}.</div>;
+  if (!media) return <div className="insp__stage-empty sf-muted">Aún no hay nada generado en {nameOf(snap.production, node)}.</div>;
   return <Player media={media} time={playhead} playing={playing} onTime={(t) => setPanel({ playhead: t })} onPlaying={(v) => setPanel({ playing: v })} />;
 }
 

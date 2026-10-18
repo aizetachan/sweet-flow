@@ -7,7 +7,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { IconArrowBackUp, IconArrowForwardUp, IconCheck, IconClock, IconMapPin, IconSend, IconTrash, IconX } from "@tabler/icons-react";
-import { codeOf, formatTc, versionTag, type Comment, type Id, type Media, type Member, type ProdNode } from "@sweetflow/domain";
+import { formatTc, versionTag, type Comment, type Id, type Media, type Member, type ProdNode } from "@sweetflow/domain";
 import { Avatar, avatarColor, Button, cx, IconButton, Modal } from "@sweetflow/ui";
 import { useSnap, useStore } from "../state/store";
 import { coverOf, memberName } from "../state/selectors";
@@ -15,6 +15,7 @@ import { usePanel } from "./panel";
 import { OnStage } from "./stage";
 import { Player, Thumb } from "../components/media";
 import type { Mark } from "../components/marks";
+import { nameOf } from "../state/names";
 
 export function ReviewTab({ node }: { node: ProdNode }) {
   const snap = useSnap();
@@ -320,7 +321,7 @@ export function Composer({ node, mediaId, parentId, isVideo, playhead = 0, mark,
     <div className={cx("composer", compact && "composer--compact")}>
       <div className="composer__field">
         <textarea ref={ref} className="sf-textarea" rows={compact ? 1 : 2} autoFocus={autoFocus}
-          placeholder={parentId ? "Responder… (@ para avisar a alguien)" : `Comentar ${codeOf(snap.production, node)}… (@ para avisar a alguien)`}
+          placeholder={parentId ? "Responder… (@ para avisar a alguien)" : `Comentar ${nameOf(snap.production, node)}… (@ para avisar a alguien)`}
           value={text}
           onChange={(e) => { if (!text) onTyping?.(); setText(e.target.value); setCaret(e.target.selectionStart); }}
           onSelect={(e) => setCaret(e.currentTarget.selectionStart)}

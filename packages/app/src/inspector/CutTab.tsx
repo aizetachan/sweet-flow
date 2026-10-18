@@ -3,7 +3,7 @@ import { IconCut, IconCornerDownRight, IconPlayerPlay } from "@tabler/icons-reac
 import {
   ancestorsOf,
   childrenOf,
-  codeOf,
+
   formatTc,
   isUnit,
   levelIndex,
@@ -20,6 +20,7 @@ import { colorSlot } from "../state/selectors";
 import { usePanel } from "./panel";
 import { OnStage } from "./stage";
 import { Player, useDuration } from "../components/media";
+import { nameOf } from "../state/names";
 
 const KEEP = "__keep__";
 const NEW = "__new__";
@@ -85,9 +86,9 @@ export function CutTab({ node }: { node: ProdNode }) {
   if (!media) return <div className="tab"><p className="note">No hay clips de vídeo listos en esta rama.</p></div>;
 
   const destOf = (i: number): string => dest[i] ?? kids[i]?.id ?? (childLevel ? NEW : KEEP);
-  const nameOf = (id: Id) => {
+  const destName = (id: Id) => {
     const n = snap.nodes.find((x) => x.id === id);
-    return n ? `${codeOf(p, n)} ${n.title}` : "";
+    return n ? nameOf(p, n) : "";
   };
 
   const place = (indexes: number[]) => {
@@ -111,7 +112,7 @@ export function CutTab({ node }: { node: ProdNode }) {
   // A video in «Vídeos editados»: the marked stretches become shots; it stays there.
   const edited = node.shelvedAt !== undefined && media.nodeId === node.id;
   const split = () => {
-    const before = codeOf(p, owner);
+    const before = nameOf(p, owner);
     if (edited) {
       const ids = source.shotsFromEdited(node.id, media.id, kept);
       if (!ids.length) return;
@@ -132,7 +133,7 @@ export function CutTab({ node }: { node: ProdNode }) {
     if (!ids.length) return;
     const { select, notify } = useStore.getState();
     select(ids[0]!, "produce");
-    notify(`${before} pasó a Vídeos editados${scene ? ` de ${codeOf(p, scene)}` : ""} · ${ids.length} plano${ids.length > 1 ? "s" : ""} nuevo${ids.length > 1 ? "s" : ""}.`, {
+    notify(`${before} pasó a Vídeos editados${scene ? ` de ${nameOf(p, scene)}` : ""} · ${ids.length} plano${ids.length > 1 ? "s" : ""} nuevo${ids.length > 1 ? "s" : ""}.`, {
       label: "Deshacer",
       run: () => {
         for (const id of ids) source.trashNode(id);
@@ -154,10 +155,10 @@ export function CutTab({ node }: { node: ProdNode }) {
         <select className="sf-select" value={media.id} onChange={(e) => setPanel({ activeMediaId: e.target.value, playhead: 0, playing: false })}>
           {(inTake ? [media] : clips).map((m) => {
             const n = all.find((x) => x.id === m.nodeId) ?? node;
-            return <option key={m.id} value={m.id}>{codeOf(p, n)} · {versionTag(m.version)}{m.id === media.id ? ` · ${dur}s` : m.durationSec ? ` · ${m.durationSec}s` : ""}</option>;
+            return <option key={m.id} value={m.id}>{nameOf(p, n)} · {versionTag(m.version)}{m.id === media.id ? ` · ${dur}s` : m.durationSec ? ` · ${m.durationSec}s` : ""}</option>;
           })}
         </select>
-        {inTake ? <span className="sf-small sf-muted"><IconCornerDownRight size={12} /> su tramo {formatTc(myTake!.inSec)}–{formatTc(myTake!.outSec)}</span> : owner.id !== node.id ? <span className="sf-small sf-muted"><IconCornerDownRight size={12} /> clip de {codeOf(p, owner)}</span> : null}
+        {inTake ? <span className="sf-small sf-muted"><IconCornerDownRight size={12} /> su tramo {formatTc(myTake!.inSec)}–{formatTc(myTake!.outSec)}</span> : owner.id !== node.id ? <span className="sf-small sf-muted"><IconCornerDownRight size={12} /> clip de {nameOf(p, owner)}</span> : null}
       </div>
 
       <OnStage>
@@ -189,8 +190,8 @@ export function CutTab({ node }: { node: ProdNode }) {
           <div className="tl__placed" title="Tramos ya colocados de este clip">
             {placed.map((t) => {
               return (
-                <span key={t.id} className={`seg-c${colorSlot(snap, t.nodeId)}`} style={{ left: `${(t.inSec / dur) * 100}%`, width: `${((t.outSec - t.inSec) / dur) * 100}%` }} title={`${nameOf(t.nodeId)} · ${formatTc(t.inSec)}–${formatTc(t.outSec)}`}>
-                  {codeOf(p, snap.nodes.find((n) => n.id === t.nodeId) ?? owner)}
+                <span key={t.id} className={`seg-c${colorSlot(snap, t.nodeId)}`} style={{ left: `${(t.inSec / dur) * 100}%`, width: `${((t.outSec - t.inSec) / dur) * 100}%` }} title={`${destName(t.nodeId)} · ${formatTc(t.inSec)}–${formatTc(t.outSec)}`}>
+                  {nameOf(p, snap.nodes.find((n) => n.id === t.nodeId) ?? owner)}
                 </span>
               );
             })}
@@ -227,8 +228,8 @@ export function CutTab({ node }: { node: ProdNode }) {
             <IconButton size="sm" label="Ver tramo" onClick={() => setPanel({ playhead: s.inSec, playing: true })}><IconPlayerPlay size={12} /></IconButton>
             <span className="sf-mono segrow__tc">{formatTc(s.inSec)}–{formatTc(s.outSec)} <span className="sf-faint">{round1(s.outSec - s.inSec)}s</span></span>
             <select className="sf-select" value={destOf(i)} onChange={(e) => setDest({ ...dest, [i]: e.target.value })}>
-              <option value={KEEP}>{isUnit(p, owner) ? `Toma de ${codeOf(p, owner)}` : `Mantener en ${codeOf(p, owner)}`}</option>
-              {kids.map((k) => <option key={k.id} value={k.id}>→ {codeOf(p, k)} {k.title}</option>)}
+              <option value={KEEP}>{isUnit(p, owner) ? `Toma de ${nameOf(p, owner)}` : `Mantener en ${nameOf(p, owner)}`}</option>
+              {kids.map((k) => <option key={k.id} value={k.id}>→ {nameOf(p, k)} {k.title}</option>)}
               {childLevel ? <option value={NEW}>→ Nuevo {childLevel.name.toLowerCase()}</option> : null}
             </select>
           </div>
@@ -241,9 +242,9 @@ export function CutTab({ node }: { node: ProdNode }) {
             <p className="sf-faint sf-small">
               {segments.length < 2
                 ? <>Pulsa <span className="sf-kbd">C</span> o «Cortar» donde empieza cada plano.</>
-                : edited ? <>Cada tramo marcado sale como un plano nuevo{scene ? ` en ${codeOf(p, scene)}` : ""}, después de los que ya salieron de este vídeo; {codeOf(p, owner)} sigue en «Vídeos editados».</>
-                : inTake ? <>{codeOf(p, owner)} se queda con el primer tramo marcado y los demás salen como planos a su lado; el vídeo original no se toca.</>
-                : <>Los tramos marcados sustituyen a {codeOf(p, owner)} en la fila; el vídeo completo pasa a «Vídeos editados»{scene ? ` de ${codeOf(p, scene)}` : ""}.</>}
+                : edited ? <>Cada tramo marcado sale como un plano nuevo{scene ? ` en ${nameOf(p, scene)}` : ""}, después de los que ya salieron de este vídeo; {nameOf(p, owner)} sigue en «Vídeos editados».</>
+                : inTake ? <>{nameOf(p, owner)} se queda con el primer tramo marcado y los demás salen como planos a su lado; el vídeo original no se toca.</>
+                : <>Los tramos marcados sustituyen a {nameOf(p, owner)} en la fila; el vídeo completo pasa a «Vídeos editados»{scene ? ` de ${nameOf(p, scene)}` : ""}.</>}
             </p>
           </>
         ) : (

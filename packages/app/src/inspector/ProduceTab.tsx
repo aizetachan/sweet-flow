@@ -6,7 +6,7 @@ import {
 } from "@tabler/icons-react";
 import {
   ancestorsOf,
-  codeOf,
+
   formatTc,
   isUnit,
   levelOf,
@@ -29,6 +29,7 @@ import { Composer } from "./ReviewTab";
 import { hasFiles, runImport } from "../components/ImportDialog";
 import type { Mark } from "../components/marks";
 import { Player, Thumb } from "../components/media";
+import { nameOf } from "../state/names";
 
 
 /** One thing in a shot's gallery: a version generated here, or a stretch of another video placed here. */
@@ -78,7 +79,7 @@ export function ProduceTab({ node }: { node: ProdNode }) {
     const id = source.extractToRow(node.id, i.media.id, i.foreign && i.take ? { inSec: i.take.inSec, outSec: i.take.outSec } : undefined);
     const made = id ? useStore.getState().snap?.nodes.find((n) => n.id === id) : undefined;
     if (!id) return;
-    notify(`${i.foreign ? "Tramo" : versionTag(i.media.version)} sacado a la fila${made ? ` como ${codeOf(snap.production, made)}` : ""}.`, {
+    notify(`${i.foreign ? "Tramo" : versionTag(i.media.version)} sacado a la fila${made ? ` como ${nameOf(snap.production, made)}` : ""}.`, {
       label: "Ver",
       run: () => { useStore.getState().select(id); useStore.getState().set({ notice: null }); },
     });
@@ -164,7 +165,7 @@ export function ProduceTab({ node }: { node: ProdNode }) {
                 <Thumb media={ready ? m : undefined} take={i.foreign ? i.take : undefined} pending={m.status === "queued" || m.status === "rendering" ? m : undefined} badge={false} preview />
                 <span className="version__tag">
                   {m.kind === "video" ? <IconVideo size={11} /> : m.kind === "audio" ? <IconMusic size={11} /> : <IconPhoto size={11} />}
-                  <span className="version__label" title={i.foreign ? `Tramo de ${from ? codeOf(snap.production, from) : "—"}` : undefined}>{i.foreign ? `Tramo de ${from ? codeOf(snap.production, from) : "—"}` : versionTag(m.version)}</span>
+                  <span className="version__label" title={i.foreign ? `Tramo de ${from ? nameOf(snap.production, from) : "—"}` : undefined}>{i.foreign ? `Tramo de ${from ? nameOf(snap.production, from) : "—"}` : versionTag(m.version)}</span>
                   {isChosen ? <span className="version__chosen"><IconCheck size={10} stroke={3} /> Elegida</span> : <Avatar name={memberName(snap, m.createdBy)} size={14} />}
                 </span>
                 {ready && !m.archived ? (
@@ -207,7 +208,7 @@ function MediaMeta({ media, take }: { media: Media; take?: Take }) {
       <div className="mmeta__row">
         <span className="mmeta__v">{take ? "Tramo" : versionTag(media.version)}</span>
         <span className="sf-muted sf-small">
-          {take ? `${formatTc(take.inSec)} → ${formatTc(take.outSec)} · ${takeDuration(take)}s · de ${from ? codeOf(snap.production, from) : "—"} ${versionTag(media.version)}${from?.shelvedAt !== undefined ? " (en Vídeos editados)" : ""}` : (
+          {take ? `${formatTc(take.inSec)} → ${formatTc(take.outSec)} · ${takeDuration(take)}s · de ${from ? nameOf(snap.production, from) : "—"} ${versionTag(media.version)}${from?.shelvedAt !== undefined ? " (en Vídeos editados)" : ""}` : (
             <>{g?.model} · {memberName(snap, media.createdBy)} · {new Date(media.createdAt).toLocaleString("es-ES", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</>
           )}
         </span>
@@ -499,9 +500,9 @@ function RefSlot({ label, icon, accept, node, value, disabled, disabledHint, onP
           {options.map((m) => {
             const n = [...snap.nodes, ...snap.shelf].find((x) => x.id === m.nodeId);
             return (
-              <button key={m.id} className="menu__item gen__pick" onClick={() => onPick(m.id, m.kind as Pickable)} title={n ? `${codeOf(snap.production, n)} ${versionTag(m.version)}` : ""}>
+              <button key={m.id} className="menu__item gen__pick" onClick={() => onPick(m.id, m.kind as Pickable)} title={n ? `${nameOf(snap.production, n)} ${versionTag(m.version)}` : ""}>
                 <Thumb media={m} badge={false} />
-                <span className="sf-small">{n ? codeOf(snap.production, n) : "—"} {versionTag(m.version)}</span>
+                <span className="sf-small">{n ? nameOf(snap.production, n) : "—"} {versionTag(m.version)}</span>
               </button>
             );
           })}

@@ -217,6 +217,16 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
   duración, y la papelera (solo al pasar el ratón). A la derecha, «Ver todos /
   En fila» y «Vídeos editados», con el mismo estilo.
 - La **barra de scroll** de una fila solo se ve mientras se desplaza.
+- **Títulos, no códigos:** en pantalla todo se nombra por su **título** (en
+  tarjetas, cabeceras, Explorer, panel, avisos y menús). Sin título, se ve
+  «Sin título» como provisional hasta que se cambie. Los códigos (SQ010,
+  SC010, SH0010…) no se ven, ni al pasar el ratón; en la tarjeta del plano, la
+  segunda línea queda con los avatares asignados y la duración. En **Ajustes**
+  (el botón del menú de abajo) está **«Mostrar códigos»** para quien los
+  quiera ver junto a los títulos (y editar el número en el panel). Es un
+  ajuste de este ordenador. En el disco y en Magnific las carpetas siempre
+  llevan su código. En Explorer el título va en blanco con peso medio y el
+  código, si se muestra, más suave.
 - **Espacio de trabajo:** sin nada elegido en Explorer, el tablero se titula
   «Espacio de trabajo» (sin número de planos).
 - **Estado de la escena** en su cabecera: un clic abre la lista de estados,

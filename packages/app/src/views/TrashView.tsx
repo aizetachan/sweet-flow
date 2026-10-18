@@ -10,6 +10,7 @@ import { ancestorsOf, codeOf, descendantsOf, levelOf, splitTrash, type ProdNode 
 import { Button, IconButton } from "@sweetflow/ui";
 import { useSnap, useStore } from "../state/store";
 import { ago } from "../dashboard/Browse";
+import { nameOf, useShowCodes } from "../state/names";
 
 export function TrashView() {
   const snap = useSnap();
@@ -46,6 +47,7 @@ export function TrashView() {
 }
 
 function TrashRow({ node, all }: { node: ProdNode; all: ProdNode[] }) {
+  const showCodes = useShowCodes();
   const p = useSnap().production;
   const { notify, set, select, source } = useStore();
   const [armedRow, setArmedRow] = useArmed();
@@ -55,11 +57,11 @@ function TrashRow({ node, all }: { node: ProdNode; all: ProdNode[] }) {
     const name = levelOf(p, d).name.toLowerCase();
     counts.set(name, (counts.get(name) ?? 0) + 1);
   }
-  const where = ancestorsOf(all, node).slice(0, -1).map((a) => codeOf(p, a)).join(" / ") || "la raíz de la producción";
+  const where = ancestorsOf(all, node).slice(0, -1).map((a) => nameOf(p, a)).join(" / ") || "la raíz de la producción";
   const restore = () => {
-    const was = codeOf(p, node);
+    const was = nameOf(p, node);
     const renumbered = source.restoreNode(node.id);
-    const now = renumbered === undefined ? was : codeOf(p, { ...node, number: renumbered });
+    const now = renumbered === undefined ? was : nameOf(p, { ...node, number: renumbered });
     notify(renumbered === undefined ? `${was} ha vuelto a su sitio.` : `${was} ha vuelto como ${now}: su código estaba ocupado.`, {
       label: "Ver",
       run: () => {
@@ -70,7 +72,7 @@ function TrashRow({ node, all }: { node: ProdNode; all: ProdNode[] }) {
   };
   return (
     <div className="trash__row">
-      <span className="trash__code">{codeOf(p, node)}</span>
+      {showCodes ? <span className="trash__code">{codeOf(p, node)}</span> : null}
       <span className="trash__main">
         <span className="trash__title">{node.title || <i className="sf-faint">Sin título</i>}</span>
         <span className="sf-faint sf-small">

@@ -7,11 +7,12 @@
 
 import { useState } from "react";
 import { IconBell } from "@tabler/icons-react";
-import { codeOf, formatTc, type Comment, type Id } from "@sweetflow/domain";
+import { formatTc, type Comment, type Id } from "@sweetflow/domain";
 import { Avatar, cx, IconButton } from "@sweetflow/ui";
 import { useSnap, useStore } from "../state/store";
 import { memberName } from "../state/selectors";
 import { Popover } from "../components/Popover";
+import { nameOf } from "../state/names";
 
 const KEY = (productionId: Id) => `sweetflow:read:${productionId}`;
 
@@ -82,7 +83,7 @@ export function Notifications() {
                 <span className="notif__body">
                   <span className="sf-small">
                     <b>{memberName(snap, c.authorId)}</b> {isReply ? "respondió a tu comentario" : "te mencionó"}
-                    {node ? <> en <b>{codeOf(snap.production, node)}</b></> : null}
+                    {node ? <> en <b>{nameOf(snap.production, node)}</b></> : null}
                     {c.atSec !== undefined ? <span className="sf-faint"> · {formatTc(c.atSec)}</span> : null}
                   </span>
                   <span className="notif__text">{c.text}</span>

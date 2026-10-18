@@ -6,10 +6,11 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { IconChevronRight, IconClock, IconFolder, IconMusic, IconPhoto, IconSearch, IconUpload, IconVideo } from "@tabler/icons-react";
-import { codeOf, formatTc, type MediaKind } from "@sweetflow/domain";
+import { formatTc, type MediaKind } from "@sweetflow/domain";
 import { Button, cx, Modal, Segmented, Spinner } from "@sweetflow/ui";
 import { useSnap, useStore, type ImportTarget } from "../state/store";
 import { importKind, type ImportItem, type RemoteCreation, type RemoteFolder } from "../data/source";
+import { nameOf } from "../state/names";
 
 /** Brings the items in where `target` says, and tells what happened. */
 export function runImport(target: ImportTarget, items: ImportItem[]): void {
@@ -21,7 +22,7 @@ export function runImport(target: ImportTarget, items: ImportItem[]): void {
     if ("nodeId" in target) {
       for (const i of ok) source.importMedia(target.nodeId, i);
       const n = snap?.nodes.find((x) => x.id === target.nodeId);
-      notify(`${ok.length === 1 ? "Importada una versión" : `Importadas ${ok.length} versiones`}${n && snap ? ` en ${codeOf(snap.production, n)}` : ""}.${skipped ? ` ${skipped} no eran imagen, vídeo ni audio.` : ""}`);
+      notify(`${ok.length === 1 ? "Importada una versión" : `Importadas ${ok.length} versiones`}${n && snap ? ` en ${nameOf(snap.production, n)}` : ""}.${skipped ? ` ${skipped} no eran imagen, vídeo ni audio.` : ""}`);
     } else {
       const ids = source.importShots(target.rowId, ok, target.before, target.groupId);
       if (ids[0]) select(ids[0]);
@@ -48,7 +49,7 @@ export function ImportDialog() {
   const p = snap.production;
   const node = "nodeId" in target ? snap.nodes.find((n) => n.id === target.nodeId) : undefined;
   const row = "rowId" in target ? snap.nodes.find((n) => n.id === target.rowId) : undefined;
-  const where = node ? `Como versión nueva de ${codeOf(p, node)}` : row ? `Como planos nuevos en ${codeOf(p, row)}` : "";
+  const where = node ? `Como versión nueva de ${nameOf(p, node)}` : row ? `Como planos nuevos en ${nameOf(p, row)}` : "";
   const done = (items: ImportItem[]) => {
     close();
     runImport(target, items);

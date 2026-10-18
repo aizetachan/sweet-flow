@@ -12,6 +12,7 @@ import { Button, cx, IconButton } from "@sweetflow/ui";
 import { useSnap, useStore } from "../state/store";
 import { Player, Thumb } from "../components/media";
 import { Popover } from "../components/Popover";
+import { nameOf, useShowCodes } from "../state/names";
 
 export function ShelfButton({ row }: { row: ProdNode }) {
   const snap = useSnap();
@@ -20,7 +21,7 @@ export function ShelfButton({ row }: { row: ProdNode }) {
   return (
     <Popover align="right" className="shelf" button={({ open, toggle }) => (
       // Same look as the row's «Ver todos / En fila».
-      <Button size="sm" variant="ghost" className={cx(open && "is-on")} title={`Vídeos editados de ${codeOf(snap.production, row)}: los originales que se cortaron en planos`} onClick={toggle}>
+      <Button size="sm" variant="ghost" className={cx(open && "is-on")} title={`Vídeos editados de ${nameOf(snap.production, row)}: los originales que se cortaron en planos`} onClick={toggle}>
         <IconMovie size={14} /> Vídeos editados <span className="shelf__count">{items.length}</span>
       </Button>
     )}>
@@ -30,6 +31,7 @@ export function ShelfButton({ row }: { row: ProdNode }) {
 }
 
 function ShelfList({ row, items }: { row: ProdNode; items: ProdNode[] }) {
+  const showCodes = useShowCodes();
   const snap = useSnap();
   const { source, notify, select } = useStore();
   const selectedId = useStore((s) => s.selectedId);
@@ -41,7 +43,7 @@ function ShelfList({ row, items }: { row: ProdNode; items: ProdNode[] }) {
 
   return (
     <div className="shelf__in">
-      <div className="menu__title">Vídeos editados · {codeOf(p, row)}</div>
+      <div className="menu__title">Vídeos editados · {nameOf(p, row)}</div>
       {sorted.map((n) => {
         const video = snap.media.filter((m) => m.nodeId === n.id && m.status === "ready" && !m.archived).sort((a, b) => b.createdAt - a.createdAt);
         const fed = video.find((m) => snap.takes.some((t) => t.mediaId === m.id)) ?? video[0];
@@ -56,22 +58,22 @@ function ShelfList({ row, items }: { row: ProdNode; items: ProdNode[] }) {
                 <span className="shelf__play"><IconPlayerPlay size={14} /></span>
               </button>
               <div className="shelf__meta">
-                <div><strong>{codeOf(p, n)}</strong> {n.title || <span className="sf-faint">Sin título</span>}</div>
+                <div>{showCodes ? <><strong>{codeOf(p, n)}</strong> </> : null}{n.title || <span className="sf-faint">Sin título</span>}</div>
                 <div className="sf-faint sf-small">
                   {fed?.durationSec ? `${fed.durationSec}s · ` : ""}
-                  {shots.length ? `cortado en ${shots.map((s) => codeOf(p, s)).join(", ")}` : "sin planos que lo usen"}
+                  {shots.length ? `cortado en ${shots.map((s) => nameOf(p, s)).join(", ")}` : "sin planos que lo usen"}
                 </div>
               </div>
               <IconButton size="sm" label="Devolver a la fila (los planos cortados se quedan)" onClick={() => {
                 const renumbered = source.unshelveNode(n.id);
                 notify(renumbered !== undefined
-                  ? `${codeOf(p, n)} vuelve a la fila como ${codeOf(p, { ...n, number: renumbered })}: su código ya estaba en uso.`
-                  : `${codeOf(p, n)} vuelve a la fila.`);
+                  ? `${nameOf(p, n)} vuelve a la fila como ${nameOf(p, { ...n, number: renumbered })}: su código ya estaba en uso.`
+                  : `${nameOf(p, n)} vuelve a la fila.`);
                 select(n.id);
               }}><IconArrowBackUp size={14} /></IconButton>
-              <IconButton size="sm" label={shots.length ? `Descartar a la papelera (${shots.map((s) => codeOf(p, s)).join(", ")} lo siguen usando mientras esté allí)` : "Descartar a la papelera"} onClick={() => {
+              <IconButton size="sm" label={shots.length ? `Descartar a la papelera (${shots.map((s) => nameOf(p, s)).join(", ")} lo siguen usando mientras esté allí)` : "Descartar a la papelera"} onClick={() => {
                 source.trashNode(n.id);
-                notify(`${codeOf(p, n)} a la papelera de la producción.`, { label: "Deshacer", run: () => { source.restoreNode(n.id); useStore.getState().set({ notice: null }); } });
+                notify(`${nameOf(p, n)} a la papelera de la producción.`, { label: "Deshacer", run: () => { source.restoreNode(n.id); useStore.getState().set({ notice: null }); } });
               }}><IconTrash size={14} /></IconButton>
             </div>
             {open ? <Player media={fed} time={time} playing={playing} onTime={setTime} onPlaying={setPlaying} /> : null}

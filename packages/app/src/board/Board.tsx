@@ -24,8 +24,10 @@ import { copyMedia, copyShotLink, downloadMedia } from "../data/share";
 import { StatusPicker } from "../components/StatusPicker";
 import { groupDragProps, nodeDragProps, useNodeDrop, useRowDrop, useUngroupDrop, type RowHint } from "./dnd";
 import { ShelfButton } from "./Shelf";
+import { nameOf, UNTITLED, useShowCodes } from "../state/names";
 
 export function Board() {
+  const showCodes = useShowCodes();
   const snap = useSnap();
   const { scopeId, cardSize, filters, set } = useStore();
   const p = snap.production;
@@ -38,7 +40,7 @@ export function Board() {
     <main className="board">
       <div className="board__head">
         <div className="board__title">
-          <h1>{scope ? <><span className="board__code">{codeOf(p, scope)}</span> {scope.title}</> : "Espacio de trabajo"}</h1>
+          <h1>{scope ? <>{showCodes ? <span className="board__code">{codeOf(p, scope)}</span> : null} {scope.title || UNTITLED}</> : "Espacio de trabajo"}</h1>
           {scope ? <span className="board__count" title={`${units.length} ${unitName}${units.length === 1 ? "" : "s"}`}>{units.length}</span> : null}
         </div>
         <div className="board__tools">
@@ -74,6 +76,7 @@ function HeadInfo({ shots, done, seconds, unit }: { shots: number; done: number;
 
 /** Folders above the lane level render as headed groups; the lane level renders lanes. */
 function Group({ node }: { node: ProdNode }) {
+  const showCodes = useShowCodes();
   const snap = useSnap();
   const p = snap.production;
   const rowLevel = p.levels.length - 2;
@@ -89,17 +92,17 @@ function Group({ node }: { node: ProdNode }) {
   return (
     <section className="group">
       <GroupHead node={node} onToggle={toggleFold} folded={folded}>
-        <span className="group__code">{codeOf(p, node)}</span>
+        {showCodes ? <span className="group__code">{codeOf(p, node)}</span> : null}
         <InlineEdit className="group__title" value={node.title} placeholder="Sin título" label="Doble clic para cambiar el título"
           onSave={(title) => useStore.getState().source.updateNode(node.id, { title })} />
         <HeadInfo shots={prog.total} done={prog.done} seconds={durationOf(snap, node)} unit={p.levels.at(-1)!.name} />
         <span className="group__spacer" />
         {!filtersActive(filters) ? (
-          <Button size="sm" variant="ghost" title={`Nueva ${childLevel.name.toLowerCase()} al final de ${codeOf(p, node)}`} onClick={() => createRow(node.id)}>
+          <Button size="sm" variant="ghost" title={`Nueva ${childLevel.name.toLowerCase()} al final de ${nameOf(p, node)}`} onClick={() => createRow(node.id)}>
             <IconPlus size={14} /> {childLevel.name}
           </Button>
         ) : null}
-        <IconButton size="sm" className="head__del" label={`Mover ${codeOf(p, node)} y su contenido a la papelera`} onClick={() => trashNodes([node.id])}><IconTrash size={14} /></IconButton>
+        <IconButton size="sm" className="head__del" label={`Mover ${nameOf(p, node)} y su contenido a la papelera`} onClick={() => trashNodes([node.id])}><IconTrash size={14} /></IconButton>
       </GroupHead>
       {folded ? null : kids.map((k) => <Group key={k.id} node={k} />)}
       {/* Never empty: with nothing inside yet, the "+" card that starts its first scene with its first shot. */}
@@ -197,6 +200,7 @@ function useFold(id: Id): [boolean, (e?: ReactMouseEvent) => void] {
 }
 
 function Lane({ row }: { row: ProdNode }) {
+  const showCodes = useShowCodes();
   const snap = useSnap();
   const { filters, trashNodes } = useStore();
   const [folded, toggleFold] = useFold(row.id);
@@ -248,7 +252,7 @@ function Lane({ row }: { row: ProdNode }) {
     <section className="lane">
       <div className={cx("lane__head", folded && "lane__head--folded", headDrop.zone && `dnd-${headDrop.zone}`)} {...nodeDragProps(row.id)} {...headDrop.props}
         onClick={(e) => { if (!isControl(e.target)) toggleFold(e); }}>
-        <span className="lane__code">{codeOf(p, row)}</span>
+        {showCodes ? <span className="lane__code">{codeOf(p, row)}</span> : null}
         <InlineEdit className="lane__title" value={row.title} placeholder="Sin título" label="Doble clic para cambiar el título"
           onSave={(title) => useStore.getState().source.updateNode(row.id, { title })} />
         {/* The status changes right here, like on a card: a click opens the list (the row does not fold). */}
@@ -259,7 +263,7 @@ function Lane({ row }: { row: ProdNode }) {
         <HeadInfo shots={all.length} done={all.filter((u) => statusOf(snap, u).category === "done").length} seconds={durationOf(snap, row)} unit={unitLevel.name} />
         {viewers.length ? <AvatarStack names={viewers} size={18} /> : null}
         {/* Trash right after the info, shown on hover; the row's own buttons stay on the right. */}
-        <IconButton size="sm" className="head__del" label={`Mover ${codeOf(p, row)} y sus ${unitLevel.name.toLowerCase()}s a la papelera`} onClick={() => trashNodes([row.id])}><IconTrash size={14} /></IconButton>
+        <IconButton size="sm" className="head__del" label={`Mover ${nameOf(p, row)} y sus ${unitLevel.name.toLowerCase()}s a la papelera`} onClick={() => trashNodes([row.id])}><IconTrash size={14} /></IconButton>
         <div className="lane__spacer" />
         <Button size="sm" variant="ghost" className={cx(wrap && "is-on")} title={wrap ? "Volver a una sola fila con scroll" : "Ver todos los planos: la fila se adapta al ancho y baja de línea"} onClick={() => setWrap(!wrap)}>
           {wrap ? <IconLayoutList size={14} /> : <IconLayoutGrid size={14} />} {wrap ? "En fila" : "Ver todos"}
@@ -344,7 +348,7 @@ function EmptyRow({ parent }: { parent: ProdNode }) {
   const [menu, setMenu] = useState<MenuAt | null>(null);
   const p = snap.production;
   const shot = p.levels.at(-1)!.name.toLowerCase();
-  const label = `Nuevo ${shot} en ${codeOf(p, parent)}`;
+  const label = `Nuevo ${shot} en ${nameOf(p, parent)}`;
   return (
     <section className="lane">
       <div className="lane__cards">
@@ -372,7 +376,7 @@ function AddCard({ row, groupId, hint }: { row: ProdNode; groupId?: Id; hint?: R
   const { source, select, set } = useStore();
   const p = snap.production;
   const g = groupId ? snap.groups.find((x) => x.id === groupId) : undefined;
-  const label = `Nuevo ${p.levels[levelIndex(p, row) + 1]!.name.toLowerCase()} en ${g ? `«${g.name}»` : codeOf(p, row)}`;
+  const label = `Nuevo ${p.levels[levelIndex(p, row) + 1]!.name.toLowerCase()} en ${g ? `«${g.name}»` : nameOf(p, row)}`;
   const [menu, setMenu] = useState<MenuAt | null>(null);
   return (
     <>
@@ -410,6 +414,7 @@ function AddMenu({ at, onClose, onNew, onImport }: { at: MenuAt; onClose: () => 
 
 /** `inRow`: its row handles drops (§2.1, §2.4); `hint` says where a drop would land. */
 function UnitCard({ node, inRow, hint }: { node: ProdNode; inRow?: boolean; hint?: RowHint["zone"] }) {
+  const showCodes = useShowCodes();
   const snap = useSnap();
   const { selectedId, multi, select, toggleMulti, focusPopped } = useStore();
   const apart = useStore((s) => s.popped.some((w) => w.nodeId === node.id));
@@ -452,7 +457,7 @@ function UnitCard({ node, inRow, hint }: { node: ProdNode; inRow?: boolean; hint
       </div>
       {/* Second line: code and who is on it on the left; notes and length on the right. No third line. */}
       <div className="card__row">
-        <span className="card__title card__codeline">{codeOf(p, node)}</span>
+        {showCodes ? <span className="card__title card__codeline">{codeOf(p, node)}</span> : null}
         {node.assigneeIds.length ? <AvatarStack names={node.assigneeIds.map((u) => memberName(snap, u))} size={16} max={2} /> : null}
         {c.comments ? <span className="card__comments"><IconMessageCircle size={12} /> {c.comments}</span> : null}
         {apart ? (
@@ -599,7 +604,7 @@ function GroupCard({ group, hint, onOpen, glow }: { group: ShotGroup; hint?: Row
     }} title={`Abrir «${group.name}»`}>
       <div className={`gmosaic gmosaic--${tiles.length}`}>
         {tiles.map((s, i) => (
-          <div key={s.id} className="gmosaic__tile" title={codeOf(snap.production, s)}>
+          <div key={s.id} className="gmosaic__tile" title={nameOf(snap.production, s)}>
             <Thumb {...coverOf(snap, s)} preview badge={false} />
             {more && i === tiles.length - 1 ? <span className="gmosaic__more">+{more}</span> : null}
           </div>
@@ -630,7 +635,7 @@ function GroupBar({ group, row, count, onClose }: { group: ShotGroup; row: ProdN
   const out = useUngroupDrop(group.id);
   return (
     <div className="lane__group">
-      <button className={cx("lane__back", out.over && "dnd-group")} {...out.props} onClick={onClose} title={`Volver a ${codeOf(snap.production, row)}. Suelta aquí un plano para sacarlo del grupo.`}>
+      <button className={cx("lane__back", out.over && "dnd-group")} {...out.props} onClick={onClose} title={`Volver a ${nameOf(snap.production, row)}. Suelta aquí un plano para sacarlo del grupo.`}>
         <IconArrowLeft size={14} /> Volver
       </button>
       <IconStack2 size={14} className="sf-faint" />

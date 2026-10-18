@@ -222,7 +222,7 @@ function move(parentId: Id | null, beforeId: Id | null): void {
     const now = n ? codeOf(after.production, n) : undefined;
     return now && now !== codeBefore.get(id) ? [`${codeBefore.get(id)} → ${now}`] : [];
   });
-  if (renamed.length) notify(`${renamed.join(", ")}: ese código ya existía en el destino.`);
+  if (renamed.length && useStore.getState().showCodes) notify(`${renamed.join(", ")}: ese código ya existía en el destino.`);
 }
 
 function orderOnScreen(p: Production, nodes: ProdNode[], ids: Id[]): Id[] {
@@ -351,7 +351,7 @@ export function useRowDrop(rowId: Id, openGroupId: Id | null) {
       const now = n && after ? codeOf(after.production, n) : undefined;
       return now && now !== codeBefore.get(id) ? [`${codeBefore.get(id)} → ${now}`] : [];
     });
-    if (renamed.length) notify(`${renamed.join(", ")}: ese código ya existía en el destino.`);
+    if (renamed.length && useStore.getState().showCodes) notify(`${renamed.join(", ")}: ese código ya existía en el destino.`);
   };
 
   return {

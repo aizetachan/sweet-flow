@@ -7,11 +7,12 @@
 
 import { create } from "zustand";
 import { parseAppLink } from "../data/share";
-import { codeOf, type Id, type RowItem } from "@sweetflow/domain";
+import { type Id, type RowItem } from "@sweetflow/domain";
 import type { DataSource, Snapshot } from "../data/source";
 import type { Library, LibraryState, Pin } from "../data/library";
 import { createLibrary } from "../data";
 import { closePoppedWindow, closePoppedWindows, focusPoppedWindow, hostWindows, onFlashRequest, openerShare, popOutWindow, watchOpener, type PoppedWindow } from "./windows";
+import { nameOf } from "./names";
 
 export type Phase = "dashboard" | "production" | "window";
 export type View = "board" | "library" | "trash";
@@ -79,6 +80,8 @@ interface UiState {
   notesFor: Id | null;
   /** The «Importar» window: as versions of a shot, or as new shots in a row. */
   importTo: ImportTarget | null;
+  /** Show the codes (SQ010, SH0020…) on screen; off, things go by their title (a setting of this computer). */
+  showCodes: boolean;
   collapsed: Record<Id, boolean>;
   floating: FloatingPanel[];
   /** Short message at the bottom of the screen (e.g. a code changed on move). */
@@ -89,6 +92,22 @@ interface UiState {
   popped: PoppedWindow[];
   /** Asking to confirm leaving the production with windows open; holds where to go. */
   leaveAsk: { folderId?: Id | null } | null;
+}
+
+const SHOW_CODES_KEY = "sweetflow:show-codes";
+function readShowCodes(): boolean {
+  try {
+    return localStorage.getItem(SHOW_CODES_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+function saveShowCodes(on: boolean): void {
+  try {
+    localStorage.setItem(SHOW_CODES_KEY, on ? "1" : "0");
+  } catch {
+    // Only a convenience.
+  }
 }
 
 /** Where an import lands (docs/INTERFAZ.md §2.0). */
@@ -177,6 +196,7 @@ export const useStore = create<Store>((set, get) => ({
   filters: { query: "", statusIds: [], assigneeId: null, assetId: null },
   modal: null,
   importTo: null,
+  showCodes: readShowCodes(),
   notesFor: null,
   collapsed: {},
   floating: [],
@@ -185,7 +205,10 @@ export const useStore = create<Store>((set, get) => ({
   popped: [],
   leaveAsk: null,
   sideTab: "structure",
-  set: (patch) => set(patch),
+  set: (patch) => {
+    if (patch.showCodes !== undefined) saveShowCodes(patch.showCodes);
+    set(patch);
+  },
   select: (id, tab, stay) => {
     if (id !== get().selectedId) set({ activeMediaId: null, playhead: 0, playing: false });
     // Nothing selected (closed, deselected, sent to the trash): back to the structure.
@@ -307,7 +330,7 @@ export const useStore = create<Store>((set, get) => ({
     if (selectedId && gone.has(selectedId)) get().select(null);
     if (multi.some((id) => gone.has(id))) set({ multi: multi.filter((id) => !gone.has(id)) });
     const p = snap.production;
-    const what = top.length === 1 ? codeOf(p, byId.get(top[0]!)!) : `${top.length} elementos`;
+    const what = top.length === 1 ? nameOf(p, byId.get(top[0]!)!) : `${top.length} elementos`;
     get().notify(`${what} a la papelera de la producción.`, {
       label: "Deshacer",
       run: () => {
