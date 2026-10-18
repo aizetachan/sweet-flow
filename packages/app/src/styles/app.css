@@ -117,7 +117,7 @@
 .lane__spacer { flex: 1; }
 /* Room around the cards: the horizontal scroller would clip the selection ring and drop markers. */
 /* Room around the cards so the neon of a selected or hovered one is never cut (the margin gives it back). */
-.lane__cards { display: flex; gap: 10px; overflow-x: auto; padding: 14px 14px 16px; margin: -14px -14px -12px; }
+.lane__cards { display: flex; gap: 10px; overflow-x: auto; padding: 22px 22px 22px; margin: -22px -22px -18px; }
 /* The row's scrollbar only shows while it is being scrolled. */
 .lane__cards { scrollbar-width: thin; scrollbar-color: transparent transparent; }
 .lane__cards.is-scrolling { scrollbar-color: var(--line-2) transparent; }
@@ -143,27 +143,23 @@
   filter: blur(1.2px);
   box-shadow: 0 0 8px 1px color-mix(in srgb, var(--primary) 22%, transparent), inset 0 0 6px color-mix(in srgb, var(--primary) 12%, transparent);
 }
-/* Selected: the edge gives off light — a bright, thin core (whiter at the top
-   left, bluer along the rest) and a blue bloom spreading out from it, plus a
-   little of that light falling inside. Kept within the row's room. */
+/* Selected: a neon tube — the same all the way round: a light core, the
+   light spilling into the card from its edges, and a blue bloom outside. A
+   bit softer than a real sign. Kept within the row's room. */
 .card--on {
+  --neon: color-mix(in srgb, var(--primary) 82%, #38bdf8 18%);
   border-color: transparent;
-  background: radial-gradient(120% 70% at 18% 0%, color-mix(in srgb, var(--primary) 12%, transparent), transparent 62%), var(--bg-2);
   box-shadow:
-    0 0 1px 0 color-mix(in srgb, var(--primary) 80%, white 20%),
-    0 0 6px 0 color-mix(in srgb, var(--primary) 55%, transparent),
-    0 0 14px 1px color-mix(in srgb, var(--primary) 30%, transparent),
-    inset 0 0 12px color-mix(in srgb, var(--primary) 18%, transparent);
+    0 0 3px 0 var(--neon),
+    0 0 10px 1px color-mix(in srgb, var(--neon) 55%, transparent),
+    0 0 18px 3px color-mix(in srgb, var(--neon) 22%, transparent),
+    inset 0 0 6px 0 color-mix(in srgb, var(--neon) 55%, transparent),
+    inset 0 0 22px 2px color-mix(in srgb, var(--neon) 16%, transparent);
 }
 .card--on::after, .card--on:hover::after {
   opacity: 1;
-  border: 0;
-  padding: 1.25px;
-  background: linear-gradient(115deg, rgb(245 247 255) 0%, color-mix(in srgb, var(--primary) 55%, white 45%) 30%, color-mix(in srgb, var(--primary) 85%, white 15%) 65%, color-mix(in srgb, var(--primary) 70%, transparent) 100%);
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  filter: blur(.35px);
+  border: 1.5px solid color-mix(in srgb, var(--neon) 40%, white 60%);
+  filter: blur(.3px);
   box-shadow: none;
 }
 /* The "+" card keeps its dashed look. */
