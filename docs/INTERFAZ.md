@@ -294,6 +294,11 @@ y «Tomas» por separado):
 - **Todas las miniaturas miden lo mismo** (16:9, el formato de las
   producciones; el texto largo se corta con «…»). En un vídeo, mover el ratón
   por la miniatura lo recorre, como en las tarjetas del tablero.
+- Arriba a la izquierda de la miniatura, **sacar a la fila** (flecha): esa
+  versión pasa a ser un **plano nuevo justo al lado** de este (con el código
+  libre que toque, p. ej. SH0025, y el mismo título), con ella como elegida.
+  Un tramo sale como plano con solo su tramo. El archivo no se mueve ni se
+  copia, y la versión sigue también aquí. Aviso con «Ver».
 - Al pasar el ratón, dos botones en la miniatura:
   - **Elegir (✓):** el plano pasa a ser esa. Es la que cuenta: portada de la
     tarjeta, duración y montaje. La elegida lleva «Elegida» y un borde verde.

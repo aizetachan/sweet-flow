@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
-  IconArchiveOff, IconAspectRatio, IconMessagePlus, IconBolt, IconCheck, IconClock, IconCut, IconMusic, IconPhoto, IconPhotoDown, IconPhotoScan,
+  IconArchiveOff, IconArrowUpRight, IconAspectRatio, IconMessagePlus, IconBolt, IconCheck, IconClock, IconCut, IconMusic, IconPhoto, IconPhotoDown, IconPhotoScan,
   IconPhotoUp, IconPlus, IconRepeat, IconSparkles, IconTrash, IconVideo, IconVolume, IconVolumeOff, IconWand, IconX,
 } from "@tabler/icons-react";
 import {
@@ -70,6 +70,16 @@ export function ProduceTab({ node }: { node: ProdNode }) {
     source.placeTakes(i.media.id, [{ segment: { inSec: 0, outSec: i.media.durationSec ?? 0 }, target: { nodeId: node.id } }]);
     const made = useStore.getState().snap?.takes.find((t) => t.nodeId === node.id && t.mediaId === i.media.id);
     if (made) source.selectTake(node.id, made.id);
+  };
+  /** Out to the row: a new shot right after this one, with that version (the file stays put). */
+  const extract = (i: GalleryItem) => {
+    const id = source.extractToRow(node.id, i.media.id, i.foreign && i.take ? { inSec: i.take.inSec, outSec: i.take.outSec } : undefined);
+    const made = id ? useStore.getState().snap?.nodes.find((n) => n.id === id) : undefined;
+    if (!id) return;
+    notify(`${i.foreign ? "Tramo" : versionTag(i.media.version)} sacado a la fila${made ? ` como ${codeOf(snap.production, made)}` : ""}.`, {
+      label: "Ver",
+      run: () => { useStore.getState().select(id); useStore.getState().set({ notice: null }); },
+    });
   };
   /** Out of the gallery: a stretch is taken off; a version is archived (kept in its folder), with Deshacer. */
   const usedElsewhere = (m: Media) => snap.takes.some((t) => t.mediaId === m.id && t.nodeId !== node.id);
@@ -148,6 +158,12 @@ export function ProduceTab({ node }: { node: ProdNode }) {
                   <span className="version__label" title={i.foreign ? `Tramo de ${from ? codeOf(snap.production, from) : "—"}` : undefined}>{i.foreign ? `Tramo de ${from ? codeOf(snap.production, from) : "—"}` : versionTag(m.version)}</span>
                   {isChosen ? <span className="version__chosen"><IconCheck size={10} stroke={3} /> Elegida</span> : <Avatar name={memberName(snap, m.createdBy)} size={14} />}
                 </span>
+                {ready && !m.archived && isUnit(snap.production, node) ? (
+                  // Interesting on its own: out to the row, as a shot of its own right after this one.
+                  <span className="version__acts version__acts--left" onClick={(e) => e.stopPropagation()}>
+                    <button className="version__act" title="Sacar a la fila: un plano nuevo, al lado de este, con esta versión" onClick={() => extract(i)}><IconArrowUpRight size={13} /></button>
+                  </span>
+                ) : null}
                 {ready && !m.archived ? (
                   <span className="version__acts" onClick={(e) => e.stopPropagation()}>
                     {!isChosen && m.kind !== "audio" ? (

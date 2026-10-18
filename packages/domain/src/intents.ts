@@ -415,3 +415,34 @@ export function planPlaceInRow(
   }
   return { events };
 }
+
+/**
+ * Take a version out to the row (docs/INTERFAZ.md §2.0.1): a new shot right
+ * after `nodeId`, with the same title, whose chosen take is that version
+ * (whole). The file stays where it is; the version stays in its shot too.
+ */
+export function planExtractVersion(
+  p: Production,
+  nodes: ProdNode[],
+  nodeId: Id,
+  media: Pick<Media, "id" | "durationSec">,
+  newId: (prefix: string) => Id,
+  by: Id,
+  now: Millis,
+  /** Only a stretch of it (a shot cut from a video); the whole of it by default. */
+  segment?: Segment,
+): Plan {
+  const base = planInsertAfter(p, nodes, nodeId, newId("n"));
+  const created = base.events[0];
+  const from = nodes.find((n) => n.id === nodeId);
+  if (!base.nodeId || !created || created.type !== "node.created" || !from) return EMPTY;
+  const takeId = newId("tk");
+  return {
+    nodeId: base.nodeId,
+    events: [
+      { ...created, node: { ...created.node, title: from.title } },
+      { type: "take.added", take: { id: takeId, nodeId: base.nodeId, mediaId: media.id, inSec: segment?.inSec ?? 0, outSec: segment?.outSec ?? media.durationSec ?? 0, createdBy: by, createdAt: now } },
+      { type: "node.updated", id: base.nodeId, patch: { selectedTakeId: takeId, ...(from.groupId ? { groupId: from.groupId } : {}) } },
+    ],
+  };
+}

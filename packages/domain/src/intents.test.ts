@@ -21,6 +21,7 @@ import {
   planDissolveGroup,
   planRenameGroup,
   planPlaceInRow,
+  planExtractVersion,
   planMoveNodes as moveNodes,
   planUnshelveNode,
   folderPath,
@@ -322,5 +323,20 @@ describe("structure intents", () => {
     expect(state().comments).toMatchObject([{ id: "c1", resolved: true, mentions: ["u_ana"], atSec: 4.2, productionId: "p" }, { id: "c2", parentId: "c1" }]);
     run(() => ({ events: [{ type: "comment.deleted", id: "c1" }] }));
     expect(state().comments).toEqual([]);
+  });
+
+  it("takes a version out to the row as a new shot right after, with it as its take", () => {
+    const { run, state } = session();
+    const sq = run((s) => planCreateNode(s.production!, s.nodes, null, "q")).nodeId!;
+    const sc = run((s) => planCreateNode(s.production!, s.nodes, sq, "c")).nodeId!;
+    const a = run((s) => planCreateNode(s.production!, s.nodes, sc, "xa", "Faro")).nodeId!;
+    run((s) => planCreateNode(s.production!, s.nodes, sc, "xb", "Muelle"));
+    run(() => ({ events: [{ type: "media.added", media: { id: "mx", nodeId: a, kind: "video", origin: "generated", archived: false, createdBy: "u", createdAt: 1, version: 2, status: "ready", progress: 100, durationSec: 6 } }] }));
+    const shotId = run((s) => planExtractVersion(s.production!, s.nodes, a, { id: "mx", durationSec: 6 }, id, "u", 5)).nodeId!;
+    const s = state();
+    expect(childrenOf(s.nodes, sc).map((n) => `${n.number}:${n.title}`)).toEqual(["10:Faro", "15:Faro", "20:Muelle"]);
+    const shot = s.nodes.find((n) => n.id === shotId)!;
+    expect(s.takes.find((t) => t.id === shot.selectedTakeId)).toMatchObject({ mediaId: "mx", inSec: 0, outSec: 6 });
+    expect(s.media.find((m) => m.id === "mx")?.nodeId).toBe(a);
   });
 });

@@ -346,6 +346,10 @@ export class FirebaseSource implements DataSource {
     throw new NotImplemented("Cortar en planos", "etapa C");
   }
 
+  extractToRow(_nodeId: Id, _mediaId: Id, _segment?: Segment): Id | undefined {
+    throw new NotImplemented("Sacar una versión a la fila", "etapa C");
+  }
+
   unshelveNode(_nodeId: Id): number | undefined {
     throw new NotImplemented("Vídeos editados", "etapa C");
   }
