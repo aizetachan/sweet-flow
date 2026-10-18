@@ -81,13 +81,14 @@ function Group({ node }: { node: ProdNode }) {
   const filters = useStore((s) => s.filters);
   const createRow = useCreateRow();
   const trashNodes = useStore((s) => s.trashNodes);
+  const [folded, toggleFold] = useFold(node.id);
   if (li === rowLevel) return <Lane row={node} />;
   const kids = childrenOf(snap.nodes, node.id);
   const prog = progressOf(snap, node);
   const childLevel = p.levels[li + 1]!;
   return (
     <section className="group">
-      <GroupHead node={node}>
+      <GroupHead node={node} onToggle={toggleFold}>
         <span className="group__code">{codeOf(p, node)}</span>
         <InlineEdit className="group__title" value={node.title} placeholder="Sin título" label="Doble clic para cambiar el título"
           onSave={(title) => useStore.getState().source.updateNode(node.id, { title })} />
@@ -100,7 +101,7 @@ function Group({ node }: { node: ProdNode }) {
         ) : null}
         <IconButton size="sm" className="head__del" label={`Mover ${codeOf(p, node)} y su contenido a la papelera`} onClick={() => trashNodes([node.id])}><IconTrash size={14} /></IconButton>
       </GroupHead>
-      {kids.map((k) => <Group key={k.id} node={k} />)}
+      {folded ? null : kids.map((k) => <Group key={k.id} node={k} />)}
     </section>
   );
 }
@@ -140,14 +141,62 @@ function AddBar({ big }: { big?: boolean }) {
   );
 }
 
-function GroupHead({ node, children }: { node: ProdNode; children: ReactNode }) {
+function GroupHead({ node, children, onToggle }: { node: ProdNode; children: ReactNode; onToggle: (e: ReactMouseEvent) => void }) {
   const drop = useNodeDrop(node, "y", true);
-  return <div className={cx("group__head", drop.zone && `dnd-${drop.zone}`)} {...nodeDragProps(node.id)} {...drop.props}>{children}</div>;
+  return (
+    <div className={cx("group__head", drop.zone && `dnd-${drop.zone}`)} {...nodeDragProps(node.id)} {...drop.props} onClick={(e) => { if (!isControl(e.target)) onToggle(e); }}>
+      {children}
+    </div>
+  );
+}
+
+/** A click on a header folds it, except on what the header holds (buttons, the status, a title being edited…). */
+function isControl(t: EventTarget): boolean {
+  return !!(t as HTMLElement).closest("button, input, select, textarea, label, a, .picker, .pop, .menu, .inline-edit__in");
+}
+
+/**
+ * Folded sequences and scenes of the board (docs/INTERFAZ.md §2), remembered
+ * per production in this browser.
+ */
+function useFold(id: Id): [boolean, (e?: ReactMouseEvent) => void] {
+  const productionId = useStore((s) => s.productionId);
+  const key = `sweetflow:fold:${productionId}`;
+  const read = (): Id[] => {
+    try {
+      return JSON.parse(localStorage.getItem(key) ?? "[]") as Id[];
+    } catch {
+      return [];
+    }
+  };
+  const [folded, setFolded] = useState(() => read().includes(id));
+  const flip = () => {
+    const next = !folded;
+    setFolded(next);
+    try {
+      const ids = new Set(read());
+      if (next) ids.add(id);
+      else ids.delete(id);
+      localStorage.setItem(key, JSON.stringify([...ids]));
+    } catch {
+      // Only a convenience.
+    }
+  };
+  // A click folds a moment later, so a double click (renaming the title) does not fold and unfold.
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const toggle = (e?: ReactMouseEvent) => {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = null;
+    if (e && e.detail > 1) return;
+    timer.current = setTimeout(flip, 220);
+  };
+  return [folded, toggle];
 }
 
 function Lane({ row }: { row: ProdNode }) {
   const snap = useSnap();
   const { filters, trashNodes } = useStore();
+  const [folded, toggleFold] = useFold(row.id);
   const p = snap.production;
   const all = childrenOf(snap.nodes, row.id);
   const active = filtersActive(filters);
@@ -188,7 +237,8 @@ function Lane({ row }: { row: ProdNode }) {
   const grid = wrap && cols > 0 && items.length + 1 > cols;
   return (
     <section className="lane">
-      <div className={cx("lane__head", headDrop.zone && `dnd-${headDrop.zone}`)} {...nodeDragProps(row.id)} {...headDrop.props}>
+      <div className={cx("lane__head", folded && "lane__head--folded", headDrop.zone && `dnd-${headDrop.zone}`)} {...nodeDragProps(row.id)} {...headDrop.props}
+        onClick={(e) => { if (!isControl(e.target)) toggleFold(e); }}>
         <span className="lane__code">{codeOf(p, row)}</span>
         <InlineEdit className="lane__title" value={row.title} placeholder="Sin título" label="Doble clic para cambiar el título"
           onSave={(title) => useStore.getState().source.updateNode(row.id, { title })} />
@@ -203,6 +253,7 @@ function Lane({ row }: { row: ProdNode }) {
         </Button>
         <ShelfButton row={row} />
       </div>
+      {folded ? null : <>
       {open && !active ? <GroupBar group={open} row={row} count={units.filter((u) => u.groupId === open.id).length} onClose={() => setOpenId(null)} /> : null}
       {/* Wrapped only when they don't all fit in one row: then the columns fill the width exactly. */}
       <div ref={box} className={cx("lane__cards", grid && "lane__cards--wrap")} onScroll={showScrollbar}
@@ -210,6 +261,7 @@ function Lane({ row }: { row: ProdNode }) {
         {items.map((i) => i.el)}
         {!active ? <AddCard row={row} groupId={open?.id} hint={hintOf("end")} /> : null}
       </div>
+      </>}
     </section>
   );
 }
