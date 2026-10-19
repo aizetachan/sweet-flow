@@ -9,10 +9,12 @@
   cursor: default;
   user-select: none;
   opacity: 1;
-  transition-property: opacity;
-  transition-timing-function: ease;
+  transition: opacity var(--bg-out) ease-in-out var(--bg-delay);
 }
 .splash--out { opacity: 0; pointer-events: none; }
+/* The word goes first; the background follows when it is almost gone (Splash.tsx). */
+.splash--out .splash__drops,
+.splash--out .splash__letter { opacity: 0 !important; transition: opacity var(--word-out) ease-out; }
 
 .splash__measure,
 .splash__letter {

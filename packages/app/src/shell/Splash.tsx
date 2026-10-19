@@ -18,7 +18,14 @@ const WORD = "Sweet Flow";
 const MIN_MS = 2000;
 /** How long the finished word stays before fading out. */
 const HOLD_MS = 1300;
-const FADE_MS = 450;
+/**
+ * Leaving: the word fades out over `WORD_OUT_MS`; when it is almost gone the
+ * dark background starts to fade too (after `BG_DELAY_MS`, over `BG_OUT_MS`),
+ * so the dashboard comes up softly underneath.
+ */
+const WORD_OUT_MS = 650;
+const BG_DELAY_MS = 450;
+const BG_OUT_MS = 900;
 /**
  * Landing: as soon as the drop reaches its slot it bounces — it grows and
  * shrinks a little, as if it had dropped face-on onto the surface — and while
@@ -234,7 +241,7 @@ export function Splash({ ready, onDone }: { ready: boolean; onDone: () => void }
     finished.current = true;
     window.setTimeout(() => {
       setFading(true);
-      window.setTimeout(() => onDoneRef.current(), FADE_MS);
+      window.setTimeout(() => onDoneRef.current(), BG_DELAY_MS + BG_OUT_MS);
     }, holdMs);
   }, []);
 
@@ -417,7 +424,7 @@ export function Splash({ ready, onDone }: { ready: boolean; onDone: () => void }
       className={`splash${fading ? " splash--out" : ""}`}
       role="status"
       aria-label="Cargando Sweet Flow"
-      style={{ transitionDuration: `${FADE_MS}ms` }}
+      style={{ ["--word-out" as string]: `${WORD_OUT_MS}ms`, ["--bg-delay" as string]: `${BG_DELAY_MS}ms`, ["--bg-out" as string]: `${BG_OUT_MS}ms` }}
       onPointerDown={() => finish(0)}
     >
       {/* The drops: one outline per letter, each with its light (shading, shine, shadow on the surface). */}
