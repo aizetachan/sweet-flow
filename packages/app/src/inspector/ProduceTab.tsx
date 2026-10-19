@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useRef, useState, type DragEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type DragEvent, type ReactNode } from "react";
 import {
   IconFileImport,
   IconArchiveOff, IconArrowUpRight, IconAspectRatio, IconMessagePlus, IconBolt, IconCheck, IconClock, IconCut, IconMusic, IconPhoto, IconPhotoDown, IconPhotoScan,
-  IconPhotoUp, IconPlus, IconRepeat, IconSparkles, IconTrash, IconUpload, IconVideo, IconVolume, IconVolumeOff, IconWand, IconX,
+  IconPhotoUp, IconPlus, IconRepeat, IconSparkles, IconTrash, IconVideo, IconVolume, IconVolumeOff, IconWand, IconX,
 } from "@tabler/icons-react";
 import {
   ancestorsOf,
@@ -27,7 +27,7 @@ import { modelsFor, nearest, REF_LABEL, specOf, useModelsVersion, type GenKind, 
 import { refreshCatalog } from "../integrations/magnific/catalog";
 import { mentionsIn, PromptTags, type Mentions } from "./PromptTags";
 import { draggedMedia, MEDIA_DRAG } from "../library/LibraryBoard";
-import { kindOfFile, type GenerateArgs } from "../data/source";
+import { kindOfFile, type GenerateArgs, type ImportItem, type RemoteCreation } from "../data/source";
 import { Popover } from "../components/Popover";
 import { Composer } from "./ReviewTab";
 import { hasFiles, runImport } from "../components/ImportDialog";
@@ -364,13 +364,13 @@ function GenerateBox({ node }: { node: ProdNode }) {
   };
 
   /** Files dropped on the references: each where the model takes it (references first, then the frames). */
-  const dropFiles = (files: File[]) => {
+  const dropFiles = (files: RefItem[]) => {
     let list = refs;
     let s0 = start;
     let e0 = end;
     const max = spec.references?.max ?? 0;
     for (const f of files) {
-      const k = kindOfFile(f);
+      const k = kindOfItem(f);
       if (!k) {
         useStore.getState().notify(`${f.name}: solo imágenes, vídeos y audios.`);
         continue;
@@ -464,7 +464,7 @@ function GenerateBox({ node }: { node: ProdNode }) {
               <RefSlot ctx={ref} label="Estilo" icon={<IconSparkles size={16} />} accept={["image"]} node={node}
                 value={refs.find((r) => r.type === "style")?.mediaId ?? null} disabled={usesFrames} disabledHint="No se combina con imagen inicial"
                 onPick={(id) => setRefs([...refs.filter((r) => r.type !== "style"), { type: "style", mediaId: id }])}
-                onFiles={([f]) => f && kindOfFile(f) === "image" && setRefs([...refs.filter((r) => r.type !== "style"), { type: "style", mediaId: ref.send(f) }])}
+                onFiles={([f]) => f && kindOfItem(f) === "image" && setRefs([...refs.filter((r) => r.type !== "style"), { type: "style", mediaId: ref.send(f) }])}
                 onMedia={(ids) => { const [id] = libMedia(ids); if (id) setRefs([...refs.filter((r) => r.type !== "style"), { type: "style", mediaId: id }]); }}
                 onClear={() => setRefs(refs.filter((r) => r.type !== "style"))} />
             ) : null}
@@ -565,7 +565,14 @@ interface RefUpload {
   preview: string;
   ref?: string;
   error?: string;
+  /** Picked from Magnific: its preview is a URL, not a local file. */
+  remote?: boolean;
 }
+
+/** A reference from outside the production: a file of this computer or a Magnific creation. */
+type RefItem = File | RemoteCreation;
+const kindOfItem = (x: RefItem): Pickable | null => (x instanceof File ? kindOfFile(x) : (x.kind as Pickable));
+const asRefItem = (i: ImportItem): RefItem => ("file" in i ? i.file : i.creation);
 
 const isUp = (v: string) => v.startsWith("up:");
 let upSeq = 0;
@@ -582,13 +589,19 @@ function useRefFiles(node: ProdNode) {
   const [ups, setUps] = useState<Record<string, RefUpload>>({});
   const [sending, setSending] = useState<Id[]>([]);
   const fail = (e: unknown) => (e instanceof Error ? e.message : String(e));
-  useEffect(() => () => Object.values(ups).forEach((u) => URL.revokeObjectURL(u.preview)), []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => () => Object.values(ups).forEach((u) => !u.remote && URL.revokeObjectURL(u.preview)), []); // eslint-disable-line react-hooks/exhaustive-deps
   return {
     ups,
     sending,
     /** Starts sending a file; returns the key its slot holds. */
-    send(file: File): string {
+    send(item: RefItem): string {
       const key = `up:${++upSeq}`;
+      // From Magnific: already there, nothing to send.
+      if (!(item instanceof File)) {
+        setUps((u) => ({ ...u, [key]: { kind: item.kind as Pickable, name: item.name, preview: item.thumbUrl ?? item.url, ref: item.id, remote: true } }));
+        return key;
+      }
+      const file = item;
       setUps((u) => ({ ...u, [key]: { kind: kindOfFile(file) ?? "image", name: file.name, preview: URL.createObjectURL(file) } }));
       source.uploadReference(node.id, file).then(
         (r) => setUps((u) => (u[key] ? { ...u, [key]: { ...u[key]!, ref: r.ref } } : u)),
@@ -668,7 +681,7 @@ function RefSlot({ ctx, label, icon, accept, node, value, disabled, disabledHint
   onPick: (mediaId: Id, kind: Pickable) => void;
   /** A library card picked: its chosen images (slots that take several). */
   onPickMany?: (mediaIds: Id[], card: ProdNode) => void;
-  onFiles?: (files: File[]) => void;
+  onFiles?: (items: RefItem[]) => void;
   /** Library images dropped on it. */
   onMedia?: (mediaIds: Id[]) => void;
   onClear: () => void;
@@ -678,7 +691,6 @@ function RefSlot({ ctx, label, icon, accept, node, value, disabled, disabledHint
   // A library group opened in the list, and the images marked in it.
   const [openCard, setOpenCard] = useState<{ card: ProdNode; refs: Media[]; all: Media[] } | null>(null);
   const [marks, setMarks] = useState<Id[]>([]);
-  const input = useRef<HTMLInputElement>(null);
   const drop = onFiles && !disabled ? fileDrop(onFiles, setOver, onMedia) : {};
   const up = value && isUp(value) ? ctx.ups[value] : undefined;
   const picked = value && !up ? snap.media.find((m) => m.id === value) : undefined;
@@ -702,7 +714,6 @@ function RefSlot({ ctx, label, icon, accept, node, value, disabled, disabledHint
     .filter((m) => m.status === "ready" && !m.archived && accept.includes(m.kind as Pickable) && !libIds.has(m.nodeId))
     .sort((a, b) => where(a) - where(b) || b.createdAt - a.createdAt)
     .slice(0, 48);
-  const mime = accept.map((k) => `${k}/*`).join(",");
   // Library cards that can go here: their chosen images (or all of them, if none is chosen yet).
   const cards = accept.includes("image")
     ? snap.library.flatMap((card) => {
@@ -726,9 +737,11 @@ function RefSlot({ ctx, label, icon, accept, node, value, disabled, disabledHint
             {onFiles ? (
               <>
                 <span className="grow" />
-                <button className="link gen__pick-upload" onClick={() => input.current?.click()}><IconUpload size={13} /> Subir del ordenador</button>
-                <input ref={input} type="file" hidden multiple={wide || label === "Añadir"} accept={mime}
-                  onChange={(e) => { const files = [...(e.target.files ?? [])]; e.target.value = ""; if (files.length) onFiles(files); }} />
+                {/* Like Importar in a shot: from Magnific or from this computer (docs/INTERFAZ.md §2.0.2). */}
+                <button className="link gen__pick-upload" onClick={() => {
+                  const files = onFiles;
+                  useStore.getState().set({ importTo: { label: `Como referencia: ${label}`, kinds: accept, refs: (items) => files(items.map(asRefItem)) } });
+                }}><IconFileImport size={13} /> Importar</button>
               </>
             ) : null}
           </div>
@@ -737,9 +750,9 @@ function RefSlot({ ctx, label, icon, accept, node, value, disabled, disabledHint
               {options.map((m) => {
                 const n = [...snap.nodes, ...snap.shelf].find((x) => x.id === m.nodeId);
                 return (
-                  <button key={m.id} className="menu__item gen__pick" onClick={() => { ctx.media(m); onPick(m.id, m.kind as Pickable); }} title={n ? `${nameOf(snap.production, n)} ${versionTag(m.version)}` : ""}>
+                  <button key={m.id} className="menu__item gen__pick gen__pick--img" onClick={() => { ctx.media(m); onPick(m.id, m.kind as Pickable); }}
+                    data-tip={`${n ? nameOf(snap.production, n) : "—"} · ${versionTag(m.version)}`}>
                     <Thumb media={m} badge={false} />
-                    <span className="sf-small">{n ? nameOf(snap.production, n) : "—"} {versionTag(m.version)}</span>
                   </button>
                 );
               })}
@@ -761,12 +774,12 @@ function RefSlot({ ctx, label, icon, accept, node, value, disabled, disabledHint
                     {openCard.all.map((m) => {
                       const on = marks.includes(m.id);
                       return onPickMany ? (
-                        <button key={m.id} className={cx("gen__pick gen__libimg", on && "is-on")} onClick={() => setMarks(on ? marks.filter((x) => x !== m.id) : [...marks, m.id])}>
+                        <button key={m.id} data-tip={`${openCard.card.title} · ${versionTag(m.version)}`} className={cx("gen__pick gen__libimg", on && "is-on")} onClick={() => setMarks(on ? marks.filter((x) => x !== m.id) : [...marks, m.id])}>
                           <Thumb media={m} badge={false} />
                           {on ? <span className="gen__libcheck"><IconCheck size={11} stroke={3} /></span> : null}
                         </button>
                       ) : (
-                        <button key={m.id} className="menu__item gen__pick gen__libimg" onClick={() => { ctx.media(m); onPick(m.id, "image"); setOpenCard(null); }}>
+                        <button key={m.id} data-tip={`${openCard.card.title} · ${versionTag(m.version)}`} className="menu__item gen__pick gen__libimg" onClick={() => { ctx.media(m); onPick(m.id, "image"); setOpenCard(null); }}>
                           <Thumb media={m} badge={false} />
                         </button>
                       );
@@ -780,7 +793,7 @@ function RefSlot({ ctx, label, icon, accept, node, value, disabled, disabledHint
                       setOpenCard(null);
                       setMarks([]);
                     }}>
-                      <IconPlus size={14} /> <span className="menu__label">{marks.length ? `Seleccionar ${marks.length}` : "Seleccionar"}</span>
+                      {marks.length ? `Seleccionar ${marks.length}` : "Seleccionar"}
                     </button>
                   ) : null}
                 </div>

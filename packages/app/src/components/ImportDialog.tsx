@@ -19,6 +19,7 @@ export function runImport(target: ImportTarget, items: ImportItem[]): void {
   const skipped = items.length - ok.length;
   if (!ok.length) return notify("Solo se pueden importar imágenes, vídeos y audios.");
   try {
+    if ("refs" in target) return target.refs(ok);
     if ("nodeId" in target) {
       for (const i of ok) source.importMedia(target.nodeId, i);
       const n = snap?.nodes.find((x) => x.id === target.nodeId);
@@ -49,7 +50,7 @@ export function ImportDialog() {
   const p = snap.production;
   const node = "nodeId" in target ? snap.nodes.find((n) => n.id === target.nodeId) : undefined;
   const row = "rowId" in target ? snap.nodes.find((n) => n.id === target.rowId) : undefined;
-  const where = node ? `Como versión nueva de ${nameOf(p, node)}` : row ? `Como planos nuevos en ${nameOf(p, row)}` : "";
+  const where = "refs" in target ? target.label : node ? `Como versión nueva de ${nameOf(p, node)}` : row ? `Como planos nuevos en ${nameOf(p, row)}` : "";
   const done = (items: ImportItem[]) => {
     close();
     runImport(target, items);
@@ -61,10 +62,10 @@ export function ImportDialog() {
           ...(canBrowse ? [{ id: "magnific" as const, label: "De Magnific" }] : []),
           { id: "computer", label: "Del ordenador" },
         ]} />
-        <span className="sf-faint sf-small">{where} · cada elemento, {node ? "una versión" : "un plano"}</span>
+        <span className="sf-faint sf-small">{"refs" in target ? where : `${where} · cada elemento, ${node ? "una versión" : "un plano"}`}</span>
       </div>
       {/* Same size on both tabs. */}
-      <div className="imp__wrap">{tab === "magnific" ? <FromMagnific onImport={done} /> : <FromComputer onImport={done} />}</div>
+      <div className="imp__wrap">{tab === "magnific" ? <FromMagnific onImport={done} initialKind={"refs" in target && target.kinds?.length ? target.kinds[0]! : "video"} /> : <FromComputer onImport={done} />}</div>
     </Modal>
   );
 }
@@ -98,11 +99,11 @@ const KINDS = [
  * «Recientes» and every project (a project's folders open under it); on the
  * right, the gallery of what is picked.
  */
-function FromMagnific({ onImport }: { onImport: (items: ImportItem[]) => void }) {
+function FromMagnific({ onImport, initialKind = "video" }: { onImport: (items: ImportItem[]) => void; initialKind?: MediaKind }) {
   const source = useStore((s) => s.source);
   const [folder, setFolder] = useState<RemoteFolder | null>(null);
   // One kind at a time; none: all of them.
-  const [kind, setKind] = useState<MediaKind | null>("video");
+  const [kind, setKind] = useState<MediaKind | null>(initialKind);
   const [items, setItems] = useState<RemoteCreation[]>([]);
   const [page, setPage] = useState(1);
   const [more, setMore] = useState(false);

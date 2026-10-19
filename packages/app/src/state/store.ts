@@ -5,9 +5,10 @@
  * mirrors what they emit.
  */
 
+import type { ImportItem } from "../data/source";
 import { create } from "zustand";
 import { parseAppLink } from "../data/share";
-import { type Access, type Id, type RowItem } from "@sweetflow/domain";
+import { type Access, type Id, type MediaKind, type RowItem } from "@sweetflow/domain";
 import type { DataSource, Snapshot } from "../data/source";
 import type { Library, LibraryState, Pin } from "../data/library";
 import { createLibrary } from "../data";
@@ -116,7 +117,11 @@ function saveShowCodes(on: boolean): void {
 }
 
 /** Where an import lands (docs/INTERFAZ.md §2.0). */
-export type ImportTarget = { nodeId: Id } | { rowId: Id; before: RowItem | null; groupId: Id | null };
+export type ImportTarget =
+  | { nodeId: Id }
+  | { rowId: Id; before: RowItem | null; groupId: Id | null }
+  /** As references of Generar (docs/INTERFAZ.md §2.0): what was picked goes to `refs`. */
+  | { refs: (items: ImportItem[]) => void; label: string; kinds?: MediaKind[] };
 
 interface Store extends UiState {
   library: Library;

@@ -372,11 +372,15 @@ derecha en la ventana aparte). De arriba abajo:
     fotogramas y las referencias no se combinan: al usar uno, el otro se
     desactiva con el motivo.
   - Se eligen de lo que ya hay en la producción (primero este plano, luego su
-    escena, luego el resto) o **del ordenador**, como en Magnific: **Subir del
-    ordenador** en la lista de cada hueco, o **arrastrar archivos** sobre un
-    hueco (va ahí) o sobre las referencias (cada uno donde lo admite el
-    modelo: referencias primero, luego imagen inicial y final).
-  - Lo del ordenador se sube a Magnific al momento, a la carpeta del plano
+    escena, luego el resto; solo la imagen, sin título: al dejar el ratón
+    encima unos 3 s sale su nombre y versión), de la biblioteca, o con
+    **Importar** en la lista de cada hueco: la misma ventana de Importar de
+    los planos (de Magnific o del ordenador, abierta en los tipos que admite
+    el hueco), y lo elegido entra como referencia. También se pueden
+    **arrastrar archivos** sobre un hueco (va ahí) o sobre las referencias
+    (cada uno donde lo admite el modelo: referencias primero, luego imagen
+    inicial y final).
+  - Lo de Magnific se usa tal cual. Lo del ordenador se sube a Magnific al momento, a la carpeta del plano
     allí; el hueco lo muestra con un indicador mientras sube y **Generar**
     espera («Subiendo referencias…»). Si falla, el hueco queda marcado y hay
     que quitarlo o cambiarlo. No se guarda en la producción.
@@ -705,7 +709,8 @@ centrada en la imagen y sin tipos fijos (decidido el 19 oct 2026):
 - **Usar en los planos:** en las referencias de Generar, «De la biblioteca»
   lista los grupos por su nombre. Al elegir uno se ven **sus imágenes** para
   marcar las que se quieren (empiezan marcadas sus ★ elegidas); abajo,
-  **Seleccionar** (desactivado hasta marcar alguna; «Seleccionar N» las añade);
+  **Seleccionar** (centrado, en gris hasta marcar alguna; «Seleccionar N»
+  las añade);
   en un hueco de una sola imagen (Estilo, imagen inicial o final) se elige una.
   «←» vuelve a la lista de grupos. La lista se abre **flotando por encima**
   de todo (no dentro del panel, que no se desplaza de lado).
