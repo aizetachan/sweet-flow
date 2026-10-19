@@ -123,8 +123,9 @@ Anotadas el 15 oct 2026, pendientes de que el usuario elija orden:
 4. **Conectar Dropbox y Google Drive — hecho en el navegador (19 oct 2026).**
    **Se prueba con cuentas reales al montar la app de escritorio** (decidido el
    19 oct 2026): registrar la app en cada servicio (`DEVELOPMENT.md`), hacer
-   que el inicio de sesión vuelva a la app de escritorio (hoy vuelve a
-   `localhost`; también el de Magnific) y probar con dos personas. Requisitos
+   que el inicio de sesión vuelva a la app de escritorio (hecho el 19 oct 2026:
+   se abre en el navegador del sistema y vuelve a `http://127.0.0.1:53134`;
+   también el de Magnific) y probar con dos personas. Requisitos
    que se mantienen:
    Requisito: Sweet Flow se instalará en otras máquinas y cada usuario tiene
    que poder conectar su Dropbox (o Drive) sin saber nada técnico:

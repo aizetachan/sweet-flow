@@ -64,7 +64,8 @@ dice «Sin configurar». Cada persona conecta después su propia cuenta con
    carpetas al invitar), y **Submit**.
 3. Pestaña **Settings**:
    - *OAuth 2 › Redirect URIs*: `http://localhost:5180/auth/dropbox` (y
-     `http://localhost:5173/auth/dropbox` si se usa ese puerto).
+     `http://localhost:5173/auth/dropbox` si se usa ese puerto). Para la app de
+     escritorio, también `http://127.0.0.1:53134/auth/dropbox`.
    - *Allow public clients (Implicit Grant & PKCE)*: **Allow**. No hace falta el
      *App secret*.
 4. Copiar el **App key** a `VITE_DROPBOX_APP_KEY`.
@@ -85,7 +86,8 @@ junto a las propias.
 4. **Credenciales › Crear credenciales › ID de cliente de OAuth** ›
    *Aplicación web*:
    - *Orígenes de JavaScript autorizados*: `http://localhost:5180`.
-   - *URI de redirección autorizados*: `http://localhost:5180/auth/google`.
+   - *URI de redirección autorizados*: `http://localhost:5180/auth/google` y,
+     para la app de escritorio, `http://127.0.0.1:53134/auth/google`.
 5. Copiar el **ID de cliente** a `VITE_GOOGLE_CLIENT_ID` y el **secreto** a
    `GOOGLE_CLIENT_SECRET` (sin `VITE_`: lo usa solo el servidor de desarrollo
    para pedir los tokens, `/google/token` en `vite.config.ts`; nunca llega a la

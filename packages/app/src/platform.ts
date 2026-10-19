@@ -10,6 +10,16 @@ export interface DesktopBridge {
   revealInFolder(path: string): Promise<void>;
   /** Older desktop builds lack it. */
   copyFile?(path: string): Promise<void>;
+  /** Sign-in through the system browser (older desktop builds lack it). */
+  authRedirect?(path: string): Promise<string>;
+  authOpen?(url: string): Promise<string>;
+}
+
+/** Desktop app: sign-ins open in the system browser and come back to a loopback address. */
+export function desktopAuth(): { redirect(path: string): Promise<string>; open(url: string): Promise<string> } | null {
+  const d = typeof window !== "undefined" ? window.sweetflow : undefined;
+  if (!d?.authRedirect || !d.authOpen) return null;
+  return { redirect: (p) => d.authRedirect!(p), open: (u) => d.authOpen!(u) };
 }
 
 declare global {

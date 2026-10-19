@@ -16,6 +16,8 @@ const REGISTER = `${ISSUER}/clients-registrations/openid-connect`;
 const SCOPE = "openid profile email mcp:custom-audience";
 export const CALLBACK_PATH = "/auth/magnific";
 
+import { desktopAuth } from "../../platform";
+
 const KEY_CLIENT = "sweetflow:magnific:client";
 const KEY_SESSION = "sweetflow:magnific:session";
 const KEY_PENDING = "sweetflow:magnific:pending";
@@ -27,7 +29,8 @@ interface Session {
   expiresAt: number;
 }
 
-const redirectUri = () => `${location.origin}${CALLBACK_PATH}`;
+/** In a browser, this page; the desktop app gives a loopback address instead. */
+const webRedirect = () => `${location.origin}${CALLBACK_PATH}`;
 
 function read<T>(key: string): T | null {
   try {
@@ -45,15 +48,15 @@ export function disconnect(): void {
 }
 
 /** Same client id for this browser and address; registered once. */
-async function clientId(): Promise<string> {
+async function clientId(redirect: string): Promise<string> {
   const known = read<{ id: string; redirect: string }>(KEY_CLIENT);
-  if (known && known.redirect === redirectUri()) return known.id;
+  if (known && known.redirect === redirect) return known.id;
   const r = await fetch(REGISTER, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({
       client_name: "Sweet Flow",
-      redirect_uris: [redirectUri()],
+      redirect_uris: [redirect],
       grant_types: ["authorization_code", "refresh_token"],
       response_types: ["code"],
       token_endpoint_auth_method: "none",
@@ -61,7 +64,7 @@ async function clientId(): Promise<string> {
   });
   if (!r.ok) throw new Error(`Magnific no ha aceptado registrar Sweet Flow (${r.status}).`);
   const id = ((await r.json()) as { client_id: string }).client_id;
-  localStorage.setItem(KEY_CLIENT, JSON.stringify({ id, redirect: redirectUri() }));
+  localStorage.setItem(KEY_CLIENT, JSON.stringify({ id, redirect }));
   return id;
 }
 
@@ -74,31 +77,42 @@ const b64url = (bytes: ArrayBuffer | Uint8Array) =>
  * hands the code to this window (see `handleCallback`).
  */
 export async function connect(): Promise<void> {
-  // Open first, inside the click, or the browser blocks it.
-  const popup = window.open("about:blank", "sf-magnific-login", "popup,width=520,height=720");
-  if (!popup) throw new Error("El navegador ha bloqueado la ventana de inicio de sesión.");
+  const desk = desktopAuth();
+  // Open first, inside the click, or the browser blocks it. The desktop app uses the system browser.
+  const popup = desk ? null : window.open("about:blank", "sf-magnific-login", "popup,width=520,height=720");
+  if (!desk && !popup) throw new Error("El navegador ha bloqueado la ventana de inicio de sesión.");
+  let signIn = "";
   try {
-    const id = await clientId();
+    const redirect = desk ? await desk.redirect(CALLBACK_PATH) : webRedirect();
+    const id = await clientId(redirect);
     const verifier = b64url(crypto.getRandomValues(new Uint8Array(32)));
     const challenge = b64url(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier)));
     const state = b64url(crypto.getRandomValues(new Uint8Array(16)));
-    localStorage.setItem(KEY_PENDING, JSON.stringify({ verifier, state, id }));
+    localStorage.setItem(KEY_PENDING, JSON.stringify({ verifier, state, id, redirect }));
     const url = new URL(AUTHORIZE);
     url.search = new URLSearchParams({
       client_id: id,
       response_type: "code",
-      redirect_uri: redirectUri(),
+      redirect_uri: redirect,
       scope: SCOPE,
       code_challenge: challenge,
       code_challenge_method: "S256",
       state,
     }).toString();
-    popup.location.href = url.toString();
+    signIn = url.toString();
+    if (popup) popup.location.href = signIn;
   } catch (err) {
-    popup.close();
+    popup?.close();
     throw err;
   }
 
+  if (desk) {
+    const q = new URLSearchParams(await desk.open(signIn));
+    const error = q.get("error_description") ?? q.get("error");
+    if (error || !q.get("code")) throw new Error(error || "No se ha completado el inicio de sesión.");
+    return exchange(q.get("code")!, q.get("state") ?? "");
+  }
+  const win = popup!;
   await new Promise<void>((resolve, reject) => {
     const onMessage = (e: MessageEvent<{ type?: string; code?: string; state?: string; error?: string }>) => {
       if (e.origin !== location.origin || e.data?.type !== "sf-magnific-callback") return;
@@ -107,7 +121,7 @@ export async function connect(): Promise<void> {
       exchange(e.data.code, e.data.state ?? "").then(resolve, reject);
     };
     const timer = setInterval(() => {
-      if (popup.closed) {
+      if (win.closed) {
         cleanup();
         reject(new Error("Se ha cerrado la ventana antes de terminar."));
       }
@@ -121,10 +135,10 @@ export async function connect(): Promise<void> {
 }
 
 async function exchange(code: string, state: string): Promise<void> {
-  const pending = read<{ verifier: string; state: string; id: string }>(KEY_PENDING);
+  const pending = read<{ verifier: string; state: string; id: string; redirect?: string }>(KEY_PENDING);
   localStorage.removeItem(KEY_PENDING);
   if (!pending || pending.state !== state) throw new Error("La respuesta de Magnific no corresponde a este inicio de sesión.");
-  await token({ grant_type: "authorization_code", code, redirect_uri: redirectUri(), client_id: pending.id, code_verifier: pending.verifier });
+  await token({ grant_type: "authorization_code", code, redirect_uri: pending.redirect ?? webRedirect(), client_id: pending.id, code_verifier: pending.verifier });
 }
 
 async function token(params: Record<string, string>): Promise<Session> {

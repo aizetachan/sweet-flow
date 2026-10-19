@@ -8,8 +8,11 @@
  * The app's id at each service comes from the build (VITE_DROPBOX_APP_KEY,
  * VITE_GOOGLE_CLIENT_ID; docs/DEVELOPMENT.md). Google also wants the app's
  * secret to hand out tokens: the dev server adds it (`/google/token`), so it
- * never reaches the page.
+ * never reaches the page. In the desktop app the sign-in opens in the system
+ * browser and comes back to a loopback address (platform.ts `desktopAuth`).
  */
+
+import { desktopAuth } from "../platform";
 
 export type CloudProvider = "dropbox" | "google";
 
@@ -56,7 +59,8 @@ interface Session {
 
 const sessionKey = (p: CloudProvider) => `sweetflow:${p}:session`;
 const pendingKey = (p: CloudProvider) => `sweetflow:${p}:pending`;
-const redirectUri = (p: CloudProvider) => `${location.origin}/auth/${p}`;
+/** In a browser, this page; the desktop app gives a loopback address instead. */
+const webRedirect = (p: CloudProvider) => `${location.origin}/auth/${p}`;
 
 function read<T>(key: string): T | null {
   try {
@@ -80,25 +84,34 @@ const b64url = (bytes: ArrayBuffer | Uint8Array) =>
 export async function connectCloud(p: CloudProvider): Promise<void> {
   const c = CONFIG[p];
   if (!c.clientId) throw new Error(`Falta configurar la app de ${c.name} en esta instalación.`);
-  // Open first, inside the click, or the browser blocks it.
-  const popup = window.open("about:blank", `sf-${p}-login`, "popup,width=560,height=720");
-  if (!popup) throw new Error("El navegador ha bloqueado la ventana de inicio de sesión.");
+  const desk = desktopAuth();
+  // Open first, inside the click, or the browser blocks it. The desktop app uses the system browser.
+  const popup = desk ? null : window.open("about:blank", `sf-${p}-login`, "popup,width=560,height=720");
+  if (!desk && !popup) throw new Error("El navegador ha bloqueado la ventana de inicio de sesión.");
+  const redirect = desk ? await desk.redirect(`/auth/${p}`) : webRedirect(p);
   const verifier = b64url(crypto.getRandomValues(new Uint8Array(32)));
   const challenge = b64url(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier)));
   const state = b64url(crypto.getRandomValues(new Uint8Array(16)));
-  localStorage.setItem(pendingKey(p), JSON.stringify({ verifier, state }));
+  localStorage.setItem(pendingKey(p), JSON.stringify({ verifier, state, redirect }));
   const url = new URL(c.authorize);
   url.search = new URLSearchParams({
     client_id: c.clientId,
     response_type: "code",
-    redirect_uri: redirectUri(p),
+    redirect_uri: redirect,
     code_challenge: challenge,
     code_challenge_method: "S256",
     state,
     ...(c.scope ? { scope: c.scope } : {}),
     ...c.extra,
   }).toString();
-  popup.location.href = url.toString();
+  if (desk) {
+    const q = new URLSearchParams(await desk.open(url.toString()));
+    const error = q.get("error_description") ?? q.get("error");
+    if (error || !q.get("code")) throw new Error(error || "No se ha completado el inicio de sesión.");
+    return exchange(p, q.get("code")!, q.get("state") ?? "");
+  }
+  const win = popup!;
+  win.location.href = url.toString();
 
   await new Promise<void>((resolve, reject) => {
     const onMessage = (e: MessageEvent<{ type?: string; code?: string; state?: string; error?: string }>) => {
@@ -108,7 +121,7 @@ export async function connectCloud(p: CloudProvider): Promise<void> {
       exchange(p, e.data.code, e.data.state ?? "").then(resolve, reject);
     };
     const timer = setInterval(() => {
-      if (popup.closed) {
+      if (win.closed) {
         cleanup();
         reject(new Error("Se ha cerrado la ventana antes de terminar."));
       }
@@ -122,10 +135,10 @@ export async function connectCloud(p: CloudProvider): Promise<void> {
 }
 
 async function exchange(p: CloudProvider, code: string, state: string): Promise<void> {
-  const pending = read<{ verifier: string; state: string }>(pendingKey(p));
+  const pending = read<{ verifier: string; state: string; redirect?: string }>(pendingKey(p));
   localStorage.removeItem(pendingKey(p));
   if (!pending || pending.state !== state) throw new Error(`La respuesta de ${CONFIG[p].name} no corresponde a este inicio de sesión.`);
-  await token(p, { grant_type: "authorization_code", code, redirect_uri: redirectUri(p), code_verifier: pending.verifier });
+  await token(p, { grant_type: "authorization_code", code, redirect_uri: pending.redirect ?? webRedirect(p), code_verifier: pending.verifier });
 }
 
 async function token(p: CloudProvider, params: Record<string, string>): Promise<Session> {

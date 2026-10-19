@@ -14,6 +14,8 @@ const api: SweetflowApi = {
   pickFolder: () => ipcRenderer.invoke(IPC.pickFolder) as Promise<string | null>,
   revealInFolder: (path) => ipcRenderer.invoke(IPC.revealInFolder, path) as Promise<void>,
   copyFile: (path) => ipcRenderer.invoke(IPC.copyFile, path) as Promise<void>,
+  authRedirect: (path) => ipcRenderer.invoke(IPC.authRedirect, path) as Promise<string>,
+  authOpen: (url) => ipcRenderer.invoke(IPC.authOpen, url) as Promise<string>,
 };
 
 contextBridge.exposeInMainWorld("sweetflow", api);

@@ -4,6 +4,7 @@ import { BrowserWindow, clipboard, dialog, ipcMain, shell, type IpcMainInvokeEve
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { IPC } from "../shared/api";
+import { authOpen, authRedirect } from "./auth";
 import { isAppUrl } from "./env";
 
 /** Only our own renderer may call privileged handlers. */
@@ -42,5 +43,17 @@ export function registerIpc(): void {
     } else {
       clipboard.writeText(`file://${file}`);
     }
+  });
+
+  ipcMain.handle(IPC.authRedirect, (e, p: unknown) => {
+    assertTrusted(e);
+    if (typeof p !== "string" || !/^\/auth\/[a-z]+$/.test(p)) throw new Error("Ruta no válida");
+    return authRedirect(p);
+  });
+
+  ipcMain.handle(IPC.authOpen, (e, url: unknown) => {
+    assertTrusted(e);
+    if (typeof url !== "string") throw new Error("Dirección no válida");
+    return authOpen(url);
   });
 }
