@@ -17,6 +17,7 @@ import { forgetLocalFolder, localFoldersSupported, pickLocalFolder, reconnectLoc
 import { useStore, type SettingsTab } from "../state/store";
 import { allModelsFor, catalogReadAt, isShown, resetShown, setShown, useModelsVersion, type GenKind, type ModelSpec } from "../data/models";
 import { refreshCatalog } from "../integrations/magnific/catalog";
+import { readIdentity } from "../integrations/magnific/identity";
 
 const TABS: Array<{ id: SettingsTab; label: string; icon: typeof IconUser }> = [
   { id: "profile", label: "Perfil", icon: IconUser },
@@ -65,17 +66,35 @@ function Section({ title, hint, children }: { title: string; hint?: string; chil
 
 export function Profile({ lib }: { lib: LibraryState }) {
   const library = useStore((s) => s.library);
+  const [identity, setIdentity] = useState(readIdentity);
   const [name, setName] = useState(lib.me.displayName);
   const [email, setEmail] = useState(lib.me.email);
   useEffect(() => {
     setName(lib.me.displayName);
     setEmail(lib.me.email);
+    setIdentity(readIdentity());
   }, [lib.me.displayName, lib.me.email]);
   const dirty = name.trim() !== lib.me.displayName || email.trim() !== lib.me.email;
   const save = () => dirty && library.setProfile({ displayName: name, email });
 
+  // With Magnific connected, the person is their Magnific account (docs/USUARIOS.md §1).
+  if (identity && lib.mode !== "demo") {
+    return (
+      <Section title="Perfil" hint="Tu cuenta de Magnific es quien eres en Sweet Flow: con ella te reconoce el equipo en cualquier ordenador. Tu cuenta de Dropbox o Drive puede ser otra.">
+        <div className="sprofile">
+          <Avatar name={identity.name} size={64} src={identity.avatarUrl} />
+          <div className="sform">
+            <div className="sfield"><span>Nombre</span><div className="sprofile__value">{identity.name}</div></div>
+            <div className="sfield"><span>Email</span><div className="sprofile__value">{identity.email}</div></div>
+            <p className="sf-faint sf-small">Se cambian en tu cuenta de Magnific.</p>
+          </div>
+        </div>
+      </Section>
+    );
+  }
+
   return (
-    <Section title="Perfil" hint="Tu nombre aparece en las producciones en las que trabajas: en los responsables, la actividad y el equipo.">
+    <Section title="Perfil" hint="Tu nombre aparece en las producciones en las que trabajas. Al conectar Magnific (Integraciones), tu cuenta de Magnific pasa a ser tu identidad en Sweet Flow.">
       <div className="sprofile">
         <Avatar name={name || lib.me.displayName} size={64} />
         <div className="sform">

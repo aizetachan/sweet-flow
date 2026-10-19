@@ -11,6 +11,7 @@
 
 import { isDesktop } from "../platform";
 import { MagnificGenerator } from "../integrations/magnific/generator";
+import { initIdentity } from "../integrations/magnific/identity";
 import { buildSeed } from "./mock/seed";
 import { MockSource } from "./mock/MockSource";
 import { browserLibrary, demoLibrary, folderLibrary, summarize, type Library, type LibraryState } from "./library";
@@ -88,6 +89,8 @@ const generator = new MagnificGenerator();
  */
 export async function initStorage(mode = dataMode()): Promise<void> {
   if (mode !== "local") return;
+  // Who I am (my Magnific account) before the library takes my id.
+  await initIdentity();
   // A popped-out window works on its main window's production: nothing to open here.
   if (location.hash.startsWith("#/ventana/") && window.opener) {
     prepared = { library: browserLibrary(generator), status: { status: "browser" } };

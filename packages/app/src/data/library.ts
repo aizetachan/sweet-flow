@@ -12,6 +12,7 @@
  *   production is a folder with `.sweetflow/` inside.
  */
 
+import { IDENTITY_EVENT, IDENTITY_KEY, readIdentity, uidForEmail } from "../integrations/magnific/identity";
 import {
   defaultLevels,
   defaultStatuses,
@@ -463,14 +464,25 @@ function personal() {
     },
     save: (v) => localStorage.setItem(key, JSON.stringify(v)),
   });
-  const uid = `u_${remembered(localStorage, "sweetflow:uid")}`;
-  const defaultMe: Member = { uid, email: "", displayName: `Usuario ${uid.slice(2, 6)}`, role: "owner", magnificConnected: false };
+  const browserUid = `u_${remembered(localStorage, "sweetflow:uid")}`;
+  const defaultMe: Member = { uid: browserUid, email: "", displayName: `Usuario ${browserUid.slice(2, 6)}`, role: "owner", magnificConnected: false };
   const profile = json<Member>(KEYS.profile, defaultMe);
   return {
-    keys: Object.values(KEYS),
+    keys: [...Object.values(KEYS), IDENTITY_KEY],
     prefs: json(KEYS.prefs, EMPTY_PREFS),
-    // The uid never changes, whatever was saved.
-    profile: { load: () => ({ ...profile.load(), uid, role: "owner" as const }), save: profile.save },
+    // Who I am: my Magnific account when it is known (same id on every
+    // computer, docs/USUARIOS.md §1); else this browser's own id and the
+    // name written in Ajustes › Perfil.
+    profile: {
+      load: () => {
+        const id = readIdentity();
+        const saved = profile.load();
+        return id
+          ? { ...saved, uid: uidForEmail(id.email), email: id.email, displayName: id.name, ...(id.avatarUrl ? { photoUrl: id.avatarUrl } : {}), role: "owner" as const }
+          : { ...saved, uid: browserUid, role: "owner" as const };
+      },
+      save: profile.save,
+    },
     // sessionStorage is per window: every window writes its own log file. A
     // popped window inherits its opener's sessionStorage, so it gets a fresh id
     // (it normally borrows the opener's source and writes nothing itself).
@@ -501,7 +513,11 @@ export function browserLibrary(generator?: Generator): Library {
     watch: (cb) => {
       const h = (e: StorageEvent) => ([ENTRIES, ...me.keys].includes(e.key ?? "") || e.key?.startsWith("sweetflow:prod:")) && cb();
       window.addEventListener("storage", h);
-      return () => window.removeEventListener("storage", h);
+      window.addEventListener(IDENTITY_EVENT, cb);
+      return () => {
+        window.removeEventListener("storage", h);
+        window.removeEventListener(IDENTITY_EVENT, cb);
+      };
     },
     logStoreFor: (id) => new BrowserLogStore(`prod:${id}`),
     generator,
@@ -530,10 +546,12 @@ export async function folderLibrary(fs: FolderFs, generator?: Generator): Promis
       entries.startPolling();
       const h = (e: StorageEvent) => me.keys.includes(e.key ?? "") && cb();
       window.addEventListener("storage", h);
+      window.addEventListener(IDENTITY_EVENT, cb);
       return () => {
         off();
         entries.stopPolling();
         window.removeEventListener("storage", h);
+        window.removeEventListener(IDENTITY_EVENT, cb);
       };
     },
     logStoreFor: (id) => new FolderLogStore(fs, () => entries.pathOf(id)),

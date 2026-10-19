@@ -66,7 +66,9 @@ aplicación completa con **menú lateral**:
 
 En el dashboard están los ajustes generales:
 
-- **Perfil:** nombre y email (el avatar sale del nombre).
+- **Perfil:** con Magnific conectada, la persona **es su cuenta de Magnific**
+  (nombre, email y avatar, que se cambian allí; docs/USUARIOS.md §1): la misma
+  en cualquier ordenador. Sin Magnific, nombre y email escritos a mano.
 - **Almacenamiento:** dónde se guardan las producciones: este navegador, una
   carpeta de este ordenador, o la carpeta del equipo en **Dropbox** o **Google
   Drive**. Cada servicio tiene su tarjeta: **Conectar** (cada persona con su
