@@ -1176,3 +1176,27 @@ button.topbar__me { position: relative; padding: 0; border: 0; border-radius: 50
 .is-mac-app .topbar { padding-left: 84px; -webkit-app-region: drag; }
 .is-mac-app .insp--window .insp__top { padding-top: 34px; -webkit-app-region: drag; }
 .is-mac-app :is(.dside__brand, .dash__head, .topbar, .insp--window .insp__top) :is(button, a, input, select, textarea, label, [role="button"], [role="tab"], [role="tablist"], [draggable="true"], .pop, .menu) { -webkit-app-region: no-drag; }
+
+/* First run (Welcome.tsx): «Conectarse» in place of the avatar, and the two steps in Inicio. */
+.signin { display: flex; align-items: center; gap: 10px; width: 100%; color: var(--fg-1); cursor: pointer; }
+.signin:disabled { cursor: progress; }
+.signin__icon { display: grid; place-items: center; width: 30px; height: 30px; flex: none; border-radius: 50%; background: rgb(var(--brand-500-rgb) / .18); color: var(--brand-300); box-shadow: inset 0 0 0 1px rgb(var(--brand-500-rgb) / .45); }
+.signin__text { display: flex; flex-direction: column; min-width: 0; }
+.signin__label { font-weight: 600; }
+.signin__hint { font-size: 11px; color: var(--fg-4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.signin__hint.is-error { color: var(--bad); white-space: normal; }
+.welcome { max-width: 620px; margin: 48px auto 24px; display: flex; flex-direction: column; gap: 4px; }
+.welcome__title { margin: 0; font-size: 20px; font-weight: 600; }
+.welcome__steps { list-style: none; margin: 18px 0 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.welcome__step { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border: 1px solid var(--line-1); border-radius: var(--r-lg); background: var(--bg-1); }
+.welcome__step.is-done { opacity: .7; }
+.welcome__num { display: grid; place-items: center; width: 26px; height: 26px; flex: none; border-radius: 50%; background: var(--bg-3); font-weight: 600; font-size: 13px; }
+.welcome__step.is-done .welcome__num { background: rgb(var(--brand-500-rgb) / .25); color: var(--brand-300); }
+.welcome__text { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.welcome__error { color: var(--bad); }
+.topbar__signin { width: auto; padding: 4px 12px 4px 4px; border: 1px solid var(--line-1); border-radius: 99px; background: none; }
+.topbar__signin:hover { background: var(--ghost); }
+.topbar__signin .signin__icon { width: 26px; height: 26px; }
+.topbar__signin .signin__hint:not(.is-error) { display: none; }
+.dside__me.signin { background: none; }
+.dside__me.signin:hover { background: var(--ghost); }

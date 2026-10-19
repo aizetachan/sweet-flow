@@ -24,6 +24,7 @@ import { revealEntry } from "../data/reveal";
 import { Notifications } from "./Notifications";
 import { Popover } from "../components/Popover";
 import { useMagnific } from "../integrations/magnific/useMagnific";
+import { SignInButton } from "../dashboard/Welcome";
 
 const NAV: Array<{ id: View; label: string; icon: typeof IconLayoutBoard }> = [
   { id: "board", label: "Producción", icon: IconLayoutBoard },
@@ -152,6 +153,8 @@ function AccountMenu() {
     requestLeave();
   };
   return (
+    // No Magnific account yet: no avatar, «Conectarse» (docs/INTERFAZ.md §1.0a).
+    !demo && !snap.me.email ? <SignInButton className="topbar__signin" /> :
     <Popover align="right" className="amenu" button={({ open, toggle }) => (
       <button className={cx("topbar__me", open && "topbar__me--on")} title={snap.me.displayName} aria-label="Tu cuenta" onClick={toggle}>
         <Avatar name={snap.me.displayName} size={28} />

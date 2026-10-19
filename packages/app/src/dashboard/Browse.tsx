@@ -27,6 +27,7 @@ import {
   IconTrash,
   IconTrashX, IconUserPlus, IconBooks } from "@tabler/icons-react";
 import { ContextMenu, type MenuAt } from "../components/ContextMenu";
+import { FirstRun, isGuest } from "./Welcome";
 import { revealEntry } from "../data/reveal";
 import { copyEntryLink } from "../data/share";
 import type { Id } from "@sweetflow/domain";
@@ -87,6 +88,8 @@ export function Browse({ lib, section }: { lib: LibraryState; section: Exclude<D
   const editable = lib.mode !== "firebase";
   const showPlace = section !== "home" || !!q;
   const meta = section === "home" ? undefined : TITLES[section];
+  // Nothing set yet (no Magnific account or no team folder): Inicio shows the steps.
+  const firstRun = section === "home" && !folderId && !q && lib.mode === "local" && (isGuest(lib.me, lib.mode) || lib.storage.kind !== "folder");
 
   return (
     // A click anywhere but on an entry (or its buttons) clears the selection.
@@ -132,6 +135,8 @@ export function Browse({ lib, section }: { lib: LibraryState; section: Exclude<D
         <p className="sf-muted sf-small dash__note">Lo que está en la papelera no aparece en el resto del dashboard. Puedes restaurarlo o eliminarlo definitivamente; no se borra solo.</p>
       )}
 
+      {firstRun ? <FirstRun lib={lib} /> : null}
+
       {visible.length ? (
         <div className={cx("dash__items", `dash__items--${section === "trash" ? "list" : dashLayout}`)}>
           {section === "trash" || dashLayout === "list" ? (
@@ -164,7 +169,7 @@ export function Browse({ lib, section }: { lib: LibraryState; section: Exclude<D
             />
           ))}
         </div>
-      ) : (
+      ) : firstRun ? null : (
         <div className="dash__empty">
           {q ? <p>Nada coincide con «{query}».</p> : (
             <>

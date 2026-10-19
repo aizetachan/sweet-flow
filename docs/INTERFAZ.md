@@ -62,6 +62,18 @@ aplicación completa con **menú lateral**:
   eliminar definitivamente. El clic derecho sobre algo no seleccionado lo
   selecciona primero, como en el Finder.
 
+### 1.0a Primera vez (sin usuario ni carpeta)
+
+- Quien no ha conectado Magnific aún no tiene usuario: no hay avatar ni
+  nombre. En su lugar, abajo en el menú lateral (y arriba a la derecha en una
+  producción), **«Conectarse»**, que abre el inicio de sesión de Magnific. Al
+  volver, aparecen su nombre y su avatar.
+- Mientras falte Magnific o la carpeta del equipo, Inicio muestra
+  **«Bienvenido a Sweet Flow»** con los dos pasos: *Conéctate con Magnific* y
+  *Elige la carpeta del equipo*. Cada paso hecho queda marcado; con los dos,
+  desaparece.
+- En la app de escritorio la carpeta se recuerda: se elige una vez.
+
 ### 1.0 Equipo (docs/USUARIOS.md)
 
 - **Equipo** en el menú del dashboard: el propietario (quien creó el equipo de

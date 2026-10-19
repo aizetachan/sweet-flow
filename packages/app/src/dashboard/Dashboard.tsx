@@ -15,6 +15,7 @@ import { useStore, type DashSection } from "../state/store";
 import { Browse, DRAG_TYPE, useDropInto } from "./Browse";
 import { Settings } from "./Settings";
 import { TeamPage } from "./Team";
+import { isGuest, SignInButton } from "./Welcome";
 
 export function Dashboard() {
   const lib = useStore((s) => s.lib);
@@ -93,13 +94,15 @@ function Sidebar({ lib }: { lib: LibraryState }) {
       <nav className="dside__nav">
         <SideItem icon={<IconSettings size={17} stroke={1.6} />} label="Ajustes" on={dashSection === "settings"} onClick={() => set({ dashSection: "settings" })} />
       </nav>
-      <button className="dside__me" title="Tu perfil" onClick={() => set({ dashSection: "settings", settingsTab: "profile" })}>
-        <Avatar name={lib.me.displayName} size={30} />
-        <span className="dside__who">
-          <span className="dside__who-name">{lib.me.displayName}</span>
-          <span className="dside__who-where">{lib.label}</span>
-        </span>
-      </button>
+      {isGuest(lib.me, lib.mode) ? <SignInButton className="dside__me" /> : (
+        <button className="dside__me" title="Tu perfil" onClick={() => set({ dashSection: "settings", settingsTab: "profile" })}>
+          <Avatar name={lib.me.displayName} size={30} />
+          <span className="dside__who">
+            <span className="dside__who-name">{lib.me.displayName}</span>
+            <span className="dside__who-where">{lib.label}</span>
+          </span>
+        </button>
+      )}
     </aside>
   );
 }
