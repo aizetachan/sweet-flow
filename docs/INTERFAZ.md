@@ -210,6 +210,8 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
 - **Clic derecho** en una tarjeta abre su menú, titulado «Menú» (sin repetir el
   código ni el título). El estado va como en el panel de la izquierda: la
   etiqueta, y al pulsarla se despliega la lista.
+  - **Plano dentro de un grupo:** **Sacar del grupo** (también con varios
+    seleccionados): vuelve a la fila, como al arrastrarlo a «Volver».
   - **Plano:** además de lo de abajo, sobre la versión elegida del plano:
     **Copiar vídeo / imagen / audio** al portapapeles para pegarlo en otra app:
     la imagen se copia en cualquier sitio; el vídeo o audio se copia como

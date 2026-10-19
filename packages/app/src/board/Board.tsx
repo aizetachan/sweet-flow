@@ -543,6 +543,12 @@ function ShotMenu({ at, node, targets, onRename, onClose }: { at: MenuAt; node: 
         </>
       ) : null}
       <ClientToggle nodes={nodes} />
+      {/* Inside a group: out of it, to the row (like dragging it to «Volver»). */}
+      {nodes.some((n) => n.groupId) ? (
+        <button className="menu__item" onClick={() => source.ungroupShots(nodes.filter((n) => n.groupId).map((n) => n.id))}>
+          <IconArrowLeft size={14} /> <span className="menu__label">Sacar del grupo</span>
+        </button>
+      ) : null}
       <div className="menu__sep" />
       <button className="menu__item menu__item--danger" onClick={() => trashNodes(targets)}>
         <IconTrash size={14} /> <span className="menu__label">{many ? `Mover los ${targets.length} a la papelera` : "Mover a la papelera"}</span>
