@@ -13,6 +13,11 @@ export interface DesktopBridge {
   /** Sign-in through the system browser (older desktop builds lack it). */
   authRedirect?(path: string): Promise<string>;
   authOpen?(url: string): Promise<string>;
+  /** The team folder, read and written by the app (older desktop builds lack it). */
+  teamFolder?(): Promise<{ path: string; name: string } | null>;
+  pickTeamFolder?(): Promise<{ path: string; name: string } | null>;
+  forgetTeamFolder?(): Promise<void>;
+  folder?(op: "list" | "listFiles" | "readText" | "readBytes" | "writeText" | "writeBytes" | "mkdir" | "move" | "remove", a?: string, b?: string | Uint8Array): Promise<unknown>;
 }
 
 /** Desktop app: sign-ins open in the system browser and come back to a loopback address. */

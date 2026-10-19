@@ -154,7 +154,8 @@ Anotadas el 15 oct 2026, pendientes de que el usuario elija orden:
 6. **Varias personas:** probar con dos ordenadores sobre la misma carpeta
    compartida.
 7. **Google Drive:** el mismo `FolderFs` sobre la API v3.
-8. **Escritorio:** probar la carpeta en Electron (o `FolderFs` con Node), y
+8. **Escritorio:** ✅ la carpeta del equipo con `FolderFs` sobre Node (19 oct
+   2026): la app la recuerda y no pide permiso en cada arranque. Falta
    ahí **Dropbox y Drive con cuentas reales** (paso 4).
 
 ### Fase 2 · Generación

@@ -5,6 +5,7 @@
  */
 
 import { splitPath, type FolderFs, type FsEntry } from "./fs";
+import { DesktopFolderFs, desktopFolders } from "./desktopFs";
 
 // Parts of the API that TypeScript's DOM types don't include yet.
 type Permission = "granted" | "denied" | "prompt";
@@ -15,7 +16,7 @@ interface DirHandle extends FileSystemDirectoryHandle {
 }
 type Movable = { move?: (dir: FileSystemDirectoryHandle, name: string) => Promise<void> };
 
-export const localFoldersSupported = () => typeof window !== "undefined" && "showDirectoryPicker" in window;
+export const localFoldersSupported = () => !!desktopFolders() || (typeof window !== "undefined" && "showDirectoryPicker" in window);
 
 export class BrowserFolderFs implements FolderFs {
   readonly kind = "local" as const;
@@ -170,12 +171,18 @@ async function idb<T>(mode: IDBTransactionMode, run: (s: IDBObjectStore) => IDBR
 
 export type LocalFolderState =
   | { status: "none" }
-  | { status: "ready"; fs: BrowserFolderFs }
+  | { status: "ready"; fs: FolderFs }
   /** Remembered, but the browser wants a click to allow it again. */
   | { status: "reconnect"; name: string };
 
 /** The remembered folder, if any, without asking anything. */
 export async function restoreLocalFolder(): Promise<LocalFolderState> {
+  // The desktop app keeps the folder itself: no permission to give again.
+  const desk = desktopFolders();
+  if (desk) {
+    const f = await desk.teamFolder();
+    return f ? { status: "ready", fs: new DesktopFolderFs(desk, f.name) } : { status: "none" };
+  }
   if (!localFoldersSupported()) return { status: "none" };
   try {
     const h = await idb<DirHandle | undefined>("readonly", (s) => s.get(KEY));
@@ -190,12 +197,15 @@ export async function restoreLocalFolder(): Promise<LocalFolderState> {
 
 /** Asks again for the remembered folder (call from a click). */
 export async function reconnectLocalFolder(): Promise<boolean> {
+  if (desktopFolders()) return !!(await desktopFolders()!.teamFolder());
   const h = await idb<DirHandle | undefined>("readonly", (s) => s.get(KEY));
   return !!h && (await h.requestPermission({ mode: "readwrite" })) === "granted";
 }
 
 /** Lets the user pick a folder and remembers it (call from a click). Null if cancelled. */
 export async function pickLocalFolder(): Promise<string | null> {
+  const desk = desktopFolders();
+  if (desk) return (await desk.pickTeamFolder())?.name ?? null;
   const picker = (window as unknown as { showDirectoryPicker(o: object): Promise<DirHandle> }).showDirectoryPicker;
   try {
     const h = await picker.call(window, { id: "sweetflow-team", mode: "readwrite" });
@@ -208,5 +218,7 @@ export async function pickLocalFolder(): Promise<string | null> {
 }
 
 export async function forgetLocalFolder(): Promise<void> {
+  const desk = desktopFolders();
+  if (desk) return desk.forgetTeamFolder();
   await idb("readwrite", (s) => s.delete(KEY));
 }

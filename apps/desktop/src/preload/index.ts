@@ -4,7 +4,7 @@
  */
 
 import { contextBridge, ipcRenderer } from "electron";
-import { IPC, VERSION_ARG, type SweetflowApi } from "../shared/api";
+import { IPC, VERSION_ARG, type SweetflowApi, type TeamFolder } from "../shared/api";
 
 const versionArg = process.argv.find((a) => a.startsWith(VERSION_ARG));
 
@@ -16,6 +16,10 @@ const api: SweetflowApi = {
   copyFile: (path) => ipcRenderer.invoke(IPC.copyFile, path) as Promise<void>,
   authRedirect: (path) => ipcRenderer.invoke(IPC.authRedirect, path) as Promise<string>,
   authOpen: (url) => ipcRenderer.invoke(IPC.authOpen, url) as Promise<string>,
+  teamFolder: () => ipcRenderer.invoke(IPC.teamFolder) as Promise<TeamFolder | null>,
+  pickTeamFolder: () => ipcRenderer.invoke(IPC.pickTeamFolder) as Promise<TeamFolder | null>,
+  forgetTeamFolder: () => ipcRenderer.invoke(IPC.forgetTeamFolder) as Promise<void>,
+  folder: (op, a, b) => ipcRenderer.invoke(IPC.folder, op, a, b),
 };
 
 contextBridge.exposeInMainWorld("sweetflow", api);
