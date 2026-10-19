@@ -150,6 +150,8 @@ export function ProduceTab({ node }: { node: ProdNode }) {
         </section>
       ) : null}
 
+      {/* In the library the group's images are all on the board: no gallery here (docs/INTERFAZ.md §2.8). */}
+      {!node.lib ? (
       <section className="sec">
         <div className="sec__head">
           <h4>Galería</h4>
@@ -200,6 +202,7 @@ export function ProduceTab({ node }: { node: ProdNode }) {
           })}
         </div>
       </section>
+      ) : null}
       </OnStage> : null}
     </div>
   );
@@ -226,7 +229,13 @@ function MediaMeta({ media, take }: { media: Media; take?: Take }) {
           <Button size="sm" onClick={() => setPanel({ tab: "cut", activeMediaId: media.id })}><IconCut size={13} /> Cortar</Button>
         ) : null}
       </div>
-      {g?.prompt ? <p className="mmeta__prompt">{g.prompt}</p> : null}
+      {g?.prompt ? (
+        // A click copies it, to paste it elsewhere.
+        <p className="mmeta__prompt" title="Clic para copiar el prompt" onClick={() => {
+          void navigator.clipboard?.writeText(g.prompt);
+          useStore.getState().notify("Prompt copiado.");
+        }}>{g.prompt}</p>
+      ) : null}
       {media.status === "failed" ? <p className="mmeta__error">{media.error ?? "No se ha podido generar."}</p> : null}
     </div>
   );
@@ -612,6 +621,7 @@ function fileDrop(onFiles: (files: File[]) => void, on?: (over: boolean) => void
     if (!ours(e)) return;
     e.preventDefault();
     e.stopPropagation();
+    // «copy» is allowed by both: files, and library images (copyMove).
     e.dataTransfer.dropEffect = "copy";
     on?.(true);
   };

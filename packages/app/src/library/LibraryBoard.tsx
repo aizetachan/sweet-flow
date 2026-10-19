@@ -176,15 +176,26 @@ function GroupRow({ group, picked, setPicked }: { group: ProdNode; picked: Id[];
             onDragStart={(e) => {
               dragging = picked.includes(m.id) ? ids.filter((id) => picked.includes(id)).concat(picked.filter((id) => !ids.includes(id))) : [m.id];
               e.dataTransfer.setData(MEDIA_DRAG, JSON.stringify(dragging));
-              e.dataTransfer.effectAllowed = "move";
+              // Moved inside the library, copied into the references of Generar: both must be allowed.
+              e.dataTransfer.effectAllowed = "copyMove";
+              // The reference slots light up while it is dragged.
+              document.body.classList.add("sf-drag-media");
             }}
-            onDragEnd={() => { dragging = []; }}
+            onDragEnd={() => { dragging = []; document.body.classList.remove("sf-drag-media"); }}
             onClick={(e) => click(e, m)}>
             <Thumb media={m} badge={false} />
-            <button className={cx("libimg__star", m.chosen && "is-on")} title={m.chosen ? "Quitar de las elegidas" : "Elegir: es de las que se mandan al usar el grupo (si no hay elegidas, van todas)"}
-              onClick={(e) => { e.stopPropagation(); source.setChosen([m.id], !m.chosen); }}>
-              {m.chosen ? <IconStarFilled size={13} /> : <IconStar size={13} />}
-            </button>
+            <span className="libimg__acts">
+              <button className={cx("libimg__act", m.chosen && "is-on")} title={m.chosen ? "Favorita: sale marcada al usar el grupo como referencia. Clic para quitarla" : "Marcar como favorita: sale ya marcada al usar el grupo como referencia (@ o «De la biblioteca»)"}
+                onClick={(e) => { e.stopPropagation(); source.setChosen([m.id], !m.chosen); }}>
+                {m.chosen ? <IconStarFilled size={13} /> : <IconStar size={13} />}
+              </button>
+              <button className="libimg__act" title="Eliminar esta imagen del grupo"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  source.setArchived(m.id, true);
+                  useStore.getState().notify("Imagen eliminada del grupo.", { label: "Deshacer", run: () => { source.setArchived(m.id, false); useStore.getState().set({ notice: null }); } });
+                }}><IconTrash size={13} /></button>
+            </span>
           </div>
         ))}
         {/* The end of the row: generate into this group (the panel) — also where drops land last. */}

@@ -682,8 +682,17 @@ centrada en la imagen y sin tipos fijos (decidido el 19 oct 2026):
 - **Organizar:** arrastrar imágenes para reordenarlas en su fila o llevarlas a
   otra (una línea azul marca dónde caen). Clic selecciona una (y la muestra en
   el panel), ⌘ suma o quita, ⇧ selecciona un tramo; se arrastran juntas.
-- **★ Elegidas:** las imágenes marcadas son las que se mandan al usar el
-  grupo; si no hay ninguna marcada, van todas.
+- **En cada imagen** (al pasar el ratón):
+  - **★ Favorita:** sale ya marcada al usar el grupo como referencia (con @ o
+    «De la biblioteca»); siempre se puede cambiar la selección allí.
+  - **Papelera:** la quita del grupo, con «Deshacer» en el aviso.
+- **El panel en la Biblioteca** no tiene galería (las imágenes del grupo ya
+  están a la vista): generar, y debajo el visor de la imagen elegida con sus
+  datos y el prompt con el que se hizo.
+- **El prompt** de una imagen o un vídeo (bajo el visor) se copia al
+  portapapeles con un clic, para pegarlo donde haga falta.
+- Mientras se arrastra una imagen de la biblioteca, los huecos de referencias
+  del panel se iluminan para indicar dónde se puede soltar.
 - **Descripción** del grupo (panel o menú del clic derecho en su nombre):
   cómo es; es la base del prompt al generar en él. Se ve junto al nombre.
 - **Clic derecho en cualquier parte de la fila:** cambiar el nombre,

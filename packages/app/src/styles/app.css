@@ -369,7 +369,8 @@
 .mmeta__row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .mmeta__v { font-weight: 700; font-family: var(--mono); font-size: 12px; }
 .mmeta__spacer { flex: 1; }
-.mmeta__prompt { margin: 0; font-size: 12px; color: var(--fg-3); line-height: 1.45; }
+.mmeta__prompt { margin: 0; font-size: 12px; color: var(--fg-3); line-height: 1.45; cursor: copy; border-radius: 4px; }
+.mmeta__prompt:hover { color: var(--fg-1); background: var(--ghost); }
 
 .versions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
 .version { position: relative; padding: 3px; border: 1px solid transparent; border-radius: var(--r-md); background: none; text-align: left; cursor: pointer; }
@@ -1056,9 +1057,11 @@ button.topbar__me { position: relative; padding: 0; border: 0; border-radius: 50
 .libimg.is-active .thumb { outline-color: var(--line-2); }
 .libimg.is-picked .thumb { outline-color: var(--brand-300, #6cb6ff); box-shadow: 0 0 0 1px var(--brand-500, #2f7dff), 0 0 14px -2px color-mix(in srgb, var(--brand-500, #2f7dff) 70%, transparent); }
 .libimg.dnd-before::before, .libb__add.dnd-before::before { content: ""; position: absolute; left: -6px; top: 4px; bottom: 4px; width: 3px; border-radius: 2px; background: var(--brand-300, #6cb6ff); }
-.libimg__star { position: absolute; top: 6px; right: 6px; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; background: #000a; color: #fff; padding: 0; line-height: 0; opacity: 0; transition: opacity .12s; }
-.libimg:hover .libimg__star, .libimg__star.is-on { opacity: 1; }
-.libimg__star.is-on { color: #ffd166; }
+.libimg__acts { position: absolute; top: 6px; right: 6px; display: flex; gap: 4px; }
+.libimg__act { width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; background: #000a; color: #fff; padding: 0; line-height: 0; opacity: 0; transition: opacity .12s; }
+.libimg:hover .libimg__act, .libimg__act.is-on { opacity: 1; }
+.libimg__act.is-on { color: #ffd166; }
+.libimg__act:hover { background: #000d; }
 .libb__add { position: relative; flex: none; width: var(--card); aspect-ratio: 16 / 9; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border: 1px dashed var(--line-1); border-radius: var(--r-md); background: none; color: var(--fg-3); }
 .libb__add:hover { color: var(--fg-1); border-color: var(--line-2); }
 .libb__newrow { display: flex; align-items: center; gap: 10px; padding: 18px 16px; border: 1px dashed var(--line-1); border-radius: var(--r-xl); color: var(--fg-3); cursor: pointer; }
@@ -1101,3 +1104,7 @@ button.topbar__me { position: relative; padding: 0; border: 0; border-radius: 50
 .gen__libadd:disabled { opacity: .45; cursor: default; }
 .gen__libadd:not(:disabled) { background: var(--brand-500, #2f7dff); color: #fff; }
 .gen__libadd:not(:disabled):hover { background: var(--brand-700, #1648d8); }
+
+/* While a library image is dragged, the reference slots show where it can go */
+.sf-drag-media .gen__refs .gen__ref:not(:disabled) { border-color: var(--brand-300, #6cb6ff); border-style: dashed; color: var(--fg-0); }
+.sf-drag-media .gen__refs .gen__ref.is-on { background: color-mix(in srgb, var(--brand-500, #2f7dff) 22%, var(--bg-1)); }
