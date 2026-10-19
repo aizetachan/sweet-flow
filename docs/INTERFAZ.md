@@ -445,8 +445,9 @@ y «Tomas» por separado):
   versión pasa a ser un **plano nuevo justo al lado** de este (con el código
   libre que toque, p. ej. SH0025, y el mismo título), con ella como elegida.
   La versión **se va** de esta galería (no queda duplicada): pasa al plano
-  nuevo con su archivo (a su carpeta), como su v001. Si es la elegida de este
-  plano, se queda también aquí, porque este plano la usa. Un tramo sale como
+  nuevo con su archivo (a su carpeta), como su v001, también si era la elegida
+  de este plano (dentro de un grupo o no): entonces este plano pasa a su
+  versión más reciente de las que le quedan, o a ninguna. Un tramo sale como
   plano con solo su tramo (el vídeo sigue donde está). Aviso con «Ver».
 - Al pasar el ratón, dos botones en la miniatura:
   - **Elegir (✓):** el plano pasa a ser esa. Es la que cuenta: portada de la

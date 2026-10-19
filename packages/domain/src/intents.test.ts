@@ -362,7 +362,7 @@ describe("structure intents", () => {
     expect(s.media.find((m) => m.id === "mx")?.nodeId).toBe(a);
   });
 
-  it("a version taken out leaves its shot's gallery (unless it is the shot's chosen one)", () => {
+  it("a version taken out leaves its shot's gallery; if it was the chosen one, the shot takes its latest left", () => {
     const { run, state } = session();
     const sq = run((s) => planCreateNode(s.production!, s.nodes, null, "q")).nodeId!;
     const sc = run((s) => planCreateNode(s.production!, s.nodes, sq, "c")).nodeId!;
@@ -374,8 +374,11 @@ describe("structure intents", () => {
     const own = () => ({ media: state().media, takes: state().takes });
     const out = run((s) => planExtractVersion(s.production!, s.nodes, a, { id: "m2", durationSec: 6 }, id, "u", 5, undefined, own())).nodeId!;
     expect(state().media.find((m) => m.id === "m2")).toMatchObject({ nodeId: out, version: 1 });
-    run((s) => planExtractVersion(s.production!, s.nodes, a, { id: "m1", durationSec: 6 }, id, "u", 6, undefined, own()));
-    expect(state().media.find((m) => m.id === "m1")?.nodeId).toBe(a);
+    add("m3", 3);
+    const out2 = run((s) => planExtractVersion(s.production!, s.nodes, a, { id: "m1", durationSec: 6 }, id, "u", 6, undefined, own())).nodeId!;
+    expect(state().media.find((m) => m.id === "m1")?.nodeId).toBe(out2);
+    const shot = state().nodes.find((n) => n.id === a)!;
+    expect(state().takes.find((t) => t.id === shot.selectedTakeId)?.mediaId).toBe("m3");
   });
 
   it("cuts a cut shot again: it keeps the first stretch, the rest go right after it", () => {

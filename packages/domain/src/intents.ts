@@ -422,9 +422,9 @@ export function planPlaceInRow(
  * Take a version out to the row (docs/INTERFAZ.md §2.0.1): a new shot right
  * after `nodeId`, with the same title, whose chosen take is that version
  * (whole). With `own` (what the production has), a version of that shot goes
- * with it — it leaves the shot's gallery, its file moves to the new shot —
- * unless it is the shot's chosen one (still used there). A stretch of another
- * video only makes the new shot.
+ * with it — it leaves the shot's gallery, its file moves to the new shot. If
+ * it was the shot's chosen one, the shot takes its latest version left (or
+ * none). A stretch of another video only makes the new shot.
  */
 export function planExtractVersion(
   p: Production,
@@ -436,7 +436,7 @@ export function planExtractVersion(
   now: Millis,
   /** Only a stretch of it (a shot cut from a video); the whole of it by default. */
   segment?: Segment,
-  own?: { media: Array<Pick<Media, "id" | "nodeId" | "kind" | "version">>; takes: Array<Pick<Take, "id" | "nodeId" | "mediaId">> },
+  own?: { media: Array<Pick<Media, "id" | "nodeId" | "kind" | "version" | "status" | "archived" | "createdAt" | "durationSec">>; takes: Array<Pick<Take, "id" | "nodeId" | "mediaId">> },
 ): Plan {
   const base = planInsertAfter(p, nodes, nodeId, newId("n"));
   const created = base.events[0];
@@ -450,10 +450,25 @@ export function planExtractVersion(
   ];
   const m = own?.media.find((x) => x.id === media.id);
   const chosen = own?.takes.find((t) => t.id === from.selectedTakeId);
-  if (own && m && m.nodeId === nodeId && !segment && chosen?.mediaId !== media.id) {
+  if (own && m && m.nodeId === nodeId && !segment) {
     events.push({ type: "media.updated", id: m.id, patch: { nodeId: base.nodeId, version: nextMediaVersion(own.media, base.nodeId, m.kind) } });
-    // Its takes in the shot it leaves (none chosen) would show it there again.
+    // Its takes in the shot it leaves would show it there again.
     for (const t of own.takes) if (t.nodeId === nodeId && t.mediaId === m.id) events.push({ type: "take.removed", id: t.id });
+    if (chosen?.mediaId === m.id) {
+      // It was the chosen one: the shot takes its latest version left, whole.
+      const next = own.media
+        .filter((x) => x.nodeId === nodeId && x.id !== m.id && x.status === "ready" && !x.archived && x.kind !== "audio")
+        .sort((a, b) => b.createdAt - a.createdAt)[0];
+      const kept = next && own.takes.find((t) => t.nodeId === nodeId && t.mediaId === next.id);
+      if (kept) events.push({ type: "node.updated", id: nodeId, patch: { selectedTakeId: kept.id } });
+      else if (next) {
+        const id = newId("tk");
+        events.push(
+          { type: "take.added", take: { id, nodeId, mediaId: next.id, inSec: 0, outSec: next.durationSec ?? 0, createdBy: by, createdAt: now } },
+          { type: "node.updated", id: nodeId, patch: { selectedTakeId: id } },
+        );
+      } else events.push({ type: "node.updated", id: nodeId, patch: { selectedTakeId: null as unknown as undefined } });
+    }
   }
   return { nodeId: base.nodeId, events };
 }
