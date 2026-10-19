@@ -11,13 +11,13 @@
 
 import { parseStamp, type Stamp } from "./clock";
 import { byNumber, splitTrash } from "./tree";
-import type { Comment, Id, LevelDef, Media, Member, Millis, ProdNode, Production, ShotGroup, StatusDef, Take } from "./types";
+import type { ClientEntry, ClientGuest, Comment, Id, LevelDef, Media, Member, Millis, ProdNode, Production, ShotGroup, StatusDef, Take } from "./types";
 
 /** Bump when an event's shape changes incompatibly. */
 export const LOG_VERSION = 1;
 
 /** Node fields that change with last-writer-wins, one field at a time. */
-export type NodePatch = Partial<Pick<ProdNode, "title" | "notes" | "statusId" | "assigneeIds" | "assetIds" | "selectedTakeId" | "groupId">>;
+export type NodePatch = Partial<Pick<ProdNode, "title" | "notes" | "statusId" | "assigneeIds" | "assetIds" | "selectedTakeId" | "groupId" | "forClient">>;
 
 export type LogEventBody =
   | {
@@ -28,6 +28,10 @@ export type LogEventBody =
   /** Who is working on the production; written by each user on first open, and on profile changes. */
   | { type: "member.joined"; member: Pick<Member, "uid" | "displayName" | "email" | "role"> }
   | { type: "levels.set"; levels: LevelDef[] }
+  /** Sharing with the client (docs/USUARIOS.md §4): how they get in; who is invited. */
+  | { type: "client.entry"; entry: ClientEntry }
+  | { type: "client.guest.added"; guest: Pick<ClientGuest, "email" | "name"> }
+  | { type: "client.guest.removed"; email: string }
   | { type: "statuses.set"; statuses: StatusDef[] }
   | {
       type: "node.created";
@@ -153,6 +157,9 @@ const TYPES = new Set<string>([
   "production.updated",
   "member.joined",
   "levels.set",
+  "client.entry",
+  "client.guest.added",
+  "client.guest.removed",
   "statuses.set",
   "node.created",
   "node.updated",
@@ -239,6 +246,24 @@ export function foldLog(events: LogEvent[]): LogState {
         break;
       case "levels.set":
         if (production) production = { ...production, levels: e.levels, updatedAt: at };
+        break;
+      case "client.entry":
+        if (production) production = { ...production, client: { guests: production.client?.guests ?? [], entry: e.entry }, updatedAt: at };
+        break;
+      case "client.guest.added": {
+        if (!production) break;
+        const email = e.guest.email.trim().toLowerCase();
+        const share = production.client ?? { entry: "invite" as const, guests: [] };
+        if (!email || share.guests.some((g) => g.email === email)) break;
+        const guest: ClientGuest = { email, ...(e.guest.name ? { name: e.guest.name } : {}), addedBy: e.userId, addedAt: at };
+        production = { ...production, client: { ...share, guests: [...share.guests, guest] }, updatedAt: at };
+        break;
+      }
+      case "client.guest.removed":
+        if (production?.client) {
+          const email = e.email.trim().toLowerCase();
+          production = { ...production, client: { ...production.client, guests: production.client.guests.filter((g) => g.email !== email) }, updatedAt: at };
+        }
         break;
       case "statuses.set":
         if (production) production = { ...production, statuses: e.statuses, updatedAt: at };

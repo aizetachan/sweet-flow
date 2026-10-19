@@ -12,10 +12,9 @@ import {
   IconSettings,
   IconTrash,
   IconUsers,
-  IconUsersGroup,
-} from "@tabler/icons-react";
+  IconUsersGroup, IconShare } from "@tabler/icons-react";
 import { splitTrash } from "@sweetflow/domain";
-import { Avatar, AvatarStack, cx, IconButton, Spinner } from "@sweetflow/ui";
+import { Avatar, AvatarStack, cx, IconButton, Spinner, Button } from "@sweetflow/ui";
 import { useSnap, useStore, type View } from "../state/store";
 import { memberName } from "../state/selectors";
 import { useLibraryTrail } from "../dashboard/Dashboard";
@@ -95,6 +94,9 @@ export function Topbar() {
         </div>
       ) : null}
 
+      <Button size="sm" variant="primary" className="topbar__share" onClick={() => useStore.getState().set({ modal: "share" })}>
+        <IconShare size={14} /> Compartir
+      </Button>
       <Notifications />
       <IconButton label="Mostrar la carpeta de la producción en el ordenador" onClick={() => void revealEntry(productionId)}>
         <IconFolderShare size={17} stroke={1.6} />

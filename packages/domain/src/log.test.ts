@@ -266,3 +266,24 @@ describe("foldLog", () => {
     expect(foldLog([])).toEqual({ production: null, nodes: [], media: [], takes: [], groups: [], comments: [], members: [], conflicts: [], lastStamp: null });
   });
 });
+
+describe("sharing with the client", () => {
+  it("keeps how the client gets in, who is invited and which shots they see", () => {
+    const d = device("a");
+    const s = foldLog([
+      d.emit(created()),
+      d.emit(node("sq", null, SQ, 10)),
+      d.emit(node("sc", "sq", SC, 10)),
+      d.emit(node("sh", "sc", SH, 10)),
+      d.emit({ type: "client.guest.added", guest: { email: " Cliente@Mar.tv ", name: "Productora Mar" } }),
+      d.emit({ type: "client.guest.added", guest: { email: "cliente@mar.tv" } }),
+      d.emit({ type: "client.guest.added", guest: { email: "otra@mar.tv" } }),
+      d.emit({ type: "client.guest.removed", email: "OTRA@mar.tv" }),
+      d.emit({ type: "client.entry", entry: "link-name" }),
+      d.emit({ type: "node.updated", id: "sh", patch: { forClient: true } }),
+    ]);
+    expect(s.production?.client).toMatchObject({ entry: "link-name", guests: [{ email: "cliente@mar.tv", name: "Productora Mar", addedBy: "u_a" }] });
+    expect(s.nodes.find((n) => n.id === "sh")?.forClient).toBe(true);
+    expect(s.nodes.find((n) => n.id === "sc")?.forClient).toBeUndefined();
+  });
+});

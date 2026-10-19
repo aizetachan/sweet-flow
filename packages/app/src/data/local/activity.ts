@@ -39,6 +39,7 @@ export function activityFrom(events: LogEvent[], s: LogState): Activity[] {
         if (pt.title !== undefined) add(e.at, wall, e.id, "structure", e.userId, pt.title ? `le puso de título «${pt.title}»` : "quitó el título");
         if (pt.notes !== undefined) add(e.at, wall, e.id, "structure", e.userId, pt.notes ? "editó las notas" : "borró las notas");
         if (pt.assigneeIds) add(e.at, wall, e.id, "assign", e.userId, pt.assigneeIds.length ? "cambió los responsables" : "quitó los responsables");
+        if (pt.forClient !== undefined) add(e.at, wall, e.id, "structure", e.userId, pt.forClient ? "lo mostró al cliente" : "dejó de mostrarlo al cliente");
         if (pt.selectedTakeId) {
           const t = takes.get(pt.selectedTakeId);
           add(e.at, wall, e.id, "take", e.userId, `eligió ${t ? ver(t.mediaId) : "una versión"} para el plano`);

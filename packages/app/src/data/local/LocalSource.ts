@@ -66,6 +66,7 @@ import {
   type RowItem,
   type Segment,
   type StatusDef,
+  type ClientEntry,
 } from "@sweetflow/domain";
 import { importKind, type BrowsePage, type BrowseQuery, type DataSource, type GenerateArgs, type ImportItem, type NewComment, type Placement, type RemoteFolder, type Snapshot, type UploadedRef } from "../source";
 import type { Generator, GenerationRequest } from "../generation";
@@ -367,6 +368,26 @@ export class LocalSource implements DataSource {
 
   updateNode(nodeId: Id, patch: Partial<Pick<ProdNode, "title" | "notes" | "statusId" | "assigneeIds" | "assetIds">>): void {
     this.apply(planUpdateNode(this.loaded().nodes, nodeId, patch as NodePatch));
+  }
+
+  setForClient(nodeIds: Id[], on: boolean): void {
+    const s = this.loaded();
+    this.write(nodeIds.filter((id) => s.nodes.some((n) => n.id === id && !!n.forClient !== on)).map((id) => ({ type: "node.updated" as const, id, patch: { forClient: on } })));
+  }
+
+  setClientEntry(entry: ClientEntry): void {
+    if ((this.loaded().production.client?.entry ?? "invite") === entry) return;
+    this.write([{ type: "client.entry", entry }]);
+  }
+
+  addClientGuest(email: string, name?: string): void {
+    const e = email.trim().toLowerCase();
+    if (!/^\S+@\S+\.\S+$/.test(e)) throw new Error("Escribe un email válido.");
+    this.write([{ type: "client.guest.added", guest: { email: e, ...(name?.trim() ? { name: name.trim() } : {}) } }]);
+  }
+
+  removeClientGuest(email: string): void {
+    this.write([{ type: "client.guest.removed", email }]);
   }
 
   /** Rename the production itself (used by the dashboard). */

@@ -58,8 +58,30 @@ export interface Production {
   format?: string;
   levels: LevelDef[];
   statuses: StatusDef[];
+  /** Sharing with the client (docs/USUARIOS.md §4): how they get in, and who is invited. */
+  client?: ClientShare;
   createdAt: Millis;
   updatedAt: Millis;
+}
+
+/**
+ * How the client (a guest, without access to the team folder) gets into the
+ * production's review page: by an invitation to their email (only those
+ * invited), or with the link giving their name, or their name and email.
+ * They only see the shots marked «Mostrar al cliente».
+ */
+export type ClientEntry = "invite" | "link-name" | "link-name-email";
+
+export interface ClientGuest {
+  email: string;
+  name?: string;
+  addedBy: Id;
+  addedAt: Millis;
+}
+
+export interface ClientShare {
+  entry: ClientEntry;
+  guests: ClientGuest[];
 }
 
 export interface NodeStats {
@@ -87,6 +109,8 @@ export interface ProdNode {
   /** Breakdown: cast / props / locations linked to this node. */
   assetIds: Id[];
   selectedTakeId?: Id;
+  /** Shown to the client on the review page (docs/USUARIOS.md §4); off by default. */
+  forClient?: boolean;
   /**
    * In the production's trash since then (docs/INTERFAZ.md §2.2); its subtree
    * goes with it. Hidden from the board; its code can be reused meanwhile.

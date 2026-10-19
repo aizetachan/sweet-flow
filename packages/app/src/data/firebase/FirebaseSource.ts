@@ -29,6 +29,7 @@ import type {
   StatusDef,
   Take,
   Workspace,
+  ClientEntry,
 } from "@sweetflow/domain";
 import {
   CALLABLES,
@@ -364,6 +365,22 @@ export class FirebaseSource implements DataSource {
 
   importShots(_rowId: Id, _items: ImportItem[], _before: RowItem | null, _groupId: Id | null): Id[] {
     throw new NotImplemented("Importar", "etapa C");
+  }
+
+  setForClient(_nodeIds: Id[], _on: boolean): void {
+    throw new NotImplemented("Compartir con el cliente", "etapa C");
+  }
+
+  setClientEntry(_entry: ClientEntry): void {
+    throw new NotImplemented("Compartir con el cliente", "etapa C");
+  }
+
+  addClientGuest(_email: string, _name?: string): void {
+    throw new NotImplemented("Compartir con el cliente", "etapa C");
+  }
+
+  removeClientGuest(_email: string): void {
+    throw new NotImplemented("Compartir con el cliente", "etapa C");
   }
 
   uploadReference(_nodeId: Id, _from: File | { mediaId: Id }): Promise<UploadedRef> {

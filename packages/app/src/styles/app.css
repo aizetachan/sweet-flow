@@ -1020,3 +1020,22 @@ button.topbar__me { position: relative; padding: 0; border: 0; border-radius: 50
 .apick__row:hover { background: var(--bg-3); }
 .apick__row.is-on { color: var(--fg-0); }
 .apick__row svg { flex: none; color: var(--fg-3); }
+.card__client { position: absolute; top: 12px; left: 12px; display: inline-flex; align-items: center; gap: 4px; height: 20px; padding: 0 7px; border-radius: 999px; background: #000b; color: var(--brand-300, #6cb6ff); font-size: 11px; font-weight: 500; pointer-events: none; }
+/* Compartir (docs/USUARIOS.md §4) */
+.topbar__share { margin-right: 4px; }
+.share__sec + .share__sec { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line-0); }
+.share__sec h3 { margin: 0 0 8px; font-size: 13px; font-weight: 600; }
+.share__lead { margin: 0 0 12px; }
+.share__team { display: flex; align-items: center; gap: 10px; }
+.share__label { font-size: 11px; color: var(--fg-3); text-transform: uppercase; letter-spacing: .04em; margin: 14px 0 6px; }
+.share__entries { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.share__entry { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; text-align: left; padding: 10px; border-radius: var(--r-md); border: 1px solid var(--line-1); background: var(--bg-1); color: var(--fg-1); }
+.share__entry:hover { border-color: var(--line-2); }
+.share__entry.is-on { border-color: var(--brand-300, #6cb6ff); background: color-mix(in srgb, var(--brand-500, #2f7dff) 10%, var(--bg-1)); color: var(--fg-0); }
+.share__add { display: flex; gap: 6px; }
+.share__name { width: 150px; }
+.share__list { display: flex; flex-direction: column; border: 1px solid var(--line-1); border-radius: var(--r-md); max-height: 180px; overflow: auto; margin-top: 6px; }
+.share__row { display: flex; align-items: center; gap: 8px; min-height: 34px; padding: 0 6px 0 10px; border-top: 1px solid var(--line-0); }
+.share__row:first-child { border-top: 0; }
+.share__link { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px dashed var(--line-2); border-radius: var(--r-md); }
+@media (max-width: 700px) { .share__entries { grid-template-columns: 1fr; } }

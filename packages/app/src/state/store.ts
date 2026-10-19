@@ -76,7 +76,7 @@ interface UiState {
   playing: boolean;
   filters: Filters;
   /** `team`: who works on the production (opened from the avatar menu). */
-  modal: null | "settings" | "team" | "notes";
+  modal: null | "settings" | "team" | "notes" | "share";
   /** The node whose notes the `notes` modal shows. */
   notesFor: Id | null;
   /** The «Importar» window: as versions of a shot, or as new shots in a row. */

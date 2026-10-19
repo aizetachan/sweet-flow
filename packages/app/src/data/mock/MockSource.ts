@@ -41,6 +41,7 @@ import {
   type Segment,
   type StatusDef,
   type Take,
+  type ClientEntry,
 } from "@sweetflow/domain";
 import { ALL_FEATURES, importKind, type BrowsePage, type BrowseQuery, type DataSource, type GenerateArgs, type ImportItem, type NewComment, type Placement, type RemoteCreation, type RemoteFolder, type Snapshot, type UploadedRef } from "../source";
 import { frame, type Mood } from "./frames";
@@ -245,6 +246,34 @@ export class MockSource implements DataSource {
       { nodes: this.patchNodes((n) => (n.id === nodeId ? { ...n, ...patch, updatedAt: Date.now(), updatedBy: this.s.me.uid } : n)), activity },
       "title" in patch || "statusId" in patch,
     );
+  }
+
+  setForClient(nodeIds: Id[], on: boolean): void {
+    const set = new Set(nodeIds);
+    const changed = this.s.nodes.filter((n) => set.has(n.id) && !!n.forClient !== on);
+    if (!changed.length) return;
+    const activity = [...changed.map((n) => this.log("structure", on ? "lo mostró al cliente" : "dejó de mostrarlo al cliente", n.id)), ...this.s.activity];
+    this.commit({ nodes: this.patchNodes((n) => (set.has(n.id) ? { ...n, forClient: on } : n)), activity });
+  }
+
+  setClientEntry(entry: ClientEntry): void {
+    const p = this.s.production;
+    this.commit({ production: { ...p, client: { guests: p.client?.guests ?? [], entry } } });
+  }
+
+  addClientGuest(email: string, name?: string): void {
+    const e = email.trim().toLowerCase();
+    if (!/^\S+@\S+\.\S+$/.test(e)) throw new Error("Escribe un email válido.");
+    const p = this.s.production;
+    const share = p.client ?? { entry: "invite" as const, guests: [] };
+    if (share.guests.some((g) => g.email === e)) return;
+    this.commit({ production: { ...p, client: { ...share, guests: [...share.guests, { email: e, ...(name?.trim() ? { name: name.trim() } : {}), addedBy: this.s.me.uid, addedAt: Date.now() }] } } });
+  }
+
+  removeClientGuest(email: string): void {
+    const p = this.s.production;
+    if (!p.client) return;
+    this.commit({ production: { ...p, client: { ...p.client, guests: p.client.guests.filter((g) => g.email !== email) } } });
   }
 
   // ---------- configuration ----------

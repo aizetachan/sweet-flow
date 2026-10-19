@@ -189,6 +189,15 @@ Dropbox.
   producción con «Invitar a esta producción». La demo tiene un equipo de
   ejemplo en memoria.
 
+## 6.2 Compartir con el cliente: lo que ya está (19 oct 2026)
+
+El lado del equipo, sin servidor: **Compartir** en la producción (cómo entra
+el cliente, sus invitados) y **Mostrar al cliente** en el menú de los planos y
+grupos. Se guarda en el registro de la producción (`client.entry`,
+`client.guest.added/removed`, `forClient` en el plano). Falta la página del
+cliente (§4–5): el enlace y los correos de invitación salen como
+«Próximamente».
+
 ## 7. Decisiones pendientes
 
 1. Para la revisión del cliente: ¿opción A o B? (§5, cuando toque)

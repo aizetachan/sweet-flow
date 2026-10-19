@@ -26,6 +26,7 @@ import type {
   StatusDef,
   Take,
   Workspace,
+  ClientEntry,
 } from "@sweetflow/domain";
 
 export interface Snapshot {
@@ -262,6 +263,12 @@ export interface DataSource {
    * the production keeps the provider's id, so it is sent only once.
    */
   uploadReference(nodeId: Id, from: File | { mediaId: Id }): Promise<UploadedRef>;
+  /** Show these shots to the client on the review page, or stop (docs/USUARIOS.md §4). */
+  setForClient(nodeIds: Id[], on: boolean): void;
+  /** How the client gets in: invitation to their email, or the link with their name (and email). */
+  setClientEntry(entry: ClientEntry): void;
+  addClientGuest(email: string, name?: string): void;
+  removeClientGuest(email: string): void;
   /** This person's creations at the provider (Magnific), to import; absent when there is no provider. */
   browseCreations?(q: BrowseQuery): Promise<BrowsePage>;
   /** Folders at the provider: its projects (`parent` null) or what is inside one. */

@@ -646,6 +646,25 @@ y «Tomas» por separado):
   Explorer, antes o después de un plano suelto u otro grupo de la misma escena.
 - **Pendiente:** el orden de montaje de sus planos (ver ROADMAP).
 
+### 2.7 Compartir (docs/USUARIOS.md §4)
+
+- **Compartir** (botón azul de la barra superior) abre una ventana con:
+  - **Equipo:** quién trabaja en la producción e **Invitar al equipo**.
+  - **Cliente:** el cliente no entra en Dropbox ni Drive; verá una página con
+    lo que se le muestre, y podrá comentar y marcar «Validado». **Por defecto
+    no ve nada.**
+    - **Cómo entra:** por invitación (correo; solo los invitados), con el enlace
+      y su nombre, o con el enlace, su nombre y su correo.
+    - **Invitados** (en «por invitación»): correo y nombre opcional; se
+      quitan con ×.
+    - **Lo que ve:** los planos marcados, con × para dejar de mostrarlos.
+    - **Enlace:** «Próximamente», con la página de revisión del cliente (el
+      enlace y el envío de las invitaciones).
+- **Mostrar al cliente:** en el menú del clic derecho de un plano (o de varios
+  seleccionados) y de un grupo (todos sus planos). Otra vez: «Dejar de mostrar
+  al cliente». La card lo indica con «👁 Cliente» sobre la imagen, y queda en
+  Actividad.
+
 ## 3. Ventanas aparte
 
 - **Tamaño:** se abre como una pantalla de portátil de 13–14″ (1440×900),

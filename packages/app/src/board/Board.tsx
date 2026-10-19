@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode, type RefObject } from "react";
-import { IconClock, IconFileImport, IconCopy, IconDownload, IconLink, IconNote, IconArrowBackUp, IconArrowLeft, IconPencil, IconStack2, IconExternalLink, IconMessageCircle, IconPlus, IconFilter, IconSearch, IconTrash, IconLayoutGrid, IconLayoutList, IconX } from "@tabler/icons-react";
+import { IconClock, IconFileImport, IconCopy, IconDownload, IconLink, IconNote, IconArrowBackUp, IconArrowLeft, IconPencil, IconStack2, IconExternalLink, IconMessageCircle, IconPlus, IconFilter, IconSearch, IconTrash, IconLayoutGrid, IconLayoutList, IconX, IconEye, IconEyeOff } from "@tabler/icons-react";
 import {
   childrenOf,
   codeOf,
@@ -456,6 +456,7 @@ function UnitCard({ node, inRow, hint }: { node: ProdNode; inRow?: boolean; hint
     >
       {/* The length goes under the status, not on the cover. */}
       <Thumb {...cover} preview badge={false} />
+      {node.forClient ? <span className="card__client" title="Lo ve el cliente (Compartir)"><IconEye size={12} /> Cliente</span> : null}
       {/* The title carries the weight (it is how a shot is found); the code goes under it. */}
       <div className="card__meta">
         <InlineEdit className="card__name" value={node.title} placeholder="Sin título" label="Doble clic para escribir el título"
@@ -541,10 +542,35 @@ function ShotMenu({ at, node, targets, onRename, onClose }: { at: MenuAt; node: 
           <div className="menu__sep" />
         </>
       ) : null}
+      <ClientToggle nodes={nodes} />
+      <div className="menu__sep" />
       <button className="menu__item menu__item--danger" onClick={() => trashNodes(targets)}>
         <IconTrash size={14} /> <span className="menu__label">{many ? `Mover los ${targets.length} a la papelera` : "Mover a la papelera"}</span>
       </button>
     </ContextMenu>
+  );
+}
+
+/**
+ * «Mostrar al cliente» (docs/USUARIOS.md §4): the client only sees the shots
+ * marked here. For several shots, it shows them all unless all are shown.
+ */
+function ClientToggle({ nodes }: { nodes: ProdNode[] }) {
+  const source = useStore((s) => s.source);
+  const notify = useStore((s) => s.notify);
+  const all = nodes.length > 0 && nodes.every((n) => n.forClient);
+  const n = nodes.length;
+  return (
+    <button className="menu__item" onClick={() => {
+      try {
+        source.setForClient(nodes.map((x) => x.id), !all);
+      } catch (e) {
+        notify(e instanceof Error ? e.message : String(e));
+      }
+    }}>
+      {all ? <IconEyeOff size={14} /> : <IconEye size={14} />}
+      <span className="menu__label">{all ? (n > 1 ? `Dejar de mostrar los ${n} al cliente` : "Dejar de mostrar al cliente") : n > 1 ? `Mostrar los ${n} al cliente` : "Mostrar al cliente"}</span>
+    </button>
   );
 }
 
@@ -561,6 +587,7 @@ function GroupMenu({ at, group, shots, onRename, onOpen, onClose }: { at: MenuAt
       <button className="menu__item" onClick={onRename}><IconPencil size={14} /> <span className="menu__label">Cambiar el nombre</span></button>
       <button className="menu__item" onClick={onOpen}><IconStack2 size={14} /> <span className="menu__label">Abrir el grupo</span></button>
       <button className="menu__item" onClick={() => source.dissolveGroup(group.id)}><IconArrowBackUp size={14} /> <span className="menu__label">Deshacer el grupo</span></button>
+      <ClientToggle nodes={shots} />
       <button className="menu__item menu__item--danger" onClick={() => trashNodes(shots.map((s) => s.id))}>
         <IconTrash size={14} /> <span className="menu__label">Mover a la papelera</span>
       </button>

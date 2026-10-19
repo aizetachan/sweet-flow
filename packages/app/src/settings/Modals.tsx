@@ -2,6 +2,7 @@ import { IconArrowDown, IconArrowUp, IconArchive, IconBolt, IconCircleDot, IconC
 import { codeFor, folderName, normEmail, safeTitle, type LevelDef, type StatusCategory, type StatusDef } from "@sweetflow/domain";
 import { Avatar, Button, cx, IconButton, Modal } from "@sweetflow/ui";
 import { Integrations, ModelsSettings, Profile } from "../dashboard/Settings";
+import { ShareModal } from "../shell/ShareModal";
 import { entryWithin } from "../data/folder/folderEntries";
 import { uidForEmail } from "../integrations/magnific/identity";
 import { useMagnific } from "../integrations/magnific/useMagnific";
@@ -13,6 +14,7 @@ export function Modals() {
   const set = useStore((s) => s.set);
   const close = () => set({ modal: null });
   if (modal === "settings") return <ProductionSettings onClose={close} />;
+  if (modal === "share") return <ShareModal onClose={close} />;
   if (modal === "team") return <TeamModal onClose={close} />;
   if (modal === "notes") return <NotesModal onClose={close} />;
   return null;
