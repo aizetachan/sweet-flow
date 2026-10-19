@@ -8,13 +8,15 @@
  */
 
 import { useEffect, useState, type DragEvent, type MouseEvent } from "react";
-import { IconPhotoPlus, IconPlus, IconStar, IconStarFilled, IconTrash } from "@tabler/icons-react";
-import { libOrder, type Id, type Media, type ProdNode } from "@sweetflow/domain";
+import { IconBooks, IconPhotoPlus, IconPlus, IconStar, IconStarFilled, IconTrash } from "@tabler/icons-react";
+import { libOrder, type Id, type LibraryShare, type Media, type ProdNode } from "@sweetflow/domain";
 import { Button, cx } from "@sweetflow/ui";
 import { useSnap, useStore } from "../state/store";
 import { Thumb } from "../components/media";
 import { ContextMenu, type MenuAt } from "../components/ContextMenu";
+import { Popover } from "../components/Popover";
 import { InlineEdit } from "../board/Board";
+import { useSharedLibraries } from "./shared";
 import { LIB_TYPES } from "../inspector/Inspector";
 import type { AssetType } from "@sweetflow/domain";
 
@@ -77,6 +79,7 @@ export function LibraryBoard() {
       <header className="libb__head">
         <h1>Biblioteca</h1>
         <span className="sf-muted sf-small grow">Grupos de imágenes de referencia. El nombre de cada grupo es el que se usa al llamarlo en los planos.</span>
+        <ShareLibrary />
         <Button size="sm" variant="primary" onClick={() => newGroup()}><IconPlus size={14} /> Grupo</Button>
       </header>
       {groups.map((g) => <GroupRow key={g.id} group={g} picked={picked} setPicked={setPicked} />)}
@@ -102,7 +105,107 @@ export function LibraryBoard() {
         <IconPlus size={18} />
         <span>{groups.length ? "Nuevo grupo (o suelta imágenes aquí)" : "Crea tu primer grupo: «Personaje 1», «Casa de Robida»… y genera dentro desde el panel."}</span>
       </div>
+      <SharedLibraries />
     </div>
+  );
+}
+
+/**
+ * Libraries other productions share with this one (docs/INTERFAZ.md §2.8.1):
+ * read here, always up to date, edited only in their own production. Their
+ * images drag onto the references like this production's.
+ */
+function SharedLibraries() {
+  const shared = useSharedLibraries();
+  const lib = useStore((s) => s.lib);
+  if (!shared.length) return null;
+  const folderName = (id: Id) => lib?.entries.find((e) => e.id === id)?.name ?? "una carpeta";
+  return (
+    <section className="libb__shared">
+      <div className="libb__sharedhead"><IconBooks size={16} /> <b>Bibliotecas compartidas</b> <span className="sf-faint sf-small">de otras producciones; se editan en la suya</span></div>
+      {shared.map((l) => (
+        <div key={l.productionId} className="libb__from">
+          <div className="libb__fromhead">
+            <span>De <b>{l.name}</b></span>
+            <span className="sf-faint sf-small">{l.share.scope === "all" ? "compartida con todo Sweet Flow" : `compartida con «${folderName(l.share.folderId)}»`}</span>
+            <span className="grow" />
+            <button className="link sf-small" onClick={() => { useStore.getState().openProduction(l.productionId); useStore.getState().set({ view: "library" }); }}>Abrir «{l.name}»</button>
+          </div>
+          {l.groups.length ? l.groups.map((g) => {
+            const images = l.media.filter((m) => m.nodeId === g.id && m.kind === "image").sort((a, b) => libOrder(a) - libOrder(b));
+            const kind = g.lib?.kind === "card" ? g.lib.type : undefined;
+            const type = kind ? LIB_TYPES.find((t) => t.id === kind)?.label : undefined;
+            return (
+              <div key={g.id} className="libb__lane libb__lane--shared">
+                <div className="libb__lanehead"><span className="libb__gname">{g.title}</span>{type ? <span className="libkind libkind--static">{type}</span> : null}<span className="sf-faint sf-small">{images.length || ""}</span></div>
+                <div className="libb__row">
+                  {images.map((m) => (
+                    <div key={m.id} className="libimg" draggable data-tip={`${g.title} · de ${l.name}`}
+                      onDragStart={(e) => {
+                        dragging = [m.id];
+                        e.dataTransfer.setData(MEDIA_DRAG, JSON.stringify(dragging));
+                        e.dataTransfer.effectAllowed = "copy";
+                        document.body.classList.add("sf-drag-media");
+                      }}>
+                      <Thumb media={m} badge={false} />
+                    </div>
+                  ))}
+                  {!images.length ? <span className="sf-faint sf-small">Sin imágenes todavía.</span> : null}
+                </div>
+              </div>
+            );
+          }) : <p className="sf-faint sf-small">Aún no tiene grupos.</p>}
+        </div>
+      ))}
+    </section>
+  );
+}
+
+/**
+ * «Compartir biblioteca» (docs/INTERFAZ.md §2.8.1): on or off, and for whom:
+ * every production of Sweet Flow, or those inside one of the folders this
+ * production is in. No links: the other productions just see it, always up to
+ * date, in their own Biblioteca.
+ */
+function ShareLibrary() {
+  const snap = useSnap();
+  const source = useStore((s) => s.source);
+  const lib = useStore((s) => s.lib);
+  const productionId = useStore((s) => s.productionId);
+  const share = snap.production.libraryShare;
+  // The folders this production is in, from the closest one up.
+  const folders: Array<{ id: Id; name: string }> = [];
+  if (lib && productionId) {
+    const byId = new Map(lib.entries.map((e) => [e.id, e]));
+    for (let cur = byId.get(productionId)?.parentId; cur; cur = byId.get(cur)?.parentId) {
+      const f = byId.get(cur);
+      if (f) folders.push({ id: f.id, name: f.name });
+    }
+  }
+  const label = !share ? "Compartir biblioteca" : share.scope === "all" ? "Compartida con todo Sweet Flow" : `Compartida con «${folders.find((f) => f.id === share.folderId)?.name ?? "una carpeta"}»`;
+  const pick = (next: LibraryShare | null) => source.setLibraryShare(next);
+  const on = (s: LibraryShare) => JSON.stringify(s) === JSON.stringify(share ?? null);
+  return (
+    <Popover align="right" className="libshare" button={({ open, toggle }) => (
+      <Button size="sm" className={cx(share && "libshare__on", open && "is-on")} onClick={toggle}><IconBooks size={14} /> {label}</Button>
+    )}>
+      <div className="menu__title">Compartir la biblioteca</div>
+      <label className="libshare__switch">
+        <input type="checkbox" checked={!!share} onChange={(e) => pick(e.target.checked ? (folders[0] ? { scope: "folder", folderId: folders[0].id } : { scope: "all" }) : null)} />
+        <span><b>{share ? "Compartida" : "Solo esta producción"}</b><span className="sf-faint sf-small"> · las demás la ven en su Biblioteca, siempre al día; solo se edita aquí.</span></span>
+      </label>
+      {share ? (
+        <div className="libshare__scopes">
+          <div className="sf-faint sf-small">Para:</div>
+          {folders.map((f) => (
+            <button key={f.id} className={cx("libshare__scope", on({ scope: "folder", folderId: f.id }) && "is-on")} onClick={() => pick({ scope: "folder", folderId: f.id })}>
+              Las producciones de «{f.name}»
+            </button>
+          ))}
+          <button className={cx("libshare__scope", on({ scope: "all" }) && "is-on")} onClick={() => pick({ scope: "all" })}>Todo Sweet Flow</button>
+        </div>
+      ) : null}
+    </Popover>
   );
 }
 
@@ -172,7 +275,10 @@ function GroupRow({ group, picked, setPicked }: { group: ProdNode; picked: Id[];
         setHint(null);
         if (!dragging.length) return;
         e.preventDefault();
-        source.placeLibMedia(dragging.filter((id) => id !== h.before), group.id, h.before);
+        // Images of another production's library stay there (they are only read here).
+        const own = dragging.filter((id) => id !== h.before && snap.media.some((m) => m.id === id));
+        if (own.length) source.placeLibMedia(own, group.id, h.before);
+        else useStore.getState().notify("Esa imagen es de la biblioteca de otra producción: úsala como referencia, no se mueve aquí.");
         dragging = [];
         setPicked([]);
       }}>

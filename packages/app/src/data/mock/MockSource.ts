@@ -48,6 +48,7 @@ import {
   planMoveToLib,
   planPlaceLibMedia,
   type Asset,
+  type LibraryShare,
 } from "@sweetflow/domain";
 import { ALL_FEATURES, importKind, type BrowsePage, type BrowseQuery, type DataSource, type GenerateArgs, type ImportItem, type NewComment, type Placement, type RemoteCreation, type RemoteFolder, type Snapshot, type UploadedRef } from "../source";
 import { frame, type Mood } from "./frames";
@@ -338,6 +339,11 @@ export class MockSource implements DataSource {
 
   private libNode(n: Pick<ProdNode, "id" | "parentId" | "levelId" | "number" | "title" | "statusId"> & { lib?: ProdNode["lib"] }): ProdNode {
     return { ...n, productionId: this.s.production.id, notes: "", assigneeIds: [], assetIds: [], updatedAt: Date.now(), updatedBy: this.s.me.uid };
+  }
+
+  setLibraryShare(share: LibraryShare | null): void {
+    const { libraryShare: _old, ...rest } = this.s.production;
+    this.commit({ production: { ...rest, ...(share ? { libraryShare: share } : {}) } });
   }
 
   setForClient(nodeIds: Id[], on: boolean): void {

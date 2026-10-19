@@ -246,6 +246,6 @@ la fila muestra lo que hay dentro.
 - **Revisión:** comentarios con timecode, avisos de cambios y anotación sobre el fotograma.
 - **API de Dropbox (etapa B):** `DropboxSource`, sin necesidad del cliente de Dropbox.
 - **Tiempo real (etapa C):** Firebase Auth, Firestore, presencia y roles en el servidor. Aquí se retoma el esqueleto de Firebase.
-- **Biblioteca:** hecha dentro de cada producción (19 oct 2026, INTERFAZ §2.8): mesa de trabajo, fichas por tipo, elegidas y exploración, y su uso como referencia en los planos. Siguiente: compartirla entre producciones como Figma (§2.8.1).
+- **Biblioteca:** hecha dentro de cada producción (19 oct 2026, INTERFAZ §2.8): mesa de trabajo, fichas por tipo, elegidas y exploración, y su uso como referencia en los planos. Compartida entre producciones (19 oct 2026, §2.8.1): todo Sweet Flow o las producciones de una carpeta, siempre al día, sin copias.
 - **Montaje:** timeline de escena o secuencia y export.
 - **Más adelante:** web de revisión, firma de apps y política de almacenamiento.

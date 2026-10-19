@@ -28,6 +28,7 @@ import type {
   Workspace,
   ClientEntry,
   AssetType,
+  LibraryShare,
 } from "@sweetflow/domain";
 
 export interface Snapshot {
@@ -152,7 +153,7 @@ export interface GenerateArgs {
    * Library groups called in the prompt («@Elena», docs/INTERFAZ.md §2.8),
    * with the images picked for each.
    */
-  mentions?: Array<{ groupId: Id; tag: string; mediaIds: Id[] }>;
+  mentions?: Array<{ groupId: Id; tag: string; mediaIds: Id[]; remote?: { ids: string[]; kind?: AssetType; description?: string } }>;
   /** How many results (one version each). */
   count?: number;
   aspectRatio?: string;
@@ -282,6 +283,8 @@ export interface DataSource {
   /** Mark images of a group as its chosen references, or not. */
   setChosen(mediaIds: Id[], chosen: boolean): void;
   setLibType(nodeId: Id, type: AssetType): void;
+  /** Share this production's library with others (null: only this one), docs/INTERFAZ.md §2.8.1. */
+  setLibraryShare(share: LibraryShare | null): void;
   /** Show these shots to the client on the review page, or stop (docs/USUARIOS.md §4). */
   setForClient(nodeIds: Id[], on: boolean): void;
   /** How the client gets in: invitation to their email, or the link with their name (and email). */

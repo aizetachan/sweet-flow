@@ -287,3 +287,13 @@ describe("sharing with the client", () => {
     expect(s.nodes.find((n) => n.id === "sc")?.forClient).toBeUndefined();
   });
 });
+
+describe("sharing the library", () => {
+  it("keeps who the library is shared with, and stops sharing", () => {
+    const d = device("a");
+    const base = [d.emit(created()), d.emit({ type: "library.shared", share: { scope: "folder", folderId: "f1" } })];
+    expect(foldLog(base).production?.libraryShare).toEqual({ scope: "folder", folderId: "f1" });
+    expect(foldLog([...base, d.emit({ type: "library.shared", share: { scope: "all" } })]).production?.libraryShare).toEqual({ scope: "all" });
+    expect(foldLog([...base, d.emit({ type: "library.shared", share: null })]).production?.libraryShare).toBeUndefined();
+  });
+});

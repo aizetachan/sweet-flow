@@ -25,7 +25,7 @@ import {
   IconPlus,
   IconSearch,
   IconTrash,
-  IconTrashX, IconUserPlus } from "@tabler/icons-react";
+  IconTrashX, IconUserPlus, IconBooks } from "@tabler/icons-react";
 import { ContextMenu, type MenuAt } from "../components/ContextMenu";
 import { revealEntry } from "../data/reveal";
 import { copyEntryLink } from "../data/share";
@@ -332,6 +332,12 @@ function EntryItem(p: EntryItemProps) {
     </ContextMenu>
   ) : null;
   const star = p.pinned && !inTrash ? <IconPinFilled size={12} className="dentry__star dentry__star--badge" /> : null;
+  // Its library is shared with other productions (docs/INTERFAZ.md §2.8.1), like a Figma file with a library.
+  const sharedLib = !isFolder && s?.libraryShare ? (
+    <span className="dentry__lib" title={`Comparte su biblioteca${s.libraryGroups ? ` (${s.libraryGroups} ${s.libraryGroups === 1 ? "grupo" : "grupos"})` : ""} con ${s.libraryShare.scope === "all" ? "todo Sweet Flow" : "las producciones de su carpeta"}`}>
+      <IconBooks size={13} />
+    </span>
+  ) : null;
 
   if (p.layout === "list") {
     return (
@@ -340,6 +346,7 @@ function EntryItem(p: EntryItemProps) {
           {isFolder ? <IconFolder size={16} className="dentry__ficon" /> : <IconMovie size={16} className="sf-faint" />}
           {name}
           {star}
+          {sharedLib}
           {p.place && !inTrash ? <span className="sf-faint sf-small">· {p.place}</span> : null}
         </span>
         <span>{inTrash ? <span className="sf-faint sf-small">{p.place}</span> : isFolder ? <span className="sf-faint sf-small">{meta}</span> : <Progress s={s} compact />}</span>
@@ -359,6 +366,7 @@ function EntryItem(p: EntryItemProps) {
         <div className="dcard__thumb">
           {s?.thumbUrl ? <img src={s.thumbUrl} alt="" /> : <span className="dcard__initials">{initials(p.entry.name)}</span>}
           {s?.format ? <span className="dcard__format">{s.format}</span> : null}
+          {sharedLib ? <span className="dcard__lib">{sharedLib}</span> : null}
         </div>
       )}
       <div className="dcard__body">

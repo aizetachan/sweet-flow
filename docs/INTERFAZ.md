@@ -743,36 +743,35 @@ centrada en la imagen y sin tipos fijos (decidido el 19 oct 2026):
   sin biblioteca), sus imágenes van como referencias normales. Las imágenes
   que Magnific aún no tiene se suben antes; Generar espera.
 
-#### 2.8.1 Bibliotecas compartidas entre producciones (propuesta, como Figma)
+#### 2.8.1 Bibliotecas compartidas entre producciones (hecho el 19 oct 2026)
 
 Una biblioteca nace en una producción, pero puede servir a otras (los 10
-episodios de una temporada) sin salir de ella:
-- **Publicar:** en la Biblioteca de una producción, **Publicar la
-  biblioteca** con un alcance: la carpeta del dashboard donde está (y todo lo
-  de dentro), una carpeta de más arriba o todo el equipo.
-- **Se ve dónde está:** en el dashboard, la tarjeta de esa producción lleva un
-  **icono de biblioteca**, como un archivo de Figma que comparte componentes:
-  «Biblioteca de «Ep. 01» · se usa en 9 producciones».
-- **Usarla:** las producciones dentro del alcance la ven en su Biblioteca, en
-  **«Bibliotecas del proyecto»**, con su origen («de Ep. 01») y en solo
-  lectura. Sus fichas salen en «De la biblioteca» al generar, agrupadas por
-  origen.
-- **Editarla:** solo en su producción. «Abrir en «Ep. 01»» lleva allí; lo que
-  cambia (nuevas elegidas, descripción) llega a todas al momento.
-- **Sin copias:** los archivos siguen en la carpeta de la producción de origen;
-  las demás los leen de allí. Opcional: «Copiar a esta producción» para
-  desvincular una ficha.
-- **Accesos:** para usarla hay que tener la producción de origen. Al invitar a
-  alguien a «Ep. 05», si usa la biblioteca de «Ep. 01», se avisa y se ofrece
-  darle también acceso a «Ep. 01».
-- **Papelera:** mandar a la papelera una producción cuya biblioteca se usa
-  pide confirmación y dice dónde se usa.
-- También vale una producción hecha solo para la biblioteca («Biblia de
-  Mareas»): mismo mecanismo.
-- **Decidido (19 oct 2026):** una vez compartida, **siempre al día**: los
-  cambios llegan en vivo, sin publicar versiones.
-- **Por decidir:** ¿las producciones del alcance se conectan solas a la
-  biblioteca o hay que activarla en cada una?
+episodios de una temporada) sin salir de ella. **Sin enlaces:** es dentro de
+Sweet Flow, solo activar o desactivar y decir para quién.
+- **Compartir biblioteca** (cabecera de la Biblioteca): un interruptor
+  (desactivado: solo esta producción) y **Para:** las producciones de una de
+  las carpetas del dashboard donde está (de la más cercana hacia arriba) o
+  **todo Sweet Flow**. El botón dice con quién está compartida («Compartida con
+  «Mareas»»).
+- **Se ve dónde está:** en el dashboard, la tarjeta (y la fila) de la
+  producción que comparte lleva un **icono de biblioteca**, como un archivo de
+  Figma con biblioteca; al pasar el ratón dice con quién y cuántos grupos.
+- **Usarla:** las producciones del alcance la ven **solas, siempre al día**, en
+  su Biblioteca, en **Bibliotecas compartidas** (debajo de sus grupos): «De
+  «Biblia de Mareas»», con quién está compartida y **Abrir «…»**. Sus grupos
+  son de solo lectura; sus imágenes se arrastran a las referencias. También
+  salen en **@** y en «De la biblioteca» al generar, con «de «…»».
+- **Editarla:** solo en su producción. Lo que cambia allí llega a las demás.
+- **Sin copias:** las imágenes siguen en la carpeta de su producción; las
+  demás las leen de allí (en solo lectura: abrirla así no escribe nada en ella).
+  Como referencia van por su identificador en Magnific; una imagen que
+  Magnific no tiene (importada del ordenador y nunca usada) no se puede usar
+  desde otra producción.
+- **Accesos:** solo se ven las bibliotecas de producciones a las que se tiene
+  acceso (equipo, docs/USUARIOS.md).
+- **Pendiente:** avisar al mandar a la papelera una producción cuya biblioteca
+  se usa; avisar al invitar a una producción que usa la biblioteca de otra a
+  la que esa persona no tiene acceso.
 
 ## 3. Ventanas aparte
 

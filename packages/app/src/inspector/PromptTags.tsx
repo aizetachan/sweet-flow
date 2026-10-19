@@ -10,6 +10,7 @@ import { IconCheck, IconPhoto } from "@tabler/icons-react";
 import { libOrder, libTag, type Id, type Media, type ProdNode } from "@sweetflow/domain";
 import { cx } from "@sweetflow/ui";
 import { useSnap } from "../state/store";
+import { useSharedLibraries } from "../library/shared";
 import { Thumb } from "../components/media";
 import { LIB_TYPES } from "./Inspector";
 
@@ -37,12 +38,20 @@ export function PromptTags({ value, onChange, placeholder, mentions, setMentions
   setMentions: (m: Mentions) => void;
 }) {
   const snap = useSnap();
+  const shared = useSharedLibraries();
   const area = useRef<HTMLTextAreaElement>(null);
+  // This production's groups and those other productions share with it (§2.8.1).
+  const fromOf = new Map<Id, string>();
+  const media: Media[] = [...snap.media];
+  for (const l of shared) {
+    for (const g of l.groups) fromOf.set(g.id, l.name);
+    media.push(...l.media);
+  }
   const [query, setQuery] = useState<{ text: string; at: number } | null>(null);
   const [hi, setHi] = useState(0);
   const [picking, setPicking] = useState<Id | null>(null);
   // Every group, also those still without images (they show what to do).
-  const groups = snap.library.filter((n) => n.lib?.kind === "card");
+  const groups = [...snap.library.filter((n) => n.lib?.kind === "card"), ...shared.flatMap((l) => l.groups)];
   const q = query?.text.toLowerCase() ?? "";
   const list = query ? groups.filter((g) => g.title.toLowerCase().includes(q) || libTag(g.title).toLowerCase().includes(q)).slice(0, 8) : [];
 
@@ -61,7 +70,7 @@ export function PromptTags({ value, onChange, placeholder, mentions, setMentions
     onChange(next);
     setQuery(null);
     if (!mentions[g.id]) {
-      const imgs = imagesOf(snap.media, g.id);
+      const imgs = imagesOf(media, g.id);
       const chosen = imgs.filter((m) => m.chosen);
       setMentions({ ...mentions, [g.id]: { tag, mediaIds: (chosen.length ? chosen : imgs).slice(0, MAX_IMAGES).map((m) => m.id) } });
     } else if (mentions[g.id]!.tag !== tag) setMentions({ ...mentions, [g.id]: { ...mentions[g.id]!, tag } });
@@ -82,7 +91,7 @@ export function PromptTags({ value, onChange, placeholder, mentions, setMentions
   };
 
   const called = mentionsIn(value, mentions);
-  const pickGroup = picking ? snap.library.find((n) => n.id === picking) : undefined;
+  const pickGroup = picking ? groups.find((n) => n.id === picking) : undefined;
   const toggle = (id: Id) => {
     if (!picking) return;
     const cur = mentions[picking];
@@ -103,7 +112,7 @@ export function PromptTags({ value, onChange, placeholder, mentions, setMentions
         <div className="menu ptags__menu" role="listbox">
           <div className="menu__title">Biblioteca</div>
           {list.map((g, i) => {
-            const first = imagesOf(snap.media, g.id)[0];
+            const first = imagesOf(media, g.id)[0];
             const type = g.lib?.kind === "card" ? g.lib.type : undefined;
             const kind = type ? LIB_TYPES.find((t) => t.id === type)?.label : undefined;
             return (
@@ -111,7 +120,7 @@ export function PromptTags({ value, onChange, placeholder, mentions, setMentions
                 onMouseDown={(e) => { e.preventDefault(); insert(g); }} onMouseEnter={() => setHi(i)}>
                 {first ? <Thumb media={first} badge={false} /> : <IconPhoto size={14} />}
                 <span className="menu__label">{g.title}</span>
-                {kind ? <span className="menu__hint">{kind}</span> : null}
+                {kind || fromOf.has(g.id) ? <span className="menu__hint">{[kind, fromOf.has(g.id) ? `de ${fromOf.get(g.id)}` : null].filter(Boolean).join(" · ")}</span> : null}
               </button>
             );
           })}
@@ -120,9 +129,9 @@ export function PromptTags({ value, onChange, placeholder, mentions, setMentions
       {pickGroup && mentions[pickGroup.id] ? (
         <div className="menu ptags__pick" onMouseDown={(e) => e.preventDefault()}>
           <div className="menu__title">@{mentions[pickGroup.id]!.tag} · imágenes de referencia ({mentions[pickGroup.id]!.mediaIds.length}/{MAX_IMAGES})</div>
-          {!imagesOf(snap.media, pickGroup.id).length ? <p className="sf-faint sf-small ptags__empty">Este grupo aún no tiene imágenes: genera en él desde la Biblioteca.</p> : null}
+          {!imagesOf(media, pickGroup.id).length ? <p className="sf-faint sf-small ptags__empty">Este grupo aún no tiene imágenes: genera en él desde la Biblioteca.</p> : null}
           <div className="ptags__grid">
-            {imagesOf(snap.media, pickGroup.id).map((m) => {
+            {imagesOf(media, pickGroup.id).map((m) => {
               const on = mentions[pickGroup.id]!.mediaIds.includes(m.id);
               return (
                 <button key={m.id} className={cx("ptags__img", on && "is-on")} onClick={() => toggle(m.id)} title={on ? "Quitar" : "Usar como referencia"}>

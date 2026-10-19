@@ -11,7 +11,7 @@
 
 import { parseStamp, type Stamp } from "./clock";
 import { byNumber, splitTrash } from "./tree";
-import type { ClientEntry, ClientGuest, Comment, Id, LevelDef, LibKind, Media, Member, Millis, ProdNode, Production, ShotGroup, StatusDef, Take } from "./types";
+import type { ClientEntry, ClientGuest, Comment, Id, LevelDef, LibKind, LibraryShare, Media, Member, Millis, ProdNode, Production, ShotGroup, StatusDef, Take } from "./types";
 
 /** Bump when an event's shape changes incompatibly. */
 export const LOG_VERSION = 1;
@@ -30,6 +30,8 @@ export type LogEventBody =
   | { type: "levels.set"; levels: LevelDef[] }
   /** Sharing with the client (docs/USUARIOS.md §4): how they get in; who is invited. */
   | { type: "client.entry"; entry: ClientEntry }
+  /** Its library shared with other productions (null: only this one). */
+  | { type: "library.shared"; share: LibraryShare | null }
   | { type: "client.guest.added"; guest: Pick<ClientGuest, "email" | "name"> }
   | { type: "client.guest.removed"; email: string }
   | { type: "statuses.set"; statuses: StatusDef[] }
@@ -158,6 +160,7 @@ const TYPES = new Set<string>([
   "member.joined",
   "levels.set",
   "client.entry",
+  "library.shared",
   "client.guest.added",
   "client.guest.removed",
   "statuses.set",
@@ -246,6 +249,12 @@ export function foldLog(events: LogEvent[]): LogState {
         break;
       case "levels.set":
         if (production) production = { ...production, levels: e.levels, updatedAt: at };
+        break;
+      case "library.shared":
+        if (production) {
+          const { libraryShare: _old, ...rest } = production;
+          production = { ...rest, ...(e.share ? { libraryShare: e.share } : {}), updatedAt: at };
+        }
         break;
       case "client.entry":
         if (production) production = { ...production, client: { guests: production.client?.guests ?? [], entry: e.entry }, updatedAt: at };

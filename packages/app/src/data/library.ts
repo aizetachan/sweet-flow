@@ -12,7 +12,7 @@
  *   production is a folder with `.sweetflow/` inside.
  */
 
-import { accessOf, normEmail, shareRoots, type Access, type TeamMember } from "@sweetflow/domain";
+import { accessOf, normEmail, shareRoots, type Access, type LibraryShare, type TeamMember } from "@sweetflow/domain";
 import { IDENTITY_EVENT, IDENTITY_KEY, readIdentity, uidForEmail } from "../integrations/magnific/identity";
 import {
   defaultLevels,
@@ -60,6 +60,9 @@ export interface ProductionSummary {
   members: string[];
   updatedAt?: Millis;
   thumbUrl?: string;
+  /** Its library, when shared with other productions (docs/INTERFAZ.md §2.8.1), and how many groups it has. */
+  libraryShare?: LibraryShare;
+  libraryGroups?: number;
 }
 
 /**
@@ -160,6 +163,8 @@ export interface Library {
   setProfile(p: Profile): void;
   /** DataSource of a production. Caller disposes it when leaving. */
   open(id: Id): DataSource;
+  /** A production only to read it (another one's shared library); writes nothing. Caller disposes it. */
+  openReadOnly?(id: Id): DataSource;
   /** Where an entry's folder is, inside the team folder (folder mode only). */
   pathOf?(id: Id): string | null;
 }
@@ -376,6 +381,20 @@ class EntryLibrary implements Library {
       if (this.opened.get(id) === src) this.opened.delete(id);
       dispose();
     };
+    // What its library shares changes the other productions' libraries: keep the summary in step.
+    const offShare = src.subscribe((snap) => {
+      const cur = this.summaries[id];
+      const share = snap.production.libraryShare;
+      const groups = snap.library.filter((n) => n.lib?.kind === "card").length;
+      if (cur && JSON.stringify(cur.libraryShare ?? null) === JSON.stringify(share ?? null) && cur.libraryGroups === groups) return;
+      this.summaries[id] = { ...(cur ?? summarize({ production: snap.production, nodes: snap.nodes, members: snap.members })), libraryGroups: groups, ...(share ? { libraryShare: share } : { libraryShare: undefined }) };
+      this.emit();
+    });
+    const disposeShare = src.dispose.bind(src);
+    src.dispose = () => {
+      offShare();
+      disposeShare();
+    };
     src.ready
       .then(() => {
         // One name inside and outside: the dashboard's wins when they differ (renamed while closed).
@@ -384,6 +403,12 @@ class EntryLibrary implements Library {
       })
       .catch((err) => console.error("[library] no se pudo abrir la producción", err));
     return src;
+  }
+
+  openReadOnly(id: Id): DataSource {
+    const special = this.o.special?.[id];
+    if (special) return special.open();
+    return new LocalSource({ store: this.o.logStoreFor(id), deviceId: this.o.deviceId, me: this.me, files: this.o.filesFor?.(id), generator: this.o.generator, readOnly: true });
   }
 
   // ---------- internals ----------
@@ -463,6 +488,8 @@ export function summarize(s: Pick<LogState, "production" | "nodes" | "members">)
     byStatus: statuses.map((st) => ({ color: st.color, name: st.name, count: units.filter((u) => u.statusId === st.id).length })).filter((x) => x.count),
     members: s.members.map((m) => m.displayName),
     updatedAt: Math.max(p.updatedAt, ...s.nodes.map((n) => n.updatedAt)),
+    ...(p.libraryShare ? { libraryShare: p.libraryShare } : {}),
+    libraryGroups: s.nodes.filter((n) => n.lib?.kind === "card" && !n.trashedAt).length,
   };
 }
 

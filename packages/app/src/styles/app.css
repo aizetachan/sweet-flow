@@ -1107,3 +1107,21 @@ button.topbar__me { position: relative; padding: 0; border: 0; border-radius: 50
 /* Delayed tooltips (components/DelayedTip.tsx): the full name of a picture without a title */
 .dtip { position: fixed; z-index: 300; transform: translate(-50%, -100%); max-width: 280px; padding: 5px 9px; border-radius: 6px; background: var(--bg-5); color: var(--fg-0); font-size: 12px; line-height: 1.35; box-shadow: var(--shadow-pop); pointer-events: none; animation: sf-fade .12s; }
 .dtip--below { transform: translate(-50%, 0); }
+/* Compartir biblioteca (docs/INTERFAZ.md §2.8.1) */
+.libshare { width: 320px; }
+.libshare__on { border-color: var(--brand-300, #6cb6ff); color: var(--brand-300, #6cb6ff); }
+.libshare__switch { display: flex; gap: 8px; align-items: flex-start; padding: 4px 8px 8px; cursor: pointer; }
+.libshare__switch input { margin-top: 3px; }
+.libshare__scopes { display: flex; flex-direction: column; gap: 4px; padding: 4px 8px 6px; }
+.libshare__scope { text-align: left; padding: 7px 10px; border-radius: var(--r-md); border: 1px solid var(--line-1); background: none; color: var(--fg-1); font-size: 12.5px; }
+.libshare__scope:hover { border-color: var(--line-2); }
+.libshare__scope.is-on { border-color: var(--brand-300, #6cb6ff); background: color-mix(in srgb, var(--brand-500, #2f7dff) 14%, transparent); color: var(--fg-0); }
+.libb__shared { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line-1); }
+.libb__sharedhead { display: flex; align-items: center; gap: 8px; }
+.libb__from { display: flex; flex-direction: column; gap: 8px; }
+.libb__fromhead { display: flex; align-items: baseline; gap: 10px; padding: 0 4px; }
+.libb__lane--shared { background: #0d0d0f; border: 1px dashed var(--line-1); }
+.libkind--static { cursor: default; }
+.dentry__lib { display: inline-grid; place-items: center; color: var(--brand-300, #6cb6ff); margin-left: 4px; }
+.dcard__lib { position: absolute; top: 8px; left: 8px; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 6px; background: #000b; }
+.dcard__lib .dentry__lib { margin: 0; }

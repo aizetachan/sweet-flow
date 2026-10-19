@@ -60,6 +60,12 @@ export interface Production {
   statuses: StatusDef[];
   /** Sharing with the client (docs/USUARIOS.md §4): how they get in, and who is invited. */
   client?: ClientShare;
+  /**
+   * Its library shared with other productions (docs/INTERFAZ.md §2.8.1):
+   * with every production of the team ("all"), or with those inside a
+   * dashboard folder (its id). Absent: only this production.
+   */
+  libraryShare?: LibraryShare;
   createdAt: Millis;
   updatedAt: Millis;
 }
@@ -83,6 +89,9 @@ export interface ClientShare {
   entry: ClientEntry;
   guests: ClientGuest[];
 }
+
+/** Who a production's library is shared with: everyone, or the productions inside a dashboard folder. */
+export type LibraryShare = { scope: "all" } | { scope: "folder"; folderId: Id };
 
 export interface NodeStats {
   media: number;

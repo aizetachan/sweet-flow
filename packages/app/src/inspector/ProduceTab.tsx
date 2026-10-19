@@ -27,6 +27,7 @@ import { modelsFor, nearest, REF_LABEL, specOf, useModelsVersion, type GenKind, 
 import { refreshCatalog } from "../integrations/magnific/catalog";
 import { mentionsIn, PromptTags, type Mentions } from "./PromptTags";
 import { draggedMedia, MEDIA_DRAG } from "../library/LibraryBoard";
+import { sharedGroup, sharedMedia, useSharedLibraries } from "../library/shared";
 import { kindOfFile, type GenerateArgs, type ImportItem, type RemoteCreation } from "../data/source";
 import { Popover } from "../components/Popover";
 import { Composer } from "./ReviewTab";
@@ -316,7 +317,13 @@ function GenerateBox({ node }: { node: ProdNode }) {
     ...(start ? (isUp(start) ? { sourceRef: ref.ups[start]?.ref } : { sourceMediaId: start }) : {}),
     ...(start && end ? (isUp(end) ? { endRef: ref.ups[end]?.ref } : { endMediaId: end }) : {}),
     ...(refs.length ? { references: refs.map((r) => (isUp(r.mediaId) ? { type: r.type, ref: ref.ups[r.mediaId]?.ref } : r)) } : {}),
-    ...(called.length ? { mentions: called } : {}),
+    ...(called.length ? { mentions: called.map((c) => {
+      // A group of another production's shared library: what it is and its images, by provider id.
+      if (snap.library.some((n) => n.id === c.groupId)) return c;
+      const imgs = c.mediaIds.map((id) => sharedMedia(id)?.media).filter((m): m is Media => !!m);
+      const group = sharedGroup(c.groupId);
+      return { ...c, remote: { ids: imgs.flatMap((m) => (m.remote?.id ? [m.remote.id] : [])), ...(group?.lib?.kind === "card" && group.lib.type ? { kind: group.lib.type } : {}), ...(group?.notes.trim() ? { description: group.notes.trim() } : {}) } };
+    }) } : {}),
   });
   // Images of the groups called that the provider doesn't have yet go up first.
   const called = mentionsIn(prompt, mentions);
@@ -344,9 +351,19 @@ function GenerateBox({ node }: { node: ProdNode }) {
 
   /** Library images dropped: the provider gets them first if it doesn't have them. */
   const libMedia = (ids: Id[]) => {
-    const list = ids.map((id) => snap.media.find((m) => m.id === id)).filter((m): m is Media => !!m && m.kind === "image" && m.status === "ready");
-    for (const m of list) ref.media(m);
-    return list.map((m) => m.id);
+    return ids.flatMap((id) => {
+      const own = snap.media.find((m) => m.id === id);
+      if (own) {
+        if (own.kind !== "image" || own.status !== "ready") return [];
+        ref.media(own);
+        return [own.id];
+      }
+      // Another production's shared library: by its provider id.
+      const other = sharedMedia(id);
+      const key = other && other.media.kind === "image" ? ref.shared(other.media) : null;
+      if (other && !key) useStore.getState().notify("Esa imagen no está en Magnific: no se puede usar como referencia desde otra producción.");
+      return key ? [key] : [];
+    });
   };
   /** Library images as references (or as the start frame, when the model has no references). */
   const addMedia = (raw: Id[]) => {
@@ -612,6 +629,15 @@ function useRefFiles(node: ProdNode) {
       );
       return key;
     },
+    /**
+     * An image of another production's shared library (docs/INTERFAZ.md
+     * §2.8.1): used by its provider id, like a Magnific creation. Null when
+     * the provider doesn't have it (only images made or sent there can go).
+     */
+    shared(m: Media): string | null {
+      if (!m.remote?.id) return null;
+      return this.send({ provider: m.remote.provider, id: m.remote.id, name: m.file ?? m.id, kind: m.kind, url: m.url ?? "", ...(m.thumbUrl || m.url ? { thumbUrl: m.thumbUrl ?? m.url } : {}) });
+    },
     /** Media of the production picked: sent first if the provider doesn't have it. */
     media(m: Media): void {
       if (m.remote?.id) return;
@@ -689,7 +715,8 @@ function RefSlot({ ctx, label, icon, accept, node, value, disabled, disabledHint
   const snap = useSnap();
   const [over, setOver] = useState(false);
   // A library group opened in the list, and the images marked in it.
-  const [openCard, setOpenCard] = useState<{ card: ProdNode; refs: Media[]; all: Media[] } | null>(null);
+  const [openCard, setOpenCard] = useState<{ card: ProdNode; refs: Media[]; all: Media[]; from?: string } | null>(null);
+  const shared = useSharedLibraries();
   const [marks, setMarks] = useState<Id[]>([]);
   const drop = onFiles && !disabled ? fileDrop(onFiles, setOver, onMedia) : {};
   const up = value && isUp(value) ? ctx.ups[value] : undefined;
@@ -715,14 +742,24 @@ function RefSlot({ ctx, label, icon, accept, node, value, disabled, disabledHint
     .sort((a, b) => where(a) - where(b) || b.createdAt - a.createdAt)
     .slice(0, 48);
   // Library cards that can go here: their chosen images (or all of them, if none is chosen yet).
+  // This production's groups, then those of libraries other productions share with it (§2.8.1).
+  const groupCards = (groups: ProdNode[], media: Media[], from?: string) => groups.flatMap((card) => {
+    if (card.lib?.kind !== "card") return [];
+    const imgs = media.filter((m) => m.nodeId === card.id && m.kind === "image" && m.status === "ready" && !m.archived && (!from || !!m.remote?.id));
+    const refs = imgs.some((m) => m.chosen) ? imgs.filter((m) => m.chosen) : imgs;
+    return refs.length ? [{ card, refs, all: imgs, ...(from ? { from } : {}) }] : [];
+  });
   const cards = accept.includes("image")
-    ? snap.library.flatMap((card) => {
-        if (card.lib?.kind !== "card") return [];
-        const imgs = snap.media.filter((m) => m.nodeId === card.id && m.kind === "image" && m.status === "ready" && !m.archived);
-        const refs = imgs.some((m) => m.chosen) ? imgs.filter((m) => m.chosen) : imgs;
-        return refs.length ? [{ card, refs, all: imgs }] : [];
-      })
+    ? [...groupCards(snap.library, snap.media), ...shared.flatMap((l) => groupCards(l.groups, l.media, l.name))]
     : [];
+  /** What a picked library image goes as: its id here, or (another production's) a reference key. */
+  const toRef = (m: Media) => {
+    if (!openCard?.from) {
+      ctx.media(m);
+      return m.id;
+    }
+    return ctx.shared(m);
+  };
   return (
     <Popover float className="gen__picker" button={({ open, toggle }) => (
       <button className={cx("gen__ref", wide && "gen__ref--wide", (open || over) && "is-on")} disabled={disabled}
@@ -779,7 +816,7 @@ function RefSlot({ ctx, label, icon, accept, node, value, disabled, disabledHint
                           {on ? <span className="gen__libcheck"><IconCheck size={11} stroke={3} /></span> : null}
                         </button>
                       ) : (
-                        <button key={m.id} data-tip={`${openCard.card.title} · ${versionTag(m.version)}`} className="menu__item gen__pick gen__libimg" onClick={() => { ctx.media(m); onPick(m.id, "image"); setOpenCard(null); }}>
+                        <button key={m.id} data-tip={`${openCard.card.title} · ${versionTag(m.version)}`} className="menu__item gen__pick gen__libimg" onClick={() => { const id = toRef(m); if (id) onPick(id, "image"); setOpenCard(null); }}>
                           <Thumb media={m} badge={false} />
                         </button>
                       );
@@ -787,9 +824,8 @@ function RefSlot({ ctx, label, icon, accept, node, value, disabled, disabledHint
                   </div>
                   {onPickMany ? (
                     <button className="menu__item gen__libadd" disabled={!marks.length} onClick={() => {
-                      const list = openCard.all.filter((m) => marks.includes(m.id));
-                      for (const m of list) ctx.media(m);
-                      onPickMany(list.map((m) => m.id), openCard.card);
+                      const ids = openCard.all.filter((m) => marks.includes(m.id)).map(toRef).filter((x): x is string => !!x);
+                      onPickMany(ids, openCard.card);
                       setOpenCard(null);
                       setMarks([]);
                     }}>
@@ -800,10 +836,11 @@ function RefSlot({ ctx, label, icon, accept, node, value, disabled, disabledHint
               ) : (
                 <div className="gen__pick-grid">
                   {cards.map((c) => (
-                    <button key={c.card.id} className="gen__pick gen__libgroup" title={`${c.card.title}: ${c.all.length} ${c.all.length === 1 ? "imagen" : "imágenes"}`}
+                    <button key={`${c.from ?? ""}${c.card.id}`} className="gen__pick gen__libgroup" title={`${c.card.title}: ${c.all.length} ${c.all.length === 1 ? "imagen" : "imágenes"}`}
                       onClick={() => { setOpenCard(c); setMarks(c.all.filter((m) => m.chosen).map((m) => m.id)); }}>
                       <Thumb media={c.refs[0]} badge={false} />
                       <span className="sf-small">{c.card.title} · {c.all.length}</span>
+                      {c.from ? <span className="sf-faint sf-small gen__libfrom">de {c.from}</span> : null}
                     </button>
                   ))}
                 </div>

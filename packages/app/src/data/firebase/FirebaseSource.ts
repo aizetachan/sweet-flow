@@ -31,6 +31,7 @@ import type {
   Workspace,
   ClientEntry,
   AssetType,
+  LibraryShare,
 } from "@sweetflow/domain";
 import {
   CALLABLES,
@@ -391,6 +392,10 @@ export class FirebaseSource implements DataSource {
 
   setLibType(_nodeId: Id, _type: AssetType): void {
     throw new NotImplemented("Biblioteca", "etapa C");
+  }
+
+  setLibraryShare(_share: LibraryShare | null): void {
+    throw new NotImplemented("Compartir la biblioteca", "etapa C");
   }
 
   setForClient(_nodeIds: Id[], _on: boolean): void {

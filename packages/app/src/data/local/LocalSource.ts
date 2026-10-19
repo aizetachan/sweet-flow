@@ -71,6 +71,7 @@ import {
   planCreateLibNode,
   planMoveToLib,
   planPlaceLibMedia,
+  type LibraryShare,
 } from "@sweetflow/domain";
 import { assetsFromLibrary } from "../libraryCards";
 import { importKind, type BrowsePage, type BrowseQuery, type DataSource, type GenerateArgs, type ImportItem, type NewComment, type Placement, type RemoteFolder, type Snapshot, type UploadedRef } from "../source";
@@ -90,6 +91,11 @@ export interface LocalSourceOptions {
   files?: ProductionFiles;
   /** Image and video generation (Magnific) with this person's account. */
   generator?: Generator;
+  /**
+   * Only to read it (another production's shared library, docs/INTERFAZ.md
+   * §2.8.1): writes nothing, not even who opened it, and resumes no jobs.
+   */
+  readOnly?: boolean;
   /** Injectable for tests. */
   now?: () => number;
   newId?: (prefix: string) => Id;
@@ -134,9 +140,11 @@ export class LocalSource implements DataSource {
     this.files = opts.files;
     this.generator = opts.generator;
     this.unwatch = this.store.watch(() => void this.reload());
-    this.ready = this.reload()
-      .then(() => this.bootstrap(opts.create))
-      .then(() => this.resumeJobs());
+    this.ready = opts.readOnly
+      ? this.reload()
+      : this.reload()
+          .then(() => this.bootstrap(opts.create))
+          .then(() => this.resumeJobs());
   }
 
   dispose(): void {
@@ -435,6 +443,12 @@ export class LocalSource implements DataSource {
     this.write([{ type: "node.updated", id: nodeId, patch: { lib: { kind: "card", type } } }]);
   }
 
+  setLibraryShare(share: LibraryShare | null): void {
+    const cur = this.loaded().production.libraryShare ?? null;
+    if (JSON.stringify(cur) === JSON.stringify(share)) return;
+    this.write([{ type: "library.shared", share }]);
+  }
+
   setForClient(nodeIds: Id[], on: boolean): void {
     const s = this.loaded();
     this.write(nodeIds.filter((id) => s.nodes.some((n) => n.id === id && !!n.forClient !== on)).map((id) => ({ type: "node.updated" as const, id, patch: { forClient: on } })));
@@ -549,6 +563,12 @@ export class LocalSource implements DataSource {
       references,
       mentions: (args.mentions ?? []).flatMap((m) => {
         const group = s.nodes.find((n) => n.id === m.groupId);
+        // A group of another production's shared library comes already resolved (§2.8.1).
+        if (!group && m.remote?.ids.length) {
+          const t = m.remote.kind;
+          const kind = t === "cast" ? "character" : t === "prop" ? "product" : t === "location" ? "locations" : t === "style" ? "style" : null;
+          return [{ key: m.groupId, tag: m.tag, kind, ...(m.remote.description ? { description: m.remote.description } : {}), ids: m.remote.ids }];
+        }
         const ids = m.mediaIds.map((id) => remote(id)).filter((x): x is string => !!x);
         if (!group || !ids.length) return [];
         const t = group.lib?.kind === "card" ? group.lib.type : undefined;
