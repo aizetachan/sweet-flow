@@ -718,6 +718,11 @@ centrada en la imagen y sin tipos fijos (decidido el 19 oct 2026):
   su tipo si el modelo los admite. Las imágenes de la biblioteca y la
   cuadrícula de la ventana usan el mismo hover y el mismo seleccionado que las
   cards de producción; el grupo seleccionado, ese mismo estilo mucho más suave.
+- **Progreso de una generación:** Magnific casi nunca dice cuánto lleva, así
+  que el porcentaje avanza también con el tiempo: rápido al principio, cada vez
+  más despacio (según sea imagen, audio o vídeo, y lo largo del vídeo), sin
+  retroceder y sin llegar al 100 % hasta que la pieza está. Si el proveedor da
+  una cifra mayor, se usa la suya.
 - **Una generación fallida** dice por qué y tiene **Reintentar**: se vuelve a
   lanzar con los mismos ajustes (una versión nueva; la fallida se quita). Si
   Magnific responde con un error de servidor sin explicación, Sweet Flow lo

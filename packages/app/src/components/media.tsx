@@ -5,6 +5,30 @@ import { cx, Spinner } from "@sweetflow/ui";
 import { MarkLayer, type Mark, type ShownMark } from "./marks";
 import { useStore } from "../state/store";
 
+/**
+ * The progress shown while a job runs (docs/INTERFAZ.md §2.0). Providers seldom
+ * say how far they are (Magnific only says «in progress»), so it also moves on
+ * with the time gone by: quickly at first, slower and slower, never back and
+ * never at 100 until the piece is there. The provider's figure wins when ahead.
+ */
+export function useShownProgress(m?: Media | null): number {
+  const running = !!m && m.status === "rendering";
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!running) return;
+    const t = setInterval(() => setNow(Date.now()), 700);
+    return () => clearInterval(t);
+  }, [running]);
+  if (!m) return 0;
+  if (!running) return m.progress;
+  const secs = Math.max(0, (now - m.createdAt) / 1000);
+  const len = Number((m.generation?.params as { durationSec?: number } | undefined)?.durationSec) || 5;
+  // About how long each kind takes; a video, longer the longer it is.
+  const tau = m.kind === "video" ? 45 + len * 12 : m.kind === "audio" ? 25 : 18;
+  const guess = 5 + 90 * (1 - Math.exp(-secs / tau));
+  return Math.min(97, Math.max(m.progress, Math.floor(guess)));
+}
+
 const isRealVideo = (m?: Media) => !!m?.url && m.kind === "video" && !m.url.startsWith("data:image");
 
 /** Durations read from the files themselves, by URL. */
@@ -95,13 +119,7 @@ export function Thumb({ media, take, pending, className, preview, badge = true }
       {badge && media?.kind === "video" ? (
         <span className="thumb__badge" title={take ? "Duración del tramo" : "Duración del clip"}><IconVideo size={11} /> {dur ? `${dur}s` : ""}</span>
       ) : null}
-      {pending ? (
-        <div className="thumb__job">
-          <Spinner />
-          <span>{pending.status === "queued" ? "En cola" : `${pending.progress}%`}</span>
-          <div className="thumb__bar" style={{ width: `${pending.progress}%` }} />
-        </div>
-      ) : null}
+      {pending ? <JobProgress media={pending} /> : null}
     </div>
   );
 }
@@ -141,6 +159,7 @@ export function Player({
   onComment?: () => void;
   commenting?: boolean;
 }) {
+  const shown = useShownProgress(media);
   const dur = useDuration(media);
   const video = useRef<HTMLVideoElement>(null);
   const timeRef = useRef(time);
@@ -206,7 +225,7 @@ export function Player({
         media.status === "failed" ? (
           <div className="player__empty player__empty--failed">No se ha podido generar{media.error ? `: ${media.error}` : "."}</div>
         ) : (
-          <div className="player__empty"><Spinner /> {media.status === "queued" ? "En cola" : `Generando… ${media.progress}%`}</div>
+          <div className="player__empty"><Spinner /> {media.status === "queued" ? "En cola" : `Generando… ${shown}%`}</div>
         )
       )}
       {media.kind === "video" && media.url ? (
@@ -246,6 +265,18 @@ export function Player({
           <button className="player__btn" aria-label="Pantalla completa" title="Pantalla completa" onClick={fullscreen}><IconMaximize size={14} /></button>
         </div>
       ) : null}
+    </div>
+  );
+}
+
+/** Spinner, percentage and bar of a job, on its thumbnail. */
+function JobProgress({ media }: { media: Media }) {
+  const shown = useShownProgress(media);
+  return (
+    <div className="thumb__job">
+      <Spinner />
+      <span>{media.status === "queued" ? "En cola" : `${shown}%`}</span>
+      <div className="thumb__bar" style={{ width: `${shown}%` }} />
     </div>
   );
 }
