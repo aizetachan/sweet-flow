@@ -59,6 +59,15 @@ async function rpc(method: string, params: unknown, retried = false): Promise<un
     session = null;
     return rpc(method, params, true);
   }
+  if (r.status >= 500 && !retried) {
+    // A server error with nothing said: once more, on a new session, after a moment.
+    const raw = await r.clone().text().catch(() => "");
+    if (!raw.trim()) {
+      session = null;
+      await new Promise((res) => setTimeout(res, 1500));
+      return rpc(method, params, true);
+    }
+  }
   return result(r);
 }
 

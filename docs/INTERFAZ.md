@@ -700,7 +700,12 @@ centrada en la imagen y sin tipos fijos (decidido el 19 oct 2026):
   - **Papelera:** la quita del grupo, con «Deshacer» en el aviso.
 - **El panel en la Biblioteca** no tiene galería (las imágenes del grupo ya
   están a la vista): generar, y debajo el visor de la imagen elegida con sus
-  datos y el prompt con el que se hizo.
+  datos y el prompt con el que se hizo. **En una ventana aparte**, debajo del
+  visor salen todas las imágenes del grupo para pasar de una a otra.
+- **Una generación fallida** dice por qué y tiene **Reintentar**: se vuelve a
+  lanzar con los mismos ajustes (una versión nueva; la fallida se quita). Si
+  Magnific responde con un error de servidor sin explicación, Sweet Flow lo
+  reintenta una vez solo, con una sesión nueva.
 - **El prompt** de una imagen o un vídeo (bajo el visor) se copia al
   portapapeles con un clic, para pegarlo donde haga falta.
 - Mientras se arrastra una imagen de la biblioteca, los huecos de referencias

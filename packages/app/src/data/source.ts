@@ -283,6 +283,8 @@ export interface DataSource {
   /** Mark images of a group as its chosen references, or not. */
   setChosen(mediaIds: Id[], chosen: boolean): void;
   setLibType(nodeId: Id, type: AssetType): void;
+  /** Generate again what failed, with the same settings (a new version; the failed one is put away). */
+  retryMedia(mediaId: Id): void;
   /** Share this production's library with others (null: only this one), docs/INTERFAZ.md §2.8.1. */
   setLibraryShare(share: LibraryShare | null): void;
   /** Show these shots to the client on the review page, or stop (docs/USUARIOS.md §4). */

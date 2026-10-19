@@ -443,6 +443,15 @@ export class LocalSource implements DataSource {
     this.write([{ type: "node.updated", id: nodeId, patch: { lib: { kind: "card", type } } }]);
   }
 
+  retryMedia(mediaId: Id): void {
+    const m = this.loaded().media.find((x) => x.id === mediaId);
+    const g = m?.generation;
+    if (!m || !g || m.status !== "failed") return;
+    const { deviceId: _d, ...settings } = (g.params ?? {}) as Record<string, unknown>;
+    this.generate({ ...(settings as Partial<GenerateArgs>), nodeId: m.nodeId, kind: m.kind, prompt: g.prompt, model: g.model, ...(g.sourceMediaId ? { sourceMediaId: g.sourceMediaId } : {}), count: 1 });
+    this.setArchived(mediaId, true);
+  }
+
   setLibraryShare(share: LibraryShare | null): void {
     const cur = this.loaded().production.libraryShare ?? null;
     if (JSON.stringify(cur) === JSON.stringify(share)) return;

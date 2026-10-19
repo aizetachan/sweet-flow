@@ -341,6 +341,13 @@ export class MockSource implements DataSource {
     return { ...n, productionId: this.s.production.id, notes: "", assigneeIds: [], assetIds: [], updatedAt: Date.now(), updatedBy: this.s.me.uid };
   }
 
+  retryMedia(mediaId: Id): void {
+    const m = this.s.media.find((x) => x.id === mediaId);
+    if (!m?.generation || m.status !== "failed") return;
+    this.generate({ nodeId: m.nodeId, kind: m.kind, prompt: m.generation.prompt, model: m.generation.model, count: 1 });
+    this.setArchived(mediaId, true);
+  }
+
   setLibraryShare(share: LibraryShare | null): void {
     const { libraryShare: _old, ...rest } = this.s.production;
     this.commit({ production: { ...rest, ...(share ? { libraryShare: share } : {}) } });

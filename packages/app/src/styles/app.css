@@ -1126,3 +1126,11 @@ button.topbar__me { position: relative; padding: 0; border: 0; border-radius: 50
 .dcard__lib { position: absolute; top: 8px; left: 8px; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 6px; background: #000b; }
 .dcard__lib .dentry__lib { margin: 0; }
 .ptags__opt .ptags__thumb { width: 44px; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 4px; flex: none; }
+/* A library group in its own window: its images under the viewer */
+.libstrip { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin-top: 14px; }
+.libstrip__img { position: relative; padding: 0; border: 0; background: none; border-radius: var(--r-md); outline: 2px solid transparent; outline-offset: -2px; }
+.libstrip__img .thumb { aspect-ratio: 16 / 9; width: 100%; border-radius: var(--r-md); }
+.libstrip__img:hover { outline-color: var(--line-2); }
+.libstrip__img.is-on { outline-color: var(--brand-300, #6cb6ff); }
+.libstrip__bad { position: absolute; left: 6px; bottom: 6px; padding: 1px 6px; border-radius: 999px; background: #000b; color: var(--bad); font-size: 11px; }
+.mmeta__failed { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }

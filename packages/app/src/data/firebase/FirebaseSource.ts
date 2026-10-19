@@ -394,6 +394,10 @@ export class FirebaseSource implements DataSource {
     throw new NotImplemented("Biblioteca", "etapa C");
   }
 
+  retryMedia(_mediaId: Id): void {
+    throw new NotImplemented("Reintentar", "etapa C");
+  }
+
   setLibraryShare(_share: LibraryShare | null): void {
     throw new NotImplemented("Compartir la biblioteca", "etapa C");
   }

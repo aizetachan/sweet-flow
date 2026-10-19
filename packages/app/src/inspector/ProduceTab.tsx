@@ -53,7 +53,7 @@ const LIB_LEVEL_DEF: LevelDef = { id: "lib", name: "Ficha", prefix: "", step: 1,
 export function ProduceTab({ node }: { node: ProdNode }) {
   const snap = useSnap();
   const { source, notify } = useStore();
-  const { activeMediaId, setPanel, playhead, playing } = usePanel();
+  const { activeMediaId, setPanel, playhead, playing, mode } = usePanel();
   const [showArchived, setShowArchived] = useState(false);
   // The library's desk and cards always generate (docs/INTERFAZ.md §2.8).
   const level = node.lib ? LIB_LEVEL_DEF : levelOf(snap.production, node);
@@ -148,6 +148,18 @@ export function ProduceTab({ node }: { node: ProdNode }) {
             </div>
           ) : null}
           <MediaMeta media={active.media} take={active.foreign ? active.take : undefined} />
+          {/* A library group in its own window: all its images under the viewer, to go through them (§2.8). */}
+          {node.lib && mode === "window" ? (
+            <div className="libstrip">
+              {all.filter((m) => !m.archived).map((m) => (
+                <button key={m.id} className={cx("libstrip__img", m.id === active.media.id && "is-on")} data-tip={`${node.title} · ${versionTag(m.version)}`}
+                  onClick={() => { setActiveKey(`m:${m.id}`); setPanel({ activeMediaId: m.id, playhead: 0, playing: false }); }}>
+                  <Thumb media={m.status === "ready" ? m : undefined} pending={m.status === "queued" || m.status === "rendering" ? m : undefined} badge={false} />
+                  {m.status === "failed" ? <span className="libstrip__bad">Fallida</span> : null}
+                </button>
+              ))}
+            </div>
+          ) : null}
         </section>
       ) : null}
 
@@ -237,7 +249,14 @@ function MediaMeta({ media, take }: { media: Media; take?: Take }) {
           useStore.getState().notify("Prompt copiado.");
         }}>{g.prompt}</p>
       ) : null}
-      {media.status === "failed" ? <p className="mmeta__error">{media.error ?? "No se ha podido generar."}</p> : null}
+      {media.status === "failed" ? (
+        <div className="mmeta__failed">
+          <p className="mmeta__error">{media.error ?? "No se ha podido generar."}</p>
+          {media.generation ? (
+            <Button size="sm" title="Generar otra vez con los mismos ajustes (una versión nueva; esta se quita)" onClick={() => useStore.getState().source.retryMedia(media.id)}>Reintentar</Button>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }
