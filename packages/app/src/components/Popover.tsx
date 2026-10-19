@@ -72,7 +72,7 @@ export function Popover({ button, children, align = "left", className, float }: 
     // Picking an item of a menu closes it.
     <div ref={panel} className={cx("menu pop__panel", align === "right" && "pop__panel--right", float && "pop__panel--float", className)} role="dialog"
       style={float ? pos : undefined}
-      onClick={(e) => (e.target as HTMLElement).closest(".menu__item") && setOpen(false)}>{children}</div>
+      onClick={(e) => (e.target as HTMLElement).closest(".menu__item, [data-close]") && setOpen(false)}>{children}</div>
   ) : null;
 
   return (

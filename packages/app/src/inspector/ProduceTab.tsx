@@ -738,7 +738,7 @@ function RefSlot({ ctx, label, icon, accept, node, value, disabled, disabledHint
               <>
                 <span className="grow" />
                 {/* Like Importar in a shot: from Magnific or from this computer (docs/INTERFAZ.md §2.0.2). */}
-                <button className="link gen__pick-upload" onClick={() => {
+                <button className="link gen__pick-upload" data-close onClick={() => {
                   const files = onFiles;
                   useStore.getState().set({ importTo: { label: `Como referencia: ${label}`, kinds: accept, refs: (items) => files(items.map(asRefItem)) } });
                 }}><IconFileImport size={13} /> Importar</button>
@@ -751,7 +751,7 @@ function RefSlot({ ctx, label, icon, accept, node, value, disabled, disabledHint
                 const n = [...snap.nodes, ...snap.shelf].find((x) => x.id === m.nodeId);
                 return (
                   <button key={m.id} className="menu__item gen__pick gen__pick--img" onClick={() => { ctx.media(m); onPick(m.id, m.kind as Pickable); }}
-                    data-tip={`${n ? nameOf(snap.production, n) : "—"} · ${versionTag(m.version)}`}>
+                    data-tip={[n ? nameOf(snap.production, n) : "—", versionTag(m.version), m.durationSec ? `${String(Math.round(m.durationSec * 10) / 10).replace(".", ",")} s` : null].filter(Boolean).join(" · ")}>
                     <Thumb media={m} badge={false} />
                   </button>
                 );

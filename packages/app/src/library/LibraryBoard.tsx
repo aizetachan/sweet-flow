@@ -27,6 +27,19 @@ let dragging: Id[] = [];
 /** The library images being dragged right now, for drop targets elsewhere (references). */
 export const draggedMedia = () => dragging;
 
+/**
+ * The end of any drag clears the highlight of the reference slots: the card
+ * dragged may have moved to another group (and its own dragend is lost).
+ */
+if (typeof window !== "undefined") {
+  const clear = () => {
+    document.body.classList.remove("sf-drag-media");
+    setTimeout(() => (dragging = []), 0);
+  };
+  window.addEventListener("dragend", clear, true);
+  window.addEventListener("drop", clear, true);
+}
+
 /** A group's images in their order (not archived). */
 function imagesOf(media: Media[], nodeId: Id): Media[] {
   return media.filter((m) => m.nodeId === nodeId && !m.archived && m.kind === "image").sort((a, b) => libOrder(a) - libOrder(b));
@@ -138,6 +151,8 @@ function GroupRow({ group, picked, setPicked }: { group: ProdNode; picked: Id[];
 
   return (
     <section className={cx("libb__lane", on && "is-on")}
+      // A click anywhere in the row that is not an image or a button selects the group.
+      onClick={(e) => { if (!(e.target as HTMLElement).closest(".libimg, button, input, [contenteditable=true]")) select(group.id, "produce", true); }}
       onContextMenu={(e) => { e.preventDefault(); setMenu({ x: e.clientX, y: e.clientY }); }}
       onDragEnter={(e) => {
         if (e.dataTransfer.types.includes(MEDIA_DRAG)) e.preventDefault();

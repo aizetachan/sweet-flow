@@ -373,10 +373,12 @@ derecha en la ventana aparte). De arriba abajo:
     desactiva con el motivo.
   - Se eligen de lo que ya hay en la producción (primero este plano, luego su
     escena, luego el resto; solo la imagen, sin título: al dejar el ratón
-    encima unos 3 s sale su nombre y versión), de la biblioteca, o con
-    **Importar** en la lista de cada hueco: la misma ventana de Importar de
-    los planos (de Magnific o del ordenador, abierta en los tipos que admite
-    el hueco), y lo elegido entra como referencia. También se pueden
+    encima unos 3 s sale un tooltip con su nombre completo, versión y
+    duración), de la biblioteca, o con
+    **Importar** en la lista de cada hueco: cierra la lista y abre por encima
+    la misma ventana de Importar de los planos (de Magnific o del ordenador,
+    abierta en los tipos que admite el hueco); lo elegido (una o varias) entra
+    como referencia en ese hueco. También se pueden
     **arrastrar archivos** sobre un hueco (va ahí) o sobre las referencias
     (cada uno donde lo admite el modelo: referencias primero, luego imagen
     inicial y final).
@@ -699,6 +701,8 @@ centrada en la imagen y sin tipos fijos (decidido el 19 oct 2026):
   del panel se iluminan para indicar dónde se puede soltar.
 - **Descripción** del grupo (panel o menú del clic derecho en su nombre):
   cómo es; es la base del prompt al generar en él. Se ve junto al nombre.
+- **Clic en cualquier hueco de la fila** (no en una imagen) selecciona el
+  grupo, como el clic derecho.
 - **Clic derecho en cualquier parte de la fila:** cambiar el nombre,
   descripción, papelera.
 - **Arrastrar a las referencias:** una imagen (o varias seleccionadas) de un
