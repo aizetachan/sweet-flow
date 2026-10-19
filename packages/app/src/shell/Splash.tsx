@@ -18,10 +18,10 @@ const WORD = "Sweet Flow";
 const MIN_MS = 2000;
 const HOLD_MS = 250;
 const FADE_MS = 450;
-/** The small wobble once a letter has its shape. */
-const SETTLE_MS = 600;
-/** Last part of the way (0…1) in which the drop turns into its letter. */
-const FORM_FROM = 0.62;
+/** Once at its slot and still, the drop takes the letter's shape (still lit, as liquid)… */
+const FORM_MS = 650;
+/** …then settles with a small bounce, in which it loses its shine and shadow. */
+const BOUNCE_MS = 600;
 
 interface Point {
   x: number;
@@ -81,7 +81,7 @@ function planLetter(target: Point, size: Point, vw: number, vh: number): Plan {
   }
   points.push(target);
   const delay = rand(0, 600);
-  const travel = rand(2700, 3300);
+  const travel = rand(2300, 2900);
   return { points, start: delay, travel, arrive: delay + travel, pulse: rand(3, 5), phase: rand(0, Math.PI * 2) };
 }
 
@@ -119,29 +119,30 @@ interface Pose {
   speed: number;
   /** 0 = still a drop, 1 = the letter. */
   form: number;
-  /** Squash of the formed letter (settling wobble). */
+  /** Squash of the formed letter (settling bounce): >0 wider and lower. */
   wobble: number;
+  /** Shine, shading and shadow: 1 while liquid, 0 as the flat letter. */
+  light: number;
 }
 
 function poseAt(plan: Plan, t: number): Pose {
   const target = plan.points[plan.points.length - 1]!;
   if (t >= plan.arrive) {
+    // At its slot, standing still: first it takes the letter's shape…
     const k = t - plan.arrive;
-    return { ...target, angle: 0, speed: 0, form: 1, wobble: 0.05 * Math.exp(-k / 150) * Math.sin((k / 220) * Math.PI * 2) };
+    if (k < FORM_MS) return { ...target, angle: 0, speed: 0, form: smooth(k / FORM_MS), wobble: 0, light: 1 };
+    // …then a small bounce (squash, then a little stretch, dying out) that leaves it flat.
+    const b = k - FORM_MS;
+    const wobble = 0.09 * Math.exp(-b / 170) * Math.sin((b / 260) * Math.PI * 2 + Math.PI / 2) * clamp(b / 40, 0, 1);
+    return { ...target, angle: 0, speed: 0, form: 1, wobble, light: 1 - smooth(clamp(b / (BOUNCE_MS * 0.7), 0, 1)) };
   }
+  // On the way it is all drop: it keeps its round shape until it stops.
   const f = (t - plan.start) / plan.travel;
   const p = along(plan.points, progress(plan, f));
   const q = along(plan.points, progress(plan, f + 16 / plan.travel));
   const vx = q.x - p.x;
   const vy = q.y - p.y;
-  return {
-    x: p.x,
-    y: p.y,
-    angle: (Math.atan2(vy, vx) * 180) / Math.PI,
-    speed: Math.hypot(vx, vy),
-    form: smooth(clamp((f - FORM_FROM) / (1 - FORM_FROM), 0, 1)),
-    wobble: 0,
-  };
+  return { x: p.x, y: p.y, angle: (Math.atan2(vy, vx) * 180) / Math.PI, speed: Math.hypot(vx, vy), form: 0, wobble: 0, light: 1 };
 }
 
 const reducedMotion = () => typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
@@ -175,6 +176,10 @@ function dropPath(g: Glyph, pose: Pose, t: number, phase: number): string {
   const stretch = 0.2 * s;
   const tail = 0.75 * s;
   const n = OUTER_POINTS;
+  // The bounce squashes and stretches the letter about its base.
+  const w = pose.wobble;
+  const bx = (px: number) => cx + (px - cx) * (1 + w);
+  const by = (py: number) => y + g.base + (py - y - g.base) * (1 - w);
   let d = "";
   for (let i = 0; i < n; i++) {
     const th = (i / n) * Math.PI * 2;
@@ -195,13 +200,13 @@ function dropPath(g: Glyph, pose: Pose, t: number, phase: number): string {
     const o = g.outer[i]!;
     const qx = lerp(px, x + o.x, m);
     const qy = lerp(py, y + o.y, m);
-    d += `${i ? "L" : "M"}${qx.toFixed(1)} ${qy.toFixed(1)}`;
+    d += `${i ? "L" : "M"}${bx(qx).toFixed(1)} ${by(qy).toFixed(1)}`;
   }
   d += "Z";
   // Holes open from the middle of the drop as it takes the letter's shape.
   if (m > 0.02) {
     for (const h of g.holes) {
-      h.forEach((p, j) => (d += `${j ? "L" : "M"}${lerp(cx, x + p.x, m).toFixed(1)} ${lerp(cy, y + p.y, m).toFixed(1)}`));
+      h.forEach((p, j) => (d += `${j ? "L" : "M"}${bx(lerp(cx, x + p.x, m)).toFixed(1)} ${by(lerp(cy, y + p.y, m)).toFixed(1)}`));
       d += "Z";
     }
   }
@@ -284,29 +289,29 @@ export function Splash({ ready, onDone }: { ready: boolean; onDone: () => void }
       const d = drops.current[i];
       const g = glyphs[i];
       if (!d) return;
-      const { x, y, form, wobble } = pose;
-      // The text itself takes over once the drop has the letter's shape: crisp, never deformed.
-      const text = !g ? form : clamp((form - 0.94) / 0.06, 0, 1);
+      const { x, y, form, wobble, light } = pose;
+      // The text itself takes over once the letter has lost its shine: crisp, never deformed.
+      const text = !g ? form : form < 1 ? 0 : clamp((0.15 - light) / 0.15, 0, 1);
       if (d.glyph) {
         d.glyph.style.opacity = String(text);
         d.glyph.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${1 + wobble}, ${1 - wobble})`;
       }
       if (!d.path) return;
-      if (!g || form >= 1) {
+      if (!g || (form >= 1 && light <= 0)) {
         d.path.style.display = "none";
         return;
       }
       d.path.style.display = "";
       d.path.setAttribute("d", dropPath(g, pose, clock, phases[i]!));
-      // Shine, shading and shadow: full while it is a drop, gone as it becomes the flat letter.
-      const L = 1 - smooth(clamp((form - 0.35) / 0.6, 0, 1));
+      // Shine, shading and shadow: full while liquid, gone during the bounce.
+      const L = light;
       d.mix?.setAttribute("k2", L.toFixed(3));
       d.mix?.setAttribute("k3", (1 - L).toFixed(3));
       d.shine?.setAttribute("k2", (0.75 * L).toFixed(3));
       d.shadow?.setAttribute("values", `0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 ${(0.6 * L).toFixed(3)} 0`);
     };
 
-    const still = (p: Point): Pose => ({ ...p, angle: 0, speed: 0, form: 1, wobble: 0 });
+    const still = (p: Point): Pose => ({ ...p, angle: 0, speed: 0, form: 1, wobble: 0, light: 0 });
     const placeAllAtTargets = () => {
       targets.forEach((p, i) => place(i, still(p)));
     };
@@ -330,7 +335,7 @@ export function Splash({ ready, onDone }: { ready: boolean; onDone: () => void }
     }
 
     const plans: (Plan | null)[] = targets.map((p, i) => (WORD[i] === " " || !p ? null : planLetter(p, sizes[i]!, box.width, box.height)));
-    const done = Math.max(...plans.map((p) => (p ? p.arrive + SETTLE_MS : 0)));
+    const done = Math.max(...plans.map((p) => (p ? p.arrive + FORM_MS + BOUNCE_MS : 0)));
     const t0 = performance.now();
     let landed = false;
 

@@ -18,6 +18,8 @@ export interface Glyph {
   /** Centre of the ink, and the radius of a round drop with the same area (same amount of liquid). */
   centroid: Pt;
   radius: number;
+  /** Lowest point of the ink (the letter rests on it when it bounces). */
+  base: number;
 }
 
 export const OUTER_POINTS = 140;
@@ -165,5 +167,6 @@ export function traceGlyph(ch: string, font: string, w: number, h: number): Glyp
     holes: holesRaw.map((l) => resample(l, HOLE_POINTS)),
     centroid,
     radius: Math.sqrt(Math.max(ink, 1) / Math.PI),
+    base: Math.max(...outerRaw.map((p) => p.y)),
   };
 }
