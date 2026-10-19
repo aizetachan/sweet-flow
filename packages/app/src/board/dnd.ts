@@ -6,7 +6,7 @@
  */
 
 import { useState, type DragEvent } from "react";
-import { childrenOf, codeOf, isUnit, levelIndex, type Id, type ProdNode, type Production, type RowItem } from "@sweetflow/domain";
+import { childrenOf, codeOf, isUnit, levelIndex, sortValue, type Id, type ProdNode, type Production, type RowItem, type ShotGroup } from "@sweetflow/domain";
 import { useStore } from "../state/store";
 import { hasFiles, runImport } from "../components/ImportDialog";
 
@@ -58,6 +58,12 @@ export function useNodeDrop(target: ProdNode, axis: "x" | "y", into = false, gro
     const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
     const t = axis === "y" ? (e.clientY - r.top) / r.height : (e.clientX - r.left) / r.width;
     const p = snap.production;
+    // A group (from the tree) goes before or after a loose shot of its scene.
+    if (draggingGroup) {
+      const g = snap.groups.find((x) => x.id === draggingGroup);
+      if (!g || !isUnit(p, target) || target.groupId || target.parentId !== g.parentId) return null;
+      return t < 0.5 ? "before" : "after";
+    }
     if (into && allowed(p, snap.nodes, target, "into") && t > 0.25 && t < 0.75) return "into";
     if (group && t > 0.3 && t < 0.7 && canGroup(p, snap.nodes, target)) return "group";
     const z: Zone = t < 0.5 ? "before" : "after";
@@ -131,6 +137,84 @@ function canGroup(p: Production, nodes: ProdNode[], target: ProdNode): boolean {
   });
 }
 
+/**
+ * A scene's row as the tree and the board show it: loose shots and groups,
+ * in order (docs/INTERFAZ.md §2.4).
+ */
+function rowOrder(nodes: ProdNode[], groups: ShotGroup[], rowId: Id): RowItem[] {
+  const kids = childrenOf(nodes, rowId);
+  const live = groups.filter((g) => g.parentId === rowId && kids.some((k) => k.groupId === g.id));
+  return [
+    ...kids.filter((k) => !live.some((g) => g.id === k.groupId)).map((k) => ({ at: sortValue(k), item: { nodeId: k.id } as RowItem })),
+    ...live.map((g) => ({ at: g.order, item: { groupId: g.id } as RowItem })),
+  ].sort((a, b) => a.at - b.at).map((x) => x.item);
+}
+
+const sameItem = (a: RowItem, b: RowItem) => ("nodeId" in a && "nodeId" in b && a.nodeId === b.nodeId) || ("groupId" in a && "groupId" in b && a.groupId === b.groupId);
+
+/** Move the dragged group before or after an item of its row. */
+function placeGroup(rowId: Id, target: RowItem, zone: "before" | "after"): void {
+  const { source, snap, notify } = useStore.getState();
+  const moving = draggingGroup;
+  draggingGroup = null;
+  if (!snap || !moving) return;
+  const order = rowOrder(snap.nodes, snap.groups, rowId).filter((i) => !("groupId" in i && i.groupId === moving));
+  const at = order.findIndex((i) => sameItem(i, target));
+  const before = zone === "before" ? target : order[at + 1] ?? null;
+  try {
+    source.placeInRow([{ groupId: moving }], rowId, before, null);
+  } catch (err) {
+    notify(err instanceof Error ? err.message : String(err));
+  }
+}
+
+/**
+ * Drop target for a group row in the tree: shots dropped in its middle go
+ * inside; another group of the same scene goes before or after it.
+ */
+export function useTreeGroupDrop(g: ShotGroup) {
+  const [zone, setZone] = useState<"into" | "before" | "after" | null>(null);
+  const pickZone = (e: DragEvent): "into" | "before" | "after" | null => {
+    const { snap } = useStore.getState();
+    if (!snap) return null;
+    if (draggingGroup) {
+      const other = snap.groups.find((x) => x.id === draggingGroup);
+      if (!other || other.id === g.id || other.parentId !== g.parentId) return null;
+      const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+      return (e.clientY - r.top) / r.height < 0.5 ? "before" : "after";
+    }
+    const ok = dragging.length > 0 && dragging.every((id) => {
+      const n = snap.nodes.find((x) => x.id === id);
+      return !!n && isUnit(snap.production, n) && n.groupId !== g.id;
+    });
+    return ok ? "into" : null;
+  };
+  return {
+    zone,
+    props: {
+      onDragOver: (e: DragEvent) => {
+        if (!e.dataTransfer.types.includes(NODE_DRAG)) return;
+        const z = pickZone(e);
+        if (!z) return setZone(null);
+        e.preventDefault();
+        e.stopPropagation();
+        e.dataTransfer.dropEffect = "move";
+        setZone(z);
+      },
+      onDragLeave: () => setZone(null),
+      onDrop: (e: DragEvent) => {
+        const z = pickZone(e);
+        setZone(null);
+        if (!z) return;
+        e.preventDefault();
+        e.stopPropagation();
+        if (z === "into") group(dragging, { groupId: g.id });
+        else placeGroup(g.parentId, { groupId: g.id }, z);
+      },
+    },
+  };
+}
+
 /** Drop target for a group card: the dragged shots go into the group. */
 export function useGroupDrop(groupId: Id) {
   return useSimpleDrop(() => {
@@ -193,6 +277,7 @@ function group(ids: Id[], target: { shotId: Id } | { groupId: Id }): void {
 function dropOn(target: ProdNode, zone: Zone): void {
   const { snap } = useStore.getState();
   if (!snap) return;
+  if (draggingGroup && target.parentId && (zone === "before" || zone === "after")) return placeGroup(target.parentId, { nodeId: target.id }, zone);
   if (zone === "group") return group(dragging, { shotId: target.id });
   if (zone === "into") return move(target.id, null);
   if (zone === "before") return move(target.parentId, target.id);

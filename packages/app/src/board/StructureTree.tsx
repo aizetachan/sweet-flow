@@ -3,7 +3,7 @@ import { childrenOf, codeOf, isUnit, levelIndex, sortValue, type ProdNode, type 
 import { cx, IconButton } from "@sweetflow/ui";
 import { useSnap, useStore } from "../state/store";
 import { progressOf, statusOf } from "../state/selectors";
-import { nodeDragProps, useEndDrop, useGroupDrop, useNodeDrop } from "./dnd";
+import { groupDragProps, nodeDragProps, useEndDrop, useNodeDrop, useTreeGroupDrop } from "./dnd";
 import { InlineEdit } from "./Board";
 import { useShowCodes } from "../state/names";
 
@@ -121,10 +121,10 @@ function TreeGroup({ group, shots, depth }: { group: ShotGroup; shots: ProdNode[
   const { collapsed, toggleCollapsed, source } = useStore();
   const key = `open:${group.id}`;
   const open = !!collapsed[key];
-  const drop = useGroupDrop(group.id);
+  const drop = useTreeGroupDrop(group);
   return (
     <>
-      <div className={cx("trow trow--group", drop.over && "dnd-into")} style={{ paddingLeft: 6 + depth * 14 }} {...drop.props} onClick={() => toggleCollapsed(key)}>
+      <div className={cx("trow trow--group", drop.zone && `dnd-${drop.zone}`)} style={{ paddingLeft: 6 + depth * 14 }} {...groupDragProps(group.id)} {...drop.props} onClick={() => toggleCollapsed(key)}>
         <button className={cx("trow__caret", open && "is-open")} onClick={(e) => { e.stopPropagation(); toggleCollapsed(key); }} aria-label={open ? "Plegar" : "Desplegar"}>
           <IconChevronRight size={12} />
         </button>

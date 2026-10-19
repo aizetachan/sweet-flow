@@ -589,8 +589,9 @@ y «Tomas» por separado):
   plano a otra escena sale de su grupo. Un grupo que se queda vacío desaparece.
 - Con filtros activos se ven todos los planos que coinciden, también los que
   están en grupos.
-- **Pendiente:** reordenar un grupo arrastrándolo, y el orden de montaje de sus
-  planos (ver ROADMAP).
+- **Reordenar un grupo:** se arrastra su tarjeta en la fila, o su fila en
+  Explorer, antes o después de un plano suelto u otro grupo de la misma escena.
+- **Pendiente:** el orden de montaje de sus planos (ver ROADMAP).
 
 ## 3. Ventanas aparte
 
