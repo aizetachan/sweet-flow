@@ -1046,16 +1046,20 @@ button.topbar__me { position: relative; padding: 0; border: 0; border-radius: 50
 .libb__head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .libb__head h1 { margin: 0; font-size: 20px; font-weight: 650; letter-spacing: -.01em; }
 .libb__lane { user-select: none; background: #101012; border-radius: var(--r-xl); padding: 12px; border: 1px solid transparent; transition: border-color .12s; }
-.libb__lane.is-on { border-color: color-mix(in srgb, var(--brand-500, #2f7dff) 45%, transparent); }
+/* The group selected: the production cards' neon, much fainter (its images keep the bright one). */
+.libb__lane { position: relative; }
+.libb__lane.is-on {
+  border-color: transparent;
+  background: linear-gradient(rgb(var(--brand-700-rgb) / .04), rgb(var(--brand-700-rgb) / .04)), #101012;
+  box-shadow: 0 0 1px 0 rgb(var(--brand-500-rgb) / .55), 0 0 10px 1px rgb(var(--brand-700-rgb) / .14), inset 0 0 10px rgb(var(--brand-500-rgb) / .06);
+}
+.libb__lane.is-on::after { content: ""; position: absolute; inset: -1px; border-radius: inherit; pointer-events: none; border: 1px solid rgb(var(--brand-500-rgb) / .35); filter: blur(.3px); }
 .libb__lanehead { display: flex; align-items: baseline; gap: 10px; margin: 0 2px 10px; min-height: 26px; cursor: pointer; min-width: 0; }
 .libb__gname { font-weight: 600; font-size: 14px; }
 .libb__gdesc { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; max-width: 60ch; }
 .libb__row { display: flex; flex-wrap: wrap; gap: 8px; }
 .libimg { position: relative; flex: none; width: var(--card); border-radius: var(--r-md); overflow: visible; cursor: pointer; }
-.libimg .thumb { aspect-ratio: 16 / 9; width: 100%; border-radius: var(--r-md); outline: 2px solid transparent; outline-offset: -2px; transition: outline-color .12s, box-shadow .12s; }
-.libimg:hover .thumb { outline-color: var(--line-2); }
-.libimg.is-active .thumb { outline-color: var(--line-2); }
-.libimg.is-picked .thumb { outline-color: var(--brand-300, #6cb6ff); box-shadow: 0 0 0 1px var(--brand-500, #2f7dff), 0 0 14px -2px color-mix(in srgb, var(--brand-500, #2f7dff) 70%, transparent); }
+.libimg .thumb { aspect-ratio: 16 / 9; width: 100%; border-radius: var(--r-md); }
 .libimg.dnd-before::before, .libb__add.dnd-before::before { content: ""; position: absolute; left: -6px; top: 4px; bottom: 4px; width: 3px; border-radius: 2px; background: var(--brand-300, #6cb6ff); }
 .libimg:hover .version__acts { opacity: 1; }
 .libb__add { user-select: none; position: relative; flex: none; width: var(--card); aspect-ratio: 16 / 9; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border: 1px dashed var(--line-1); border-radius: var(--r-md); background: none; color: var(--fg-3); }
@@ -1130,8 +1134,30 @@ button.topbar__me { position: relative; padding: 0; border: 0; border-radius: 50
 .libstrip { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin-top: 14px; }
 .libstrip__img { position: relative; padding: 0; border: 0; background: none; border-radius: var(--r-md); }
 /* The mark goes on the picture itself (it would cover a mark on the button) */
-.libstrip__img .thumb { aspect-ratio: 16 / 9; width: 100%; border-radius: var(--r-md); outline: 2px solid transparent; outline-offset: -2px; transition: outline-color .12s, box-shadow .12s; }
-.libstrip__img:hover .thumb { outline-color: var(--line-2); }
-.libstrip__img.is-on .thumb { outline-color: var(--brand-300, #6cb6ff); box-shadow: 0 0 0 1px var(--brand-500, #2f7dff), 0 0 14px -2px color-mix(in srgb, var(--brand-500, #2f7dff) 70%, transparent); }
+.libstrip__img .thumb { aspect-ratio: 16 / 9; width: 100%; border-radius: var(--r-md); }
 .libstrip__bad { position: absolute; left: 6px; bottom: 6px; padding: 1px 6px; border-radius: 999px; background: #000b; color: var(--bad); font-size: 11px; }
 .mmeta__failed { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.version img, .version video, .libstrip__img img, .libstrip__img video { -webkit-user-drag: none; user-select: none; }
+
+/* Library images and a group's images in its own window: the same hover and
+   selected as the production cards (a neon tube; docs/INTERFAZ.md §2.8). */
+.libimg::after, .libstrip__img::after { content: ""; position: absolute; inset: -1px; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .18s; z-index: 1; }
+.libimg:hover::after, .libimg.is-active::after, .libstrip__img:hover::after {
+  opacity: 1;
+  border: 1px solid rgb(var(--brand-500-rgb) / .8);
+  filter: blur(.4px);
+  box-shadow: 0 0 6px rgb(var(--brand-500-rgb) / .35), inset 0 0 4px rgb(var(--brand-500-rgb) / .18);
+}
+.libimg.is-picked, .libstrip__img.is-on {
+  box-shadow:
+    0 0 2px 0 rgb(var(--brand-500-rgb) / .9),
+    0 0 8px 1px rgb(var(--brand-500-rgb) / .45),
+    0 0 18px 3px rgb(var(--brand-700-rgb) / .3);
+}
+.libimg.is-picked::after, .libimg.is-picked:hover::after, .libstrip__img.is-on::after, .libstrip__img.is-on:hover::after {
+  opacity: 1;
+  border: 1px solid var(--brand-300);
+  filter: blur(.4px);
+  box-shadow: 0 0 3px rgb(var(--brand-500-rgb) / .8), inset 0 0 3px rgb(var(--brand-500-rgb) / .5), inset 0 0 14px rgb(var(--brand-500-rgb) / .3);
+}
+.libimg .version__acts { z-index: 2; }

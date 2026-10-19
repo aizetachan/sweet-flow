@@ -30,6 +30,27 @@ let dragging: Id[] = [];
 export const draggedMedia = () => dragging;
 
 /**
+ * Drag props for any picture of the production (gallery versions, a group's
+ * images in its own window): dropped on the references of Generar, like the
+ * library's images (docs/INTERFAZ.md §2.0).
+ */
+export function mediaDrag(ids: Id[]) {
+  return {
+    draggable: true,
+    onDragStart: (e: React.DragEvent) => {
+      dragging = ids;
+      e.dataTransfer.setData(MEDIA_DRAG, JSON.stringify(ids));
+      e.dataTransfer.effectAllowed = "copyMove";
+      document.body.classList.add("sf-drag-media");
+    },
+    onDragEnd: () => {
+      dragging = [];
+      document.body.classList.remove("sf-drag-media");
+    },
+  };
+}
+
+/**
  * The end of any drag clears the highlight of the reference slots: the card
  * dragged may have moved to another group (and its own dragend is lost).
  */

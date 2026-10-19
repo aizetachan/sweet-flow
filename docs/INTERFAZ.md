@@ -709,6 +709,13 @@ centrada en la imagen y sin tipos fijos (decidido el 19 oct 2026):
   visor salen todas las imágenes del grupo para pasar de una a otra. La
   ventana se abre sobre la imagen seleccionada (clic en ella antes de abrirla);
   sin ninguna, sobre la última generada.
+- **Misma forma de trabajar en todas partes:** cualquier imagen de una galería
+  (las versiones de un plano, las imágenes de un grupo en su ventana aparte)
+  se puede arrastrar a «Añadir», «Estilo» o a las imágenes inicial y final,
+  igual que las de la biblioteca; los vídeos y audios van como referencia de
+  su tipo si el modelo los admite. Las imágenes de la biblioteca y la
+  cuadrícula de la ventana usan el mismo hover y el mismo seleccionado que las
+  cards de producción; el grupo seleccionado, ese mismo estilo mucho más suave.
 - **Una generación fallida** dice por qué y tiene **Reintentar**: se vuelve a
   lanzar con los mismos ajustes (una versión nueva; la fallida se quita). Si
   Magnific responde con un error de servidor sin explicación, Sweet Flow lo

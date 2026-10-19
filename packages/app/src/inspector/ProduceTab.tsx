@@ -26,7 +26,7 @@ import { memberName } from "../state/selectors";
 import { modelsFor, nearest, REF_LABEL, specOf, useModelsVersion, type GenKind, type RefType } from "../data/models";
 import { refreshCatalog } from "../integrations/magnific/catalog";
 import { mentionsIn, PromptTags, type Mentions } from "./PromptTags";
-import { draggedMedia, MEDIA_DRAG } from "../library/LibraryBoard";
+import { draggedMedia, MEDIA_DRAG, mediaDrag } from "../library/LibraryBoard";
 import { sharedGroup, sharedMedia, useSharedLibraries } from "../library/shared";
 import { kindOfFile, type GenerateArgs, type ImportItem, type RemoteCreation } from "../data/source";
 import { Popover } from "../components/Popover";
@@ -153,6 +153,7 @@ export function ProduceTab({ node }: { node: ProdNode }) {
             <div className="libstrip">
               {all.filter((m) => !m.archived).map((m) => (
                 <button key={m.id} className={cx("libstrip__img", m.id === active.media.id && "is-on")} data-tip={`${node.title} · ${versionTag(m.version)}`}
+                  {...(m.status === "ready" ? mediaDrag([m.id]) : {})}
                   onClick={() => { setActiveKey(`m:${m.id}`); setPanel({ activeMediaId: m.id, playhead: 0, playing: false }); }}>
                   <Thumb media={m.status === "ready" ? m : undefined} pending={m.status === "queued" || m.status === "rendering" ? m : undefined} badge={false} />
                   {m.status === "failed" ? <span className="libstrip__bad">Fallida</span> : null}
@@ -184,6 +185,7 @@ export function ProduceTab({ node }: { node: ProdNode }) {
             const ready = m.status === "ready";
             return (
               <div key={i.key} className={cx("version", i.key === active?.key && "version--on", m.archived && "version--archived", isChosen && "version--chosen")}
+                {...(ready && !i.foreign && !m.archived ? mediaDrag([m.id]) : {})}
                 onClick={() => { setActiveKey(i.key); setPanel({ activeMediaId: m.id, playhead: i.foreign && i.take ? i.take.inSec : 0, playing: false }); }}>
                 <Thumb media={ready ? m : undefined} take={i.foreign ? i.take : undefined} pending={m.status === "queued" || m.status === "rendering" ? m : undefined} badge={false} preview />
                 <span className="version__tag">
@@ -400,7 +402,7 @@ function GenerateBox({ node }: { node: ProdNode }) {
     setRefs([...refs.filter((r) => !(type === "style" && r.type === "style")), ...fresh.map((mediaId) => ({ type, mediaId }))]);
   };
 
-  /** Library images dropped: the provider gets them first if it doesn't have them. */
+  /** Library (or gallery) images dropped: the provider gets them first if it doesn't have them. */
   const libMedia = (ids: Id[]) => {
     return ids.flatMap((id) => {
       const own = snap.media.find((m) => m.id === id);
@@ -418,7 +420,19 @@ function GenerateBox({ node }: { node: ProdNode }) {
   };
   /** Library images as references (or as the start frame, when the model has no references). */
   const addMedia = (raw: Id[]) => {
-    const ids = libMedia(raw);
+    // Videos and audios of the production (dragged from a gallery) go as references of their kind.
+    const avs = raw.flatMap((id) => {
+      const m = snap.media.find((x) => x.id === id && x.status === "ready" && (x.kind === "video" || x.kind === "audio"));
+      return m ? [m] : [];
+    });
+    if (avs.length) {
+      const ok = avs.filter((m) => refTypes.includes(m.kind as RefType) && !refs.some((r) => r.mediaId === m.id));
+      if (ok.length < avs.length) useStore.getState().notify(`${spec.name} no admite ${avs.some((m) => m.kind === "video") ? "vídeos" : "audios"} como referencia.`);
+      const room = (spec.references?.max ?? 0) - refs.length;
+      ok.slice(0, Math.max(0, room)).forEach((m) => ref.media(m));
+      if (ok.length) setRefs((cur) => [...cur, ...ok.slice(0, Math.max(0, room)).map((m) => ({ type: m.kind as RefType, mediaId: m.id }))]);
+    }
+    const ids = libMedia(raw.filter((id) => !avs.some((m) => m.id === id)));
     if (!ids.length) return;
     if (refTypes.includes("image") && !start) {
       const room = (spec.references?.max ?? 0) - refs.length;
