@@ -12,6 +12,6 @@ export function assetsFromLibrary(library: ProdNode[], media: Media[]): Asset[] 
     const own = media.filter((m) => m.nodeId === n.id && !m.archived && m.status === "ready");
     const cover = own.find((m) => m.chosen) ?? own[0];
     const imageUrl = cover?.thumbUrl ?? cover?.url;
-    return [{ id: n.id, productionId: n.productionId, type: n.lib.type, name: n.title, description: n.notes, ...(imageUrl ? { imageUrl } : {}) }];
+    return [{ id: n.id, productionId: n.productionId, type: n.lib.type ?? "other", name: n.title, description: n.notes, ...(imageUrl ? { imageUrl } : {}) }];
   });
 }

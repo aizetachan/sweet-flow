@@ -34,19 +34,24 @@ export const LIB_TYPE_DIR: Record<AssetType, string> = { cast: "Personajes", loc
 export const LIB_DIR = "Biblioteca";
 export const DESK_DIR = "_mesa";
 
-/** A library node's code: what its files are named after («MESA_img_v004.png», «Elena_img_v001.png»). */
+/** A library group's code: what its files are named after («Elena_img_v001.png»). */
 function libCode(n: ProdNode): string {
   if (n.lib?.kind === "desk") return "MESA";
-  return safeTitle(n.title, 40) || "Ficha";
+  return safeTitle(n.title, 40) || "Grupo";
 }
 
 export const codeOf = (p: Production, n: ProdNode) => (n.lib ? libCode(n) : codeFor(levelOf(p, n), n.number));
 export const folderOf = (p: Production, n: ProdNode) => folderName(codeOf(p, n), n.title);
 
-/** Folder of a library node, from the production folder. */
-export function libFolder(n: ProdNode): string {
+/**
+ * Folder of a library group, from the production folder: `Biblioteca/<Nombre>`,
+ * with "-2", "-3"… when two groups have the same name (the older keeps it).
+ */
+export function libFolder(n: ProdNode, nodes: ProdNode[] = [n]): string {
   if (!n.lib || n.lib.kind === "desk") return `${LIB_DIR}/${DESK_DIR}`;
-  return `${LIB_DIR}/${LIB_TYPE_DIR[n.lib.type]}/${safeTitle(n.title, 60) || `Ficha-${n.id.slice(-4)}`}`;
+  const groups = nodes.filter((x) => x.lib?.kind === "card" && !x.trashedAt).map((x) => ({ id: x.id, name: x.title, createdAt: x.number }));
+  if (!groups.some((g) => g.id === n.id)) groups.push({ id: n.id, name: n.title, createdAt: n.number });
+  return `${LIB_DIR}/${groupFolderNames(groups).get(n.id) ?? (safeTitle(n.title, 60) || "Grupo")}`;
 }
 
 export function byNumber(a: ProdNode, b: ProdNode): number {
@@ -99,7 +104,7 @@ export function codePath(p: Production, nodes: ProdNode[], n: ProdNode): string[
  * group's folder inside the scene.
  */
 export function folderPath(p: Production, nodes: ProdNode[], n: ProdNode, groups: ShotGroup[] = []): string {
-  if (n.lib) return libFolder(n);
+  if (n.lib) return libFolder(n, nodes);
   return ancestorsOf(nodes, n)
     .map((a) => {
       if (a.shelvedAt !== undefined) return `${SHELF_DIR}/${folderOf(p, a)}`;

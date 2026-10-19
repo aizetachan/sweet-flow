@@ -667,53 +667,38 @@ y «Tomas» por separado):
 
 ### 2.8 Biblioteca (imágenes de referencia)
 
-La sección **Biblioteca** del dock tiene la misma estructura que Producción,
-centrada en la imagen:
-- **A la izquierda, el panel:** Producción (generar, galería, revisión y
-  actividad de lo seleccionado) y Explorer (la Mesa de trabajo y las fichas por
-  tipo).
-- **A la derecha:**
-  - **Mesa de trabajo:** cuadrícula grande con todo lo que se genera sin
-    elegir ficha. Al entrar en la Biblioteca el panel se abre sobre ella, listo
-    para generar.
-  - **Una fila por tipo:** Personajes, Espacios, Props, Estilos y Otros, con
-    sus **fichas** (mosaico de sus imágenes elegidas, nombre, «2 elegidas · 5
-    imágenes») y un «+» para crear una vacía.
-- **Organizar mientras se genera:**
-  - En la mesa, clic selecciona una imagen (y la muestra en el panel); ⌘ suma
-    o quita y ⇧ selecciona un tramo.
-  - Con selección: **Crear ficha** (tipo y nombre; las seleccionadas entran
-    como sus **elegidas**), **Añadir a…** (una ficha existente), archivar o
-    quitar la selección.
-  - También se pueden **arrastrar** imágenes a una ficha: entran como
-    elegidas.
-- **Abrir una ficha** (doble clic, o «Abrir» en su menú):
-  - Arriba, el tipo y el nombre (editable); debajo, su descripción.
-  - Dos partes: **Elegidas** (las referencias que se mandan al usarla) y
-    **Exploración** (el resto).
-  - Cada imagen lleva **★** para elegirla o quitarla y **↩** para devolverla a
-    la mesa. Con varias seleccionadas: Elegir, A exploración, A la mesa.
-  - Generar con la ficha abierta (o seleccionada) la llena: lo nuevo va a su
-    exploración.
-- **En el panel de una ficha:**
-  - Su **tipo** (se puede cambiar) y **Descripción**, que es la base del
-    prompt. Con el prompt vacío se genera con ella.
-  - No tiene estado ni responsables. La papelera la manda con sus imágenes.
-- **Clic derecho en una ficha:** abrir, cambiar el nombre, cambiar el tipo,
-  mandar a la papelera.
-- **Usar en los planos:** en las referencias de Generar, la lista de cada hueco
-  tiene **«De la biblioteca»**, con sus fichas. Al elegir una:
-  - En «Añadir» entran sus imágenes elegidas (o todas si aún no hay
-    elegidas), hasta el máximo del modelo.
-  - Una ficha de estilo ocupa el hueco Estilo con su primera elegida.
-  - En imagen inicial o final entra su primera imagen.
-- Las fichas son también el **desglose** de escenas y planos (los chips
-  «Personaje / Prop…» de la cabecera del plano y el filtro del tablero).
-- **En el disco:** `Biblioteca/_mesa/` y `Biblioteca/<Tipo>/<Nombre>/_media/`
-  dentro de la carpeta de la producción. Mover una imagen a una ficha mueve su
-  archivo.
-- **Más adelante:** tipos de referencia propios de Magnific (personaje,
-  producto, localización) en lugar de «imagen».
+La sección **Biblioteca** del dock funciona como la de Producción, pero
+centrada en la imagen y sin tipos fijos (decidido el 19 oct 2026):
+- **Grupos con nombre**, uno por fila, que muestran sus imágenes. El nombre lo
+  pone el equipo («Personaje 1», «Casa de Robida», «Linterna»…) y es la
+  **etiqueta** con la que se llama al grupo desde los planos. Al crearlo se
+  llama «Grupo 1», «Grupo 2»… hasta que se le pone nombre (doble clic).
+- **Crear sobre la marcha:** **+ Grupo** arriba, **Nuevo grupo** debajo de la
+  última fila (clic, o soltar imágenes ahí) o «+» en Explorer.
+- **Generar:** el panel de la izquierda genera en el grupo seleccionado (al
+  entrar, el primero). Lo generado aparece al final de su fila. «Generar aquí»
+  / «Más» al final de cada fila selecciona ese grupo. También se puede
+  importar (galería del panel).
+- **Organizar:** arrastrar imágenes para reordenarlas en su fila o llevarlas a
+  otra (una línea azul marca dónde caen). Clic selecciona una (y la muestra en
+  el panel), ⌘ suma o quita, ⇧ selecciona un tramo; se arrastran juntas.
+- **★ Elegidas:** las imágenes marcadas son las que se mandan al usar el
+  grupo; si no hay ninguna marcada, van todas.
+- **Descripción** del grupo (panel o menú del clic derecho en su nombre):
+  cómo es; es la base del prompt al generar en él. Se ve junto al nombre.
+- **Clic derecho en el nombre:** cambiar el nombre, descripción, papelera.
+- **Usar en los planos:** en las referencias de Generar, «De la biblioteca»
+  lista los grupos por su nombre; al elegir uno entran sus imágenes elegidas
+  (o todas) hasta el máximo del modelo.
+- Los grupos son también el **desglose** de escenas y planos (chips de la
+  cabecera del plano y filtro del tablero).
+- **En el disco:** `Biblioteca/<Nombre>/_media/` dentro de la carpeta de la
+  producción («-2» si dos grupos se llaman igual). Mover una imagen de grupo
+  mueve su archivo.
+- **Pendiente: la etiqueta en el prompt.** Magnific solo entiende «@nombre» en
+  el prompt para los recursos de *su* biblioteca (personaje, objeto o lugar,
+  nombre sin espacios, creado con 1–6 imágenes, en la cuenta de cada persona).
+  Ver la decisión en §2.8.1.
 
 #### 2.8.1 Bibliotecas compartidas entre producciones (propuesta, como Figma)
 
@@ -741,10 +726,10 @@ episodios de una temporada) sin salir de ella:
   pide confirmación y dice dónde se usa.
 - También vale una producción hecha solo para la biblioteca («Biblia de
   Mareas»): mismo mecanismo.
-- **Por decidir:**
-  1. ¿Las producciones del alcance se conectan solas a la biblioteca o hay que
-     activarla en cada una?
-  2. ¿Los cambios llegan en vivo o al «publicar una versión», como Figma?
+- **Decidido (19 oct 2026):** una vez compartida, **siempre al día**: los
+  cambios llegan en vivo, sin publicar versiones.
+- **Por decidir:** ¿las producciones del alcance se conectan solas a la
+  biblioteca o hay que activarla en cada una?
 
 ## 3. Ventanas aparte
 

@@ -579,10 +579,50 @@ export function lastMadeFrom(nodes: ProdNode[], takes: Take[], original: ProdNod
 // ---------- library (docs/INTERFAZ.md §2.8) ----------
 
 /** The desk of the library, or a new card of a kind. Lives apart from the board. */
-export function planCreateLibNode(p: Production, lib: LibKind, title: string, newId: Id): Plan {
+export function planCreateLibNode(p: Production, lib: LibKind, title: string, newId: Id, nodes: ProdNode[] = []): Plan {
   const statusId = p.statuses.slice().sort((a, b) => a.order - b.order)[0]?.id ?? "";
-  const name = lib.kind === "desk" ? "Mesa de trabajo" : title.trim() || "Ficha sin nombre";
-  return { nodeId: newId, events: [{ type: "node.created", node: { id: newId, parentId: null, levelId: LIB_LEVEL, number: 0, title: name, statusId, lib } }] };
+  const groups = nodes.filter((n) => n.lib?.kind === "card");
+  // Generic until the team names it: «Grupo 1», «Grupo 2»…
+  const name = lib.kind === "desk" ? "Mesa de trabajo" : title.trim() || nextGroupName(groups.map((g) => g.title));
+  // `number`: creation order among the library's groups (who keeps a folder name first).
+  const number = Math.max(0, ...groups.map((g) => g.number)) + 1;
+  return { nodeId: newId, events: [{ type: "node.created", node: { id: newId, parentId: null, levelId: LIB_LEVEL, number, title: name, statusId, lib } }] };
+}
+
+/** «Grupo N» with the first N not taken. */
+export function nextGroupName(taken: string[]): string {
+  const used = new Set(taken.map((t) => t.trim().toLowerCase()));
+  for (let i = 1; ; i++) if (!used.has(`grupo ${i}`)) return `Grupo ${i}`;
+}
+
+/** Where an image sorts in its library group. */
+export const libOrder = (m: Pick<Media, "order" | "createdAt">) => m.order ?? m.createdAt;
+
+/**
+ * Images placed in a library group before another image (null: at the end),
+ * in the order given: they take positions between their new neighbours, and
+ * a new version number when they come from another group.
+ */
+export function planPlaceLibMedia(media: Array<Pick<Media, "id" | "nodeId" | "kind" | "version" | "order" | "createdAt" | "archived">>, nodes: ProdNode[], ids: Id[], toNodeId: Id, beforeId: Id | null): Plan {
+  if (!nodes.some((n) => n.id === toNodeId && n.lib)) return EMPTY;
+  const moving = ids.map((id) => media.find((m) => m.id === id)).filter((m): m is NonNullable<typeof m> => !!m);
+  if (!moving.length) return EMPTY;
+  const rest = media.filter((m) => m.nodeId === toNodeId && !m.archived && !ids.includes(m.id)).sort((a, b) => libOrder(a) - libOrder(b));
+  const at = beforeId ? rest.findIndex((m) => m.id === beforeId) : -1;
+  const next = at >= 0 ? rest[at] : undefined;
+  const prev = at >= 0 ? rest[at - 1] : rest.at(-1);
+  const lo = prev ? libOrder(prev) : next ? libOrder(next) - (moving.length + 1) * 1000 : 0;
+  const hi = next ? libOrder(next) : lo + (moving.length + 1) * 1000;
+  const step = (hi - lo) / (moving.length + 1);
+  const known = [...media];
+  const events: LogEventBody[] = moving.map((m, i) => {
+    const order = lo + step * (i + 1);
+    if (m.nodeId === toNodeId) return { type: "media.updated", id: m.id, patch: { order } };
+    const version = nextMediaVersion(known, toNodeId, m.kind);
+    known.push({ ...m, nodeId: toNodeId, version });
+    return { type: "media.updated", id: m.id, patch: { nodeId: toNodeId, version, order } };
+  });
+  return { events };
 }
 
 /**

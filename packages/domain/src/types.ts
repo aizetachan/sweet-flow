@@ -184,8 +184,10 @@ export interface Media {
   file?: string;
   /** Where the provider keeps it (e.g. a Magnific creation), to resume, preview or re-download. */
   remote?: { provider: string; id: string; url?: string; previewUrl?: string; folder?: string };
-  /** In a library card: one of the few chosen as its reference (the rest is exploration). */
+  /** In a library group: one of the few chosen as its reference (when none is, all are). */
   chosen?: boolean;
+  /** Position in its library group (images are dragged to reorder); by creation when absent. */
+  order?: number;
   createdBy: Id;
   createdAt: Millis;
 }
@@ -233,14 +235,14 @@ export interface Comment {
 export type AssetType = "cast" | "prop" | "location" | "style" | "other";
 
 /**
- * The library of a production (docs/INTERFAZ.md §2.8): the desk, where
- * images land while exploring, and the cards (fichas) they are organized
- * into: a character, a place, a prop, a style or anything else. Both are
- * nodes kept apart from the board (like «Vídeos editados»), so generating,
- * versions, review and activity work the same; their folders are
- * `Biblioteca/_mesa/` and `Biblioteca/<Tipo>/<Nombre>/`.
+ * The library of a production (docs/INTERFAZ.md §2.8): groups of reference
+ * images, each with a name the team gives it («Personaje 1», «Casa de
+ * Robida»), shown as rows of images. A group is a node kept apart from the
+ * board (like «Vídeos editados»), so generating, versions, review and
+ * activity work the same; its folder is `Biblioteca/<Nombre>/`. `type` is
+ * optional (what it is, when known). `desk` is an older catch-all group.
  */
-export type LibKind = { kind: "desk" } | { kind: "card"; type: AssetType };
+export type LibKind = { kind: "desk" } | { kind: "card"; type?: AssetType };
 
 export interface Asset {
   id: Id;

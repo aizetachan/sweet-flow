@@ -70,6 +70,7 @@ import {
   type AssetType,
   planCreateLibNode,
   planMoveToLib,
+  planPlaceLibMedia,
 } from "@sweetflow/domain";
 import { assetsFromLibrary } from "../libraryCards";
 import { importKind, type BrowsePage, type BrowseQuery, type DataSource, type GenerateArgs, type ImportItem, type NewComment, type Placement, type RemoteFolder, type Snapshot, type UploadedRef } from "../source";
@@ -403,14 +404,19 @@ export class LocalSource implements DataSource {
   libraryDesk(): Id {
     const s = this.loaded();
     const desk = s.nodes.find((n) => n.lib?.kind === "desk" && !n.trashedAt);
-    return desk?.id ?? this.apply(planCreateLibNode(s.production, { kind: "desk" }, "", this.newId("n")))!;
+    return desk?.id ?? this.apply(planCreateLibNode(s.production, { kind: "desk" }, "", this.newId("n"), s.nodes.filter((n) => n.lib)))!;
   }
 
-  createLibCard(type: AssetType, name: string, mediaIds: Id[] = []): Id {
+  createLibGroup(name: string | null, mediaIds: Id[] = []): Id {
     const s = this.loaded();
-    const id = this.apply(planCreateLibNode(s.production, { kind: "card", type }, name, this.newId("n")))!;
-    if (mediaIds.length) this.moveToLib(mediaIds, id, true);
+    const id = this.apply(planCreateLibNode(s.production, { kind: "card" }, name ?? "", this.newId("n"), s.nodes.filter((n) => n.lib && !n.trashedAt)))!;
+    if (mediaIds.length) this.placeLibMedia(mediaIds, id, null);
     return id;
+  }
+
+  placeLibMedia(mediaIds: Id[], toNodeId: Id, beforeId: Id | null): void {
+    const s = this.loaded();
+    this.apply(planPlaceLibMedia(s.media, s.nodes, mediaIds, toNodeId, beforeId));
   }
 
   moveToLib(mediaIds: Id[], toNodeId: Id, chosen?: boolean): void {

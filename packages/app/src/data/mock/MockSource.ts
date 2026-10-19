@@ -46,6 +46,7 @@ import {
   LIB_LEVEL,
   planCreateLibNode,
   planMoveToLib,
+  planPlaceLibMedia,
   type Asset,
 } from "@sweetflow/domain";
 import { ALL_FEATURES, importKind, type BrowsePage, type BrowseQuery, type DataSource, type GenerateArgs, type ImportItem, type NewComment, type Placement, type RemoteCreation, type RemoteFolder, type Snapshot, type UploadedRef } from "../source";
@@ -64,11 +65,10 @@ function seedLibrary(p: Snapshot["production"], me: Id, assets: Asset[]): { node
   const statusId = [...p.statuses].sort((a, b) => a.order - b.order)[0]!.id;
   const node = (id: string, title: string, lib: ProdNode["lib"], notes = ""): ProdNode => ({ id, productionId: p.id, parentId: null, levelId: LIB_LEVEL, number: 0, title, notes, statusId, assigneeIds: [], assetIds: [], lib, updatedAt: t, updatedBy: me });
   // The breakdown's cast, places, props and look are the library's cards (same ids).
-  const nodes = [node("lib_desk", "Mesa de trabajo", { kind: "desk" }), ...assets.map((a) => node(a.id, a.name, { kind: "card", type: a.type }, a.description))];
+  const nodes = assets.map((a, i) => ({ ...node(a.id, a.name, { kind: "card", type: a.type }, a.description), number: i + 1 }));
   const moodOf: Record<string, Mood> = { cast: "interior", location: "dusk", prop: "night", style: "dawn", other: "noon" };
   const plan: Array<[string, number, Mood, number]> = [
-    ["lib_desk", 9, "dawn", 0],
-    ...assets.map((a, i): [string, number, Mood, number] => [a.id, 2 + (i % 3), moodOf[a.type] ?? "noon", 1 + (i % 2)]),
+    ...assets.map((a, i): [string, number, Mood, number] => [a.id, 3 + (i % 4), moodOf[a.type] ?? "noon", 0]),
   ];
   const media: Media[] = plan.flatMap(([nodeId, n, mood, chosen]) => Array.from({ length: n }, (_, i): Media => {
     const url = frame(`${nodeId}-${i}`, i % 2 ? mood : MOODS[(MOODS.indexOf(mood) + i) % MOODS.length]!);
@@ -297,19 +297,26 @@ export class MockSource implements DataSource {
     const desk = this.s.library.find((n) => n.lib?.kind === "desk");
     if (desk) return desk.id;
     const id = newId("n");
-    const plan = planCreateLibNode(this.s.production, { kind: "desk" }, "", id);
+    const plan = planCreateLibNode(this.s.production, { kind: "desk" }, "", id, this.s.library);
     const created = plan.events[0]!.type === "node.created" ? plan.events[0]!.node : null;
     if (created) this.commit({ library: [...this.s.library, this.libNode(created)] });
     return id;
   }
 
-  createLibCard(type: AssetType, name: string, mediaIds: Id[] = []): Id {
+  createLibGroup(name: string | null, mediaIds: Id[] = []): Id {
     const id = newId("n");
-    const plan = planCreateLibNode(this.s.production, { kind: "card", type }, name, id);
+    const plan = planCreateLibNode(this.s.production, { kind: "card" }, name ?? "", id, this.s.library);
     const created = plan.events[0]!.type === "node.created" ? plan.events[0]!.node : null;
-    if (created) this.commit({ library: [...this.s.library, this.libNode(created)], activity: [this.log("structure", `creó la ficha «${created.title}»`, id), ...this.s.activity] });
-    if (mediaIds.length) this.moveToLib(mediaIds, id, true);
+    if (created) this.commit({ library: [...this.s.library, this.libNode(created)], activity: [this.log("structure", `creó el grupo «${created.title}»`, id), ...this.s.activity] });
+    if (mediaIds.length) this.placeLibMedia(mediaIds, id, null);
     return id;
+  }
+
+  placeLibMedia(mediaIds: Id[], toNodeId: Id, beforeId: Id | null): void {
+    const plan = planPlaceLibMedia(this.s.media, this.s.library, mediaIds, toNodeId, beforeId);
+    const patches = new Map(plan.events.flatMap((e) => (e.type === "media.updated" ? [[e.id, e.patch] as const] : [])));
+    if (!patches.size) return;
+    this.commit({ media: this.s.media.map((m) => (patches.has(m.id) ? { ...m, ...patches.get(m.id) } : m)) }, true);
   }
 
   moveToLib(mediaIds: Id[], toNodeId: Id, chosen?: boolean): void {

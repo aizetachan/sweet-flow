@@ -373,7 +373,11 @@ export class FirebaseSource implements DataSource {
     throw new NotImplemented("Biblioteca", "etapa C");
   }
 
-  createLibCard(_type: AssetType, _name: string, _mediaIds?: Id[]): Id {
+  createLibGroup(_name: string | null, _mediaIds?: Id[]): Id {
+    throw new NotImplemented("Biblioteca", "etapa C");
+  }
+
+  placeLibMedia(_mediaIds: Id[], _toNodeId: Id, _beforeId: Id | null): void {
     throw new NotImplemented("Biblioteca", "etapa C");
   }
 

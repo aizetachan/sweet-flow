@@ -266,13 +266,15 @@ export interface DataSource {
    * the production keeps the provider's id, so it is sent only once.
    */
   uploadReference(nodeId: Id, from: File | { mediaId: Id }): Promise<UploadedRef>;
-  /** The library's desk (made the first time). Returns its node id. */
+  /** The library's older catch-all group (made the first time). Returns its node id. */
   libraryDesk(): Id;
-  /** A new card of the library; `mediaIds` go in as its chosen references. Returns its node id. */
-  createLibCard(type: AssetType, name: string, mediaIds?: Id[]): Id;
-  /** Images into the desk or a card (`chosen`: as references, or as exploration). */
+  /** A new group of the library («Grupo N» without a name), with these images in it. Returns its node id. */
+  createLibGroup(name: string | null, mediaIds?: Id[]): Id;
+  /** Images into a group (`chosen`: as its chosen references). */
   moveToLib(mediaIds: Id[], toNodeId: Id, chosen?: boolean): void;
-  /** Mark images of a card as its references, or back to exploration. */
+  /** Images placed in a group before another image (null: at the end): reorder, or move from another group. */
+  placeLibMedia(mediaIds: Id[], toNodeId: Id, beforeId: Id | null): void;
+  /** Mark images of a group as its chosen references, or not. */
   setChosen(mediaIds: Id[], chosen: boolean): void;
   setLibType(nodeId: Id, type: AssetType): void;
   /** Show these shots to the client on the review page, or stop (docs/USUARIOS.md §4). */

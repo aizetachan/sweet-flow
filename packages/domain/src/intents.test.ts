@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   planCreateLibNode,
   planMoveToLib,
+  planPlaceLibMedia,
+  nextGroupName,
   childrenOf,
   defaultLevels,
   defaultStatuses,
@@ -419,7 +421,7 @@ describe("library", () => {
     expect(split.live).toEqual([]);
     expect(split.library.map((n) => n.id)).toEqual(["desk", "elena"]);
     const elena = s.nodes.find((n) => n.id === "elena")!;
-    expect(folderPath(s.production!, s.nodes, elena)).toBe("Biblioteca/Personajes/Elena-Ruiz");
+    expect(folderPath(s.production!, s.nodes, elena)).toBe("Biblioteca/Elena-Ruiz");
     expect(folderPath(s.production!, s.nodes, s.nodes.find((n) => n.id === "desk")!)).toBe("Biblioteca/_mesa");
     expect(codeOf(s.production!, elena)).toBe("Elena-Ruiz");
 
@@ -427,5 +429,37 @@ describe("library", () => {
     s = foldLog([...evs, ...emit(planMoveToLib(s.media, s.nodes, ["m2", "m3"], "elena", true).events)]);
     expect(s.media.filter((m) => m.nodeId === "elena").map((m) => [m.id, m.version, m.chosen])).toEqual([["m2", 1, true], ["m3", 2, true]]);
     expect(s.media.find((m) => m.id === "m1")).toMatchObject({ nodeId: "desk", version: 1 });
+  });
+});
+
+describe("library groups", () => {
+  const p = { id: "p", workspaceId: "w", name: "M", levels: [], statuses: [{ id: "s", name: "P", color: "#fff", category: "todo" as const, order: 0 }], createdAt: 0, updatedAt: 0 };
+  const group = (id: string, title: string, number: number) => ({ id, productionId: "p", parentId: null, levelId: "lib", number, title, notes: "", statusId: "s", assigneeIds: [], assetIds: [], lib: { kind: "card" as const }, updatedAt: 0, updatedBy: "u" });
+  const img = (id: string, nodeId: string, createdAt: number, version = 1) => ({ id, nodeId, kind: "image" as const, version, createdAt, archived: false });
+
+  it("names new groups «Grupo N» until the team names them", () => {
+    expect(nextGroupName([])).toBe("Grupo 1");
+    expect(nextGroupName(["Grupo 1", "Casa de Robida", "grupo 2"])).toBe("Grupo 3");
+    const plan = planCreateLibNode(p, { kind: "card" }, "", "g3", [group("g1", "Grupo 1", 1), group("g2", "Elena", 4)]);
+    expect(plan.events[0]).toMatchObject({ type: "node.created", node: { title: "Grupo 2", number: 5 } });
+  });
+
+  it("gives two groups with the same name their own folder", async () => {
+    const { folderPath } = await import("./index");
+    const nodes = [group("a", "Personaje 1", 1), group("b", "Personaje 1", 2)];
+    expect(nodes.map((n) => folderPath(p, nodes, n))).toEqual(["Biblioteca/Personaje-1", "Biblioteca/Personaje-1-2"]);
+  });
+
+  it("places images before another one, or at the end, also from another group", () => {
+    const nodes = [group("a", "A", 1), group("b", "B", 2)];
+    const media = [img("a1", "a", 100), img("a2", "a", 200), img("a3", "a", 300), img("b1", "b", 150)];
+    const order = (events: ReturnType<typeof planPlaceLibMedia>["events"]) => {
+      const next = media.map((m) => ({ ...m }));
+      for (const e of events) if (e.type === "media.updated") Object.assign(next.find((m) => m.id === e.id)!, e.patch);
+      return next.filter((m) => m.nodeId === "a").sort((x, y) => ((x as { order?: number }).order ?? x.createdAt) - ((y as { order?: number }).order ?? y.createdAt)).map((m) => `${m.id}:v${m.version}`);
+    };
+    expect(order(planPlaceLibMedia(media, nodes, ["a3"], "a", "a1").events)).toEqual(["a3:v1", "a1:v1", "a2:v1"]);
+    expect(order(planPlaceLibMedia(media, nodes, ["b1"], "a", "a2").events)).toEqual(["a1:v1", "b1:v2", "a2:v1", "a3:v1"]);
+    expect(order(planPlaceLibMedia(media, nodes, ["a1"], "a", null).events)).toEqual(["a2:v1", "a3:v1", "a1:v1"]);
   });
 });

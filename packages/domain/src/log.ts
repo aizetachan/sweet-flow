@@ -75,7 +75,7 @@ export type MediaRecord = Omit<Media, "productionId" | "url" | "thumbUrl">;
 export type CommentRecord = Omit<Comment, "productionId">;
 export type GroupRecord = Omit<ShotGroup, "productionId">;
 export type TakeRecord = Omit<Take, "productionId" | "thumbUrl">;
-export type MediaPatch = Partial<Pick<Media, "status" | "progress" | "archived" | "error" | "file" | "remote" | "width" | "height" | "durationSec" | "chosen" | "nodeId" | "version">>;
+export type MediaPatch = Partial<Pick<Media, "status" | "progress" | "archived" | "error" | "file" | "remote" | "width" | "height" | "durationSec" | "chosen" | "nodeId" | "version" | "order">>;
 
 export type LogEvent = LogEventBody & {
   v: number;

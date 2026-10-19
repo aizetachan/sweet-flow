@@ -188,14 +188,14 @@ function InspectorBody({ floatKey, onDragHandle }: { floatKey?: string; onDragHa
           <input
             className="sf-input sf-input--bare nhead__title"
             value={node.title}
-            placeholder={node.lib ? "Nombre de la ficha" : `Título del ${levelOf(p, node).name.toLowerCase()}`}
+            placeholder={node.lib ? "Nombre del grupo (Personaje 1, Casa de Robida…)" : `Título del ${levelOf(p, node).name.toLowerCase()}`}
             title={node.title}
             onChange={(e) => source.updateNode(node.id, { title: e.target.value })}
           />
           {panel.mode === "floating" && floatKey ? (
             <IconButton label="Acoplar al panel lateral" size="sm" onClick={() => dockPanel(floatKey)}><IconLayoutSidebarLeftExpand size={14} /></IconButton>
           ) : null}
-          {panel.mode !== "window" && node.lib?.kind !== "desk" ? (
+          {panel.mode !== "window" ? (
             <IconButton label={`Mover ${nameOf(p, node)} a la papelera (Supr)`} size="sm" onClick={() => trashNodes([node.id])}><IconTrash size={14} /></IconButton>
           ) : null}
           {node.lib ? null : <PinLabelSync node={node} />}
@@ -229,17 +229,11 @@ function InspectorBody({ floatKey, onDragHandle }: { floatKey?: string; onDragHa
         {node.lib ? (
           // A card of the library: its kind and its description (the base of its prompt); the desk, a hint.
           <div className="nhead__row nhead__row--code">
-            {node.lib.kind === "card" ? (
-              <>
-                <select className="sf-select libtype" value={node.lib.type} title="Tipo de ficha" onChange={(e) => source.setLibType(node.id, e.target.value as AssetType)}>
-                  {LIB_TYPES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
-                </select>
-                <button className={cx("notes__btn", node.notes.trim() && "notes__btn--on")} title={node.notes.trim() ? node.notes : "Describir: cómo es (base del prompt)"}
-                  onClick={() => set({ modal: "notes", notesFor: node.id })}>
-                  <IconNote size={13} /> Descripción
-                </button>
-              </>
-            ) : <span className="sf-faint sf-small">Lo que generas sin elegir ficha cae aquí.</span>}
+            <span className="sf-faint sf-small">Grupo de la biblioteca · lo que generes aquí entra en él</span>
+            <button className={cx("notes__btn", node.notes.trim() && "notes__btn--on")} title={node.notes.trim() ? node.notes : "Describir: cómo es (base del prompt)"}
+              onClick={() => set({ modal: "notes", notesFor: node.id })}>
+              <IconNote size={13} /> Descripción
+            </button>
           </div>
         ) : (
           <>
