@@ -89,6 +89,15 @@ Anotadas el 15 oct 2026, pendientes de que el usuario elija orden:
 8. **Estados vacíos con guía** en el resto de pantallas (el tablero ya la tiene).
 9. **Progreso por escena** (3/6 aprobados) en la cabecera de cada fila.
 
+### Análisis hechos (19 oct 2026)
+
+- **Exportar a Premiere y DaVinci Resolve:** [`EXPORTAR-NLE.md`](EXPORTAR-NLE.md).
+  Primero un archivo OTIO + FCP7 XML; después paneles (Premiere UXP, script y
+  Workflow Integration de Resolve) para ida y vuelta.
+- **Usuarios, invitaciones y vista de invitado:** [`USUARIOS.md`](USUARIOS.md).
+  Identidad por Magnific, equipo en un registro de la carpeta, permisos reales
+  con Drive/Dropbox; decisiones pendientes al final.
+
 ### Fase 1 · Producción en carpeta (etapa A)
 
 1. ✅ **Registro de eventos en `packages/domain`:** tipos de evento, reloj lógico
