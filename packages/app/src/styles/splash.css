@@ -34,32 +34,30 @@
   visibility: hidden;
 }
 
-.splash__drop {
+/* The drops, drawn as outlines over the whole screen. */
+.splash__drops {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.splash__drop { fill: var(--fg-0); }
+
+/* The real text, shown once each drop has its letter's shape. */
+.splash__letter {
   position: absolute;
   top: 0;
   left: 0;
-  will-change: transform;
-}
-
-/* The drop's head and tail: centred on the letter's box. */
-.splash__blob {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  border-radius: 50%;
-  background: var(--fg-0);
-}
-
-.splash__letter {
-  display: block;
   color: var(--fg-0);
-  transform-origin: 50% 55%;
+  transform-origin: 50% 70%;
   opacity: 0;
+  will-change: transform, opacity;
 }
 
 /* Reduced motion: letters sit in place and fade in. */
 .splash--still .splash__letter { animation: splash-in 0.4s ease both; }
-.splash--still .splash__blob { display: none; }
+.splash--still .splash__drops { display: none; }
 @keyframes splash-in { from { opacity: 0; } to { opacity: 1; } }
 
-.splash__defs { position: absolute; width: 0; height: 0; overflow: hidden; }

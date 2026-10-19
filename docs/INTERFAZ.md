@@ -21,13 +21,17 @@ Abrir la app ──▶ 0. Pantalla de carga ──▶ 1. Dashboard ──▶ 2. 
 - Fondo de la app, **visto desde arriba como una superficie**. Las letras de
   **Sweet Flow** entran desde los bordes de la pantalla, cada una por un lado,
   **como gotas de líquido que se arrastran por la superficie**:
-  - cada letra empieza siendo una gota redonda con una pequeña cola, que se
-    alarga cuanto más rápido va;
+  - cada letra empieza siendo una gota con volumen (iluminada desde arriba a
+    la izquierda: brillo, sombreado en los bordes y sombra sobre la
+    superficie), con el borde ondulando y una cola que se alarga cuanto más
+    rápido va;
   - recorrido continuo y serpenteante (el de las antiguas hormigas), a
     impulsos como el líquido: acelera, frena un poco y vuelve a avanzar, sin
     tirones; arranca y se para con suavidad;
-  - al llegar a su sitio, la gota se funde en su letra, que queda **nítida**
-    (el texto real, sin deformar), con un pequeño rebote al asentarse;
+  - en el último tramo **la gota se transforma en su letra**: su contorno pasa
+    punto a punto al de la letra (sacado de la propia tipografía, con la misma
+    cantidad de líquido), pierde el brillo y queda como el texto nítido, con un
+    pequeño rebote al asentarse;
   - el recorrido dura unos 3 s.
 - Cuando la app ha cargado (y el nombre está completo), el logo **se desvanece**
   y aparece el dashboard.

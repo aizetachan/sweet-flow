@@ -1,15 +1,18 @@
 /**
  * Loading splash (docs/INTERFAZ.md §0): seen from above, each letter of
- * "Sweet Flow" is a drop of liquid on a surface. The drops creep in from the
- * edges of the screen along meandering paths (the earlier ants' routes), in
- * uneven surges as liquid does — a round head pulling a short tail that grows
- * with speed. At its slot each drop melts into its letter, which ends crisp
- * (the real text, never left deformed), with a small settling wobble. When
- * the word is complete, the app is ready and a minimum time has passed, the
- * overlay fades out.
+ * "Sweet Flow" is a drop of liquid on a surface, lit from the top left (a
+ * highlight, shading at its edges and a soft shadow on the surface). The drops
+ * creep in from the edges of the screen along meandering paths (the earlier
+ * ants' routes), in uneven surges as liquid does, their outline rippling and
+ * pulled into a short tail. At its slot each drop changes shape into its
+ * letter — the letter's real outline, traced from the font (liquid.ts), with
+ * the same amount of liquid — loses its shine and ends as the crisp text, with
+ * a small settling wobble. When the word is complete, the app is ready and a
+ * minimum time has passed, the overlay fades out.
  */
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { OUTER_POINTS, traceGlyph, type Glyph } from "./liquid";
 
 const WORD = "Sweet Flow";
 const MIN_MS = 2000;
@@ -18,9 +21,7 @@ const FADE_MS = 450;
 /** The small wobble once a letter has its shape. */
 const SETTLE_MS = 600;
 /** Last part of the way (0…1) in which the drop turns into its letter. */
-const FORM_FROM = 0.78;
-/** Blur (px) that lets the head, tail and letter merge as one liquid. */
-const GOO = 7;
+const FORM_FROM = 0.62;
 
 interface Point {
   x: number;
@@ -145,18 +146,72 @@ function poseAt(plan: Plan, t: number): Pose {
 
 const reducedMotion = () => typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
 
+/** Elements of one letter: its drop (an outline in the shared SVG, with its light) and the real text. */
 interface DropEls {
-  root: HTMLDivElement | null;
-  head: HTMLDivElement | null;
-  tail: HTMLDivElement | null;
+  path: SVGPathElement | null;
   glyph: HTMLSpanElement | null;
-  goo: SVGFEGaussianBlurElement | null;
+  /** Light controls of its filter: shading mix, shine and shadow. */
+  mix: SVGFECompositeElement | null;
+  shine: SVGFECompositeElement | null;
+  shadow: SVGFEColorMatrixElement | null;
+}
+
+const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+
+/**
+ * Outline of the drop at time `t`, as an SVG path: a round drop with a
+ * rippling edge, pulled into a tail by its speed, turning into the letter's
+ * outline as `form` goes to 1.
+ */
+function dropPath(g: Glyph, pose: Pose, t: number, phase: number): string {
+  const { x, y, form } = pose;
+  const m = smooth(form);
+  const loose = 1 - m;
+  const cx = x + g.centroid.x;
+  const cy = y + g.centroid.y;
+  const R = g.radius;
+  const a = (pose.angle * Math.PI) / 180;
+  const s = clamp(pose.speed / 9, 0, 1) * loose;
+  const stretch = 0.2 * s;
+  const tail = 0.75 * s;
+  const n = OUTER_POINTS;
+  let d = "";
+  for (let i = 0; i < n; i++) {
+    const th = (i / n) * Math.PI * 2;
+    // The edge ripples a little, more while the drop is moving.
+    const ripple = 1 + loose * (0.03 * Math.sin(3 * th + t / 170 + phase) + 0.02 * Math.sin(5 * th - t / 120 + phase * 2) + 0.03 * s * Math.sin(2 * th + t / 90));
+    const u = Math.cos(th);
+    const v = Math.sin(th);
+    // In the drop's own frame (u along its travel): a longer back with a tapering tail.
+    const along = u * (1 + stretch) - (u < 0 ? tail * u * u : 0);
+    const across = (v / (1 + stretch * 0.5)) * (u < 0 ? 1 - 0.35 * tail * -u : 1);
+    // Turning into the letter: the drop straightens before its points move onto the outline.
+    const rot = a * loose;
+    const cr = Math.cos(rot), sr = Math.sin(rot);
+    const lx = along * R * ripple;
+    const ly = across * R * ripple;
+    const px = cx + lx * cr - ly * sr;
+    const py = cy + lx * sr + ly * cr;
+    const o = g.outer[i]!;
+    const qx = lerp(px, x + o.x, m);
+    const qy = lerp(py, y + o.y, m);
+    d += `${i ? "L" : "M"}${qx.toFixed(1)} ${qy.toFixed(1)}`;
+  }
+  d += "Z";
+  // Holes open from the middle of the drop as it takes the letter's shape.
+  if (m > 0.02) {
+    for (const h of g.holes) {
+      h.forEach((p, j) => (d += `${j ? "L" : "M"}${lerp(cx, x + p.x, m).toFixed(1)} ${lerp(cy, y + p.y, m).toFixed(1)}`));
+      d += "Z";
+    }
+  }
+  return d;
 }
 
 export function Splash({ ready, onDone }: { ready: boolean; onDone: () => void }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const measureRefs = useRef<(HTMLSpanElement | null)[]>([]);
-  const drops = useRef<DropEls[]>([...WORD].map(() => ({ root: null, head: null, tail: null, glyph: null, goo: null })));
+  const drops = useRef<DropEls[]>([...WORD].map(() => ({ path: null, glyph: null, mix: null, shine: null, shadow: null })));
   const onDoneRef = useRef(onDone);
   onDoneRef.current = onDone;
 
@@ -215,37 +270,40 @@ export function Splash({ ready, onDone }: { ready: boolean; onDone: () => void }
       return box;
     };
 
+    // Each letter's outline, traced from the font (again once the web font has loaded).
+    let glyphs: (Glyph | null)[] = [];
+    const trace = () => {
+      const cs = measureRefs.current.find(Boolean) ? getComputedStyle(measureRefs.current.find(Boolean)!) : null;
+      const font = cs ? `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}` : "";
+      glyphs = [...WORD].map((ch, i) => (ch === " " || !sizes[i] || !font ? null : traceGlyph(ch, font, sizes[i]!.x, sizes[i]!.y)));
+    };
+    const phases = [...WORD].map(() => rand(0, Math.PI * 2));
+    let clock = 0;
+
     const place = (i: number, pose: Pose) => {
       const d = drops.current[i];
-      const size = sizes[i];
-      if (!d?.root || !size) return;
-      const { x, y, angle, speed, form, wobble } = pose;
-      d.root.style.transform = `translate3d(${x}px, ${y}px, 0)`;
-      // The drop: a round head (about the letter's ink), stretched a little by speed,
-      // and a tail that lags behind it, longer the faster it goes.
-      const r = Math.min(size.x, size.y) * 0.42;
-      const stretch = clamp(speed / 10, 0, 1) * 0.28;
-      const drop = 1 - form;
-      if (d.head) {
-        d.head.style.width = d.head.style.height = `${r * 2}px`;
-        d.head.style.transform = `translate(-50%, -50%) rotate(${angle}deg) scale(${(1 + stretch) * drop}, ${drop / (1 + stretch * 0.6)})`;
-      }
-      if (d.tail) {
-        const lag = r * (0.55 + clamp(speed / 6, 0, 1) * 0.9);
-        const a = (angle * Math.PI) / 180;
-        const tr = r * 0.55 * clamp(speed / 4, 0, 1) * drop;
-        d.tail.style.width = d.tail.style.height = `${tr * 2}px`;
-        d.tail.style.transform = `translate(calc(-50% + ${-Math.cos(a) * lag}px), calc(-50% + ${-Math.sin(a) * lag}px))`;
-      }
+      const g = glyphs[i];
+      if (!d) return;
+      const { x, y, form, wobble } = pose;
+      // The text itself takes over once the drop has the letter's shape: crisp, never deformed.
+      const text = !g ? form : clamp((form - 0.94) / 0.06, 0, 1);
       if (d.glyph) {
-        // The letter grows out of the drop; it is the real text, so it ends crisp.
-        d.glyph.style.opacity = String(clamp(form * 1.6, 0, 1));
-        d.glyph.style.transform = `scale(${(0.55 + 0.45 * form) * (1 + wobble)}, ${(0.55 + 0.45 * form) * (1 - wobble)})`;
+        d.glyph.style.opacity = String(text);
+        d.glyph.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${1 + wobble}, ${1 - wobble})`;
       }
-      // Merged as one liquid while it is a drop; no filter once formed.
-      const goo = GOO * (1 - smooth(form));
-      d.goo?.setAttribute("stdDeviation", goo.toFixed(2));
-      d.root.style.filter = goo > 0.15 ? `url(#sf-goo-${i})` : "none";
+      if (!d.path) return;
+      if (!g || form >= 1) {
+        d.path.style.display = "none";
+        return;
+      }
+      d.path.style.display = "";
+      d.path.setAttribute("d", dropPath(g, pose, clock, phases[i]!));
+      // Shine, shading and shadow: full while it is a drop, gone as it becomes the flat letter.
+      const L = 1 - smooth(clamp((form - 0.35) / 0.6, 0, 1));
+      d.mix?.setAttribute("k2", L.toFixed(3));
+      d.mix?.setAttribute("k3", (1 - L).toFixed(3));
+      d.shine?.setAttribute("k2", (0.75 * L).toFixed(3));
+      d.shadow?.setAttribute("values", `0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 ${(0.6 * L).toFixed(3)} 0`);
     };
 
     const still = (p: Point): Pose => ({ ...p, angle: 0, speed: 0, form: 1, wobble: 0 });
@@ -254,6 +312,7 @@ export function Splash({ ready, onDone }: { ready: boolean; onDone: () => void }
     };
 
     const box = measure();
+    trace();
 
     if (reduced.current) {
       placeAllAtTargets();
@@ -277,6 +336,7 @@ export function Splash({ ready, onDone }: { ready: boolean; onDone: () => void }
 
     const frame = (now: number) => {
       const t = now - t0;
+      clock = t;
       plans.forEach((plan, i) => {
         if (plan && targets[i]) place(i, poseAt(plan, t));
       });
@@ -304,12 +364,14 @@ export function Splash({ ready, onDone }: { ready: boolean; onDone: () => void }
     void document.fonts?.ready.then(() => {
       if (!alive) return;
       measure();
+      trace();
       if (landed) placeAllAtTargets();
     });
 
     // On resize the slots move: stop travelling and settle in the new layout.
     const onResize = () => {
       measure();
+      trace();
       if (!landed) {
         cancelAnimationFrame(raf);
         landed = true;
@@ -336,15 +398,36 @@ export function Splash({ ready, onDone }: { ready: boolean; onDone: () => void }
       style={{ transitionDuration: `${FADE_MS}ms` }}
       onPointerDown={() => finish(0)}
     >
-      {/* Gooey filter per letter: blur, then cut back to a sharp edge, so head, tail and letter flow as one. */}
-      <svg className="splash__defs" aria-hidden="true" width="0" height="0">
+      {/* The drops: one outline per letter, each with its light (shading, shine, shadow on the surface). */}
+      <svg className="splash__drops" aria-hidden="true">
+        <defs>
+          {letters.map((ch, i) =>
+            ch === " " ? null : (
+              <filter key={i} id={`sf-drop-${i}`} x="-50%" y="-50%" width="200%" height="200%" colorInterpolationFilters="sRGB">
+                <feGaussianBlur in="SourceAlpha" stdDeviation="6" result="height" />
+                <feDiffuseLighting in="height" surfaceScale="7" diffuseConstant="1.3" lightingColor="#ffffff" result="diffuse">
+                  <feDistantLight azimuth="225" elevation="48" />
+                </feDiffuseLighting>
+                <feComposite in="SourceGraphic" in2="diffuse" operator="arithmetic" k1="1" k2="0" k3="0" k4="0" result="shaded" />
+                <feComposite ref={(el) => (drops.current[i]!.mix = el)} in="shaded" in2="SourceGraphic" operator="arithmetic" k1="0" k2="1" k3="0" k4="0" result="body" />
+                <feSpecularLighting in="height" surfaceScale="7" specularConstant="1.2" specularExponent="26" lightingColor="#ffffff" result="spec">
+                  <feDistantLight azimuth="225" elevation="48" />
+                </feSpecularLighting>
+                <feComposite in="spec" in2="SourceAlpha" operator="in" result="shine" />
+                <feComposite ref={(el) => (drops.current[i]!.shine = el)} in="shine" in2="body" operator="arithmetic" k1="0" k2="0.75" k3="1" k4="0" result="lit" />
+                <feOffset in="SourceAlpha" dx="5" dy="8" result="offset" />
+                <feGaussianBlur in="offset" stdDeviation="6" result="soft" />
+                <feColorMatrix ref={(el) => (drops.current[i]!.shadow = el)} in="soft" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.6 0" result="shadow" />
+                <feMerge>
+                  <feMergeNode in="shadow" />
+                  <feMergeNode in="lit" />
+                </feMerge>
+              </filter>
+            ),
+          )}
+        </defs>
         {letters.map((ch, i) =>
-          ch === " " ? null : (
-            <filter key={i} id={`sf-goo-${i}`} x="-100%" y="-100%" width="300%" height="300%">
-              <feGaussianBlur ref={(el) => (drops.current[i]!.goo = el)} in="SourceGraphic" stdDeviation="0" result="soft" />
-              <feColorMatrix in="soft" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -8" />
-            </filter>
-          ),
+          ch === " " ? null : <path key={i} className="splash__drop" fillRule="evenodd" filter={`url(#sf-drop-${i})`} ref={(el) => (drops.current[i]!.path = el)} />,
         )}
       </svg>
       {/* Laid-out copy of the word: only used to measure each letter's slot. */}
@@ -355,11 +438,7 @@ export function Splash({ ready, onDone }: { ready: boolean; onDone: () => void }
       </div>
       {letters.map((ch, i) =>
         ch === " " ? null : (
-          <div key={i} className="splash__drop" aria-hidden="true" ref={(el) => (drops.current[i]!.root = el)}>
-            <div className="splash__blob" ref={(el) => (drops.current[i]!.tail = el)} />
-            <div className="splash__blob" ref={(el) => (drops.current[i]!.head = el)} />
-            <span className="splash__letter" ref={(el) => (drops.current[i]!.glyph = el)}>{ch}</span>
-          </div>
+          <span key={i} className="splash__letter" aria-hidden="true" ref={(el) => (drops.current[i]!.glyph = el)}>{ch}</span>
         ),
       )}
     </div>
