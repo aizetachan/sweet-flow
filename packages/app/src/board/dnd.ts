@@ -12,6 +12,23 @@ import { hasFiles, runImport } from "../components/ImportDialog";
 
 const NODE_DRAG = "application/x-sweetflow-nodes";
 
+/** Same type as library images (library/LibraryBoard.tsx): the references of Generar take them. */
+const MEDIA_DRAG = "application/x-sweetflow-media";
+
+/** The version each shot shows: its chosen take's media, or its latest ready one. */
+function shownMedia(ids: Id[]): Id[] {
+  const { snap } = useStore.getState();
+  if (!snap) return [];
+  return ids.flatMap((id) => {
+    const n = snap.nodes.find((x) => x.id === id);
+    if (!n) return [];
+    const take = n.selectedTakeId ? snap.takes.find((t) => t.id === n.selectedTakeId) : undefined;
+    if (take) return [take.mediaId];
+    const latest = snap.media.filter((m) => m.nodeId === id && m.status === "ready" && !m.archived).sort((a, b) => b.createdAt - a.createdAt)[0];
+    return latest ? [latest.id] : [];
+  });
+}
+
 /** Ids being dragged. dataTransfer can't be read during dragover, so keep them here. */
 let dragging: Id[] = [];
 
@@ -28,10 +45,17 @@ export function nodeDragProps(id: Id) {
       dragging = multi.includes(id) ? multi : [id];
       draggingGroup = null;
       e.dataTransfer.setData(NODE_DRAG, JSON.stringify(dragging));
-      e.dataTransfer.effectAllowed = "move";
+      // A shot also carries the version it shows (its chosen one), for the references of Generar (§2.0).
+      const media = shownMedia(dragging);
+      if (media.length) {
+        e.dataTransfer.setData(MEDIA_DRAG, JSON.stringify(media));
+        e.dataTransfer.effectAllowed = "copyMove";
+        document.body.classList.add("sf-drag-media");
+      } else e.dataTransfer.effectAllowed = "move";
     },
     onDragEnd: () => {
       dragging = [];
+      document.body.classList.remove("sf-drag-media");
     },
   };
 }

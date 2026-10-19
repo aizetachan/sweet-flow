@@ -713,6 +713,9 @@ centrada en la imagen y sin tipos fijos (decidido el 19 oct 2026):
   Eliminar). La
   ventana se abre sobre la imagen seleccionada (clic en ella antes de abrirla);
   sin ninguna, sobre la última generada.
+- **Arrastrar un plano** del espacio de trabajo a «Añadir media», «Estilo» o
+  las imágenes inicial y final lleva la versión que muestra (su elegida). En el
+  menú de «Añadir media», los vídeos llevan su duración y los audios su icono.
 - **Misma forma de trabajar en todas partes:** cualquier imagen de una galería
   (las versiones de un plano, las imágenes de un grupo en su ventana aparte)
   se puede arrastrar a «Añadir», «Estilo» o a las imágenes inicial y final,

@@ -33,7 +33,7 @@ import { Popover } from "../components/Popover";
 import { Composer } from "./ReviewTab";
 import { hasFiles, runImport } from "../components/ImportDialog";
 import type { Mark } from "../components/marks";
-import { Player, Thumb } from "../components/media";
+import { Player, probedDuration, Thumb } from "../components/media";
 import { nameOf } from "../state/names";
 
 
@@ -85,6 +85,8 @@ export function ProduceTab({ node }: { node: ProdNode }) {
   };
   /** Out to the row: a new shot right after this one, with that version (the file stays put). */
   const extract = (i: GalleryItem) => {
+    // Its length first, when the provider never said it: the new shot's take is the whole of it.
+    if (i.media.kind === "video" && !i.media.durationSec && probedDuration(i.media) > 0) source.noteDuration?.(i.media.id, probedDuration(i.media));
     const id = source.extractToRow(node.id, i.media.id, i.foreign && i.take ? { inSec: i.take.inSec, outSec: i.take.outSec } : undefined);
     const made = id ? useStore.getState().snap?.nodes.find((n) => n.id === id) : undefined;
     if (!id) return;
@@ -870,7 +872,8 @@ function RefSlot({ ctx, label, icon, accept, node, value, disabled, disabledHint
                 return (
                   <button key={m.id} className="menu__item gen__pick gen__pick--img" onClick={() => { ctx.media(m); onPick(m.id, m.kind as Pickable); }}
                     data-tip={[n ? nameOf(snap.production, n) : "—", versionTag(m.version), m.durationSec ? `${String(Math.round(m.durationSec * 10) / 10).replace(".", ",")} s` : null].filter(Boolean).join(" · ")}>
-                    <Thumb media={m} badge={false} />
+                    <Thumb media={m} badge={m.kind === "video"} />
+                    {m.kind === "audio" ? <span className="gen__pick-audio"><IconMusic size={12} /></span> : null}
                   </button>
                 );
               })}

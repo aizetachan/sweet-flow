@@ -54,14 +54,77 @@ export class ProductionFiles {
     this.loading.add(key);
     void this.fs
       .readBlob(path)
+      .catch(() => null)
+      // Not where the tree says (a folder that did not follow a change): found by its name.
+      .then(async (b) => b ?? (await this.stray(path).then((at) => (at ? this.fs.readBlob(at) : null)).catch(() => null)))
       .then((b) => {
-        if (!b) return;
-        this.urls.set(key, URL.createObjectURL(b));
-        onReady();
+        if (!b) return this.retry(key, onReady);
+        this.misses.delete(key);
+        // A copy in memory: a file read from a folder of this computer stops being readable once
+        // its folder moves (a shot dragged into a group, a group renamed) and the picture went black.
+        return b.arrayBuffer().then((data) => {
+          this.urls.set(key, URL.createObjectURL(new Blob([data], { type: b.type })));
+          onReady();
+        });
       })
-      .catch(() => undefined)
+      .catch(() => this.retry(key, onReady))
       .finally(() => this.loading.delete(key));
     return undefined;
+  }
+
+  /** Failed reads per file, to try again a few times (its folder may have been moving). */
+  private misses = new Map<string, number>();
+
+  private retry(key: string, onReady: () => void): void {
+    const n = (this.misses.get(key) ?? 0) + 1;
+    this.misses.set(key, n);
+    if (n > 6) return;
+    // The next render asks for it again.
+    setTimeout(() => {
+      this.loading.delete(key);
+      onReady();
+    }, 800 * n);
+  }
+
+  /** Every media file of the production by name (read again when something is not found). */
+  private index: { at: number; files: Map<string, string[]> } | null = null;
+
+  /**
+   * Where a media file really is when it is not at `path`: the file with its
+   * name in the production's folders, the one whose folders look most like
+   * the expected ones. Read-only: nothing on disk is moved.
+   */
+  private async stray(path: string): Promise<string | null> {
+    const base = this.base();
+    if (base === null) return null;
+    const name = path.slice(path.lastIndexOf("/") + 1);
+    if (!this.index || Date.now() - this.index.at > 15_000) {
+      const files = new Map<string, string[]>();
+      const add = (p: string) => {
+        if (!p.includes(`/${MEDIA_DIR}/`)) return;
+        const n = p.slice(p.lastIndexOf("/") + 1);
+        files.set(n, [...(files.get(n) ?? []), p]);
+      };
+      if (this.fs.listFiles) for (const f of await this.fs.listFiles(base)) add(f.path);
+      else {
+        const walk = async (dir: string, depth: number): Promise<void> => {
+          if (depth > 8) return;
+          for (const e of await this.fs.list(dir)) {
+            if (e.name.startsWith(".")) continue;
+            const p = joinPath(dir, e.name);
+            if (e.kind === "dir") await walk(p, depth + 1);
+            else add(p);
+          }
+        };
+        await walk(base, 0);
+      }
+      this.index = { at: Date.now(), files };
+    }
+    const want = path.split("/");
+    const score = (p: string) => p.split("/").filter((seg, i) => want.includes(seg) || want[i] === seg).length;
+    const found = (this.index.files.get(name) ?? []).filter((p) => p !== path).sort((a, b) => score(b) - score(a));
+    if (found[0]) console.warn(`[carpeta] ${name} no está en ${path}; se usa ${found[0]}`);
+    return found[0] ?? null;
   }
 
   /**

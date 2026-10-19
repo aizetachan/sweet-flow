@@ -1164,3 +1164,5 @@ button.topbar__me { position: relative; padding: 0; border: 0; border-radius: 50
 .libstrip__img { cursor: pointer; }
 .libstrip__img:hover .version__acts, .libstrip__img:focus-visible .version__acts { opacity: 1; }
 .libstrip__img .version__acts { z-index: 2; }
+.gen__pick-audio { position: absolute; left: 6px; bottom: 6px; display: grid; place-items: center; width: 20px; height: 20px; border-radius: 5px; background: #000a; color: var(--fg-1); }
+.gen__pick--img { position: relative; }

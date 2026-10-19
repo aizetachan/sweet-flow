@@ -51,6 +51,9 @@ function probe(url: string): Promise<number> {
   return p;
 }
 
+/** A video's length read from its file already (0: not yet). */
+export const probedDuration = (m: Media): number => (m.url ? probed.get(m.url) ?? 0 : 0);
+
 /**
  * A video's length: what the provider said, or read from the file when it
  * said nothing (Magnific does not always return it).
