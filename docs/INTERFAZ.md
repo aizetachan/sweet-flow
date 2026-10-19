@@ -28,13 +28,14 @@ Abrir la app ──▶ 0. Pantalla de carga ──▶ 1. Dashboard ──▶ 2. 
   - recorrido continuo y serpenteante (el de las antiguas hormigas), a
     impulsos como el líquido: acelera, frena un poco y vuelve a avanzar, sin
     tirones; arranca y se para con suavidad;
-  - durante el camino es solo gota; **cuando llega a su sitio y se para**, la
-    gota se transforma en su letra: su contorno pasa punto a punto al de la
-    letra (sacado de la propia tipografía, con la misma cantidad de líquido), y
-    la letra aún tiene volumen (brillo, sombreado y sombra);
-  - después hace un pequeño rebote al asentarse y, en ese rebote, pierde el
-    sombreado y la sombra hasta quedar como el texto nítido;
-  - el recorrido dura unos 2,5 s, y transformarse y asentarse, algo más de 1 s.
+  - durante el camino es solo gota; **en cuanto llega a su sitio hace un
+    pequeño rebote**: crece y encoge un poco, como si hubiera caído de frente
+    sobre la superficie;
+  - **mientras rebota coge la forma de su letra**: su contorno pasa punto a
+    punto al de la letra (sacado de la propia tipografía, con la misma cantidad
+    de líquido), aún con volumen; al final del rebote pierde el sombreado y la
+    sombra y queda como el texto nítido;
+  - el recorrido dura unos 2,5 s, y el rebote con la transformación, algo más de 1 s.
 - Cuando la app ha cargado (y el nombre está completo), el logo **se desvanece**
   y aparece el dashboard.
 - Duración mínima de unos 2 s aunque la carga termine antes; un clic la salta.
