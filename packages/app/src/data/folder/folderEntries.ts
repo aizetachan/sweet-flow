@@ -22,7 +22,7 @@ import {
   type Stamp,
 } from "@sweetflow/domain";
 import type { LibraryEntry } from "../library";
-import { joinPath, type FolderFs } from "./fs";
+import { joinPath, logFiles, type FolderFs } from "./fs";
 import { POLL_MS } from "./FolderLogStore";
 
 const LIB_DIR = ".sweetflow/library";
@@ -205,21 +205,20 @@ export class FolderEntries {
 
   private async read(): Promise<boolean> {
     let changed = false;
-    for (const device of await this.fs.list(LIB_DIR)) {
-      if (device.kind !== "dir") continue;
-      for (const f of await this.fs.list(joinPath(LIB_DIR, device.name))) {
-        if (f.kind !== "file" || !f.name.endsWith(".jsonl")) continue;
-        const text = (await this.fs.readText(joinPath(LIB_DIR, device.name, f.name))) ?? "";
-        for (const line of text.split("\n")) {
-          if (!line.trim()) continue;
-          try {
-            const e = JSON.parse(line) as LibraryEvent;
-            if (typeof e.at !== "string" || !parseStamp(e.at) || this.events.has(e.at)) continue;
-            this.events.set(e.at, e);
-            changed = true;
-          } catch {
-            // A line being written by the sync client: it will be complete on the next read.
-          }
+    for (const f of await logFiles(this.fs, LIB_DIR)) {
+      // Unchanged since the last read: nothing new in it.
+      if (this.seen.get(f.path) === f.sig) continue;
+      const text = (await this.fs.readText(f.path)) ?? "";
+      this.seen.set(f.path, f.sig);
+      for (const line of text.split("\n")) {
+        if (!line.trim()) continue;
+        try {
+          const e = JSON.parse(line) as LibraryEvent;
+          if (typeof e.at !== "string" || !parseStamp(e.at) || this.events.has(e.at)) continue;
+          this.events.set(e.at, e);
+          changed = true;
+        } catch {
+          // A line being written by the sync client: it will be complete on the next read.
         }
       }
     }
@@ -233,6 +232,8 @@ export class FolderEntries {
   }
 
   private polling: ReturnType<typeof setTimeout> | null = null;
+  /** Size and date of each log file when it was last read. */
+  private seen = new Map<string, string>();
 
   /** Look for what other devices wrote, every POLL_MS, until `stopPolling`. */
   startPolling(): void {
@@ -240,12 +241,7 @@ export class FolderEntries {
     let last = "";
     const tick = async () => {
       try {
-        const sig: string[] = [];
-        for (const device of await this.fs.list(LIB_DIR)) {
-          if (device.kind !== "dir") continue;
-          for (const f of await this.fs.list(joinPath(LIB_DIR, device.name))) sig.push(`${device.name}/${f.name}:${f.size}:${f.modified}`);
-        }
-        const s = sig.sort().join("|");
+        const s = (await logFiles(this.fs, LIB_DIR)).map((f) => `${f.path}:${f.sig}`).join("|");
         if (s !== last) {
           last = s;
           if (await this.read()) for (const l of this.listeners) l();
@@ -253,9 +249,9 @@ export class FolderEntries {
       } catch (err) {
         console.warn("[carpeta] no se pudo revisar el dashboard", err);
       }
-      if (this.polling) this.polling = setTimeout(tick, POLL_MS);
+      if (this.polling) this.polling = setTimeout(tick, this.fs.pollMs ?? POLL_MS);
     };
-    this.polling = setTimeout(tick, POLL_MS);
+    this.polling = setTimeout(tick, this.fs.pollMs ?? POLL_MS);
   }
 
   stopPolling(): void {

@@ -427,7 +427,13 @@ crear carpeta, mover y borrar. Encima, escrito una sola vez:
   (`safeTitle`, y `-2`, `-3`… si dos hermanas coinciden). Quien renombra o mueve
   algo mueve su carpeta; la sincronización lo lleva al resto.
 - **Detectar cambios:** se revisan tamaño y fecha de los archivos de registro
-  cada 2,5 s (ni el navegador ni las API avisan de cambios en archivos).
+  cada 2,5 s en disco, 4 s en Dropbox y 5 s en Drive (ni el navegador ni las
+  API avisan de cambios en archivos). Solo se vuelve a leer un registro si ha
+  cambiado.
+- **Dropbox y Drive** se eligen en Ajustes › Almacenamiento, con la cuenta de
+  cada persona; la elección y la sesión se guardan en el navegador. Quien
+  tenga acceso a la carpeta compartida y conecte su cuenta trabaja en el mismo
+  dashboard. Los archivos de media se descargan al verlos.
 - **Lo personal** (perfil, fijados, recientes) se queda en el navegador.
 
 Implementaciones:
@@ -435,8 +441,8 @@ Implementaciones:
 | `FolderFs` | Estado |
 | --- | --- |
 | Carpeta de este ordenador (API *File System Access* de Chrome y Edge; el permiso se recuerda y a veces el navegador lo vuelve a pedir con un clic) | Hecha |
-| Dropbox (API HTTP, OAuth con PKCE, sin secreto) | Siguiente |
-| Google Drive (API v3) | Después |
+| Dropbox (API HTTP, OAuth con PKCE, sin secreto; espacio de equipo con `Dropbox-API-Path-Root`; los registros se listan en una llamada) | Hecha (19 oct 2026), sin probar con una cuenta real |
+| Google Drive (API v3; rutas resueltas a ids carpeta a carpeta; borrar manda a la papelera de Drive; el secreto lo añade el servidor de desarrollo) | Hecha (19 oct 2026), sin probar con una cuenta real |
 | Memoria (tests) | Hecha |
 
 ## 6. Generación y render

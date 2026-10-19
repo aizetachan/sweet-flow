@@ -101,7 +101,7 @@ Anotadas el 15 oct 2026, pendientes de que el usuario elija orden:
    y Edge), sobre `FolderFs` (`docs/ARCHITECTURE.md` §5.4). El dashboard y las
    producciones son carpetas reales con su registro; renombrar o mover mueve la
    carpeta. Se revisan los cambios cada 2,5 s.
-4. **Conectar Dropbox — aparcado (16 oct 2026), no es prioridad ahora.**
+4. **Conectar Dropbox y Google Drive — hecho en el navegador (19 oct 2026), falta probarlo con cuentas reales** (registrar la app en cada servicio: `DEVELOPMENT.md`). Requisitos que se mantienen:
    Requisito: Sweet Flow se instalará en otras máquinas y cada usuario tiene
    que poder conectar su Dropbox (o Drive) sin saber nada técnico:
    - Una sola app «Sweet Flow» registrada en Dropbox y en Google; su

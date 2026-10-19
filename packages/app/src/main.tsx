@@ -6,9 +6,10 @@ import "./styles/app.css";
 import "./styles/splash.css";
 import { initStorage } from "./data";
 import { handleCallback } from "./integrations/magnific/auth";
+import { handleCloudCallback } from "./integrations/oauth";
 
 // Magnific's sign-in comes back to this page in a popup: hand over and close.
-if (handleCallback()) {
+if (handleCallback() || handleCloudCallback()) {
   document.body.textContent = "Puedes cerrar esta ventana.";
 } else {
   // The team folder (if any) must be open before the store creates the library.

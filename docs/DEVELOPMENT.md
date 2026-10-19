@@ -44,6 +44,60 @@ que se pruebe allí la carpeta.
 Para empezar de cero, borra las claves `sweetflow:*` del `localStorage` (en las
 herramientas de desarrollo, *Application → Local Storage*).
 
+## Carpeta del equipo en Dropbox o Google Drive
+
+En modo local (`pnpm dev:local`, <http://localhost:5180>), Ajustes ›
+Almacenamiento conecta Dropbox o Google Drive por su API y deja elegir la
+carpeta compartida del equipo. Sweet Flow necesita estar registrada **una vez**
+en cada servicio (no por usuario): su identificador va en
+`packages/app/.env.local` (ver `packages/app/.env.example`). Sin él, la tarjeta
+dice «Sin configurar». Cada persona conecta después su propia cuenta con
+«Conectar».
+
+### Dropbox
+
+1. <https://www.dropbox.com/developers/apps> › **Create app** › *Scoped
+   access* › *Full Dropbox* › nombre (p. ej. «Sweet Flow»).
+2. Pestaña **Permissions**: marcar `account_info.read`,
+   `files.metadata.read`, `files.metadata.write`, `files.content.read` y
+   `files.content.write`, y **Submit**.
+3. Pestaña **Settings**:
+   - *OAuth 2 › Redirect URIs*: `http://localhost:5180/auth/dropbox` (y
+     `http://localhost:5173/auth/dropbox` si se usa ese puerto).
+   - *Allow public clients (Implicit Grant & PKCE)*: **Allow**. No hace falta el
+     *App secret*.
+4. Copiar el **App key** a `VITE_DROPBOX_APP_KEY`.
+
+Mientras la app esté en *Development*, solo pueden enlazarla un número
+limitado de cuentas (lo indica la consola); antes de repartirla hay que pedir
+el paso a *Production*. Las carpetas de equipo de Dropbox Business se ven
+junto a las propias.
+
+### Google Drive
+
+1. <https://console.cloud.google.com> › proyecto nuevo (p. ej. «Sweet Flow»).
+2. **APIs y servicios › Biblioteca** › *Google Drive API* › **Habilitar**.
+3. **Pantalla de consentimiento de OAuth** (Google Auth Platform): tipo
+   *Externo*, nombre de la app y email de soporte. En *Público*, añadir como
+   **usuarios de prueba** las cuentas del equipo (hasta 100 mientras esté en
+   pruebas).
+4. **Credenciales › Crear credenciales › ID de cliente de OAuth** ›
+   *Aplicación web*:
+   - *Orígenes de JavaScript autorizados*: `http://localhost:5180`.
+   - *URI de redirección autorizados*: `http://localhost:5180/auth/google`.
+5. Copiar el **ID de cliente** a `VITE_GOOGLE_CLIENT_ID` y el **secreto** a
+   `GOOGLE_CLIENT_SECRET` (sin `VITE_`: lo usa solo el servidor de desarrollo
+   para pedir los tokens, `/google/token` en `vite.config.ts`; nunca llega a la
+   página).
+
+Se pide el permiso `drive` (todo Drive), porque la carpeta del equipo ya existe
+y otros la comparten. Es un permiso «restringido»: en modo de pruebas funciona
+con los usuarios de prueba; para abrirla a cualquiera, Google exige
+verificar la app (y una evaluación de seguridad). El token de Google caduca
+cada hora y se renueva solo.
+
+Tras cambiar `.env.local`, reiniciar `pnpm dev:local`.
+
 ## App de escritorio en desarrollo
 
 ```bash

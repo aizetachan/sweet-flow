@@ -1,4 +1,4 @@
-import { defineConfig, type Plugin } from "vite";
+import { defineConfig, loadEnv, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 
 /**
@@ -33,6 +33,35 @@ function magnificFiles(): Plugin {
   };
 }
 
+/**
+ * Google's token endpoint wants the app's secret even with PKCE. The dev
+ * server adds it here, from GOOGLE_CLIENT_SECRET in .env.local (no VITE_
+ * prefix: it never reaches the page). The desktop app will do the same from
+ * its main process. docs/DEVELOPMENT.md explains how to get it.
+ */
+function googleToken(secret: string | undefined): Plugin {
+  return {
+    name: "sweetflow-google-token",
+    configureServer(server) {
+      server.middlewares.use("/google/token", async (req, res) => {
+        try {
+          const chunks: Buffer[] = [];
+          for await (const c of req) chunks.push(c as Buffer);
+          const params = new URLSearchParams(Buffer.concat(chunks).toString());
+          if (secret) params.set("client_secret", secret);
+          const r = await fetch("https://oauth2.googleapis.com/token", { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" }, body: params });
+          res.statusCode = r.status;
+          res.setHeader("content-type", r.headers.get("content-type") ?? "application/json");
+          res.end(Buffer.from(await r.arrayBuffer()));
+        } catch (err) {
+          res.statusCode = 502;
+          res.end(String(err));
+        }
+      });
+    },
+  };
+}
+
 const dropOrigin = (proxy: { on(e: "proxyReq", cb: (req: { removeHeader(h: string): void }) => void): void }) =>
   proxy.on("proxyReq", (req) => {
     req.removeHeader("origin");
@@ -41,9 +70,9 @@ const dropOrigin = (proxy: { on(e: "proxyReq", cb: (req: { removeHeader(h: strin
 
 // Renderer of the desktop app. `base: "./"` so the same build loads from
 // Electron (file://) and from any static host.
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   base: "./",
-  plugins: [react(), magnificFiles()],
+  plugins: [react(), magnificFiles(), googleToken(loadEnv(mode, process.cwd(), "").GOOGLE_CLIENT_SECRET)],
   server: {
     port: 5173,
     proxy: {
@@ -52,4 +81,4 @@ export default defineConfig({
       "/magnific/token": { target: "https://auth.magnific.com", changeOrigin: true, rewrite: () => "/realms/mcp/protocol/openid-connect/token", configure: dropOrigin },
     },
   },
-});
+}));

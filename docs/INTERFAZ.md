@@ -67,8 +67,14 @@ aplicación completa con **menú lateral**:
 En el dashboard están los ajustes generales:
 
 - **Perfil:** nombre y email (el avatar sale del nombre).
-- **Almacenamiento:** dónde se guardan ahora las producciones y la conexión
-  con la carpeta del equipo en **Dropbox** o **Google Drive**.
+- **Almacenamiento:** dónde se guardan las producciones: este navegador, una
+  carpeta de este ordenador, o la carpeta del equipo en **Dropbox** o **Google
+  Drive**. Cada servicio tiene su tarjeta: **Conectar** (cada persona con su
+  cuenta, en una ventana del servicio), luego **Elegir carpeta**: un
+  explorador de sus carpetas (en Drive: Mi unidad, Compartido conmigo y las
+  unidades compartidas) y **Usar «…»**. La carpeta en uso se ve arriba, con
+  **Dejar de usarla**; si la sesión caduca, **Conectar** otra vez. Sin la
+  clave de la app en la instalación, la tarjeta dice «Sin configurar».
 - **Integraciones:** **Magnific**, con la cuenta de cada persona.
 - **Modelos:** qué modelos aparecen al generar, por tipo (imagen, vídeo,
   audio), con lo que admite cada uno y un filtro. La lista es el catálogo de

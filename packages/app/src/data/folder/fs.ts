@@ -35,6 +35,32 @@ export interface FolderFs {
   move(from: string, to: string): Promise<void>;
   /** Removes a file or a folder with everything inside; nothing if missing. */
   remove(path: string): Promise<void>;
+  /** Every file under `dir`, at any depth, in one call (cloud APIs); paths relative to the team folder. */
+  listFiles?(dir: string): Promise<Array<FsEntry & { path: string }>>;
+  /** How often to look for other devices' changes; POLL_MS when absent. */
+  readonly pollMs?: number;
+}
+
+/**
+ * The `.jsonl` files of a log folder (`<dir>/<deviceId>/<YYYY-MM>.jsonl`),
+ * with what change detection compares. One call where the folder allows it.
+ */
+export async function logFiles(fs: FolderFs, dir: string): Promise<Array<{ path: string; sig: string }>> {
+  const out: Array<{ path: string; sig: string }> = [];
+  if (fs.listFiles) {
+    for (const f of await fs.listFiles(dir)) {
+      const rest = f.path.slice(dir.length + 1).split("/");
+      if (rest.length === 2 && f.name.endsWith(".jsonl")) out.push({ path: f.path, sig: `${f.size}:${f.modified}` });
+    }
+  } else {
+    for (const device of await fs.list(dir)) {
+      if (device.kind !== "dir") continue;
+      for (const f of await fs.list(joinPath(dir, device.name))) {
+        if (f.kind === "file" && f.name.endsWith(".jsonl")) out.push({ path: joinPath(dir, device.name, f.name), sig: `${f.size}:${f.modified}` });
+      }
+    }
+  }
+  return out.sort((a, b) => (a.path < b.path ? -1 : 1));
 }
 
 export const joinPath = (...parts: string[]) => parts.filter(Boolean).join("/");

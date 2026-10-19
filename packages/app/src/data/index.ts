@@ -15,6 +15,9 @@ import { buildSeed } from "./mock/seed";
 import { MockSource } from "./mock/MockSource";
 import { browserLibrary, demoLibrary, folderLibrary, summarize, type Library, type LibraryState } from "./library";
 import type { DataSource, Snapshot } from "./source";
+import type { FolderFs } from "./folder/fs";
+import type { DriveRoot } from "./folder/driveFs";
+import { isCloudConnected, type CloudProvider } from "../integrations/oauth";
 
 export type DataMode = "demo" | "local" | "firebase";
 
@@ -27,7 +30,52 @@ export function dataMode(): DataMode {
 let demo: MockSource | undefined;
 
 /** Team folder state found at startup (local mode). */
-export type StorageStatus = { status: "browser" } | { status: "folder"; name: string } | { status: "reconnect"; name: string };
+export type StorageStatus =
+  | { status: "browser" }
+  | { status: "folder"; name: string }
+  | { status: "reconnect"; name: string }
+  /** A folder of Dropbox or Google Drive, through their APIs. */
+  | { status: "cloud"; provider: CloudProvider; name: string }
+  /** Chosen, but this browser is not signed in to the service any more. */
+  | { status: "cloud-reconnect"; provider: CloudProvider; name: string };
+
+/** The team folder chosen in a cloud service, remembered in this browser. */
+export type CloudFolder =
+  | { provider: "dropbox"; name: string; path: string }
+  | { provider: "google"; name: string; root: DriveRoot };
+
+const CLOUD_KEY = "sweetflow:cloud-folder";
+
+export function rememberedCloudFolder(): CloudFolder | null {
+  try {
+    return JSON.parse(localStorage.getItem(CLOUD_KEY) ?? "null") as CloudFolder | null;
+  } catch {
+    return null;
+  }
+}
+
+async function cloudFs(c: CloudFolder): Promise<FolderFs> {
+  if (c.provider === "dropbox") {
+    const { DropboxFolderFs } = await import("./folder/dropboxFs");
+    return new DropboxFolderFs(c.path);
+  }
+  const { DriveFolderFs } = await import("./folder/driveFs");
+  return new DriveFolderFs(c.root, c.name);
+}
+
+/** Use a folder of Dropbox or Drive as the team folder, without reloading. */
+export async function openCloudFolder(c: CloudFolder): Promise<Library> {
+  const library = await folderLibrary(await cloudFs(c), generator);
+  localStorage.setItem(CLOUD_KEY, JSON.stringify(c));
+  prepared = { library, status: { status: "cloud", provider: c.provider, name: c.name } };
+  return library;
+}
+
+/** Stop using the cloud folder: back to this browser's own storage. */
+export function forgetCloudFolder(): Library {
+  localStorage.removeItem(CLOUD_KEY);
+  return switchToBrowserStorage();
+}
 let prepared: { library: Library; status: StorageStatus } | null = null;
 
 /** Local and folder modes generate with Magnific, with each person's own account. */
@@ -44,6 +92,22 @@ export async function initStorage(mode = dataMode()): Promise<void> {
   if (location.hash.startsWith("#/ventana/") && window.opener) {
     prepared = { library: browserLibrary(generator), status: { status: "browser" } };
     return;
+  }
+  // A folder of Dropbox or Drive, if one was chosen; else one of this computer.
+  const cloud = rememberedCloudFolder();
+  if (cloud) {
+    if (!isCloudConnected(cloud.provider)) {
+      prepared = { library: browserLibrary(generator), status: { status: "cloud-reconnect", provider: cloud.provider, name: cloud.name } };
+      return;
+    }
+    try {
+      await openCloudFolder(cloud);
+      return;
+    } catch (err) {
+      console.error("[nube] no se pudo abrir la carpeta del equipo", err);
+      prepared = { library: browserLibrary(generator), status: { status: "cloud-reconnect", provider: cloud.provider, name: cloud.name } };
+      return;
+    }
   }
   const { restoreLocalFolder } = await import("./folder/browserFs");
   const found = await restoreLocalFolder();
@@ -71,6 +135,8 @@ export async function openTeamFolder(): Promise<Library | null> {
   const found = await restoreLocalFolder();
   if (found.status !== "ready") return null;
   const library = await folderLibrary(found.fs, generator);
+  // A folder of this computer replaces the cloud one.
+  localStorage.removeItem(CLOUD_KEY);
   prepared = { library, status: { status: "folder", name: found.fs.label } };
   return library;
 }

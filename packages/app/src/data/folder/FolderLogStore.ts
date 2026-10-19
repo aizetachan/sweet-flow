@@ -7,7 +7,7 @@
  */
 
 import type { LogStore } from "../local/store";
-import { joinPath, type FolderFs } from "./fs";
+import { joinPath, logFiles, type FolderFs } from "./fs";
 
 const LOG_DIR = ".sweetflow/log";
 /** How often to look for files other devices wrote (no file events through the API or the browser). */
@@ -67,9 +67,9 @@ export class FolderLogStore implements LogStore {
       } catch (err) {
         console.warn("[carpeta] no se pudo revisar el registro", err);
       }
-      if (!stopped) timer = setTimeout(tick, POLL_MS);
+      if (!stopped) timer = setTimeout(tick, this.fs.pollMs ?? POLL_MS);
     };
-    let timer = setTimeout(tick, POLL_MS);
+    let timer = setTimeout(tick, this.fs.pollMs ?? POLL_MS);
     return () => {
       stopped = true;
       clearTimeout(timer);
@@ -84,14 +84,6 @@ export class FolderLogStore implements LogStore {
   private async files(): Promise<Array<{ path: string; sig: string }>> {
     const base = this.base();
     if (base === null) return [];
-    const dir = joinPath(base, LOG_DIR);
-    const out: Array<{ path: string; sig: string }> = [];
-    for (const device of await this.fs.list(dir)) {
-      if (device.kind !== "dir") continue;
-      for (const f of await this.fs.list(joinPath(dir, device.name))) {
-        if (f.kind === "file" && f.name.endsWith(".jsonl")) out.push({ path: joinPath(dir, device.name, f.name), sig: `${f.size}:${f.modified}` });
-      }
-    }
-    return out.sort((a, b) => (a.path < b.path ? -1 : 1));
+    return logFiles(this.fs, joinPath(base, LOG_DIR));
   }
 }

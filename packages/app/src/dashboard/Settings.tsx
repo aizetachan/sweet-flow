@@ -6,9 +6,11 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import { IconBolt, IconBrandDropbox, IconCheck, IconCpu, IconRefresh, IconBrandGoogleDrive, IconDeviceDesktop, IconFolder, IconFolderOpen, IconFolders, IconInfoCircle, IconPlugConnected, IconUser } from "@tabler/icons-react";
-import { Avatar, Button, cx } from "@sweetflow/ui";
+import { Avatar, Button, cx, Modal } from "@sweetflow/ui";
 import type { LibraryState } from "../data/library";
-import { openTeamFolder, storageStatus, switchToBrowserStorage } from "../data";
+import { forgetCloudFolder, openCloudFolder, openTeamFolder, rememberedCloudFolder, storageStatus, switchToBrowserStorage, type CloudFolder, type StorageStatus } from "../data";
+import { cloudConfigured, cloudName, connectCloud, disconnectCloud, isCloudConnected, onCloudChange, type CloudProvider } from "../integrations/oauth";
+import type { DrivePlace } from "../data/folder/driveFs";
 import * as magnific from "../integrations/magnific/auth";
 import { callTool, type ToolResult } from "../integrations/magnific/mcp";
 import { forgetLocalFolder, localFoldersSupported, pickLocalFolder, reconnectLocalFolder } from "../data/folder/browserFs";
@@ -97,7 +99,7 @@ function Storage({ lib }: { lib: LibraryState }) {
     <>
       <Section
         title="Carpeta del equipo"
-        hint="Todo se guarda en una carpeta: el dashboard, cada producción y sus carpetas por códigos. Ahora puede ser una carpeta de este ordenador; después, una carpeta de Dropbox o de Google Drive conectada desde aquí."
+        hint="Todo se guarda en una carpeta: el dashboard, cada producción y sus carpetas por códigos. Puede ser una carpeta de este ordenador o una carpeta de Dropbox o de Google Drive conectada desde aquí (abajo)."
       >
         {lib.mode === "local" ? <LocalFolder lib={lib} /> : (
           <div className="scard">
@@ -109,9 +111,9 @@ function Storage({ lib }: { lib: LibraryState }) {
           </div>
         )}
       </Section>
-      <Section title="En la nube" hint="Conectar el servicio del equipo: Sweet Flow lee y escribe en la carpeta compartida sin instalar nada más, y puede guardar además una copia en este ordenador.">
-        <Connection icon={<IconBrandDropbox size={22} stroke={1.5} />} name="Dropbox" detail="Una carpeta compartida de Dropbox del equipo." />
-        <Connection icon={<IconBrandGoogleDrive size={22} stroke={1.5} />} name="Google Drive" detail="Una unidad compartida (o carpeta compartida) de Google Drive." />
+      <Section title="En la nube" hint="Conecta el servicio del equipo y elige la carpeta compartida: Sweet Flow lee y escribe en ella directamente, sin instalar nada más. Quien tenga acceso a esa carpeta y conecte su cuenta ve lo mismo y trabaja a la vez.">
+        <CloudCard provider="dropbox" lib={lib} />
+        <CloudCard provider="google" lib={lib} />
       </Section>
     </>
   );
@@ -152,6 +154,7 @@ function LocalFolder({ lib }: { lib: LibraryState }) {
     setLibrary(switchToBrowserStorage());
     return "Ahora se guarda en este navegador.";
   });
+  if (status.status === "cloud" || status.status === "cloud-reconnect") return <CloudCurrent status={status} />;
   const title = status.status === "folder" ? `Carpeta «${status.name}»` : status.status === "reconnect" ? `Carpeta «${status.name}» (sin permiso)` : "Este navegador";
   const detail =
     status.status === "folder"
@@ -256,19 +259,199 @@ function describeAccount(profile: ToolResult, balance: ToolResult): string {
   return [`Conectada como ${name}`, b.plan?.productName, credits !== undefined ? `${credits.toLocaleString("es-ES")} créditos` : null].filter(Boolean).join(" · ");
 }
 
-/** An account or folder link that is not available yet. */
-function Connection({ icon, name, detail }: { icon: ReactNode; name: string; detail: string }) {
+const CLOUD_ICON: Record<CloudProvider, typeof IconBrandDropbox> = { dropbox: IconBrandDropbox, google: IconBrandGoogleDrive };
+
+/** Who is signed in to a cloud service (Settings). */
+async function cloudAccount(p: CloudProvider): Promise<{ name: string; email: string }> {
+  if (p === "dropbox") return (await import("../data/folder/dropboxFs")).dropboxAccount();
+  return (await import("../data/folder/driveFs")).driveAccount();
+}
+
+/** The team folder in use is in Dropbox or Drive. */
+function CloudCurrent({ status }: { status: Extract<StorageStatus, { status: "cloud" | "cloud-reconnect" }> }) {
+  const setLibrary = useStore((s) => s.setLibrary);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const Icon = CLOUD_ICON[status.provider];
+  const name = cloudName(status.provider);
+  const reconnect = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await connectCloud(status.provider);
+      const c = rememberedCloudFolder();
+      if (c) setLibrary(await openCloudFolder(c));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
   return (
-    <div className="scard">
-      {icon}
-      <div className="scard__text">
-        <strong>{name}</strong>
-        <span className="sf-muted">{detail}</span>
+    <>
+      <div className="scard">
+        <Icon size={22} stroke={1.5} />
+        <div className="scard__text">
+          <strong>{name} · «{status.name}»{status.status === "cloud-reconnect" ? " (sin conexión)" : ""}</strong>
+          <span className="sf-muted">
+            {status.status === "cloud"
+              ? `Todo se guarda en esta carpeta de ${name}. Lo ve quien tenga acceso a ella y conecte su cuenta.`
+              : `Esta carpeta es la del equipo, pero este navegador ya no tiene acceso a ${name}. Mientras tanto ves lo guardado en este navegador.`}
+          </span>
+        </div>
+        <span className="scard__spacer" />
+        {status.status === "cloud-reconnect" ? <Button size="sm" variant="primary" disabled={busy} onClick={() => void reconnect()}>{busy ? "Conectando…" : `Conectar ${name}`}</Button> : null}
+        <Button size="sm" disabled={busy} onClick={() => setLibrary(forgetCloudFolder())}>Dejar de usarla</Button>
       </div>
-      <span className="scard__spacer" />
-      <span className="sbadge">Próximamente</span>
-      <Button size="sm" disabled title="Próximamente">Conectar</Button>
-    </div>
+      {error ? <p className="sf-small" style={{ color: "var(--bad)" }}>{error}</p> : null}
+    </>
+  );
+}
+
+/** Connect Dropbox or Google Drive with this person's account and choose the team folder in it. */
+function CloudCard({ provider, lib }: { provider: CloudProvider; lib: LibraryState }) {
+  const [connected, setConnected] = useState(isCloudConnected(provider));
+  const [who, setWho] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [picking, setPicking] = useState(false);
+  const setLibrary = useStore((s) => s.setLibrary);
+  const Icon = CLOUD_ICON[provider];
+  const name = cloudName(provider);
+  const configured = cloudConfigured(provider);
+  const status = storageStatus();
+  const inUse = (status.status === "cloud" || status.status === "cloud-reconnect") && status.provider === provider ? status.name : null;
+  useEffect(() => onCloudChange(() => setConnected(isCloudConnected(provider))), [provider]);
+  useEffect(() => {
+    if (!connected) return setWho(null);
+    let alive = true;
+    void cloudAccount(provider)
+      .then((a) => alive && setWho(`Conectada como ${a.name || a.email}${a.name && a.email ? ` (${a.email})` : ""}`))
+      .catch((e: unknown) => alive && setError(e instanceof Error ? e.message : String(e)));
+    return () => {
+      alive = false;
+    };
+  }, [connected, provider]);
+  const connect = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await connectCloud(provider);
+      setPicking(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const use = async (c: CloudFolder) => {
+    setPicking(false);
+    setBusy(true);
+    setError(null);
+    try {
+      setLibrary(await openCloudFolder(c));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <>
+      <div className="scard">
+        <Icon size={22} stroke={1.5} />
+        <div className="scard__text">
+          <strong className="scard__name">
+            {name}
+            {connected ? <span className="sok" title="Conectada" aria-label="Conectada"><IconCheck size={10} stroke={3} /></span> : null}
+          </strong>
+          <span className="sf-muted">
+            {!configured
+              ? `Falta registrar Sweet Flow en ${name} y poner su clave en esta instalación (docs/DEVELOPMENT.md).`
+              : connected
+                ? [who ?? "Conectada. Comprobando la cuenta…", inUse ? `En uso: «${inUse}»` : null].filter(Boolean).join(" · ")
+                : provider === "dropbox" ? "Una carpeta compartida de Dropbox del equipo (también las carpetas de equipo)." : "Una carpeta de Mi unidad, compartida contigo o de una unidad compartida."}
+          </span>
+        </div>
+        <span className="scard__spacer" />
+        {!configured ? <span className="sbadge">Sin configurar</span> : connected ? (
+          <>
+            <Button size="sm" variant={inUse ? undefined : "primary"} disabled={busy} onClick={() => setPicking(true)}><IconFolderOpen size={14} /> {inUse ? "Cambiar carpeta" : "Elegir carpeta"}</Button>
+            <Button size="sm" disabled={busy} onClick={() => { if (inUse) setLibrary(forgetCloudFolder()); disconnectCloud(provider); }}>Desconectar</Button>
+          </>
+        ) : (
+          <Button size="sm" variant="primary" disabled={busy} onClick={() => void connect()}>{busy ? `Esperando a ${name}…` : "Conectar"}</Button>
+        )}
+      </div>
+      {error ? <p className="sf-small" style={{ color: "var(--bad)" }}>{error}</p> : null}
+      {picking ? <CloudFolderPicker provider={provider} hasLocal={lib.entries.length > 0 && lib.storage.kind === "browser"} onPick={(c) => void use(c)} onClose={() => setPicking(false)} /> : null}
+    </>
+  );
+}
+
+/** A level of the folder browser: where we are and how to name it. */
+type Place = { name: string; dropbox?: string; drive?: DrivePlace | null };
+
+/**
+ * Choose the team folder in Dropbox or Drive: go into folders, then «Usar esta
+ * carpeta». The top of Drive (Mi unidad, Compartido conmigo, unidades
+ * compartidas) and the top of Dropbox can't be the team folder themselves.
+ */
+function CloudFolderPicker({ provider, hasLocal, onPick, onClose }: { provider: CloudProvider; hasLocal: boolean; onPick: (c: CloudFolder) => void; onClose: () => void }) {
+  const top: Place = provider === "dropbox" ? { name: "Dropbox", dropbox: "" } : { name: "Google Drive", drive: null };
+  const [trail, setTrail] = useState<Place[]>([top]);
+  const [items, setItems] = useState<Place[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const here = trail.at(-1)!;
+  useEffect(() => {
+    let alive = true;
+    setItems(null);
+    setError(null);
+    const load = async (): Promise<Place[]> => {
+      if (provider === "dropbox") {
+        const { browseDropbox } = await import("../data/folder/dropboxFs");
+        return (await browseDropbox(here.dropbox ?? "")).map((f) => ({ name: f.name, dropbox: f.path }));
+      }
+      const { browseDrive } = await import("../data/folder/driveFs");
+      return (await browseDrive(here.drive ?? null)).map((f) => ({ name: f.name, drive: f }));
+    };
+    load().then((l) => alive && setItems(l), (e: unknown) => alive && setError(e instanceof Error ? e.message : String(e)));
+    return () => {
+      alive = false;
+    };
+  }, [here, provider]);
+  // Drive: a real folder (not the top list, not «Compartido conmigo» itself); Dropbox: not its root.
+  const usable = provider === "dropbox" ? !!here.dropbox : !!here.drive && here.drive.root.id !== "shared" && trail.length > 1;
+  const choose = () => {
+    if (provider === "dropbox" && here.dropbox) onPick({ provider, name: here.name, path: here.dropbox });
+    if (provider === "google" && here.drive) onPick({ provider, name: here.name, root: here.drive.root });
+  };
+  return (
+    <Modal title={`Carpeta del equipo en ${cloudName(provider)}`} onClose={onClose} width={560}>
+      <div className="cpick__trail">
+        {trail.map((t, i) => (
+          <span key={i}>
+            {i > 0 ? <span className="sf-faint"> › </span> : null}
+            <button className="link" disabled={i === trail.length - 1} onClick={() => setTrail(trail.slice(0, i + 1))}>{t.name}</button>
+          </span>
+        ))}
+      </div>
+      <div className="cpick__list">
+        {error ? <p className="sf-small" style={{ color: "var(--bad)" }}>{error}</p> : items === null ? <p className="sf-faint sf-small">Cargando…</p> : items.length ? items.map((f, i) => (
+          <button key={i} className="cpick__item" onClick={() => setTrail([...trail, f])}>
+            <IconFolder size={16} stroke={1.5} /> <span>{f.name}</span>
+          </button>
+        )) : <p className="sf-faint sf-small">No hay carpetas aquí.</p>}
+      </div>
+      <p className="sf-faint sf-small">
+        Elige la carpeta compartida con el equipo. Si está vacía, Sweet Flow empieza ahí un dashboard nuevo; si ya la usa el equipo, verás sus producciones.
+        {hasLocal ? " Lo que ya tienes en este navegador no se copia." : ""}
+      </p>
+      <div className="modal-foot">
+        <Button onClick={onClose}>Cancelar</Button>
+        <Button variant="primary" disabled={!usable} onClick={choose}>Usar «{here.name}»</Button>
+      </div>
+    </Modal>
   );
 }
 
