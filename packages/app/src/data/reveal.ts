@@ -2,10 +2,11 @@
  * «Mostrar en la carpeta» (docs/INTERFAZ.md §1, §2): opens a production's or
  * a folder's folder in Finder / Explorer.
  *
- * - Desktop app: the shell reveals it. The team folder is reached through the
- *   browser's folder access, which never tells its full path, so the first
- *   time the user locates it once with the native picker; it is remembered on
- *   this computer.
+ * - Desktop app: the shell reveals it. When the app itself opened the team
+ *   folder (chosen in Ajustes or on first run) its path is already known.
+ *   Older builds reached it through the browser's folder access, which never
+ *   tells its full path: there the user locates it once with the native
+ *   picker, and it is remembered on this computer.
  * - Browser: it cannot open Finder. The path is copied instead.
  * - Browser storage: there is no folder on disk to show.
  */
@@ -35,12 +36,22 @@ function remember(label: string, path: string): void {
  * to locate it once if it is not known yet; calls `use` with it.
  */
 export function withTeamRoot(use: (root: string) => void): void {
-  const { lib, notify, set } = useStore.getState();
+  const { lib } = useStore.getState();
   const desktop = window.sweetflow;
   if (!desktop || lib?.storage.kind !== "folder") return;
   const label = lib.storage.name;
-  const root = rememberedRoot(label);
-  if (root) return use(root);
+  void (async () => {
+    const own = await desktop.teamFolder?.().catch(() => null);
+    if (own?.name === label) return use(own.path);
+    const root = rememberedRoot(label);
+    if (root) return use(root);
+    askToLocate(label, use);
+  })();
+}
+
+function askToLocate(label: string, use: (root: string) => void): void {
+  const { notify, set } = useStore.getState();
+  const desktop = window.sweetflow!;
   notify(`Localiza una vez la carpeta «${label}» en este ordenador para poder abrirla.`, {
     label: "Localizar",
     run: () => {
