@@ -389,6 +389,12 @@ derecha en la ventana aparte). De arriba abajo:
   - Lo de la producción que Magnific no tiene (importado del ordenador) se
     sube la primera vez que se elige y guarda su referencia: no se vuelve a
     subir.
+- **Referencias numeradas:** según se añaden, cada hueco se llama «Imagen 1»,
+  «Imagen 2»… (y «Vídeo 1», «Audio 1»); el estilo va aparte. En el prompt,
+  **@** las ofrece primero («Referencias», con su miniatura) y escribe
+  «@Imagen2»; al generar se manda como «image 2», en el mismo orden en que van
+  las referencias (las numeradas primero, el estilo al final). Si se quita una,
+  las siguientes se renumeran.
 - **Prompt.** Vacío usa el de la secuencia, escena y plano.
 - **Ajustes del modelo**, en pastillas sin flecha (al pulsarlas se abre la lista): número de versiones (−/+), duración,
   proporción, resolución, sonido ON/OFF (vídeos con sonido), instrumental

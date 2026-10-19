@@ -316,7 +316,8 @@ function GenerateBox({ node }: { node: ProdNode }) {
     ...(spec.loop ? { loop } : {}),
     ...(start ? (isUp(start) ? { sourceRef: ref.ups[start]?.ref } : { sourceMediaId: start }) : {}),
     ...(start && end ? (isUp(end) ? { endRef: ref.ups[end]?.ref } : { endMediaId: end }) : {}),
-    ...(refs.length ? { references: refs.map((r) => (isUp(r.mediaId) ? { type: r.type, ref: ref.ups[r.mediaId]?.ref } : r)) } : {}),
+    // In the order they are numbered («Imagen 1», «Imagen 2»…), the style last: «@Imagen2» is the second one sent.
+    ...(refs.length ? { references: [...refs.filter((r) => r.type !== "style"), ...refs.filter((r) => r.type === "style")].map((r) => (isUp(r.mediaId) ? { type: r.type, ref: ref.ups[r.mediaId]?.ref } : r)) } : {}),
     ...(called.length ? { mentions: called.map((c) => {
       // A group of another production's shared library: what it is and its images, by provider id.
       if (snap.library.some((n) => n.id === c.groupId)) return c;
@@ -440,6 +441,17 @@ function GenerateBox({ node }: { node: ProdNode }) {
   }
 
   const usesFrames = !!(start || end);
+  /**
+   * References numbered by kind, in the order they are sent: «Imagen 1»,
+   * «Imagen 2», «Vídeo 1»… The prompt can name them («@Imagen2»).
+   */
+  const numbered = (() => {
+    const seen: Record<string, number> = {};
+    return refs.filter((r) => r.type !== "style").map((r) => {
+      const n = (seen[r.type] = (seen[r.type] ?? 0) + 1);
+      return { r, label: `${REF_LABEL[r.type]} ${n}`, tag: `${REF_LABEL[r.type].normalize("NFD").replace(/[\u0300-\u036f]/g, "")}${n}` };
+    });
+  })();
   const refTypes = spec.references?.types ?? [];
   const placeholder = kind === "audio"
     ? spec.audio === "sfx" ? "Describe el sonido: qué suena, dónde y cómo de cerca…" : "Describe el estilo, el ambiente y los instrumentos…"
@@ -485,8 +497,8 @@ function GenerateBox({ node }: { node: ProdNode }) {
                 onMedia={(ids) => { const [id] = libMedia(ids); if (id) setRefs([...refs.filter((r) => r.type !== "style"), { type: "style", mediaId: id }]); }}
                 onClear={() => setRefs(refs.filter((r) => r.type !== "style"))} />
             ) : null}
-            {refs.filter((r) => r.type !== "style").map((r) => (
-              <RefSlot ctx={ref} key={r.mediaId} label={REF_LABEL[r.type]} accept={[r.type === "audio" ? "audio" : r.type === "video" ? "video" : "image"]} node={node} value={r.mediaId}
+            {numbered.map(({ r, label }) => (
+              <RefSlot ctx={ref} key={r.mediaId} label={label} accept={[r.type === "audio" ? "audio" : r.type === "video" ? "video" : "image"]} node={node} value={r.mediaId}
                 onPick={() => undefined} onClear={() => setRefs(refs.filter((x) => x !== r))} />
             ))}
             {kind !== "video" && refTypes.some((t) => t !== "style") && refs.length < (spec.references?.max ?? 0) ? (
@@ -511,7 +523,9 @@ function GenerateBox({ node }: { node: ProdNode }) {
       ) : null}
 
       <div className="gen__label">Prompt</div>
-      <PromptTags value={prompt} onChange={setPrompt} placeholder={snap.library.some((n) => n.lib?.kind === "card") ? `${placeholder} (@ para llamar a un grupo de la biblioteca)` : placeholder} mentions={mentions} setMentions={setMentions} />
+      <PromptTags value={prompt} onChange={setPrompt} placeholder={refs.length || snap.library.some((n) => n.lib?.kind === "card") ? `${placeholder} (@ para nombrar una referencia o un grupo de la biblioteca)` : placeholder}
+        mentions={mentions} setMentions={setMentions}
+        refs={numbered.map(({ r, label, tag }) => ({ tag, label, ...(isUp(r.mediaId) ? { preview: ref.ups[r.mediaId]?.preview } : { media: snap.media.find((m) => m.id === r.mediaId) }) }))} />
 
       <div className="gen__opts">
         {spec.maxCount > 1 ? (

@@ -1125,3 +1125,4 @@ button.topbar__me { position: relative; padding: 0; border: 0; border-radius: 50
 .dentry__lib { display: inline-grid; place-items: center; color: var(--brand-300, #6cb6ff); margin-left: 4px; }
 .dcard__lib { position: absolute; top: 8px; left: 8px; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 6px; background: #000b; }
 .dcard__lib .dentry__lib { margin: 0; }
+.ptags__opt .ptags__thumb { width: 44px; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 4px; flex: none; }

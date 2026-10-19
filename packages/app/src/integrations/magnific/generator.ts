@@ -284,7 +284,11 @@ export class MagnificGenerator implements Generator {
     const duration = m.durations ? nearest(m.durations, req.durationSec ?? m.durations[0]!) : undefined;
     const refs = m.references ? (req.references ?? []).filter((r) => m.references!.types.includes(r.type)).slice(0, m.references.max) : [];
     // Groups called in the prompt: as library assets by name, or their images as references.
-    let prompt = req.prompt;
+    // «@Imagen2» names the second image reference (docs/INTERFAZ.md §2.0): models read «image 2».
+    let prompt = req.prompt
+      .replace(/@Imagen(\d+)(?![A-Za-z0-9_-])/g, "image $1")
+      .replace(/@Video(\d+)(?![A-Za-z0-9_-])/g, "video $1")
+      .replace(/@Audio(\d+)(?![A-Za-z0-9_-])/g, "audio $1");
     const named: Array<{ type: string; id: string; name: string }> = [];
     for (const mention of req.mentions ?? []) {
       const asset = assets.get(mention.key);

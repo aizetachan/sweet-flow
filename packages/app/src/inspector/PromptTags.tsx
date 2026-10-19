@@ -30,12 +30,21 @@ export function mentionsIn(prompt: string, mentions: Mentions): Array<{ groupId:
     .map(([groupId, m]) => ({ groupId, ...m }));
 }
 
-export function PromptTags({ value, onChange, placeholder, mentions, setMentions }: {
+/** A reference of the generate box the prompt can name («@Imagen2»). */
+export interface RefTag {
+  tag: string;
+  label: string;
+  media?: Media;
+  preview?: string;
+}
+
+export function PromptTags({ value, onChange, placeholder, mentions, setMentions, refs = [] }: {
   value: string;
   onChange: (v: string) => void;
   placeholder: string;
   mentions: Mentions;
   setMentions: (m: Mentions) => void;
+  refs?: RefTag[];
 }) {
   const snap = useSnap();
   const shared = useSharedLibraries();
@@ -54,11 +63,28 @@ export function PromptTags({ value, onChange, placeholder, mentions, setMentions
   const groups = [...snap.library.filter((n) => n.lib?.kind === "card"), ...shared.flatMap((l) => l.groups)];
   const q = query?.text.toLowerCase() ?? "";
   const list = query ? groups.filter((g) => g.title.toLowerCase().includes(q) || libTag(g.title).toLowerCase().includes(q)).slice(0, 8) : [];
+  const refList = query ? refs.filter((r) => r.tag.toLowerCase().includes(q.replace(/\s+/g, "")) || r.label.toLowerCase().includes(q)) : [];
+  // One list for the keyboard: the references first, then the library's groups.
+  const options: Array<{ ref: RefTag } | { group: ProdNode }> = [...refList.map((r) => ({ ref: r })), ...list.map((g) => ({ group: g }))];
+
+  /** «@Imagen2»: names one of the references above. */
+  const insertRef = (r: RefTag) => {
+    if (!query) return;
+    const caret = area.current?.selectionStart ?? value.length;
+    onChange(`${value.slice(0, query.at)}@${r.tag} ${value.slice(caret)}`);
+    setQuery(null);
+    requestAnimationFrame(() => {
+      const at = query.at + r.tag.length + 2;
+      area.current?.focus();
+      area.current?.setSelectionRange(at, at);
+    });
+  };
+  const choose = (o: (typeof options)[number]) => ("ref" in o ? insertRef(o.ref) : insert(o.group));
 
   // «@» and what follows it, right before the caret.
   const track = (text: string, caret: number) => {
     const m = /@([\p{L}\p{N}_-]*)$/u.exec(text.slice(0, caret));
-    setQuery(m && groups.length ? { text: m[1]!, at: caret - m[0].length } : null);
+    setQuery(m && (groups.length || refs.length) ? { text: m[1]!, at: caret - m[0].length } : null);
     setHi(0);
   };
 
@@ -83,10 +109,10 @@ export function PromptTags({ value, onChange, placeholder, mentions, setMentions
   };
 
   const onKey = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (!list.length) return;
-    if (e.key === "ArrowDown") (e.preventDefault(), setHi((h) => (h + 1) % list.length));
-    else if (e.key === "ArrowUp") (e.preventDefault(), setHi((h) => (h - 1 + list.length) % list.length));
-    else if (e.key === "Enter" || e.key === "Tab") (e.preventDefault(), insert(list[hi]!));
+    if (!options.length) return;
+    if (e.key === "ArrowDown") (e.preventDefault(), setHi((h) => (h + 1) % options.length));
+    else if (e.key === "ArrowUp") (e.preventDefault(), setHi((h) => (h - 1 + options.length) % options.length));
+    else if (e.key === "Enter" || e.key === "Tab") (e.preventDefault(), choose(options[hi]!));
     else if (e.key === "Escape") setQuery(null);
   };
 
@@ -108,10 +134,19 @@ export function PromptTags({ value, onChange, placeholder, mentions, setMentions
         onKeyDown={onKey}
         onClick={(e) => track(value, (e.target as HTMLTextAreaElement).selectionStart)}
         onBlur={() => setTimeout(() => setQuery(null), 150)} />
-      {list.length ? (
+      {options.length ? (
         <div className="menu ptags__menu" role="listbox">
-          <div className="menu__title">Biblioteca</div>
-          {list.map((g, i) => {
+          {refList.length ? <div className="menu__title">Referencias</div> : null}
+          {refList.map((r, i) => (
+            <button key={r.tag} role="option" aria-selected={i === hi} className={cx("menu__item ptags__opt", i === hi && "is-on")}
+              onMouseDown={(e) => { e.preventDefault(); insertRef(r); }} onMouseEnter={() => setHi(i)}>
+              {r.media ? <Thumb media={r.media} badge={false} /> : r.preview ? <img className="ptags__thumb" src={r.preview} alt="" /> : <IconPhoto size={14} />}
+              <span className="menu__label">{r.label}</span>
+            </button>
+          ))}
+          {list.length ? <div className="menu__title">Biblioteca</div> : null}
+          {list.map((g, j) => {
+            const i = refList.length + j;
             const first = imagesOf(media, g.id)[0];
             const type = g.lib?.kind === "card" ? g.lib.type : undefined;
             const kind = type ? LIB_TYPES.find((t) => t.id === type)?.label : undefined;
