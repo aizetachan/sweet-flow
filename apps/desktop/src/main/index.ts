@@ -7,6 +7,7 @@
 import { app, BrowserWindow, screen, shell } from "electron";
 import path from "node:path";
 import { VERSION_ARG } from "../shared/api";
+import { APP_ORIGIN, registerAppScheme, serveApp } from "./appProtocol";
 import { DEV_URL, isAppUrl } from "./env";
 import { registerIpc } from "./ipc";
 import { startMirror, stopMirror } from "./mirror";
@@ -41,7 +42,7 @@ function createWindow(): BrowserWindow {
   lockNavigation(win);
 
   if (DEV_URL) void win.loadURL(DEV_URL);
-  else void win.loadFile(path.join(__dirname, "renderer", "index.html"));
+  else void win.loadURL(`${APP_ORIGIN}/index.html`);
   return win;
 }
 
@@ -82,6 +83,8 @@ function lockNavigation(win: BrowserWindow): void {
   });
 }
 
+registerAppScheme();
+
 if (!app.requestSingleInstanceLock()) {
   app.quit();
 } else {
@@ -93,6 +96,7 @@ if (!app.requestSingleInstanceLock()) {
   });
 
   void app.whenReady().then(() => {
+    if (!DEV_URL) serveApp(path.join(__dirname, "renderer"));
     registerIpc();
     startMirror();
     createWindow();

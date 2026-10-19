@@ -182,6 +182,24 @@ Las claves de Dropbox y Google se meten en la app al construirla: un instalador
 hecho en un ordenador con `packages/app/.env.local` relleno las lleva; los de la
 CI, no (no tiene ese archivo).
 
+La app instalada carga la interfaz desde `sf-app://app/`
+(`apps/desktop/src/main/appProtocol.ts`), no desde `file://`. Así tiene un
+origen propio y estable, y el proceso principal hace de relevo para lo mismo
+que el servidor de desarrollo: el MCP, los tokens y los archivos de Magnific, y
+los tokens de Google con el secreto.
+
+### Pasar el instalador a un compañero
+
+1. En el Mac con `packages/app/.env.local` relleno: `pnpm dist:mac`.
+2. Pasarle `apps/desktop/release/Sweet Flow-<versión>-mac-universal.dmg`. Vale
+   para Apple Silicon y para Intel.
+3. Él lo instala como se explica más abajo y, en la app:
+   - se conecta con **su** cuenta de Magnific;
+   - en Ajustes › Almacenamiento, conecta **su** Dropbox o Drive, o elige una
+     carpeta de su ordenador.
+4. Para trabajar sobre la misma carpeta del equipo, compártesela antes desde
+   Dropbox o Drive.
+
 ### Instalar en macOS
 
 1. Abre el `.dmg` y arrastra **Sweet Flow** a *Aplicaciones*.
