@@ -93,10 +93,12 @@ Anotadas el 15 oct 2026, pendientes de que el usuario elija orden:
 
 - **Exportar a Premiere y DaVinci Resolve:** [`EXPORTAR-NLE.md`](EXPORTAR-NLE.md).
   Primero un archivo OTIO + FCP7 XML; después paneles (Premiere UXP, script y
-  Workflow Integration de Resolve) para ida y vuelta.
+  Workflow Integration de Resolve) para ida y vuelta. **Aparcado** hasta que
+  esté montado lo demás (decidido el 19 oct 2026).
 - **Usuarios, invitaciones y vista de invitado:** [`USUARIOS.md`](USUARIOS.md).
-  Identidad por Magnific, equipo en un registro de la carpeta, permisos reales
-  con Drive/Dropbox; decisiones pendientes al final.
+  Decisiones del 19 oct 2026: identidad por Magnific, roles por producción,
+  invitado dentro de Sweet Flow (sin acceso al almacenamiento) que ve, comenta
+  y valida. Pendiente: si se adelanta un servidor pequeño para invitados.
 
 ### Fase 1 · Producción en carpeta (etapa A)
 
@@ -110,7 +112,12 @@ Anotadas el 15 oct 2026, pendientes de que el usuario elija orden:
    y Edge), sobre `FolderFs` (`docs/ARCHITECTURE.md` §5.4). El dashboard y las
    producciones son carpetas reales con su registro; renombrar o mover mueve la
    carpeta. Se revisan los cambios cada 2,5 s.
-4. **Conectar Dropbox y Google Drive — hecho en el navegador (19 oct 2026), falta probarlo con cuentas reales** (registrar la app en cada servicio: `DEVELOPMENT.md`). Requisitos que se mantienen:
+4. **Conectar Dropbox y Google Drive — hecho en el navegador (19 oct 2026).**
+   **Se prueba con cuentas reales al montar la app de escritorio** (decidido el
+   19 oct 2026): registrar la app en cada servicio (`DEVELOPMENT.md`), hacer
+   que el inicio de sesión vuelva a la app de escritorio (hoy vuelve a
+   `localhost`; también el de Magnific) y probar con dos personas. Requisitos
+   que se mantienen:
    Requisito: Sweet Flow se instalará en otras máquinas y cada usuario tiene
    que poder conectar su Dropbox (o Drive) sin saber nada técnico:
    - Una sola app «Sweet Flow» registrada en Dropbox y en Google; su
@@ -138,7 +145,8 @@ Anotadas el 15 oct 2026, pendientes de que el usuario elija orden:
 6. **Varias personas:** probar con dos ordenadores sobre la misma carpeta
    compartida.
 7. **Google Drive:** el mismo `FolderFs` sobre la API v3.
-8. **Escritorio:** probar la carpeta en Electron (o `FolderFs` con Node).
+8. **Escritorio:** probar la carpeta en Electron (o `FolderFs` con Node), y
+   ahí **Dropbox y Drive con cuentas reales** (paso 4).
 
 ### Fase 2 · Generación
 

@@ -77,7 +77,8 @@ En el dashboard están los ajustes generales:
   clave de la app en la instalación, la tarjeta dice «Sin configurar».
 - **Integraciones:** **Magnific**, con la cuenta de cada persona.
 - **Modelos:** qué modelos aparecen al generar, por tipo (imagen, vídeo,
-  audio), con lo que admite cada uno y un filtro. La lista es el catálogo de
+  audio), con lo que admite cada uno y un filtro; en columnas, hasta cuatro
+  en pantallas anchas. La lista es el catálogo de
   Magnific leído en vivo (se relee cada 12 h o con **Actualizar**); sin
   Magnific conectada, la copia del 18 oct 2026. Por defecto se ven los que ya
   había; los nuevos se activan aquí. **Restablecer** vuelve a los de por

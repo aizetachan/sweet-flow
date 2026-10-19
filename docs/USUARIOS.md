@@ -1,130 +1,133 @@
 # Usuarios, invitaciones y vista de invitado
 
-> Estado: **análisis** (19 oct 2026). No hay nada implementado aún, salvo el
-> perfil manual y la conexión de Magnific, Dropbox y Drive por persona.
-> Relacionado: `ARCHITECTURE.md` §2.1 (primero local, sin servidor) y §4
-> (roles), `INTERFAZ.md` §1.1.
+> Estado: **análisis con decisiones** (19 oct 2026). No hay nada implementado
+> aún, salvo el perfil manual y la conexión de Magnific, Dropbox y Drive por
+> persona. Relacionado: `ARCHITECTURE.md` §2.1 (primero local, sin servidor)
+> y §4 (roles), `INTERFAZ.md` §1.1.
 
-## 1. Punto de partida
+## Decisiones (19 oct 2026)
 
-- No hay servidor: todo vive en la carpeta del equipo (Dropbox o Drive) y cada
-  persona entra con **su** cuenta del servicio y **su** cuenta de Magnific.
-- Hoy la persona se identifica con un perfil escrito a mano (nombre y email) y
-  los roles existen en los datos (admin, supervisor, artista, lector), pero la
-  app no los comprueba.
-- Sin servidor, **la app no puede impedir** que alguien con acceso de escritura
-  a la carpeta haga algo: quien manda de verdad es el permiso que da Dropbox o
-  Drive. Los roles de la app ordenan la interfaz y dejan constancia (cada
-  evento lleva su autor); el control fuerte llega con la etapa C (Firebase).
+1. **Identidad = la cuenta de Magnific.** No hay otro registro: Magnific
+   identifica a la persona (nombre, email, avatar) y Sweet Flow decide a qué
+   tiene acceso. Que Magnific comparta o no proyectos entre organizaciones no
+   importa.
+2. **La cuenta de Drive/Dropbox puede ser otra**, aunque la persona sea la
+   misma. No debe crear fricción: la cuenta de almacenamiento es solo cómo
+   llega cada uno a la carpeta; nunca se compara con la de Magnific.
+3. **El equipo se gestiona dentro y fuera de la producción:** se invita a una
+   carpeta del dashboard (vale para lo que hay dentro) o a una producción.
+4. **Roles por producción**, los pone quien invita: alguien puede trabajar en
+   una carpeta y no en otra.
+5. **Todo el equipo tiene que poder entrar a la carpeta** del almacenamiento
+   (ahí está el trabajo).
+6. **El invitado no entra al almacenamiento:** entra a Sweet Flow, en una
+   **vista de invitado** fácil de navegar, sin generar ni crear nada. Ve lo
+   que el equipo comparte con él (prácticamente todas las versiones), comenta
+   sobre los planos y **valida**: muchas veces es el cliente, y su validación
+   es la que permite aprobar.
 
-## 2. Identidad: la cuenta de Magnific
+## 1. Identidad
 
 - Al conectar Magnific, `account_profile` da nombre, email y avatar. Esa es la
-  identidad en Sweet Flow (el perfil manual queda solo si no hay Magnific).
-- Clave de la persona: su **email** en minúsculas. Es lo que se usa para
-  invitar y lo que comparten Magnific, Dropbox y Drive.
-- Comprobación cruzada: el email de Magnific debería coincidir con el de la
-  cuenta de Dropbox/Drive conectada; si no, se avisa (no se bloquea: hay
-  quien usa cuentas distintas).
-- Entrar exige Magnific conectada para generar, pero no para ver: un invitado
-  o un lector puede no tener Magnific.
+  persona en Sweet Flow; el perfil manual queda solo para quien no tiene
+  Magnific (la demo).
+- Clave de la persona: el **email de Magnific**, en minúsculas.
+- La cuenta de Dropbox/Drive conectada se guarda aparte («cómo llego a la
+  carpeta»), sin compararla.
 
-## 3. Equipo y permisos dentro de la carpeta
+## 2. Miembros, alcance y roles
 
-- Un registro más, como el del dashboard: `.sweetflow/team/<dispositivo>/<mes>.jsonl`,
-  con altas, cambios de rol y bajas: `{ email, nombre, rol, alcance }`.
-  - **Rol:** admin, supervisor, artista, lector o **invitado**.
-  - **Alcance:** todo el espacio, o una lista de carpetas o producciones del
-    dashboard.
-- Quien crea la carpeta del equipo es su primer admin. Solo los admin pueden
-  cambiar el equipo; si alguien sin permiso escribe una baja, se ignora al
-  combinar los registros (regla del dominio, con tests).
-- La app aplica el rol en la interfaz: un lector no ve «Generar» ni puede
-  mover; un artista solo cambia el estado de lo suyo, etc. (los umbrales de
-  `ROADMAP.md`, «Decisiones pendientes»).
+- Un registro más dentro de la carpeta del equipo, como el del dashboard:
+  `.sweetflow/team/<dispositivo>/<mes>.jsonl`. Cada entrada:
+  `{ email de Magnific, nombre, dónde (carpeta o producción), rol }`.
+- **Herencia:** lo que se da en una carpeta del dashboard vale para todo lo que
+  hay dentro; en una producción se puede cambiar (subir, bajar o quitar).
+- **Roles:** admin, supervisor, artista, lector e invitado. Quien invita elige
+  el rol para esa carpeta o producción.
+- Quien crea la carpeta del equipo es su primer admin. Solo admin (y
+  supervisor en sus producciones, si se decide) cambia miembros; lo que
+  escriba otro se ignora al combinar los registros (regla del dominio, con
+  tests).
+- Dónde se gestiona:
+  - **Dashboard:** «Compartir» en una carpeta o producción (menú contextual).
+  - **Producción:** la ventana Equipo (avatares de la cabecera), con
+    «Invitar» y el rol de cada uno en esa producción.
 
-## 4. Invitar
+## 3. Invitar al equipo (con acceso a la carpeta)
 
-Un admin escribe un email, el rol y el alcance. La app hace tres cosas:
+Quien invita escribe el **email de Magnific** de la persona, el rol y, si la
+carpeta está en Dropbox o Drive, el **email de su cuenta de almacenamiento**
+(por defecto, el mismo; se puede cambiar: decisión 2).
 
-1. **Apunta la invitación** en el registro del equipo.
-2. **Da acceso a la carpeta** en el servicio, que es lo que de verdad cuenta:
-   - **Drive:** `permissions.create` sobre la carpeta del equipo (o solo sobre
-     las carpetas del alcance): *writer* para admin, supervisor y artista;
-     *reader* para lector e invitado. Drive manda su propio email de aviso.
-     Los permisos se heredan y se pueden dar sobre subcarpetas sueltas.
-   - **Dropbox:** `sharing/add_folder_member` (*editor* o *viewer*) sobre la
-     carpeta compartida. Necesita añadir el permiso `sharing.write` a la app.
-     **A comprobar:** Dropbox no deja compartir una subcarpeta de una carpeta
-     ya compartida con otras personas en cuentas normales; en Dropbox
-     Business las carpetas de equipo admiten subcarpetas con acceso propio.
-     Para invitados a una sola producción, Drive es más flexible.
-3. **Magnific (opcional):** si el invitado está en la misma **organización**
-   de Magnific (`projects_share_candidates`), se comparte el proyecto espejo
-   (`projects_share`, editor o viewer) para que vea también allí lo generado.
-   Magnific solo comparte dentro de la organización; fuera de ella, el
-   invitado ve los archivos descargados en la carpeta, que es lo normal.
+1. Se apunta en el registro de miembros.
+2. Sweet Flow **comparte la carpeta** con el email de almacenamiento, por API:
+   - **Drive:** `permissions.create` (*writer*) sobre la carpeta del equipo.
+     Drive manda su aviso.
+   - **Dropbox:** `sharing/add_folder_member` (*editor*), añadiendo el permiso
+     `sharing.write` a la app.
+   - Con una carpeta de este ordenador, se comparte a mano desde Dropbox o
+     Drive; la app lo recuerda.
+3. La persona abre Sweet Flow, conecta Magnific (así se la reconoce) y su
+   Dropbox/Drive (así llega a la carpeta), y elige la carpeta compartida.
 
-El invitado recibe el aviso de Drive o Dropbox, abre Sweet Flow, conecta su
-cuenta y elige esa carpeta (le aparece en «Compartido conmigo»). La app
-reconoce su email en el registro del equipo y le aplica su rol.
+El acceso a la carpeta es a toda la carpeta del equipo: la separación por
+producciones la hace Sweet Flow con los roles. Quien tiene la carpeta podría
+abrir los archivos a mano; es el equipo, así que se acepta.
 
-Sin Drive ni Dropbox conectados (carpeta de este ordenador), invitar solo
-apunta la invitación: la carpeta se comparte a mano desde el servicio.
+## 4. Vista de invitado (sin acceso al almacenamiento)
 
-## 5. Vista de invitado
+**Qué ve:** un dashboard con solo lo compartido con él; dentro, el tablero, el
+visor con **las versiones** y sus comentarios. Sin Generar, Editar, papelera,
+estructura ni ajustes. Sin códigos ni rutas.
 
-Lo que pediste: si a alguien se le da acceso a una carpeta, ve solo lo que hay
-dentro.
+**Qué hace:** comentar (con código de tiempo y punto en el fotograma, como el
+equipo) y **validar** un plano o una versión. El equipo ve la validación en el
+plano y en Actividad, y lo aprueba (o se aprueba solo: decisión pendiente).
 
-- **Con Drive (recomendado):** se le da *reader* solo a las carpetas de su
-  alcance (p. ej. una producción). Al entrar, la app no ve la raíz del equipo,
-  sino esas carpetas: se abre en **modo invitado**, con un dashboard que solo
-  lista lo que tiene compartido (cada producción se reconoce por su
-  `.sweetflow/production.json`).
-- **La interfaz de invitado:** tablero y visor en solo lectura, sin Generar,
-  Editar, papelera ni ajustes de la producción, y sin códigos ni rutas.
-- **Comentar:** con solo lectura no puede escribir su registro. Opciones:
-  1. Darle *writer* solo en `.sweetflow/log/invitado-<email>/` de esa
-     producción (Drive lo permite en una subcarpeta). Sus comentarios entran
-     como los de cualquiera.
-  2. Sin comentarios en la primera versión (solo ver).
-- **Ver solo algunas versiones** (p. ej. lo aprobado): los permisos van por
-  carpeta o archivo, así que haría falta o compartir archivos sueltos (Drive)
-  o copiar lo aprobado a una carpeta `Para-cliente/`. Mejor más adelante.
-- **Sin cuenta de Drive o Dropbox:** no es posible sin alojar los archivos en
-  un sitio público. Es la «vista previa para invitados sin acceso» de
-  `ROADMAP.md` (enlace compartido de Dropbox, compartir de Magnific o página
-  de revisión propia).
+**La consecuencia:** sin acceso a la carpeta, el invitado no puede leer los
+archivos ni escribir sus comentarios en ningún sitio que el equipo lea. Hace
+falta **una pieza en internet** que los dos alcancen. Es decir, un servidor
+pequeño, que hoy el plan deja para la etapa C (`ARCHITECTURE.md` §2.1).
 
-## 6. Límites (sin servidor)
+Propuesta (**espacio de revisión**), reutilizando el esqueleto de Firebase:
 
-- Los roles los respeta la app, pero alguien con permiso de escritura en la
-  carpeta podría editar los registros a mano. Lo que no puede saltarse es el
-  permiso del servicio (*reader* no escribe).
-- La lista del equipo se ve en el registro; los emails son visibles para el
-  equipo.
-- Quitar a alguien: se quita su permiso en el servicio (la app lo hace con la
-  API) y se apunta la baja. Lo que ya descargó, lo conserva.
+- **Entrar:** el invitado inicia sesión con Magnific. Una Function comprueba
+  su token con Magnific (`account_profile`) y le da una sesión de Sweet Flow
+  con su email. Nada de cuentas nuevas.
+- **Publicar:** la app del equipo publica lo compartido: la estructura, las
+  versiones y sus datos, y por cada archivo un **enlace** creado en Dropbox o
+  Drive con la cuenta del equipo (Dropbox: enlace compartido; Drive: «cualquiera
+  con el enlace», solo ese archivo). Los archivos siguen en Dropbox o Drive; no
+  vuelve Cloud Storage. Se actualiza al haber versiones nuevas.
+- **Volver:** comentarios y validaciones del invitado se guardan en
+  Firestore; la app del equipo los recoge y los escribe en el registro de la
+  producción como eventos del invitado. Así todo queda en la carpeta, como
+  siempre.
+- **Dónde lo ve el invitado:** en la web (la misma app en modo invitado), sin
+  instalar nada. Es la «vista previa para invitados» de `ROADMAP.md`.
 
-## 7. Plan propuesto
+## 5. Plan propuesto
 
-1. **Identidad por Magnific** (perfil desde `account_profile`) y aviso si no
-   coincide con la cuenta de la carpeta. Pequeño.
-2. **Registro del equipo** en `packages/domain` (altas, roles, alcance, quién
-   puede cambiarlos), con tests, y la pantalla Equipo leyendo de él.
-3. **Invitar con Drive** (permisos por carpeta) y **con Dropbox** (miembros de
-   la carpeta compartida); compartir el proyecto de Magnific si es de la
-   organización.
-4. **Roles en la interfaz** (qué ve y qué puede hacer cada uno).
-5. **Modo invitado** con Drive: dashboard con lo compartido, solo lectura y,
-   si se decide, comentarios en su subcarpeta.
+1. **Identidad por Magnific:** el perfil sale de `account_profile`; la cuenta
+   de almacenamiento, aparte. Pequeño, sin servidor.
+2. **Registro de miembros** en `packages/domain` (carpeta/producción, herencia,
+   roles, quién puede cambiarlos), con tests. La ventana Equipo y «Compartir»
+   en el dashboard leen de él.
+3. **Invitar al equipo** y compartir la carpeta por API (Drive y Dropbox),
+   con el email de almacenamiento aparte.
+4. **Roles en la interfaz** (qué ve y qué hace cada uno en cada producción).
+5. **Espacio de revisión para invitados** (Firebase): inicio de sesión con
+   Magnific, publicar, comentar y validar, y la vuelta al registro.
 
-## 8. Decisiones que necesito
+Los pasos 1 a 4 funcionan sin servidor. El 5 lo necesita.
 
-1. ¿El invitado **comenta** o **solo ve** en la primera versión?
-2. ¿Los invitados ven **todas las versiones** o solo lo **aprobado**?
-3. ¿Damos prioridad a **Drive** para los invitados (permisos por subcarpeta) y
-   dejamos Dropbox para el equipo interno?
-4. ¿Los roles del espacio valen para todas las producciones, o se ajustan por
-   producción (`ROADMAP.md`, «Permisos por producción»)?
+## 6. Decisiones que necesito
+
+1. **¿Adelantamos un servidor pequeño solo para invitados** (paso 5)? Cambia
+   la regla «sin servidor hasta la etapa C» (`ARCHITECTURE.md` §2.1).
+2. **Archivos para el invitado:** ¿enlaces de Dropbox/Drive (no se copia nada,
+   pero quien tenga el enlace ve ese archivo) o copias más ligeras (proxies)
+   en un almacenamiento propio?
+3. **Validar:** ¿la validación del invitado aprueba directamente, o avisa al
+   equipo para que apruebe?
+4. ¿El **supervisor** puede invitar en sus producciones, o solo el admin?

@@ -33,7 +33,7 @@ export function Settings({ lib }: { lib: LibraryState }) {
       <header className="dash__head">
         <h1 className="dash__title">Ajustes</h1>
       </header>
-      <div className="settings__layout">
+      <div className={cx("settings__layout", settingsTab === "models" && "settings__layout--wide")}>
         <nav className="settings__nav">
           {TABS.map((t) => (
             <button key={t.id} className={cx("settings__tab", settingsTab === t.id && "settings__tab--on")} onClick={() => set({ settingsTab: t.id })}>

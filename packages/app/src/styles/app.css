@@ -718,6 +718,8 @@ button.tree__hint { padding: 0 14px 8px; }
 
 /* ---------- settings ---------- */
 .settings__layout { display: grid; grid-template-columns: 200px minmax(0, 720px); gap: 32px; margin-top: 8px; }
+/* Modelos uses the width there is (its list grows to four columns). */
+.settings__layout--wide { grid-template-columns: 200px minmax(0, 1fr); }
 .settings__nav { display: flex; flex-direction: column; gap: 2px; }
 .settings__tab { display: flex; align-items: center; gap: 10px; height: 34px; padding: 0 10px; border: 0; border-radius: var(--r-md); background: none; color: var(--fg-2); text-align: left; }
 .settings__tab:hover { background: var(--ghost); color: var(--fg-0); }
@@ -964,7 +966,8 @@ button.topbar__me { position: relative; padding: 0; border: 0; border-radius: 50
 .smodels__filter { width: 160px; }
 .smodels__kind { margin-bottom: 18px; }
 .smodels__kind h3 { font-size: 13px; font-weight: 600; margin: 0 0 6px; display: flex; gap: 8px; align-items: baseline; }
-.smodels__list { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2px 16px; }
+/* As many columns as fit, up to four (wide screens show more models at once). */
+.smodels__list { display: grid; grid-template-columns: repeat(auto-fill, minmax(max(280px, calc((100% - 3 * 16px) / 4)), 1fr)); gap: 2px 16px; }
 .smodels__row { display: flex; align-items: baseline; gap: 8px; padding: 5px 6px; border-radius: var(--r-sm); cursor: pointer; min-width: 0; }
 .smodels__row:hover { background: var(--bg-2); }
 .smodels__row input { flex: none; transform: translateY(2px); }
