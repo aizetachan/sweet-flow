@@ -1,9 +1,13 @@
 /**
  * What each generation model allows (docs/INTERFAZ.md §2.5), so the generate
- * box only offers what the chosen model can do. Taken from Magnific's own
- * catalog (images_models_list, video_models_list, audio_music_generate,
- * audio_sfx_generate) on 18 oct 2026; `slug` is the model's id there.
+ * box only offers what the chosen model can do. The catalog is read live from
+ * the provider when it is connected (integrations/magnific/catalog.ts) and
+ * kept on this computer; until then, a copy of Magnific's catalog taken on
+ * 18 oct 2026 stands in. Which models show in the generate box is chosen in
+ * Ajustes › Modelos. `slug` is the model's id at the provider.
  */
+
+import { useSyncExternalStore } from "react";
 
 export type GenKind = "image" | "video" | "audio";
 
@@ -39,7 +43,8 @@ const range = (a: number, b: number) => Array.from({ length: b - a + 1 }, (_, i)
 const IMG_REFS: RefType[] = ["style", "image"];
 const VID_6 = ["16:9", "9:16", "1:1", "4:3", "3:4", "21:9"];
 
-export const MODEL_CATALOG: ModelSpec[] = [
+/** The copy used until the live catalog arrives; audio always comes from here (the provider does not list it). */
+export const STATIC_CATALOG: ModelSpec[] = [
   // ---------- image ----------
   { kind: "image", name: "Nano Banana Pro", slug: "imagen-nano-banana-2", aspectRatios: ["16:9", "9:16", "1:1", "4:3", "3:4", "4:5", "5:4", "3:2", "2:3", "21:9"], resolutions: ["1k", "2k", "4k"], maxCount: 8, references: { types: IMG_REFS, max: 12 } },
   { kind: "image", name: "Seedream 5 Pro", slug: "seedream-5-pro", aspectRatios: ["16:9", "9:16", "1:1", "4:3", "3:4", "3:2", "2:3", "21:9"], resolutions: ["1.5k", "2k"], maxCount: 8, references: { types: IMG_REFS, max: 12 } },
@@ -63,11 +68,106 @@ export const MODEL_CATALOG: ModelSpec[] = [
   { kind: "audio", name: "Efectos de sonido (ElevenLabs)", slug: "elevenlabs-sfx", audio: "sfx", aspectRatios: [], durations: range(1, 30), maxCount: 4, loop: true },
 ];
 
-export const modelsFor = (kind: GenKind) => MODEL_CATALOG.filter((m) => m.kind === kind);
+// ---------- live catalog and the models chosen to show ----------
 
-/** The spec of a model by its UI name (what the log keeps); the first of its kind otherwise. */
+const LIVE_KEY = "sweetflow:models-live";
+const SHOWN_KEY = "sweetflow:models-shown";
+
+/** Identity of a model across catalogs: its kind and provider id. */
+export const modelKey = (m: Pick<ModelSpec, "kind" | "slug">) => `${m.kind}:${m.slug ?? "auto"}`;
+
+function read<T>(key: string): T | null {
+  try {
+    return JSON.parse(localStorage.getItem(key) ?? "null") as T | null;
+  } catch {
+    return null;
+  }
+}
+function write(key: string, value: unknown): void {
+  try {
+    if (value === null) localStorage.removeItem(key);
+    else localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // Only a convenience: the copy and the defaults still work.
+  }
+}
+
+let live = read<{ at: number; models: ModelSpec[] }>(LIVE_KEY);
+/** Keys chosen in Ajustes › Modelos; null: the defaults (the ones of the built-in copy). */
+let shown = read<string[]>(SHOWN_KEY);
+let version = 0;
+const listeners = new Set<() => void>();
+const changed = () => {
+  version++;
+  for (const l of listeners) l();
+};
+
+/** Every model the provider offers (or the built-in copy). */
+export function catalog(): ModelSpec[] {
+  return live?.models.length ? live.models : STATIC_CATALOG;
+}
+
+/** When the live catalog was read; null: still the built-in copy. */
+export const catalogReadAt = (): number | null => (live?.models.length ? live.at : null);
+
+export function setLiveCatalog(models: ModelSpec[], at = Date.now()): void {
+  live = { at, models };
+  write(LIVE_KEY, live);
+  changed();
+}
+
+const DEFAULT_SHOWN = new Set(STATIC_CATALOG.map(modelKey));
+
+export function isShown(m: ModelSpec): boolean {
+  return shown ? shown.includes(modelKey(m)) : DEFAULT_SHOWN.has(modelKey(m));
+}
+
+export function setShown(m: ModelSpec, on: boolean): void {
+  const now = new Set(shown ?? catalog().filter(isShown).map(modelKey));
+  if (on) now.add(modelKey(m));
+  else now.delete(modelKey(m));
+  shown = [...now];
+  write(SHOWN_KEY, shown);
+  changed();
+}
+
+/** Back to the models shown by default. */
+export function resetShown(): void {
+  shown = null;
+  write(SHOWN_KEY, null);
+  changed();
+}
+
+/** Every model of a kind, shown or not (Ajustes › Modelos). */
+export const allModelsFor = (kind: GenKind) => catalog().filter((m) => m.kind === kind);
+
+/** The models of a kind that show in the generate box; never none. */
+export function modelsFor(kind: GenKind): ModelSpec[] {
+  const all = allModelsFor(kind);
+  const list = all.filter(isShown);
+  return list.length ? list : all.slice(0, 1);
+}
+
+/** Re-render when the catalog or the chosen models change. */
+export function useModelsVersion(): number {
+  return useSyncExternalStore((cb) => {
+    listeners.add(cb);
+    return () => listeners.delete(cb);
+  }, () => version);
+}
+
+/**
+ * The spec of a model by its UI name (what the log keeps). Old names from the
+ * built-in copy are found through their provider id; the first shown model of
+ * its kind otherwise.
+ */
 export function specOf(kind: GenKind, name: string): ModelSpec {
-  return MODEL_CATALOG.find((m) => m.kind === kind && m.name === name) ?? modelsFor(kind)[0]!;
+  const all = allModelsFor(kind);
+  const byName = all.find((m) => m.name === name);
+  if (byName) return byName;
+  const old = STATIC_CATALOG.find((m) => m.kind === kind && m.name === name);
+  if (old) return all.find((m) => modelKey(m) === modelKey(old)) ?? old;
+  return modelsFor(kind)[0]!;
 }
 
 /** Nearest allowed value (durations). */

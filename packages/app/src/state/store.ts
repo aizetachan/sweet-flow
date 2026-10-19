@@ -20,7 +20,8 @@ export type CardSize = "s" | "m" | "l";
 export type PanelTab = "produce" | "cut" | "review" | "activity";
 export type DashLayout = "grid" | "list";
 export type DashSection = "home" | "recent" | "trash" | "settings";
-export type SettingsTab = "profile" | "storage" | "integrations" | "about";
+/** Ajustes tabs: the dashboard's, plus the production's own (settings/Modals.tsx). */
+export type SettingsTab = "profile" | "storage" | "integrations" | "models" | "about" | "levels" | "statuses" | "view";
 /** Left column of the production screen: the work panel or the structure tree. */
 export type SideTab = "work" | "structure";
 
@@ -75,7 +76,7 @@ interface UiState {
   playing: boolean;
   filters: Filters;
   /** `team`: who works on the production (opened from the avatar menu). */
-  modal: null | "levels" | "statuses" | "invite" | "team" | "notes";
+  modal: null | "settings" | "invite" | "team" | "notes";
   /** The node whose notes the `notes` modal shows. */
   notesFor: Id | null;
   /** The «Importar» window: as versions of a shot, or as new shots in a row. */

@@ -42,7 +42,7 @@ import {
   type StatusDef,
   type Take,
 } from "@sweetflow/domain";
-import { ALL_FEATURES, importKind, type BrowsePage, type BrowseQuery, type DataSource, type GenerateArgs, type ImportItem, type NewComment, type Placement, type RemoteCreation, type RemoteFolder, type Snapshot } from "../source";
+import { ALL_FEATURES, importKind, type BrowsePage, type BrowseQuery, type DataSource, type GenerateArgs, type ImportItem, type NewComment, type Placement, type RemoteCreation, type RemoteFolder, type Snapshot, type UploadedRef } from "../source";
 import { frame, type Mood } from "./frames";
 import { buildSeed, newId } from "./seed";
 
@@ -366,6 +366,12 @@ export class MockSource implements DataSource {
       ids.push(id);
     }
     return ids;
+  }
+
+  /** The demo pretends to upload: a moment, then a made-up id. */
+  async uploadReference(_nodeId: Id, from: File | { mediaId: Id }): Promise<UploadedRef> {
+    await new Promise((r) => setTimeout(r, 700));
+    return { ref: "mediaId" in from ? `demo-${from.mediaId}` : `demo-up-${newId("u")}` };
   }
 
   /** A pretend Magnific library for the demo: a few folders and creations. */

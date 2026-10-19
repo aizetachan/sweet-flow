@@ -67,7 +67,7 @@ import {
   type Segment,
   type StatusDef,
 } from "@sweetflow/domain";
-import { importKind, type BrowsePage, type BrowseQuery, type DataSource, type GenerateArgs, type ImportItem, type NewComment, type Placement, type RemoteFolder, type Snapshot } from "../source";
+import { importKind, type BrowsePage, type BrowseQuery, type DataSource, type GenerateArgs, type ImportItem, type NewComment, type Placement, type RemoteFolder, type Snapshot, type UploadedRef } from "../source";
 import type { Generator, GenerationRequest } from "../generation";
 import type { ProductionFiles } from "../folder/ProductionFiles";
 import type { LogStore } from "./store";
@@ -436,16 +436,21 @@ export class LocalSource implements DataSource {
     for (const id of ids) void this.runJob(id);
   }
 
+  /** The provider's folders mirror the team folder down to the node. */
+  private providerPath(node: ProdNode): string[] {
+    const s = this.loaded();
+    const inTeam = this.files?.nodeDir(s.production, s.nodes, node, s.groups);
+    return (inTeam ?? [safeTitle(s.production.name) || "Sweet-Flow", folderPath(s.production, s.nodes, node, s.groups)].join("/")).split("/");
+  }
+
   private request(args: GenerateArgs): GenerationRequest {
     const s = this.loaded();
     const node = s.nodes.find((n) => n.id === args.nodeId)!;
-    // The provider's folders mirror the team folder down to the node.
-    const inTeam = this.files?.nodeDir(s.production, s.nodes, node, s.groups);
-    const segments = (inTeam ?? [safeTitle(s.production.name) || "Sweet-Flow", folderPath(s.production, s.nodes, node, s.groups)].join("/")).split("/");
+    const segments = this.providerPath(node);
     // What the provider knows our media by (only what it generated has an id there).
     const remote = (id?: Id) => (id ? s.media.find((m) => m.id === id)?.remote?.id : undefined);
     const references = (args.references ?? []).flatMap((r) => {
-      const id = remote(r.mediaId);
+      const id = r.ref ?? remote(r.mediaId);
       return id ? [{ type: r.type, id }] : [];
     });
     return {
@@ -453,8 +458,8 @@ export class LocalSource implements DataSource {
       prompt: args.prompt,
       model: args.model,
       durationSec: args.durationSec,
-      startFrom: remote(args.sourceMediaId),
-      endOn: remote(args.endMediaId),
+      startFrom: args.sourceRef ?? remote(args.sourceMediaId),
+      endOn: args.endRef ?? remote(args.endMediaId),
       references,
       aspectRatio: args.aspectRatio,
       resolution: args.resolution,
@@ -687,6 +692,28 @@ export class LocalSource implements DataSource {
       ids.push(id);
     }
     return ids;
+  }
+
+  async uploadReference(nodeId: Id, from: File | { mediaId: Id }): Promise<UploadedRef> {
+    const gen = this.generator;
+    if (!gen?.upload) throw new Error("Conecta Magnific para usar archivos como referencia.");
+    const s = this.loaded();
+    const node = s.nodes.find((n) => n.id === nodeId);
+    if (!node) throw new Error("Ese plano ya no existe.");
+    const folder = this.providerPath(node);
+    if (from instanceof File) return { ref: (await gen.upload(from, folder)).id };
+    // Media of the production: once uploaded it keeps the provider's id.
+    const m = s.media.find((x) => x.id === from.mediaId);
+    if (!m) throw new Error("Esa versión ya no existe.");
+    if (m.remote?.id && m.remote.provider === gen.provider) return { ref: m.remote.id };
+    const url = this.withUrl(m, s).url;
+    if (!url) throw new Error("No se encuentra el archivo de esa versión.");
+    const blob = await (await fetch(url)).blob();
+    const ext = (m.file?.split(".").pop() ?? blob.type.split("/")[1] ?? "bin").toLowerCase();
+    const file = new File([blob], m.file ?? `${m.id}.${ext}`, { type: blob.type || (m.kind === "image" ? "image/png" : m.kind === "video" ? "video/mp4" : "audio/mpeg") });
+    const { id } = await gen.upload(file, folder);
+    this.updateMedia(m.id, { remote: { provider: gen.provider, id } });
+    return { ref: id };
   }
 
   async browseCreations(q: BrowseQuery): Promise<BrowsePage> {

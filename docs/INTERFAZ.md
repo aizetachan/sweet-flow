@@ -64,14 +64,30 @@ aplicación completa con **menú lateral**:
 
 ### 1.1 Ajustes
 
-Se gestionan desde el dashboard:
+En el dashboard están los ajustes generales:
 
 - **Perfil:** nombre y email (el avatar sale del nombre).
 - **Almacenamiento:** dónde se guardan ahora las producciones y la conexión
-  con la carpeta del equipo en **Dropbox** o **Google Drive** (próximamente).
-- **Integraciones:** **Magnific**, con la cuenta de cada persona
-  (próximamente).
+  con la carpeta del equipo en **Dropbox** o **Google Drive**.
+- **Integraciones:** **Magnific**, con la cuenta de cada persona.
+- **Modelos:** qué modelos aparecen al generar, por tipo (imagen, vídeo,
+  audio), con lo que admite cada uno y un filtro. La lista es el catálogo de
+  Magnific leído en vivo (se relee cada 12 h o con **Actualizar**); sin
+  Magnific conectada, la copia del 18 oct 2026. Por defecto se ven los que ya
+  había; los nuevos se activan aquí. **Restablecer** vuelve a los de por
+  defecto. Lo ya generado con un modelo oculto no cambia. Se guarda en este
+  ordenador.
 - **Acerca de:** versión y origen de los datos.
+
+**Dentro de la producción**, el botón de ajustes del dock abre una ventana
+**Ajustes** sin salir de ella, con dos grupos:
+- **Esta producción:** Niveles, Estados y Vista («Mostrar códigos»).
+- **General:** Perfil, Modelos e Integraciones (los mismos que en el
+  dashboard).
+- La carpeta del equipo y «Acerca de» siguen en el dashboard (cambiar de
+  carpeta cierra la producción); un enlace abajo lleva allí. Los accesos a
+  perfil, integraciones, niveles y estados (menú del avatar, «Editar» del
+  árbol, «Editar estados…») abren esta misma ventana.
 
 Lo que aún no funciona se muestra con lo que hará y la etiqueta
 "Próximamente"; nunca como un botón que no hace nada.
@@ -313,23 +329,32 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
 Como el generador de Magnific, pero con el visor y las versiones debajo (o a la
 derecha en la ventana aparte). De arriba abajo:
 - **Imagen · Vídeo · Audio** como tres botones de solo icono (el nombre al
-  pasar el ratón) y, en la misma fila a la derecha, el **modelo**. Cada uno ofrece **solo lo que permite** (catálogo de Magnific del
-  18 oct 2026, en `data/models.ts`):
-  - Imagen: Nano Banana Pro, Seedream 5 Pro, Recraft V4.1, Nano Banana 2 Lite,
-    GPT 2, Auto.
-  - Vídeo: Auto, Seedance 2.5, Seedance 2.0, Seedance 2.0 Fast, Kling 2.5,
-    MiniMax H3 Max y H3 Max Turbo.
-  - Audio: ElevenLabs Music v2 y v1, Google Lyria 3 Pro y 3, y efectos de
-    sonido (ElevenLabs).
+  pasar el ratón) y, en la misma fila a la derecha, el **modelo**: los
+  elegidos en Ajustes › Modelos. Cada uno ofrece **solo lo que permite**,
+  según el catálogo de Magnific leído en vivo (`integrations/magnific/catalog.ts`;
+  sin conexión, la copia de `data/models.ts`). Quedan fuera los modelos
+  internos de Magnific y los que necesitan algo que la caja no tiene (un vídeo
+  que mover, una pista de voz). El audio no viene en el catálogo: ElevenLabs
+  Music v2 y v1, Google Lyria 3 Pro y 3, y efectos de sonido (ElevenLabs).
 - **Referencias** (si el modelo las admite), con el contador «n/máx»:
   - Imagen: **Estilo** y **Añadir** (imágenes). Recraft solo admite estilo.
   - Vídeo: **Imagen inicial**, **Imagen final** (con inicial) y, debajo, una
     fila ancha **Añadir media** con los iconos de lo que admite el modelo
-    (imagen, vídeo, audio). Solo en los modelos con referencias (Seedance
-    2.5, 2.0 y 2.0 Fast, MiniMax H3 Max); Kling, H3 Max Turbo y Auto no. Los fotogramas y las referencias no se
-    combinan: al usar uno, el otro se desactiva con el motivo.
+    (imagen, vídeo, audio), solo en los modelos con referencias. Los
+    fotogramas y las referencias no se combinan: al usar uno, el otro se
+    desactiva con el motivo.
   - Se eligen de lo que ya hay en la producción (primero este plano, luego su
-    escena, luego el resto). Solo lo generado con Magnific se puede mandar.
+    escena, luego el resto) o **del ordenador**, como en Magnific: **Subir del
+    ordenador** en la lista de cada hueco, o **arrastrar archivos** sobre un
+    hueco (va ahí) o sobre las referencias (cada uno donde lo admite el
+    modelo: referencias primero, luego imagen inicial y final).
+  - Lo del ordenador se sube a Magnific al momento, a la carpeta del plano
+    allí; el hueco lo muestra con un indicador mientras sube y **Generar**
+    espera («Subiendo referencias…»). Si falla, el hueco queda marcado y hay
+    que quitarlo o cambiarlo. No se guarda en la producción.
+  - Lo de la producción que Magnific no tiene (importado del ordenador) se
+    sube la primera vez que se elige y guarda su referencia: no se vuelve a
+    subir.
 - **Prompt.** Vacío usa el de la secuencia, escena y plano.
 - **Ajustes del modelo**, en pastillas sin flecha (al pulsarlas se abre la lista): número de versiones (−/+), duración,
   proporción, resolución, sonido ON/OFF (vídeos con sonido), instrumental

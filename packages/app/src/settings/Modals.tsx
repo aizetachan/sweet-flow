@@ -1,21 +1,77 @@
 import { useState } from "react";
-import { IconArrowDown, IconArrowUp, IconArchive, IconBolt, IconLink, IconMail, IconPlugConnected, IconPlus } from "@tabler/icons-react";
+import { IconArrowDown, IconArrowUp, IconArchive, IconBolt, IconCircleDot, IconCpu, IconEye, IconLink, IconMail, IconPlugConnected, IconPlus, IconStack2, IconUser } from "@tabler/icons-react";
 import { codeFor, folderName, ROLE_LABEL, safeTitle, type LevelDef, type Role, type StatusCategory, type StatusDef } from "@sweetflow/domain";
-import { Avatar, Button, IconButton, Modal, Pill } from "@sweetflow/ui";
+import { Avatar, Button, cx, IconButton, Modal, Pill } from "@sweetflow/ui";
+import { Integrations, ModelsSettings, Profile } from "../dashboard/Settings";
 import { useMagnific } from "../integrations/magnific/useMagnific";
-import { useSnap, useStore } from "../state/store";
+import { useSnap, useStore, type SettingsTab } from "../state/store";
 import { newId } from "../data/mock/seed";
 
 export function Modals() {
   const modal = useStore((s) => s.modal);
   const set = useStore((s) => s.set);
   const close = () => set({ modal: null });
-  if (modal === "levels") return <LevelsModal onClose={close} />;
-  if (modal === "statuses") return <StatusesModal onClose={close} />;
+  if (modal === "settings") return <ProductionSettings onClose={close} />;
   if (modal === "invite") return <InviteModal onClose={close} />;
   if (modal === "team") return <TeamModal onClose={close} />;
   if (modal === "notes") return <NotesModal onClose={close} />;
   return null;
+}
+
+/**
+ * Ajustes inside the production (docs/INTERFAZ.md §1.1): this production's
+ * own settings, and the general ones that don't need to leave it (profile,
+ * models, integrations). The team folder and «Acerca de» stay in the
+ * dashboard: changing the folder closes the production.
+ */
+const PROD_TABS: Array<{ group: string; tabs: Array<{ id: SettingsTab; label: string; icon: typeof IconUser }> }> = [
+  { group: "Esta producción", tabs: [
+    { id: "levels", label: "Niveles", icon: IconStack2 },
+    { id: "statuses", label: "Estados", icon: IconCircleDot },
+    { id: "view", label: "Vista", icon: IconEye },
+  ] },
+  { group: "General", tabs: [
+    { id: "profile", label: "Perfil", icon: IconUser },
+    { id: "models", label: "Modelos", icon: IconCpu },
+    { id: "integrations", label: "Integraciones", icon: IconPlugConnected },
+  ] },
+];
+
+function ProductionSettings({ onClose }: { onClose: () => void }) {
+  const tab = useStore((s) => s.settingsTab);
+  const lib = useStore((s) => s.lib);
+  const set = useStore((s) => s.set);
+  const known = PROD_TABS.flatMap((g) => g.tabs).some((t) => t.id === tab);
+  const on = known ? tab : "levels";
+  return (
+    <Modal title="Ajustes" onClose={onClose} width={1000}>
+      <div className="psettings">
+        <nav className="psettings__nav">
+          {PROD_TABS.map((g) => (
+            <div key={g.group} className="psettings__group">
+              <div className="psettings__label">{g.group}</div>
+              {g.tabs.map((t) => (
+                <button key={t.id} className={cx("settings__tab", on === t.id && "settings__tab--on")} onClick={() => set({ settingsTab: t.id })}>
+                  <t.icon size={16} stroke={1.6} /> {t.label}
+                </button>
+              ))}
+            </div>
+          ))}
+          <button className="psettings__more link" onClick={() => { onClose(); set({ dashSection: "settings", settingsTab: "storage" }); useStore.getState().requestLeave(); }}>
+            Carpeta del equipo y más ajustes en el inicio →
+          </button>
+        </nav>
+        <div className="psettings__body">
+          {on === "levels" ? <><h2 className="psettings__title">Niveles</h2><LevelsBody /></> : null}
+          {on === "statuses" ? <><h2 className="psettings__title">Estados</h2><StatusesBody /></> : null}
+          {on === "view" ? <><h2 className="psettings__title">Vista</h2><ShowCodesSetting /></> : null}
+          {on === "profile" && lib ? <Profile lib={lib} /> : null}
+          {on === "models" ? <ModelsSettings /> : null}
+          {on === "integrations" ? <Integrations /> : null}
+        </div>
+      </div>
+    </Modal>
+  );
 }
 
 /**
@@ -63,7 +119,7 @@ function NotesModal({ onClose }: { onClose: () => void }) {
  */
 function TeamModal({ onClose }: { onClose: () => void }) {
   const snap = useSnap();
-  const { set, requestLeave } = useStore();
+  const { set } = useStore();
   const demo = useStore((s) => s.lib?.mode === "demo");
   const real = useMagnific();
   const mag = demo ? { connected: snap.me.magnificConnected, credits: snap.me.magnificCredits } : real;
@@ -79,7 +135,7 @@ function TeamModal({ onClose }: { onClose: () => void }) {
         </div>
         {mag.connected && mag.credits !== undefined ? <span className="credits"><IconBolt size={15} /> {mag.credits.toLocaleString("es-ES")}</span> : null}
         {!demo ? (
-          <Button size="sm" onClick={() => { onClose(); set({ dashSection: "settings", settingsTab: "integrations" }); requestLeave(); }}>
+          <Button size="sm" onClick={() => set({ modal: "settings", settingsTab: "integrations" })}>
             <IconPlugConnected size={14} /> {mag.connected ? "Gestionar" : "Conectar Magnific"}
           </Button>
         ) : null}
@@ -104,7 +160,7 @@ function TeamModal({ onClose }: { onClose: () => void }) {
   );
 }
 
-function LevelsModal({ onClose }: { onClose: () => void }) {
+function LevelsBody() {
   const snap = useSnap();
   const { source, set } = useStore();
   const levels = snap.production.levels;
@@ -112,8 +168,7 @@ function LevelsModal({ onClose }: { onClose: () => void }) {
   const sample = levels.map((l, i) => folderName(codeFor(l, l.step), ["Apertura", "Persecución en el puerto", "Plano general", "Detalle"][i] ?? l.name)).join("/");
 
   return (
-    <Modal title="Niveles de la producción" onClose={onClose} width={780}>
-      <ShowCodesSetting />
+    <>
       <p className="sf-muted modal-lead">
         Cada nivel es una carpeta, en la app y en el disco. El último es la unidad de trabajo (las cards).
         Los niveles que <b>generan</b> son puntos de producción: una escena puede producir 30 s, cortarlos y repartirlos a sus planos.
@@ -139,13 +194,13 @@ function LevelsModal({ onClose }: { onClose: () => void }) {
           <IconPlus size={13} /> Añadir nivel arriba (p. ej. Episodio)
         </Button>
         <span className="modal-row__spacer" />
-        <Button size="sm" variant="ghost" onClick={() => set({ modal: "statuses" })}>Editar estados →</Button>
+        <Button size="sm" variant="ghost" onClick={() => set({ settingsTab: "statuses" })}>Editar estados →</Button>
       </div>
       <div className="pathpreview">
         <span className="sf-faint sf-small">Así se verá en la carpeta del escritorio (macOS y Windows):</span>
         <code>…/{safeTitle(snap.production.name, 60)}/{sample}/</code>
       </div>
-    </Modal>
+    </>
   );
 }
 
@@ -156,7 +211,7 @@ const CATS: Array<{ id: StatusCategory; label: string }> = [
   { id: "done", label: "Terminado" },
 ];
 
-function StatusesModal({ onClose }: { onClose: () => void }) {
+function StatusesBody() {
   const snap = useSnap();
   const { source } = useStore();
   const list = [...snap.production.statuses].sort((a, b) => a.order - b.order);
@@ -172,7 +227,7 @@ function StatusesModal({ onClose }: { onClose: () => void }) {
   const inUse = (id: string) => snap.nodes.filter((n) => n.statusId === id).length;
 
   return (
-    <Modal title="Estados" onClose={onClose} width={640}>
+    <>
       <p className="sf-muted modal-lead">
         El orden es solo visual: cualquier plano puede pasar de un estado a otro, también hacia atrás (p. ej. de Aprobado a Retake). Cada cambio queda en la actividad.
       </p>
@@ -194,7 +249,7 @@ function StatusesModal({ onClose }: { onClose: () => void }) {
       <Button size="sm" onClick={() => save([...list, { id: newId("st"), name: "Nuevo estado", color: "#9c82e5", category: "active", order: list.length }])}>
         <IconPlus size={13} /> Añadir estado
       </Button>
-    </Modal>
+    </>
   );
 }
 

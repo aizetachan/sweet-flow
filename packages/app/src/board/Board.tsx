@@ -264,7 +264,7 @@ function Lane({ row }: { row: ProdNode }) {
         {/* The status changes right here, like on a card: a click opens the list (the row does not fold). */}
         <span className="lane__status" onClick={(e) => e.stopPropagation()}>
           <StatusPicker floating statuses={p.statuses} value={row.statusId} onChange={(id) => useStore.getState().source.updateNode(row.id, { statusId: id })}
-            onEdit={() => useStore.getState().set({ modal: "statuses" })} />
+            onEdit={() => useStore.getState().set({ modal: "settings", settingsTab: "statuses" })} />
         </span>
         <HeadInfo node={row} />
         {viewers.length ? <AvatarStack names={viewers} size={18} /> : null}
@@ -463,7 +463,7 @@ function UnitCard({ node, inRow, hint }: { node: ProdNode; inRow?: boolean; hint
         {/* The status changes right here: a click opens the list (the card is not selected). */}
         <span className="card__status" draggable={false} onClick={(e) => e.stopPropagation()} onDragStart={(e) => { e.preventDefault(); e.stopPropagation(); }}>
           <StatusPicker floating statuses={p.statuses} value={node.statusId} onChange={(id) => source.updateNode(node.id, { statusId: id })}
-            onEdit={() => useStore.getState().set({ modal: "statuses" })} />
+            onEdit={() => useStore.getState().set({ modal: "settings", settingsTab: "statuses" })} />
         </span>
       </div>
       {/* Second line: code and who is on it on the left; notes and length on the right. No third line. */}
@@ -502,7 +502,7 @@ function StatusRow({ statuses, current, onPick, label = "Estado" }: { statuses: 
     <div className="ctxmenu__status">
       <span className="sf-muted sf-small">{label}</span>
       <StatusPicker floating statuses={statuses} value={current} placeholder={current ? undefined : "Varios"} onChange={onPick}
-        onEdit={() => useStore.getState().set({ modal: "statuses" })} />
+        onEdit={() => useStore.getState().set({ modal: "settings", settingsTab: "statuses" })} />
     </div>
   );
 }

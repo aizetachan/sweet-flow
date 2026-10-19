@@ -165,9 +165,10 @@ Anotadas el 15 oct 2026, pendientes de que el usuario elija orden:
 
 ### Generar: siguientes pasos
 
-- Leer el catálogo de modelos de Magnific en vivo (ahora es una copia del 18 oct 2026 en `data/models.ts`).
+- ✅ Catálogo de modelos de Magnific en vivo y elección de modelos en Ajustes › Modelos (19 oct 2026). Pendiente: que la elección sea del equipo (hoy, de cada ordenador).
+- ✅ Referencias del ordenador: subir o arrastrar archivos, que se suben a Magnific (19 oct 2026).
 - Voz (TTS) con elección de voz; referencia de vídeo para la música; movimiento de cámara y multiplano en Seedance.
-- Subir a Magnific una imagen local para usarla como referencia.
+- Referencias de personaje, producto y localización de Magnific (su biblioteca), junto con la biblioteca editable.
 
 ### Formato de la producción
 

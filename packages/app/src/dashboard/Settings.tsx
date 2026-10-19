@@ -5,7 +5,7 @@
  */
 
 import { useEffect, useState, type ReactNode } from "react";
-import { IconBolt, IconBrandDropbox, IconCheck, IconBrandGoogleDrive, IconDeviceDesktop, IconFolder, IconFolderOpen, IconFolders, IconInfoCircle, IconPlugConnected, IconUser } from "@tabler/icons-react";
+import { IconBolt, IconBrandDropbox, IconCheck, IconCpu, IconRefresh, IconBrandGoogleDrive, IconDeviceDesktop, IconFolder, IconFolderOpen, IconFolders, IconInfoCircle, IconPlugConnected, IconUser } from "@tabler/icons-react";
 import { Avatar, Button, cx } from "@sweetflow/ui";
 import type { LibraryState } from "../data/library";
 import { openTeamFolder, storageStatus, switchToBrowserStorage } from "../data";
@@ -13,11 +13,14 @@ import * as magnific from "../integrations/magnific/auth";
 import { callTool, type ToolResult } from "../integrations/magnific/mcp";
 import { forgetLocalFolder, localFoldersSupported, pickLocalFolder, reconnectLocalFolder } from "../data/folder/browserFs";
 import { useStore, type SettingsTab } from "../state/store";
+import { allModelsFor, catalogReadAt, isShown, resetShown, setShown, useModelsVersion, type GenKind, type ModelSpec } from "../data/models";
+import { refreshCatalog } from "../integrations/magnific/catalog";
 
 const TABS: Array<{ id: SettingsTab; label: string; icon: typeof IconUser }> = [
   { id: "profile", label: "Perfil", icon: IconUser },
   { id: "storage", label: "Almacenamiento", icon: IconFolders },
   { id: "integrations", label: "Integraciones", icon: IconPlugConnected },
+  { id: "models", label: "Modelos", icon: IconCpu },
   { id: "about", label: "Acerca de", icon: IconInfoCircle },
 ];
 
@@ -40,6 +43,7 @@ export function Settings({ lib }: { lib: LibraryState }) {
           {settingsTab === "profile" ? <Profile lib={lib} /> : null}
           {settingsTab === "storage" ? <Storage lib={lib} /> : null}
           {settingsTab === "integrations" ? <Integrations /> : null}
+          {settingsTab === "models" ? <ModelsSettings /> : null}
           {settingsTab === "about" ? <About lib={lib} /> : null}
         </div>
       </div>
@@ -57,7 +61,7 @@ function Section({ title, hint, children }: { title: string; hint?: string; chil
   );
 }
 
-function Profile({ lib }: { lib: LibraryState }) {
+export function Profile({ lib }: { lib: LibraryState }) {
   const library = useStore((s) => s.library);
   const [name, setName] = useState(lib.me.displayName);
   const [email, setEmail] = useState(lib.me.email);
@@ -187,7 +191,7 @@ function LocalFolder({ lib }: { lib: LibraryState }) {
   );
 }
 
-function Integrations() {
+export function Integrations() {
   return (
     <Section title="Integraciones" hint="Cada persona conecta su propia cuenta: lo que genera gasta sus créditos, y el resultado lo ve todo el equipo.">
       <MagnificCard />
@@ -265,6 +269,85 @@ function Connection({ icon, name, detail }: { icon: ReactNode; name: string; det
       <span className="sbadge">Próximamente</span>
       <Button size="sm" disabled title="Próximamente">Conectar</Button>
     </div>
+  );
+}
+
+const KINDS: Array<{ id: GenKind; label: string }> = [
+  { id: "image", label: "Imagen" },
+  { id: "video", label: "Vídeo" },
+  { id: "audio", label: "Audio" },
+];
+
+/** What a model allows, in a few words. */
+function modelFacts(m: ModelSpec): string {
+  const d = m.durations;
+  return [
+    d?.length ? (d.length === 1 ? `${d[0]} s` : `${d[0]}–${d.at(-1)} s`) : null,
+    m.resolutions?.join(" · "),
+    m.references ? `hasta ${m.references.max} referencias` : null,
+    m.startFrame ? (m.endFrame ? "imagen inicial y final" : "imagen inicial") : null,
+    m.sound ? "sonido" : null,
+  ].filter(Boolean).join(" · ");
+}
+
+/**
+ * Which models show when generating (docs/INTERFAZ.md §1.1). The list comes
+ * from Magnific's catalog when it is connected; a setting of this computer.
+ */
+export function ModelsSettings() {
+  useModelsVersion();
+  const [filter, setFilter] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const connected = magnific.isConnected();
+  const at = catalogReadAt();
+  useEffect(() => {
+    refreshCatalog().catch(() => undefined);
+  }, []);
+  const update = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await refreshCatalog(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const q = filter.trim().toLowerCase();
+  return (
+    <Section title="Modelos" hint="Elige qué modelos aparecen al generar. Los que no marques siguen disponibles aquí; lo que ya se generó con ellos no cambia. Se guarda en este ordenador.">
+      <div className="smodels__bar">
+        <span className="sf-muted sf-small">
+          {at ? `Catálogo de Magnific leído el ${new Date(at).toLocaleString("es-ES", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}.` : connected ? "Leyendo el catálogo de Magnific…" : "Copia del catálogo de Magnific del 18 oct 2026. Conecta Magnific para leerlo en vivo."}
+        </span>
+        <span className="scard__spacer" />
+        <input className="sf-input smodels__filter" placeholder="Filtrar" value={filter} onChange={(e) => setFilter(e.target.value)} />
+        {connected ? <Button size="sm" disabled={busy} onClick={() => void update()}><IconRefresh size={14} /> {busy ? "Actualizando…" : "Actualizar"}</Button> : null}
+        <Button size="sm" variant="ghost" onClick={resetShown} title="Volver a los modelos que se muestran por defecto">Restablecer</Button>
+      </div>
+      {error ? <p className="sf-small" style={{ color: "var(--bad)" }}>{error}</p> : null}
+      {KINDS.map((k) => {
+        const all = allModelsFor(k.id);
+        const list = all.filter((m) => !q || m.name.toLowerCase().includes(q) || (m.slug ?? "").includes(q));
+        if (!list.length) return null;
+        return (
+          <div key={k.id} className="smodels__kind">
+            <h3>{k.label} <span className="sf-faint">{all.filter(isShown).length} de {all.length}</span></h3>
+            <div className="smodels__list">
+              {list.map((m) => (
+                <label key={m.slug ?? m.name} className="smodels__row">
+                  <input type="checkbox" checked={isShown(m)} onChange={(e) => setShown(m, e.target.checked)} />
+                  <span className="smodels__name">{m.name}</span>
+                  <span className="sf-faint sf-small smodels__facts">{modelFacts(m)}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </Section>
   );
 }
 

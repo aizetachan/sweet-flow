@@ -52,6 +52,8 @@ export interface Generator {
   download(url: string): Promise<Blob>;
   /** A URL this page can show for one of the provider's files. */
   viewUrl(url: string): string;
+  /** Uploads a file to the provider, in the folder for `folderPath`; resolves with its id there. */
+  upload?(file: File, folderPath: string[]): Promise<{ id: string }>;
   /** This person's creations and folders there, to import them. */
   browse?(q: BrowseQuery): Promise<BrowsePage>;
   folders?(parent: string | null): Promise<RemoteFolder[]>;

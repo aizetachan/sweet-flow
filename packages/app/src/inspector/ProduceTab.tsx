@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type DragEvent, type ReactNode } from "react";
 import {
   IconFileImport,
   IconArchiveOff, IconArrowUpRight, IconAspectRatio, IconMessagePlus, IconBolt, IconCheck, IconClock, IconCut, IconMusic, IconPhoto, IconPhotoDown, IconPhotoScan,
-  IconPhotoUp, IconPlus, IconRepeat, IconSparkles, IconTrash, IconVideo, IconVolume, IconVolumeOff, IconWand, IconX,
+  IconPhotoUp, IconPlus, IconRepeat, IconSparkles, IconTrash, IconUpload, IconVideo, IconVolume, IconVolumeOff, IconWand, IconX,
 } from "@tabler/icons-react";
 import {
   ancestorsOf,
@@ -17,13 +17,14 @@ import {
   type ProdNode,
   type Take,
 } from "@sweetflow/domain";
-import { Avatar, Button, cx } from "@sweetflow/ui";
+import { Avatar, Button, cx, Spinner } from "@sweetflow/ui";
 import { useSnap, useStore } from "../state/store";
 import { usePanel } from "./panel";
 import { OnStage } from "./stage";
 import { memberName } from "../state/selectors";
-import { modelsFor, nearest, REF_LABEL, specOf, type GenKind, type RefType } from "../data/models";
-import type { GenerateArgs } from "../data/source";
+import { modelsFor, nearest, REF_LABEL, specOf, useModelsVersion, type GenKind, type RefType } from "../data/models";
+import { refreshCatalog } from "../integrations/magnific/catalog";
+import { kindOfFile, type GenerateArgs } from "../data/source";
 import { Popover } from "../components/Popover";
 import { Composer } from "./ReviewTab";
 import { hasFiles, runImport } from "../components/ImportDialog";
@@ -237,6 +238,15 @@ function GenerateBox({ node }: { node: ProdNode }) {
   const unit = isUnit(snap.production, node);
   const [kind, setKind] = useState<GenKind>(unit ? "image" : "video");
   const [model, setModel] = useState(modelsFor(kind)[0]!.name);
+  // The live catalog and the models chosen in Ajustes › Modelos.
+  useModelsVersion();
+  useEffect(() => {
+    refreshCatalog().catch((e: unknown) => console.warn("[models]", e));
+  }, []);
+  const shown = modelsFor(kind);
+  useEffect(() => {
+    if (!shown.some((m) => m.name === model)) setModel(shown[0]!.name);
+  }, [shown, model]);
   const spec = specOf(kind, model);
   const [prompt, setPrompt] = useState("");
   const [count, setCount] = useState(1);
@@ -248,7 +258,9 @@ function GenerateBox({ node }: { node: ProdNode }) {
   const [loop, setLoop] = useState(false);
   const [start, setStart] = useState<Id | null>(null);
   const [end, setEnd] = useState<Id | null>(null);
+  // Each slot holds a media id of the production, or an «up:» key of a file being sent (`ups`).
   const [refs, setRefs] = useState<Array<{ type: RefType; mediaId: Id }>>([]);
+  const ref = useRefFiles(node);
 
   // Video lengths: what the model allows, up to this level's maximum (Ajustes › Niveles).
   const durations = useMemo(() => {
@@ -283,10 +295,43 @@ function GenerateBox({ node }: { node: ProdNode }) {
     ...(spec.sound ? { sound } : {}),
     ...(spec.instrumental ? { instrumental } : {}),
     ...(spec.loop ? { loop } : {}),
-    ...(start ? { sourceMediaId: start } : {}),
-    ...(start && end ? { endMediaId: end } : {}),
-    ...(refs.length ? { references: refs } : {}),
+    ...(start ? (isUp(start) ? { sourceRef: ref.ups[start]?.ref } : { sourceMediaId: start }) : {}),
+    ...(start && end ? (isUp(end) ? { endRef: ref.ups[end]?.ref } : { endMediaId: end }) : {}),
+    ...(refs.length ? { references: refs.map((r) => (isUp(r.mediaId) ? { type: r.type, ref: ref.ups[r.mediaId]?.ref } : r)) } : {}),
   });
+  // Files still on their way to the provider (or that failed) hold Generate back.
+  const inUse = [start, start ? end : null, ...refs.map((r) => r.mediaId)].filter((v): v is string => !!v);
+  const waiting = inUse.some((v) => (isUp(v) ? !ref.ups[v]?.ref : ref.sending.includes(v)));
+  const failed = inUse.some((v) => isUp(v) && !!ref.ups[v]?.error);
+
+  /** Files dropped on the references: each where the model takes it (references first, then the frames). */
+  const dropFiles = (files: File[]) => {
+    let list = refs;
+    let s0 = start;
+    let e0 = end;
+    const max = spec.references?.max ?? 0;
+    for (const f of files) {
+      const k = kindOfFile(f);
+      if (!k) {
+        useStore.getState().notify(`${f.name}: solo imágenes, vídeos y audios.`);
+        continue;
+      }
+      const t: RefType = k;
+      if (refTypes.includes(t) && !s0 && list.length < max) {
+        const key = ref.send(f);
+        list = [...list, { type: t, mediaId: key }];
+      } else if (k === "image" && spec.startFrame && !list.length && !s0) {
+        s0 = ref.send(f);
+      } else if (k === "image" && spec.endFrame && s0 && !e0) {
+        e0 = ref.send(f);
+      } else {
+        useStore.getState().notify(`${spec.name} no admite más ${k === "image" ? "imágenes" : k === "video" ? "vídeos" : "audios"} como referencia.`);
+      }
+    }
+    setRefs(list);
+    setStart(s0);
+    setEnd(e0);
+  };
 
   const guess = (kind === "video" ? Math.round(dur * 9) : kind === "audio" ? Math.round(dur / 3) : 8) * count;
   const [cost, setCost] = useState<number | null>(null);
@@ -311,9 +356,8 @@ function GenerateBox({ node }: { node: ProdNode }) {
         <Button size="sm" variant="primary" onClick={() => {
           const st = useStore.getState();
           if (st.lib?.mode === "demo") return st.set({ modal: "team" });
-          // Connected from the dashboard's Settings › Integrations.
-          st.set({ dashSection: "settings", settingsTab: "integrations" });
-          st.requestLeave();
+          // Ajustes › Integraciones, without leaving the production.
+          st.set({ modal: "settings", settingsTab: "integrations" });
         }}>Conectar</Button>
       </div>
     );
@@ -338,7 +382,7 @@ function GenerateBox({ node }: { node: ProdNode }) {
           ))}
         </div>
         <select className="sf-select gen__model" value={model} onChange={(e) => setModel(e.target.value)} title="Modelo">
-          {modelsFor(kind).map((m) => <option key={m.name}>{m.name}</option>)}
+          {shown.map((m) => <option key={m.name}>{m.name}</option>)}
         </select>
       </div>
 
@@ -348,34 +392,35 @@ function GenerateBox({ node }: { node: ProdNode }) {
             Referencias
             {spec.references && refTypes.includes("image") ? <span className="sf-faint">{refs.length}/{spec.references.max}</span> : null}
           </div>
-          <div className="gen__refs">
+          <div className="gen__refs" {...fileDrop(dropFiles)}>
             {spec.startFrame ? (
-              <RefSlot label="Imagen inicial" icon={<IconPhotoUp size={16} />} accept={["image"]} node={node} value={start} disabled={refs.length > 0}
-                disabledHint="No se combina con referencias" onPick={(id) => setStart(id)} onClear={() => { setStart(null); setEnd(null); }} />
+              <RefSlot ctx={ref} label="Imagen inicial" icon={<IconPhotoUp size={16} />} accept={["image"]} node={node} value={start} disabled={refs.length > 0}
+                disabledHint="No se combina con referencias" onPick={(id) => setStart(id)} onFiles={([f]) => f && setStart(ref.send(f))} onClear={() => { setStart(null); setEnd(null); }} />
             ) : null}
             {spec.endFrame ? (
-              <RefSlot label="Imagen final" icon={<IconPhotoDown size={16} />} accept={["image"]} node={node} value={end} disabled={!start}
-                disabledHint="Primero la imagen inicial" onPick={(id) => setEnd(id)} onClear={() => setEnd(null)} />
+              <RefSlot ctx={ref} label="Imagen final" icon={<IconPhotoDown size={16} />} accept={["image"]} node={node} value={end} disabled={!start}
+                disabledHint="Primero la imagen inicial" onPick={(id) => setEnd(id)} onFiles={([f]) => f && setEnd(ref.send(f))} onClear={() => setEnd(null)} />
             ) : null}
             {refTypes.includes("style") ? (
-              <RefSlot label="Estilo" icon={<IconSparkles size={16} />} accept={["image"]} node={node}
+              <RefSlot ctx={ref} label="Estilo" icon={<IconSparkles size={16} />} accept={["image"]} node={node}
                 value={refs.find((r) => r.type === "style")?.mediaId ?? null} disabled={usesFrames} disabledHint="No se combina con imagen inicial"
                 onPick={(id) => setRefs([...refs.filter((r) => r.type !== "style"), { type: "style", mediaId: id }])}
+                onFiles={([f]) => f && kindOfFile(f) === "image" && setRefs([...refs.filter((r) => r.type !== "style"), { type: "style", mediaId: ref.send(f) }])}
                 onClear={() => setRefs(refs.filter((r) => r.type !== "style"))} />
             ) : null}
             {refs.filter((r) => r.type !== "style").map((r) => (
-              <RefSlot key={r.mediaId} label={REF_LABEL[r.type]} accept={[r.type === "audio" ? "audio" : r.type === "video" ? "video" : "image"]} node={node} value={r.mediaId}
+              <RefSlot ctx={ref} key={r.mediaId} label={REF_LABEL[r.type]} accept={[r.type === "audio" ? "audio" : r.type === "video" ? "video" : "image"]} node={node} value={r.mediaId}
                 onPick={() => undefined} onClear={() => setRefs(refs.filter((x) => x !== r))} />
             ))}
             {kind !== "video" && refTypes.some((t) => t !== "style") && refs.length < (spec.references?.max ?? 0) ? (
-              <RefSlot label="Añadir" icon={<IconPlus size={16} />} node={node} value={null} disabled={usesFrames} disabledHint="No se combina con imagen inicial"
+              <RefSlot ctx={ref} label="Añadir" icon={<IconPlus size={16} />} node={node} value={null} disabled={usesFrames} disabledHint="No se combina con imagen inicial" onFiles={dropFiles}
                 accept={refTypes.filter((t) => t !== "style").map((t) => (t === "audio" ? "audio" : t === "video" ? "video" : "image"))}
                 onPick={(id, k) => setRefs([...refs, { type: k === "video" ? "video" : k === "audio" ? "audio" : "image", mediaId: id }])} onClear={() => undefined} />
             ) : null}
           </div>
           {/* Video: like Magnific, «Añadir media» is its own wide row under the frames, with what the model takes. */}
           {kind === "video" && refTypes.length > 0 && refs.length < (spec.references?.max ?? 0) ? (
-            <RefSlot wide label="Añadir media" node={node} value={null} disabled={usesFrames} disabledHint="No se combina con imagen inicial ni final"
+            <RefSlot ctx={ref} wide label="Añadir media" node={node} value={null} disabled={usesFrames} disabledHint="No se combina con imagen inicial ni final" onFiles={dropFiles}
               icon={<span className="gen__media-icons">
                 {refTypes.includes("image") ? <span><IconPhoto size={14} /></span> : null}
                 {refTypes.includes("video") ? <span><IconVideo size={14} /></span> : null}
@@ -436,14 +481,15 @@ function GenerateBox({ node }: { node: ProdNode }) {
         ) : null}
       </div>
 
-      <Button variant="create" block onClick={() => {
+      {failed ? <p className="sf-small gen__warn">Una referencia no se ha podido subir: quítala o cámbiala.</p> : null}
+      <Button variant="create" block disabled={waiting || failed} title={waiting ? "Subiendo referencias a Magnific…" : undefined} onClick={() => {
         const p = prompt.trim() || fallback;
-        if (!p) return;
+        if (!p || waiting || failed) return;
         source.generate({ ...args(), prompt: p });
         setPanel({ activeMediaId: null, playhead: 0 });
         setPrompt("");
       }}>
-        <IconWand size={15} /> Generar{count > 1 ? ` ${count}` : ""}
+        <IconWand size={15} /> {waiting ? "Subiendo referencias…" : <>Generar{count > 1 ? ` ${count}` : ""}</>}
         <span className="gen__cost" title={cost === null && source.estimate ? "Calculando el coste…" : "Créditos que gasta"}><IconBolt size={12} /> {cost ?? (source.estimate ? "…" : guess)}</span>
       </Button>
     </section>
@@ -452,12 +498,87 @@ function GenerateBox({ node }: { node: ProdNode }) {
 
 type Pickable = "image" | "video" | "audio";
 
+/** A file of this computer on its way to the provider, as a reference. */
+interface RefUpload {
+  kind: Pickable;
+  name: string;
+  preview: string;
+  ref?: string;
+  error?: string;
+}
+
+const isUp = (v: string) => v.startsWith("up:");
+let upSeq = 0;
+
+/**
+ * References from this computer (docs/INTERFAZ.md §2.5), like Magnific's own
+ * box: a dropped or chosen file is sent to Magnific right away and its slot
+ * shows it meanwhile; media of the production that Magnific doesn't have yet
+ * is sent the first time it is picked.
+ */
+function useRefFiles(node: ProdNode) {
+  const source = useStore((s) => s.source);
+  const notify = useStore((s) => s.notify);
+  const [ups, setUps] = useState<Record<string, RefUpload>>({});
+  const [sending, setSending] = useState<Id[]>([]);
+  const fail = (e: unknown) => (e instanceof Error ? e.message : String(e));
+  useEffect(() => () => Object.values(ups).forEach((u) => URL.revokeObjectURL(u.preview)), []); // eslint-disable-line react-hooks/exhaustive-deps
+  return {
+    ups,
+    sending,
+    /** Starts sending a file; returns the key its slot holds. */
+    send(file: File): string {
+      const key = `up:${++upSeq}`;
+      setUps((u) => ({ ...u, [key]: { kind: kindOfFile(file) ?? "image", name: file.name, preview: URL.createObjectURL(file) } }));
+      source.uploadReference(node.id, file).then(
+        (r) => setUps((u) => (u[key] ? { ...u, [key]: { ...u[key]!, ref: r.ref } } : u)),
+        (e: unknown) => {
+          setUps((u) => (u[key] ? { ...u, [key]: { ...u[key]!, error: fail(e) } } : u));
+          notify(fail(e));
+        },
+      );
+      return key;
+    },
+    /** Media of the production picked: sent first if the provider doesn't have it. */
+    media(m: Media): void {
+      if (m.remote?.id) return;
+      setSending((l) => [...l, m.id]);
+      source.uploadReference(node.id, { mediaId: m.id })
+        .catch((e: unknown) => notify(fail(e)))
+        .finally(() => setSending((l) => l.filter((x) => x !== m.id)));
+    },
+  };
+}
+type RefCtx = ReturnType<typeof useRefFiles>;
+
+/** Accept files dragged from the computer. */
+function fileDrop(onFiles: (files: File[]) => void, on?: (over: boolean) => void) {
+  return {
+    onDragOver: (e: DragEvent) => {
+      if (!hasFiles(e.dataTransfer)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      e.dataTransfer.dropEffect = "copy";
+      on?.(true);
+    },
+    onDragLeave: () => on?.(false),
+    onDrop: (e: DragEvent) => {
+      if (!hasFiles(e.dataTransfer)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      on?.(false);
+      onFiles([...e.dataTransfer.files]);
+    },
+  };
+}
+
 /**
  * One reference slot: empty (dashed, its label), or the picked media with ×.
- * Picks from what the production has: this shot, its scene, then the rest.
- * Only media the provider made can be sent to it.
+ * Picks from what the production has (this shot, its scene, then the rest),
+ * or from this computer: «Subir del ordenador», or a file dropped on it.
  */
-function RefSlot({ label, icon, accept, node, value, disabled, disabledHint, onPick, onClear, wide }: {
+function RefSlot({ ctx, label, icon, accept, node, value, disabled, disabledHint, onPick, onFiles, onClear, wide }: {
+  ctx: RefCtx;
   /** The wide «Añadir media» row of videos. */
   wide?: boolean;
   label: string;
@@ -468,48 +589,70 @@ function RefSlot({ label, icon, accept, node, value, disabled, disabledHint, onP
   disabled?: boolean;
   disabledHint?: string;
   onPick: (mediaId: Id, kind: Pickable) => void;
+  onFiles?: (files: File[]) => void;
   onClear: () => void;
 }) {
   const snap = useSnap();
-  const demo = useStore((s) => s.lib?.mode === "demo");
-  const picked = value ? snap.media.find((m) => m.id === value) : undefined;
-  if (picked) {
+  const [over, setOver] = useState(false);
+  const input = useRef<HTMLInputElement>(null);
+  const drop = onFiles && !disabled ? fileDrop(onFiles, setOver) : {};
+  const up = value && isUp(value) ? ctx.ups[value] : undefined;
+  const picked = value && !up ? snap.media.find((m) => m.id === value) : undefined;
+  if (up || picked) {
+    const busy = up ? !up.ref && !up.error : ctx.sending.includes(value!);
     return (
-      <span className="gen__ref gen__ref--on" title={label}>
-        <Thumb media={picked} badge={false} />
-        <span className="gen__ref-label">{label}</span>
+      <span className={cx("gen__ref gen__ref--on", up?.error && "gen__ref--bad")} title={up ? `${label} · ${up.name}${up.error ? ` · ${up.error}` : ""}` : label} {...drop}>
+        {up ? (
+          <span className="thumb">{up.kind === "video" ? <video src={up.preview} muted /> : up.kind === "image" ? <img src={up.preview} alt="" /> : <IconMusic size={18} />}</span>
+        ) : <Thumb media={picked} badge={false} />}
+        {busy ? <span className="gen__ref-busy"><Spinner /></span> : null}
+        <span className="gen__ref-label">{up?.error ? "Error" : label}</span>
         <button className="gen__ref-x" aria-label="Quitar" onClick={onClear}><IconX size={11} /></button>
       </span>
     );
   }
   const where = (m: Media) => (m.nodeId === node.id ? 0 : m.nodeId === node.parentId || snap.nodes.find((n) => n.id === m.nodeId)?.parentId === node.parentId ? 1 : 2);
   const options = snap.media
-    .filter((m) => m.status === "ready" && !m.archived && accept.includes(m.kind as Pickable) && (demo || !!m.remote?.id))
+    .filter((m) => m.status === "ready" && !m.archived && accept.includes(m.kind as Pickable))
     .sort((a, b) => where(a) - where(b) || b.createdAt - a.createdAt)
     .slice(0, 48);
+  const mime = accept.map((k) => `${k}/*`).join(",");
   return (
     <Popover className="gen__picker" button={({ open, toggle }) => (
-      <button className={cx("gen__ref", wide && "gen__ref--wide", open && "is-on")} disabled={disabled} title={disabled ? disabledHint : `${label}: elegir de la producción`} onClick={toggle}>
+      <button className={cx("gen__ref", wide && "gen__ref--wide", (open || over) && "is-on")} disabled={disabled}
+        title={disabled ? disabledHint : `${label}: elige de la producción, súbelo del ordenador o arrastra un archivo aquí`} onClick={toggle} {...drop}>
         {icon ?? <IconPlus size={16} />}
         <span className="gen__ref-label">{label}</span>
       </button>
     )}>
-      <div className="menu__title">{label}</div>
-      {options.length ? (
-        <div className="gen__pick-grid">
-          {options.map((m) => {
-            const n = [...snap.nodes, ...snap.shelf].find((x) => x.id === m.nodeId);
-            return (
-              <button key={m.id} className="menu__item gen__pick" onClick={() => onPick(m.id, m.kind as Pickable)} title={n ? `${nameOf(snap.production, n)} ${versionTag(m.version)}` : ""}>
-                <Thumb media={m} badge={false} />
-                <span className="sf-small">{n ? nameOf(snap.production, n) : "—"} {versionTag(m.version)}</span>
-              </button>
-            );
-          })}
-        </div>
-      ) : (
-        <p className="sf-faint sf-small gen__pick-empty">Aún no hay {accept.map((k) => (k === "image" ? "imágenes" : k === "video" ? "vídeos" : "audios")).join(" ni ")} generados con Magnific en la producción.</p>
-      )}
+      <>
+          <div className="menu__title gen__pick-head">
+            {label}
+            {onFiles ? (
+              <>
+                <span className="grow" />
+                <button className="link gen__pick-upload" onClick={() => input.current?.click()}><IconUpload size={13} /> Subir del ordenador</button>
+                <input ref={input} type="file" hidden multiple={wide || label === "Añadir"} accept={mime}
+                  onChange={(e) => { const files = [...(e.target.files ?? [])]; e.target.value = ""; if (files.length) onFiles(files); }} />
+              </>
+            ) : null}
+          </div>
+          {options.length ? (
+            <div className="gen__pick-grid">
+              {options.map((m) => {
+                const n = [...snap.nodes, ...snap.shelf].find((x) => x.id === m.nodeId);
+                return (
+                  <button key={m.id} className="menu__item gen__pick" onClick={() => { ctx.media(m); onPick(m.id, m.kind as Pickable); }} title={n ? `${nameOf(snap.production, n)} ${versionTag(m.version)}` : ""}>
+                    <Thumb media={m} badge={false} />
+                    <span className="sf-small">{n ? nameOf(snap.production, n) : "—"} {versionTag(m.version)}</span>
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="sf-faint sf-small gen__pick-empty">Aún no hay {accept.map((k) => (k === "image" ? "imágenes" : k === "video" ? "vídeos" : "audios")).join(" ni ")} en la producción. Súbelo del ordenador o arrástralo aquí.</p>
+          )}
+      </>
     </Popover>
   );
 }

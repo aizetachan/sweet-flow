@@ -77,6 +77,11 @@ export interface MirrorState {
 }
 
 /** Something to bring in: a file from the computer, or a creation already at the provider. */
+/** A reference at the provider: what generations send it by. */
+export interface UploadedRef {
+  ref: string;
+}
+
 export type ImportItem = { file: File } | { creation: RemoteCreation };
 
 /** A creation at the provider (Magnific), as listed to import it. */
@@ -131,12 +136,14 @@ export interface GenerateArgs {
   /** Model name as in `data/models.ts`. */
   model: string;
   durationSec?: number;
-  /** Start frame (video). */
+  /** Start frame (video): media of the production, or a file sent with `uploadReference` (`sourceRef`). */
   sourceMediaId?: Id;
+  sourceRef?: string;
   /** End frame (video, with a start frame). */
   endMediaId?: Id;
-  /** Media of the production guiding it (style, images, videos, audio). */
-  references?: Array<{ type: RefType; mediaId: Id }>;
+  endRef?: string;
+  /** What guides it (style, images, videos, audio): media of the production, or uploaded files (`ref`). */
+  references?: Array<{ type: RefType; mediaId?: Id; ref?: string }>;
   /** How many results (one version each). */
   count?: number;
   aspectRatio?: string;
@@ -248,6 +255,13 @@ export interface DataSource {
   importMedia(nodeId: Id, item: ImportItem): Id;
   /** One new shot per item, placed in the row before `before` (the end when null), each with it as v001. Returns the new shots. */
   importShots(rowId: Id, items: ImportItem[], before: RowItem | null, groupId: Id | null): Id[];
+  /**
+   * Sends a file of this computer, or media of the production the provider
+   * doesn't have yet, to the provider to use as a reference (docs/INTERFAZ.md
+   * §2.5). A file stays at the provider, in the node's folder there; media of
+   * the production keeps the provider's id, so it is sent only once.
+   */
+  uploadReference(nodeId: Id, from: File | { mediaId: Id }): Promise<UploadedRef>;
   /** This person's creations at the provider (Magnific), to import; absent when there is no provider. */
   browseCreations?(q: BrowseQuery): Promise<BrowsePage>;
   /** Folders at the provider: its projects (`parent` null) or what is inside one. */

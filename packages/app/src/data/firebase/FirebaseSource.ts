@@ -67,7 +67,7 @@ import {
 } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
 import { getDownloadURL, ref as storageRef } from "firebase/storage";
-import { ALL_FEATURES, type DataSource, type GenerateArgs, type ImportItem, type MirrorState, type NewComment, type Placement, type Snapshot } from "../source";
+import { ALL_FEATURES, type DataSource, type GenerateArgs, type ImportItem, type MirrorState, type NewComment, type Placement, type Snapshot, type UploadedRef } from "../source";
 import { createClient, type FirebaseClient } from "./client";
 import { readFirebaseConfig } from "./config";
 import { NotImplemented } from "./errors";
@@ -364,6 +364,10 @@ export class FirebaseSource implements DataSource {
 
   importShots(_rowId: Id, _items: ImportItem[], _before: RowItem | null, _groupId: Id | null): Id[] {
     throw new NotImplemented("Importar", "etapa C");
+  }
+
+  uploadReference(_nodeId: Id, _from: File | { mediaId: Id }): Promise<UploadedRef> {
+    throw new NotImplemented("Referencias del ordenador", "etapa C");
   }
 
   unshelveNode(_nodeId: Id): number | undefined {

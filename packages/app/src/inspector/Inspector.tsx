@@ -220,7 +220,7 @@ function InspectorBody({ floatKey, onDragHandle }: { floatKey?: string; onDragHa
         {/* Row 2, under the title: the code (only with «Mostrar códigos»), the status and the notes; who works on it on the right. */}
         <div className="nhead__row nhead__row--code">
           {showCodes ? <CodeEditor node={node} /> : null}
-          <StatusPicker statuses={p.statuses} value={node.statusId} onChange={(id) => source.updateNode(node.id, { statusId: id })} onEdit={() => set({ modal: "statuses" })} />
+          <StatusPicker statuses={p.statuses} value={node.statusId} onChange={(id) => source.updateNode(node.id, { statusId: id })} onEdit={() => set({ modal: "settings", settingsTab: "statuses" })} />
           <button className={cx("notes__btn", node.notes.trim() && "notes__btn--on")} title={node.notes.trim() ? node.notes : "Escribir notas: acción, diálogo, dirección (base del prompt)"}
             onClick={() => set({ modal: "notes", notesFor: node.id })}>
             <IconNote size={13} /> Notas

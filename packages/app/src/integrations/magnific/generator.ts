@@ -22,6 +22,9 @@ const FAILED = new Set(["failed", "error", "errored", "cancelled", "canceled", "
 
 const FOLDERS_KEY = "sweetflow:magnific:folders";
 
+/** What creations_request_upload takes. */
+const UPLOAD_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "video/mp4", "video/quicktime", "video/webm", "video/x-m4v", "audio/wav", "audio/x-wav", "audio/mpeg", "audio/mp4", "audio/ogg", "audio/flac"]);
+
 export class MagnificGenerator implements Generator {
   readonly provider = "magnific";
 
@@ -46,6 +49,26 @@ export class MagnificGenerator implements Generator {
       folder = await this.folder(req.folderPath);
       return { id: await this.launch(req, folder), folder };
     }
+  }
+
+  /**
+   * A file of this computer as a creation in the node's folder, to use as a
+   * reference: ask for an upload target, send the bytes there, then turn it
+   * into a creation (creations_request_upload / creations_finalize_upload).
+   */
+  async upload(file: File, folderPath: string[]): Promise<{ id: string }> {
+    const type = file.type === "image/jpg" ? "image/jpeg" : file.type;
+    if (!UPLOAD_TYPES.has(type)) throw new Error(`Magnific no acepta este tipo de archivo (${file.name}).`);
+    const folder = await this.folder(folderPath);
+    const target = (await callTool("creations_request_upload", { mimeType: type })).data as { proxyUploadUrl?: string; uploadUrl?: string; path?: string } | undefined;
+    const url = target?.proxyUploadUrl ?? target?.uploadUrl;
+    if (!url || !target?.path) throw new Error("Magnific no ha dado dónde subir el archivo.");
+    const put = await fetch(url, { method: "PUT", headers: { "Content-Type": type }, body: file });
+    if (!put.ok) throw new Error(`No se ha podido subir ${file.name} a Magnific (${put.status}).`);
+    const done = await callTool("creations_finalize_upload", { path: target.path, fileName: file.name, folderReference: folder });
+    const id = firstIdentifier(done.data) ?? /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.exec(done.text)?.[0];
+    if (!id) throw new Error("Magnific no ha devuelto el archivo subido.");
+    return { id };
   }
 
   async poll(id: string): Promise<GenerationPoll> {
