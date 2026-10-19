@@ -4,7 +4,7 @@
 import { build } from "esbuild";
 import { cp, rm, stat } from "node:fs/promises";
 import path from "node:path";
-import { options, outDir, root } from "./bundle.mjs";
+import { define, options, outDir, root } from "./bundle.mjs";
 
 const rendererDist = path.resolve(root, "../../packages/app/dist");
 
@@ -16,6 +16,6 @@ try {
 }
 
 await rm(outDir, { recursive: true, force: true });
-await build({ ...options, minify: true, define: { "process.env.NODE_ENV": '"production"' } });
+await build({ ...options, minify: true, define: { ...define, "process.env.NODE_ENV": '"production"' } });
 await cp(rendererDist, path.join(outDir, "renderer"), { recursive: true });
 console.log(`Desktop bundle ready in ${path.relative(process.cwd(), outDir) || "."}`);

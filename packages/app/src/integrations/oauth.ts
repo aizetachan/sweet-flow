@@ -7,8 +7,8 @@
  *
  * The app's id at each service comes from the build (VITE_DROPBOX_APP_KEY,
  * VITE_GOOGLE_CLIENT_ID; docs/DEVELOPMENT.md). Google also wants the app's
- * secret to hand out tokens: the dev server adds it (`/google/token`), so it
- * never reaches the page. In the desktop app the sign-in opens in the system
+ * secret to hand out tokens: the desktop app's main process adds it, and in a
+ * browser the dev server does (`/google/token`), so it never reaches the page. In the desktop app the sign-in opens in the system
  * browser and comes back to a loopback address (platform.ts `desktopAuth`).
  */
 
@@ -143,13 +143,13 @@ async function exchange(p: CloudProvider, code: string, state: string): Promise<
 
 async function token(p: CloudProvider, params: Record<string, string>): Promise<Session> {
   const c = CONFIG[p];
-  const r = await fetch(c.token, {
-    method: "POST",
-    headers: { "content-type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ ...params, client_id: c.clientId ?? "" }),
-  });
-  if (!r.ok) throw new Error(`${c.name} no ha dado acceso (${r.status}).`);
-  const t = (await r.json()) as { access_token: string; refresh_token?: string; expires_in?: number };
+  const body = new URLSearchParams({ ...params, client_id: c.clientId ?? "" });
+  const viaDesktop = p === "google" ? window.sweetflow?.googleToken : undefined;
+  const r = viaDesktop
+    ? await viaDesktop(body.toString())
+    : await fetch(c.token, { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" }, body }).then(async (res) => ({ status: res.status, body: await res.text() }));
+  if (r.status < 200 || r.status >= 300) throw new Error(`${c.name} no ha dado acceso (${r.status}).`);
+  const t = JSON.parse(r.body) as { access_token: string; refresh_token?: string; expires_in?: number };
   const old = read<Session>(sessionKey(p));
   const s: Session = {
     accessToken: t.access_token,

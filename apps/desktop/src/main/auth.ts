@@ -73,3 +73,19 @@ export async function authOpen(url: string): Promise<string> {
   await shell.openExternal(url);
   return waiting.done;
 }
+
+/**
+ * Google's token request (code or refresh), with Sweet Flow's client secret
+ * added here so it never reaches the page. Only ever posts to Google.
+ */
+export async function googleToken(body: string): Promise<{ status: number; body: string }> {
+  const params = new URLSearchParams(body);
+  const secret = process.env.SF_GOOGLE_CLIENT_SECRET;
+  if (secret) params.set("client_secret", secret);
+  const r = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "content-type": "application/x-www-form-urlencoded" },
+    body: params,
+  });
+  return { status: r.status, body: await r.text() };
+}

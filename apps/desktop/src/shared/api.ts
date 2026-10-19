@@ -34,6 +34,8 @@ export interface SweetflowApi {
   authRedirect(path: string): Promise<string>;
   /** Opens the sign-in page in the system browser; resolves with the callback's query string. */
   authOpen(url: string): Promise<string>;
+  /** Google's token request (form body); the app's client secret is added by the main process. */
+  googleToken(body: string): Promise<{ status: number; body: string }>;
   /** The remembered team folder (read and written by the app itself, no permission to give again). */
   teamFolder(): Promise<TeamFolder | null>;
   /** Native picker; remembers the folder. Null if cancelled. */
@@ -49,6 +51,7 @@ export const IPC = {
   copyFile: "sf:copy-file",
   authRedirect: "sf:auth-redirect",
   authOpen: "sf:auth-open",
+  googleToken: "sf:google-token",
   teamFolder: "sf:team-folder",
   pickTeamFolder: "sf:pick-team-folder",
   forgetTeamFolder: "sf:forget-team-folder",

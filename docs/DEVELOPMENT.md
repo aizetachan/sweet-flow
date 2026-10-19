@@ -61,7 +61,9 @@ dice «Sin configurar». Cada persona conecta después su propia cuenta con
 2. Pestaña **Permissions**: marcar `account_info.read`,
    `files.metadata.read`, `files.metadata.write`, `files.content.read`,
    `files.content.write`, `sharing.read` y `sharing.write` (para compartir
-   carpetas al invitar), y **Submit**.
+   carpetas al invitar), y **Submit**. Si se cambian después de conectar,
+   hay que desconectar Dropbox en Ajustes y volver a conectarlo: la conexión
+   guarda los permisos que había al entrar.
 3. Pestaña **Settings**:
    - *OAuth 2 › Redirect URIs*: `http://localhost:5180/auth/dropbox` (y
      `http://localhost:5173/auth/dropbox` si se usa ese puerto). Para la app de
@@ -89,9 +91,12 @@ junto a las propias.
    - *URI de redirección autorizados*: `http://localhost:5180/auth/google` y,
      para la app de escritorio, `http://127.0.0.1:53134/auth/google`.
 5. Copiar el **ID de cliente** a `VITE_GOOGLE_CLIENT_ID` y el **secreto** a
-   `GOOGLE_CLIENT_SECRET` (sin `VITE_`: lo usa solo el servidor de desarrollo
-   para pedir los tokens, `/google/token` en `vite.config.ts`; nunca llega a la
-   página).
+   `GOOGLE_CLIENT_SECRET` (sin `VITE_`: nunca llega a la página). En el
+   navegador lo añade el servidor de desarrollo al pedir los tokens
+   (`/google/token` en `vite.config.ts`); en la app de escritorio lo añade el
+   proceso principal, que lo lleva dentro al construirla
+   (`apps/desktop/scripts/bundle.mjs` lo toma de `GOOGLE_CLIENT_SECRET` en el
+   entorno o de `packages/app/.env.local`).
 
 Se pide el permiso `drive` (todo Drive), porque la carpeta del equipo ya existe
 y otros la comparten. Es un permiso «restringido»: en modo de pruebas funciona
@@ -172,6 +177,10 @@ Salen en `apps/desktop/release/`. `pnpm build:desktop` solo genera el bundle
 
 La CI (`.github/workflows/ci.yml`) construye los dos en cada push y en cada PR.
 Los instaladores se descargan desde la ejecución, en *Artifacts*.
+
+Las claves de Dropbox y Google se meten en la app al construirla: un instalador
+hecho en un ordenador con `packages/app/.env.local` relleno las lleva; los de la
+CI, no (no tiene ese archivo).
 
 ### Instalar en macOS
 

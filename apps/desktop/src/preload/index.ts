@@ -16,6 +16,7 @@ const api: SweetflowApi = {
   copyFile: (path) => ipcRenderer.invoke(IPC.copyFile, path) as Promise<void>,
   authRedirect: (path) => ipcRenderer.invoke(IPC.authRedirect, path) as Promise<string>,
   authOpen: (url) => ipcRenderer.invoke(IPC.authOpen, url) as Promise<string>,
+  googleToken: (body) => ipcRenderer.invoke(IPC.googleToken, body) as Promise<{ status: number; body: string }>,
   teamFolder: () => ipcRenderer.invoke(IPC.teamFolder) as Promise<TeamFolder | null>,
   pickTeamFolder: () => ipcRenderer.invoke(IPC.pickTeamFolder) as Promise<TeamFolder | null>,
   forgetTeamFolder: () => ipcRenderer.invoke(IPC.forgetTeamFolder) as Promise<void>,

@@ -13,6 +13,8 @@ export interface DesktopBridge {
   /** Sign-in through the system browser (older desktop builds lack it). */
   authRedirect?(path: string): Promise<string>;
   authOpen?(url: string): Promise<string>;
+  /** Google's token request with the app's secret added (older desktop builds lack it). */
+  googleToken?(body: string): Promise<{ status: number; body: string }>;
   /** The team folder, read and written by the app (older desktop builds lack it). */
   teamFolder?(): Promise<{ path: string; name: string } | null>;
   pickTeamFolder?(): Promise<{ path: string; name: string } | null>;

@@ -4,7 +4,7 @@ import { BrowserWindow, clipboard, dialog, ipcMain, shell, type IpcMainInvokeEve
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { IPC } from "../shared/api";
-import { authOpen, authRedirect } from "./auth";
+import { authOpen, authRedirect, googleToken } from "./auth";
 import { isAppUrl } from "./env";
 import { folderOp, forgetTeamFolder, pickTeamFolder, teamFolder } from "./folder";
 
@@ -56,6 +56,12 @@ export function registerIpc(): void {
     assertTrusted(e);
     if (typeof url !== "string") throw new Error("Dirección no válida");
     return authOpen(url);
+  });
+
+  ipcMain.handle(IPC.googleToken, (e, body: unknown) => {
+    assertTrusted(e);
+    if (typeof body !== "string") throw new Error("Petición no válida");
+    return googleToken(body);
   });
 
   ipcMain.handle(IPC.teamFolder, (e) => (assertTrusted(e), teamFolder()));
