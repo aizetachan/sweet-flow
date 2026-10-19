@@ -96,9 +96,12 @@ Anotadas el 15 oct 2026, pendientes de que el usuario elija orden:
   Workflow Integration de Resolve) para ida y vuelta. **Aparcado** hasta que
   esté montado lo demás (decidido el 19 oct 2026).
 - **Usuarios, invitaciones y vista de invitado:** [`USUARIOS.md`](USUARIOS.md).
-  Decisiones del 19 oct 2026: identidad por Magnific, roles por producción,
-  invitado dentro de Sweet Flow (sin acceso al almacenamiento) que ve, comenta
-  y valida. Pendiente: si se adelanta un servidor pequeño para invitados.
+  Decisiones del 19 oct 2026: identidad del equipo por Magnific, una sola
+  carpeta igual para todo el equipo, acceso por producción, invitan el
+  propietario y los miembros (si el propietario lo permite). El cliente no
+  entra al almacenamiento ni necesita Magnific: ve, comenta y valida en una
+  página propia, como Frame.io. **Revisión del cliente aparcada** hasta tener
+  lo demás: buscar un servidor mínimo y barato (opciones en USUARIOS.md §5).
 
 ### Fase 1 · Producción en carpeta (etapa A)
 

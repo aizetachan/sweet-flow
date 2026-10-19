@@ -1,4 +1,4 @@
-# Usuarios, invitaciones y vista de invitado
+# Usuarios, equipo y revisión del cliente
 
 > Estado: **análisis con decisiones** (19 oct 2026). No hay nada implementado
 > aún, salvo el perfil manual y la conexión de Magnific, Dropbox y Drive por
@@ -7,127 +7,130 @@
 
 ## Decisiones (19 oct 2026)
 
-1. **Identidad = la cuenta de Magnific.** No hay otro registro: Magnific
-   identifica a la persona (nombre, email, avatar) y Sweet Flow decide a qué
-   tiene acceso. Que Magnific comparta o no proyectos entre organizaciones no
-   importa.
-2. **La cuenta de Drive/Dropbox puede ser otra**, aunque la persona sea la
-   misma. No debe crear fricción: la cuenta de almacenamiento es solo cómo
-   llega cada uno a la carpeta; nunca se compara con la de Magnific.
-3. **El equipo se gestiona dentro y fuera de la producción:** se invita a una
-   carpeta del dashboard (vale para lo que hay dentro) o a una producción.
-4. **Roles por producción**, los pone quien invita: alguien puede trabajar en
-   una carpeta y no en otra.
-5. **Todo el equipo tiene que poder entrar a la carpeta** del almacenamiento
-   (ahí está el trabajo).
-6. **El invitado no entra al almacenamiento:** entra a Sweet Flow, en una
-   **vista de invitado** fácil de navegar, sin generar ni crear nada. Ve lo
-   que el equipo comparte con él (prácticamente todas las versiones), comenta
-   sobre los planos y **valida**: muchas veces es el cliente, y su validación
-   es la que permite aprobar.
+1. **Identidad del equipo = la cuenta de Magnific.** Magnific dice quién es
+   cada persona; Sweet Flow decide a qué tiene acceso. Si Magnific comparte o
+   no proyectos entre organizaciones no importa.
+2. **La cuenta de Drive/Dropbox puede ser otra** aunque la persona sea la
+   misma, sin fricción: nunca se compara con la de Magnific.
+3. **Una sola carpeta para todo el equipo, igual en Sweet Flow y en el
+   almacenamiento.** Lo que uno hace en Sweet Flow (crear, renombrar, mover,
+   generar) cambia la carpeta de Dropbox o Drive, y todos lo ven igual en los
+   dos sitios. Es como funciona ya hoy: Sweet Flow escribe en la carpeta
+   compartida y lee lo que escriben los demás.
+4. **Quién invita:** el propietario (quien creó el equipo) y los miembros del
+   equipo. El propietario decide si los miembros pueden invitar; por defecto,
+   sí. No hay «supervisor».
+5. **Acceso por producción:** quien invita elige a qué carpetas o producciones
+   entra cada miembro.
+6. **El cliente (invitado) no tiene acceso a Dropbox ni Drive**, ni necesita
+   cuenta de Magnific. Solo ve una pantalla con el vídeo o el contenido que se
+   le comparte, comenta y valida. Ve prácticamente todas las versiones: suele
+   ser quien da el visto bueno final.
+7. **La revisión del cliente se deja para cuando esté montado lo demás**,
+   buscando un servidor mínimo que apenas consuma recursos (§5).
 
-## 1. Identidad
+## 1. Identidad del equipo
 
 - Al conectar Magnific, `account_profile` da nombre, email y avatar. Esa es la
-  persona en Sweet Flow; el perfil manual queda solo para quien no tiene
-  Magnific (la demo).
+  persona en Sweet Flow; el perfil manual queda para quien no tiene Magnific
+  (la demo).
 - Clave de la persona: el **email de Magnific**, en minúsculas.
-- La cuenta de Dropbox/Drive conectada se guarda aparte («cómo llego a la
-  carpeta»), sin compararla.
+- La cuenta de Dropbox/Drive se guarda aparte («cómo llego a la carpeta»).
 
-## 2. Miembros, alcance y roles
+## 2. El equipo y la carpeta compartida
 
-- Un registro más dentro de la carpeta del equipo, como el del dashboard:
-  `.sweetflow/team/<dispositivo>/<mes>.jsonl`. Cada entrada:
-  `{ email de Magnific, nombre, dónde (carpeta o producción), rol }`.
-- **Herencia:** lo que se da en una carpeta del dashboard vale para todo lo que
-  hay dentro; en una producción se puede cambiar (subir, bajar o quitar).
-- **Roles:** admin, supervisor, artista, lector e invitado. Quien invita elige
-  el rol para esa carpeta o producción.
-- Quien crea la carpeta del equipo es su primer admin. Solo admin (y
-  supervisor en sus producciones, si se decide) cambia miembros; lo que
-  escriba otro se ignora al combinar los registros (regla del dominio, con
-  tests).
-- Dónde se gestiona:
-  - **Dashboard:** «Compartir» en una carpeta o producción (menú contextual).
-  - **Producción:** la ventana Equipo (avatares de la cabecera), con
-    «Invitar» y el rol de cada uno en esa producción.
+- Toda la gente del equipo trabaja sobre **la misma carpeta** de Dropbox o
+  Drive. Para entrar, cada miembro necesita que esa carpeta esté compartida con
+  su cuenta de almacenamiento: es una vez, al entrar en el equipo. Sweet Flow
+  puede hacerlo al invitar (Drive: `permissions.create`; Dropbox:
+  `sharing/add_folder_member`), con el email de almacenamiento que se indique
+  (por defecto, el mismo).
+- A partir de ahí no se comparte nada más: todo lo que se crea en Sweet Flow
+  aparece en la carpeta y todos lo tienen al día.
+- **Miembros y roles:** un registro dentro de la carpeta,
+  `.sweetflow/team/<dispositivo>/<mes>.jsonl`, con
+  `{ email de Magnific, nombre, rol, carpetas o producciones }`.
+  - **Propietario:** quien crea el equipo. Gestiona a todos y decide si los
+    miembros pueden invitar («Los miembros pueden invitar», activado por
+    defecto).
+  - **Miembro:** trabaja en las carpetas o producciones que le dan.
+  - **Invitado:** el cliente (§4); no está en la carpeta.
+- Dónde se gestiona: «Compartir» en una carpeta o producción del dashboard, y
+  la ventana Equipo dentro de la producción.
 
-## 3. Invitar al equipo (con acceso a la carpeta)
+**A confirmar:** como la carpeta es la misma para todos, en Dropbox o Drive
+cada miembro ve todas las producciones aunque en Sweet Flow solo tenga acceso a
+algunas. ¿En Sweet Flow ocultamos las que no son suyas, o las ve y solo puede
+trabajar en las suyas?
 
-Quien invita escribe el **email de Magnific** de la persona, el rol y, si la
-carpeta está en Dropbox o Drive, el **email de su cuenta de almacenamiento**
-(por defecto, el mismo; se puede cambiar: decisión 2).
+## 3. Cómo lo hace Frame.io (referencia)
 
-1. Se apunta en el registro de miembros.
-2. Sweet Flow **comparte la carpeta** con el email de almacenamiento, por API:
-   - **Drive:** `permissions.create` (*writer*) sobre la carpeta del equipo.
-     Drive manda su aviso.
-   - **Dropbox:** `sharing/add_folder_member` (*editor*), añadiendo el permiso
-     `sharing.write` a la app.
-   - Con una carpeta de este ordenador, se comparte a mano desde Dropbox o
-     Drive; la app lo recuerda.
-3. La persona abre Sweet Flow, conecta Magnific (así se la reconoce) y su
-   Dropbox/Drive (así llega a la carpeta), y elige la carpeta compartida.
+- El equipo crea un **enlace para compartir** (*Share*) con lo que quiere
+  enseñar: un archivo, varios o una carpeta.
+- **El cliente no necesita cuenta.** Abre el enlace en el navegador y ve el
+  contenido. Al dejar su **primer comentario**, se le pide **nombre y email**,
+  que solo duran esa sesión.
+- **Ajustes del enlace:** público o seguro (solo personas añadidas; Enterprise),
+  contraseña, fecha de caducidad, permitir o no comentarios y descargas, y ver
+  todas las versiones o solo la última.
+- **Aprobación:** en la versión anterior, el revisor marcaba un estado
+  (Aprobado, En curso, Necesita revisión) y el equipo recibía un aviso.
+- **Avisos:** email al cliente cuando le comparten algo y cuando le responden.
+- Vistas: cuadrícula, lista o carrete.
 
-El acceso a la carpeta es a toda la carpeta del equipo: la separación por
-producciones la hace Sweet Flow con los roles. Quien tiene la carpeta podría
-abrir los archivos a mano; es el equipo, así que se acepta.
+## 4. La revisión del cliente en Sweet Flow (propuesta)
 
-## 4. Vista de invitado (sin acceso al almacenamiento)
+Lo mismo que Frame.io, con los pasos mínimos:
 
-**Qué ve:** un dashboard con solo lo compartido con él; dentro, el tablero, el
-visor con **las versiones** y sus comentarios. Sin Generar, Editar, papelera,
-estructura ni ajustes. Sin códigos ni rutas.
+1. **Compartir para revisión** en un plano, una escena o una secuencia: Sweet
+   Flow crea un enlace. Opciones: contraseña, caducidad, permitir descargar,
+   todas las versiones o solo la elegida.
+2. **El cliente abre el enlace**: ve los planos en orden, el visor con las
+   versiones y los comentarios. Sin cuenta, sin instalar nada.
+3. **Comenta** (con código de tiempo y punto en el fotograma) y **valida**.
+   La primera vez escribe su nombre (y su email, si quiere avisos); se recuerda
+   en su navegador.
+4. **En Sweet Flow**, los comentarios entran en Revisión con su nombre y la
+   validación se ve en el plano y en Actividad. El equipo aprueba (o se aprueba
+   solo: a decidir).
+5. El cliente **nunca ve** la carpeta del equipo, ni rutas, ni códigos.
 
-**Qué hace:** comentar (con código de tiempo y punto en el fotograma, como el
-equipo) y **validar** un plano o una versión. El equipo ve la validación en el
-plano y en Actividad, y lo aprueba (o se aprueba solo: decisión pendiente).
+## 5. El servidor mínimo (para cuando toque)
 
-**La consecuencia:** sin acceso a la carpeta, el invitado no puede leer los
-archivos ni escribir sus comentarios en ningún sitio que el equipo lea. Hace
-falta **una pieza en internet** que los dos alcancen. Es decir, un servidor
-pequeño, que hoy el plan deja para la etapa C (`ARCHITECTURE.md` §2.1).
+El cliente no puede leer la carpeta del equipo, así que hace falta algo en
+internet que guarde lo compartido y sus comentarios. Opciones de bajo coste:
 
-Propuesta (**espacio de revisión**), reutilizando el esqueleto de Firebase:
+| Opción | Qué es | Coste aproximado |
+| --- | --- | --- |
+| **A. Cloudflare** (Workers + R2 + D1/KV) | Una función pequeña sirve la página de revisión y guarda comentarios; R2 guarda copias ligeras de los vídeos (proxies) | Plan gratuito amplio para este uso; R2 no cobra la salida de datos. Verificar límites al decidir |
+| **B. Firebase** (ya hay esqueleto) | Hosting + Firestore para comentarios; Functions para crear enlaces | Firestore y Hosting tienen capa gratuita; las Functions piden el plan de pago por uso |
+| **C. Enlaces de Dropbox/Drive + almacén de comentarios** | Sin copiar vídeos: cada versión compartida usa un enlace del servicio; solo los comentarios van al servidor | Lo más barato, pero el vídeo vive en un enlace público del servicio y Drive no sirve bien vídeo en una página |
 
-- **Entrar:** el invitado inicia sesión con Magnific. Una Function comprueba
-  su token con Magnific (`account_profile`) y le da una sesión de Sweet Flow
-  con su email. Nada de cuentas nuevas.
-- **Publicar:** la app del equipo publica lo compartido: la estructura, las
-  versiones y sus datos, y por cada archivo un **enlace** creado en Dropbox o
-  Drive con la cuenta del equipo (Dropbox: enlace compartido; Drive: «cualquiera
-  con el enlace», solo ese archivo). Los archivos siguen en Dropbox o Drive; no
-  vuelve Cloud Storage. Se actualiza al haber versiones nuevas.
-- **Volver:** comentarios y validaciones del invitado se guardan en
-  Firestore; la app del equipo los recoge y los escribe en el registro de la
-  producción como eventos del invitado. Así todo queda en la carpeta, como
-  siempre.
-- **Dónde lo ve el invitado:** en la web (la misma app en modo invitado), sin
-  instalar nada. Es la «vista previa para invitados» de `ROADMAP.md`.
+Recomendación inicial: **A o C con Dropbox**. Se suben (o enlazan) solo las
+versiones que se comparten, en calidad de revisión; los comentarios y
+validaciones se guardan en una base pequeña, y la app del equipo los recoge y
+los escribe en el registro de la producción. El enlace lleva un identificador
+imposible de adivinar; con contraseña y caducidad opcionales.
 
-## 5. Plan propuesto
+## 6. Plan
 
-1. **Identidad por Magnific:** el perfil sale de `account_profile`; la cuenta
-   de almacenamiento, aparte. Pequeño, sin servidor.
-2. **Registro de miembros** en `packages/domain` (carpeta/producción, herencia,
-   roles, quién puede cambiarlos), con tests. La ventana Equipo y «Compartir»
-   en el dashboard leen de él.
-3. **Invitar al equipo** y compartir la carpeta por API (Drive y Dropbox),
-   con el email de almacenamiento aparte.
-4. **Roles en la interfaz** (qué ve y qué hace cada uno en cada producción).
-5. **Espacio de revisión para invitados** (Firebase): inicio de sesión con
-   Magnific, publicar, comentar y validar, y la vuelta al registro.
+1. **Identidad por Magnific** y cuenta de almacenamiento aparte. Sin servidor.
+2. **Registro de miembros** en `packages/domain` (propietario, miembros,
+   acceso por carpeta o producción, «los miembros pueden invitar»), con tests.
+3. **Invitar al equipo:** apuntar al miembro y compartirle la carpeta del
+   equipo por API (una vez).
+4. **Acceso en la interfaz** según el registro.
+5. **Más adelante: revisión del cliente** (§4 y §5).
 
-Los pasos 1 a 4 funcionan sin servidor. El 5 lo necesita.
+## 7. Decisiones pendientes
 
-## 6. Decisiones que necesito
+1. ¿Las producciones sin acceso se **ocultan** en Sweet Flow o se ven sin
+   poder trabajar en ellas? (§2)
+2. La validación del cliente: ¿**aprueba** directamente o **avisa** al equipo?
+3. Para la revisión del cliente: ¿opción A, B o C? (§5, cuando toque)
 
-1. **¿Adelantamos un servidor pequeño solo para invitados** (paso 5)? Cambia
-   la regla «sin servidor hasta la etapa C» (`ARCHITECTURE.md` §2.1).
-2. **Archivos para el invitado:** ¿enlaces de Dropbox/Drive (no se copia nada,
-   pero quien tenga el enlace ve ese archivo) o copias más ligeras (proxies)
-   en un almacenamiento propio?
-3. **Validar:** ¿la validación del invitado aprueba directamente, o avisa al
-   equipo para que apruebe?
-4. ¿El **supervisor** puede invitar en sus producciones, o solo el admin?
+## Fuentes (Frame.io)
+
+- [Shares in Frame.io (V4)](https://help.frame.io/en/articles/9105232-shares-in-frame-io)
+- [Sharing your files as a review page](https://help.frame.io/en/articles/414306-sharing-your-files-as-a-review-page)
+- [Review links explained for clients](https://help.frame.io/en/articles/1161479-review-links-explained-for-clients)
