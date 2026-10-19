@@ -20,14 +20,29 @@
 4. **Quién invita:** el propietario (quien creó el equipo) y los miembros del
    equipo. El propietario decide si los miembros pueden invitar; por defecto,
    sí. No hay «supervisor».
-5. **Acceso por producción:** quien invita elige a qué carpetas o producciones
-   entra cada miembro.
+5. **Acceso por carpeta, igual en Sweet Flow y en el almacenamiento:** quien
+   invita elige a qué carpetas o producciones entra cada miembro, y en
+   Dropbox o Drive ese miembro **solo tiene esas carpetas**. No ve el resto ni
+   en Sweet Flow ni en el almacenamiento.
 6. **El cliente (invitado) no tiene acceso a Dropbox ni Drive**, ni necesita
    cuenta de Magnific. Solo ve una pantalla con el vídeo o el contenido que se
    le comparte, comenta y valida. Ve prácticamente todas las versiones: suele
    ser quien da el visto bueno final.
 7. **La revisión del cliente se deja para cuando esté montado lo demás**,
    buscando un servidor mínimo que apenas consuma recursos (§5).
+8. **Los vídeos no se copian ni se duplican:** el cliente ve los mismos
+   archivos que el equipo, en una pantalla como la de producción pero solo
+   para comentar. Lo único que se guarda aparte es quién está invitado y sus
+   comentarios.
+9. **Tres formas de entrar el cliente**, a elegir al compartir:
+   - **Por invitación:** el equipo escribe su correo y le llega una
+     invitación; solo entra quien la recibe (lo más seguro, para empresas).
+   - **Enlace con nombre:** quien tenga el enlace entra y comenta poniendo su
+     nombre.
+   - **Enlace con nombre y correo:** igual, pero deja también su correo.
+10. **Validar es un comentario:** el cliente marca «Validado» (su visto
+    bueno), al equipo le llega el aviso como cualquier comentario, y el equipo
+    decide y aprueba. La validación del cliente no aprueba nada por sí sola.
 
 ## 1. Identidad del equipo
 
@@ -39,14 +54,15 @@
 
 ## 2. El equipo y la carpeta compartida
 
-- Toda la gente del equipo trabaja sobre **la misma carpeta** de Dropbox o
-  Drive. Para entrar, cada miembro necesita que esa carpeta esté compartida con
-  su cuenta de almacenamiento: es una vez, al entrar en el equipo. Sweet Flow
-  puede hacerlo al invitar (Drive: `permissions.create`; Dropbox:
+- El equipo trabaja sobre la carpeta del equipo de Dropbox o Drive, y Sweet
+  Flow y el almacenamiento muestran **lo mismo** a cada persona.
+- **Invitar a una carpeta o producción la comparte en el almacenamiento**
+  con la cuenta de esa persona (Drive: `permissions.create`; Dropbox:
   `sharing/add_folder_member`), con el email de almacenamiento que se indique
-  (por defecto, el mismo).
-- A partir de ahí no se comparte nada más: todo lo que se crea en Sweet Flow
-  aparece en la carpeta y todos lo tienen al día.
+  (por defecto, el mismo). Quien tiene una sola carpeta solo ve esa carpeta,
+  en Sweet Flow y en Dropbox o Drive. Quitarle el acceso lo quita en los dos.
+- Dentro de lo compartido, todo lo que se crea en Sweet Flow aparece en la
+  carpeta y todos los que la tienen lo ven al día.
 - **Miembros y roles:** un registro dentro de la carpeta,
   `.sweetflow/team/<dispositivo>/<mes>.jsonl`, con
   `{ email de Magnific, nombre, rol, carpetas o producciones }`.
@@ -58,10 +74,20 @@
 - Dónde se gestiona: «Compartir» en una carpeta o producción del dashboard, y
   la ventana Equipo dentro de la producción.
 
-**A confirmar:** como la carpeta es la misma para todos, en Dropbox o Drive
-cada miembro ve todas las producciones aunque en Sweet Flow solo tenga acceso a
-algunas. ¿En Sweet Flow ocultamos las que no son suyas, o las ve y solo puede
-trabajar en las suyas?
+**Lo que esto pide por dentro:**
+- **El dashboard por carpeta compartida.** Hoy el dashboard es un registro en
+  la raíz (`.sweetflow/library/`), que quien solo tiene una carpeta no puede
+  leer. Cada carpeta compartida tiene que poder montarse sola: su propio
+  registro del dashboard (lo que hay dentro), y quien la recibe la ve como
+  raíz de su dashboard (o varias, si le comparten varias).
+- **Dropbox no deja compartir una carpeta dentro de otra ya compartida** con
+  otras personas (en cuentas normales). Así que la carpeta del equipo no se
+  comparte entera: se comparte cada carpeta o producción con quien toque. Si
+  alguien necesita todo, se le comparten todas, o se usa una carpeta de equipo
+  de Dropbox Business. Drive sí permite permisos en carpetas anidadas.
+  Comprobarlo con cuentas reales al montar la app de escritorio.
+- **Permisos de la app:** Dropbox necesita además `sharing.read` y
+  `sharing.write`.
 
 ## 3. Cómo lo hace Frame.io (referencia)
 
@@ -82,52 +108,63 @@ trabajar en las suyas?
 
 Lo mismo que Frame.io, con los pasos mínimos:
 
-1. **Compartir para revisión** en un plano, una escena o una secuencia: Sweet
-   Flow crea un enlace. Opciones: contraseña, caducidad, permitir descargar,
-   todas las versiones o solo la elegida.
-2. **El cliente abre el enlace**: ve los planos en orden, el visor con las
-   versiones y los comentarios. Sin cuenta, sin instalar nada.
-3. **Comenta** (con código de tiempo y punto en el fotograma) y **valida**.
-   La primera vez escribe su nombre (y su email, si quiere avisos); se recuerda
+1. **Compartir para revisión** en un plano, una escena o una secuencia, con
+   una de las tres formas de entrar (decisión 9). Opciones: caducidad,
+   permitir descargar, todas las versiones o solo la elegida.
+2. **El cliente entra** (por su invitación o por el enlace): ve los planos en
+   orden, el visor con las versiones y los comentarios, como en la pantalla de
+   producción pero sin poder editar. Sin cuenta, sin instalar nada.
+3. **Comenta** (con código de tiempo y punto en el fotograma) y puede marcar
+   **«Validado»**, que es un comentario más. Su nombre (y correo) se recuerda
    en su navegador.
-4. **En Sweet Flow**, los comentarios entran en Revisión con su nombre y la
-   validación se ve en el plano y en Actividad. El equipo aprueba (o se aprueba
-   solo: a decidir).
+4. **En Sweet Flow**, sus comentarios entran en Revisión con su nombre y
+   **avisan al equipo** como cualquier comentario; el «Validado» se ve en el
+   plano. El equipo decide y aprueba.
 5. El cliente **nunca ve** la carpeta del equipo, ni rutas, ni códigos.
 
 ## 5. El servidor mínimo (para cuando toque)
 
-El cliente no puede leer la carpeta del equipo, así que hace falta algo en
-internet que guarde lo compartido y sus comentarios. Opciones de bajo coste:
+El cliente no tiene la carpeta del equipo, así que hace falta algo pequeño en
+internet. **No guarda vídeos**, solo:
+- qué se ha compartido (qué planos y versiones, con qué forma de entrar),
+- quién está invitado (correo, nombre) y las invitaciones enviadas,
+- los comentarios y «Validado» del cliente, hasta que la app del equipo los
+  recoge y los escribe en el registro de la producción.
+
+**Cómo ve el vídeo sin copiarlo:** el archivo sigue en Dropbox o Drive; al
+compartir, la app del equipo crea un **enlace de ese archivo** en el servicio
+(Dropbox: enlace compartido, que se puede reproducir en la página; Drive:
+«cualquiera con el enlace» para ese archivo y lectura por la API con una clave
+pública). La página de revisión reproduce ese enlace. El servidor nunca tiene
+la cuenta del equipo, y el enlace solo lo conoce la página de revisión.
+Dropbox va mejor para vídeo; en Drive hay que comprobar que reproduce bien
+archivos grandes.
+
+**Correos de invitación:** hace falta un servicio de envío (con capa gratuita
+suficiente al principio).
 
 | Opción | Qué es | Coste aproximado |
 | --- | --- | --- |
-| **A. Cloudflare** (Workers + R2 + D1/KV) | Una función pequeña sirve la página de revisión y guarda comentarios; R2 guarda copias ligeras de los vídeos (proxies) | Plan gratuito amplio para este uso; R2 no cobra la salida de datos. Verificar límites al decidir |
-| **B. Firebase** (ya hay esqueleto) | Hosting + Firestore para comentarios; Functions para crear enlaces | Firestore y Hosting tienen capa gratuita; las Functions piden el plan de pago por uso |
-| **C. Enlaces de Dropbox/Drive + almacén de comentarios** | Sin copiar vídeos: cada versión compartida usa un enlace del servicio; solo los comentarios van al servidor | Lo más barato, pero el vídeo vive en un enlace público del servicio y Drive no sirve bien vídeo en una página |
+| **A. Cloudflare** (Workers + D1/KV) | Una función pequeña sirve la página de revisión y guarda invitados y comentarios | Plan gratuito amplio para este uso. Verificar límites al decidir |
+| **B. Firebase** (ya hay esqueleto) | Hosting + Firestore para invitados y comentarios; Functions para las invitaciones | Firestore y Hosting tienen capa gratuita; las Functions piden el plan de pago por uso |
 
-Recomendación inicial: **A o C con Dropbox**. Se suben (o enlazan) solo las
-versiones que se comparten, en calidad de revisión; los comentarios y
-validaciones se guardan en una base pequeña, y la app del equipo los recoge y
-los escribe en el registro de la producción. El enlace lleva un identificador
-imposible de adivinar; con contraseña y caducidad opcionales.
+Recomendación inicial: **A** (lo más ligero), con los vídeos en enlaces de
+Dropbox.
 
 ## 6. Plan
 
 1. **Identidad por Magnific** y cuenta de almacenamiento aparte. Sin servidor.
 2. **Registro de miembros** en `packages/domain` (propietario, miembros,
    acceso por carpeta o producción, «los miembros pueden invitar»), con tests.
-3. **Invitar al equipo:** apuntar al miembro y compartirle la carpeta del
-   equipo por API (una vez).
+3. **Invitar al equipo:** apuntar al miembro y compartirle en Dropbox o Drive
+   las carpetas o producciones que se le dan; quitar el acceso, igual.
+   Dashboard montable desde cada carpeta compartida.
 4. **Acceso en la interfaz** según el registro.
 5. **Más adelante: revisión del cliente** (§4 y §5).
 
 ## 7. Decisiones pendientes
 
-1. ¿Las producciones sin acceso se **ocultan** en Sweet Flow o se ven sin
-   poder trabajar en ellas? (§2)
-2. La validación del cliente: ¿**aprueba** directamente o **avisa** al equipo?
-3. Para la revisión del cliente: ¿opción A, B o C? (§5, cuando toque)
+1. Para la revisión del cliente: ¿opción A o B? (§5, cuando toque)
 
 ## Fuentes (Frame.io)
 

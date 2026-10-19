@@ -97,10 +97,11 @@ Anotadas el 15 oct 2026, pendientes de que el usuario elija orden:
   esté montado lo demás (decidido el 19 oct 2026).
 - **Usuarios, invitaciones y vista de invitado:** [`USUARIOS.md`](USUARIOS.md).
   Decisiones del 19 oct 2026: identidad del equipo por Magnific, una sola
-  carpeta igual para todo el equipo, acceso por producción, invitan el
-  propietario y los miembros (si el propietario lo permite). El cliente no
-  entra al almacenamiento ni necesita Magnific: ve, comenta y valida en una
-  página propia, como Frame.io. **Revisión del cliente aparcada** hasta tener
+  carpeta; cada miembro ve en Dropbox o Drive solo las carpetas que se le dan
+  en Sweet Flow; invitan el propietario y los miembros (si el propietario lo
+  permite). El cliente no entra al almacenamiento ni necesita Magnific: ve los
+  mismos vídeos (sin copias), comenta y marca «Validado» (un comentario que
+  avisa al equipo, que aprueba). **Revisión del cliente aparcada** hasta tener
   lo demás: buscar un servidor mínimo y barato (opciones en USUARIOS.md §5).
 
 ### Fase 1 · Producción en carpeta (etapa A)
