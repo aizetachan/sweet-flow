@@ -1,9 +1,11 @@
 /**
- * Loading splash (docs/INTERFAZ.md §0): the letters of "Sweet Flow" come in
- * from off-screen as if each one were carried by an ant seen from above —
- * short jerky steps, tiny pauses, wandering detours, a slight lean toward the
- * direction of travel — and settle into the word. When the word is complete,
- * the app is ready and a minimum time has passed, the overlay fades out.
+ * Loading splash (docs/INTERFAZ.md §0): seen from above, the letters of
+ * "Sweet Flow" are puddles of liquid that creep over a surface from the edges
+ * of the screen — a continuous, meandering glide (the path of the earlier
+ * ants, without their jolts), rippling and stretching gently as they go. On
+ * the way each puddle gathers into its letter, and it settles with a small
+ * drop-like wobble. When the word is complete, the app is ready and a minimum
+ * time has passed, the overlay fades out.
  */
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
@@ -12,45 +14,36 @@ const WORD = "Sweet Flow";
 const MIN_MS = 2000;
 const HOLD_MS = 250;
 const FADE_MS = 450;
-const SNAP_MS = 180;
-const MAX_LEAN_DEG = 18;
+/** The small wobble once a letter has its shape. */
+const SETTLE_MS = 650;
+/** Most a puddle stretches along its way (0.2 = 20% longer). */
+const MAX_STRETCH = 0.2;
+/** How shapeless a puddle starts: blur (px) before the liquid threshold, and edge ripple (px). */
+const MAX_MELT = 9;
+const MAX_RIPPLE = 26;
 
 interface Point {
   x: number;
   y: number;
 }
 
-/** One ant step: a quick move followed by a short stop. */
-interface Step {
-  from: Point;
-  to: Point;
-  start: number;
-  moveMs: number;
-  pauseMs: number;
-  /** Lean while moving this step, in degrees. */
-  lean: number;
-}
-
 interface Plan {
-  steps: Step[];
+  /** Points the path goes through, smoothly (Catmull-Rom), from off-screen to the slot. */
+  points: Point[];
+  start: number;
+  travel: number;
   /** Time (ms since start) at which the letter reaches its slot. */
   arrive: number;
+  phase: number;
 }
 
 const rand = (a: number, b: number) => a + Math.random() * (b - a);
-const easeOutQuad = (t: number) => 1 - (1 - t) * (1 - t);
 const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
-
-/** Shortest signed difference between two angles, in radians. */
-function angleDiff(a: number, b: number): number {
-  let d = a - b;
-  while (d > Math.PI) d -= 2 * Math.PI;
-  while (d < -Math.PI) d += 2 * Math.PI;
-  return d;
-}
+/** Steady creep that slows softly into place. */
+const easeOutSine = (t: number) => Math.sin((t * Math.PI) / 2);
 
 function offscreenStart(size: Point, vw: number, vh: number): Point {
-  const margin = 40;
+  const margin = 30;
   switch (Math.floor(Math.random() * 4)) {
     case 0:
       return { x: -size.x - margin, y: rand(0, vh) };
@@ -63,87 +56,82 @@ function offscreenStart(size: Point, vw: number, vh: number): Point {
   }
 }
 
-/** Wandering, jerky path from off-screen to the letter's slot. */
+/** A wandering path to the slot: wide detours early on, a clean approach at the end. */
 function planLetter(target: Point, size: Point, vw: number, vh: number): Plan {
   const start = offscreenStart(size, vw, vh);
   const dx = target.x - start.x;
   const dy = target.y - start.y;
   const dist = Math.hypot(dx, dy) || 1;
-  const base = Math.atan2(dy, dx);
-  // Unit normal to the straight line, for sideways detours.
   const nx = -dy / dist;
   const ny = dx / dist;
-
-  const count = Math.round(rand(14, 22));
-  const amp = clamp(dist * 0.12, 24, 110);
-  const f1 = rand(1.2, 2.4);
-  const f2 = rand(3, 5.5);
+  const amp = clamp(dist * 0.14, 30, 120);
+  const f1 = rand(1, 2);
+  const f2 = rand(2.5, 4);
   const p1 = rand(0, Math.PI * 2);
   const p2 = rand(0, Math.PI * 2);
-
+  const count = 8;
   const points: Point[] = [start];
   for (let i = 1; i < count; i++) {
     const t = i / count;
-    // Detours fade out as the ant gets close, so it lands cleanly.
-    const fade = Math.pow(1 - t, 1.2);
+    const fade = Math.pow(1 - t, 1.3);
     const side = amp * fade * (Math.sin(t * Math.PI * f1 + p1) * 0.7 + Math.sin(t * Math.PI * f2 + p2) * 0.3);
-    const jitter = 6 * fade;
-    points.push({
-      x: start.x + dx * t + nx * side + rand(-jitter, jitter),
-      y: start.y + dy * t + ny * side + rand(-jitter, jitter),
-    });
+    points.push({ x: start.x + dx * t + nx * side, y: start.y + dy * t + ny * side });
   }
   points.push(target);
-
-  // Letters leave at different times and walk at different paces.
-  const delay = rand(0, 520);
-  const travel = rand(1150, 1550);
-  const weights = points.slice(1).map(() => ({ move: rand(0.6, 1), pause: Math.random() < 0.3 ? rand(0.25, 0.7) : rand(0, 0.15) }));
-  const total = weights.reduce((a, w) => a + w.move + w.pause, 0);
-  const unit = travel / total;
-
-  const steps: Step[] = [];
-  let at = delay;
-  for (let i = 0; i < weights.length; i++) {
-    const from = points[i]!;
-    const to = points[i + 1]!;
-    const heading = Math.atan2(to.y - from.y, to.x - from.x);
-    const lean = clamp((angleDiff(heading, base) * 180) / Math.PI * 0.35 + rand(-4, 4), -MAX_LEAN_DEG, MAX_LEAN_DEG);
-    const moveMs = weights[i]!.move * unit;
-    const pauseMs = weights[i]!.pause * unit;
-    steps.push({ from, to, start: at, moveMs, pauseMs, lean });
-    at += moveMs + pauseMs;
-  }
-  // The last pause is dropped: the letter arrives as soon as it stops moving.
-  const last = steps[steps.length - 1]!;
-  return { steps, arrive: last.start + last.moveMs };
+  const delay = rand(0, 450);
+  const travel = rand(1900, 2400);
+  return { points, start: delay, travel, arrive: delay + travel, phase: rand(0, Math.PI * 2) };
 }
 
-/** Position, rotation and scale of a letter at time `t` (ms since start). */
-function poseAt(plan: Plan, target: Point, t: number): { x: number; y: number; rot: number; scale: number } {
+/** Point at `u` (0…1) along the smooth curve through the plan's points. */
+function along(points: Point[], u: number): Point {
+  const n = points.length - 1;
+  const f = clamp(u, 0, 1) * n;
+  const i = Math.min(Math.floor(f), n - 1);
+  const k = f - i;
+  const p0 = points[Math.max(i - 1, 0)]!, p1 = points[i]!, p2 = points[i + 1]!, p3 = points[Math.min(i + 2, n)]!;
+  const k2 = k * k, k3 = k2 * k;
+  const cr = (a: number, b: number, c: number, d: number) => 0.5 * (2 * b + (-a + c) * k + (2 * a - 5 * b + 4 * c - d) * k2 + (-a + 3 * b - 3 * c + d) * k3);
+  return { x: cr(p0.x, p1.x, p2.x, p3.x), y: cr(p0.y, p1.y, p2.y, p3.y) };
+}
+
+const posAt = (plan: Plan, t: number) => along(plan.points, easeOutSine(clamp((t - plan.start) / plan.travel, 0, 1)));
+
+interface Pose {
+  x: number;
+  y: number;
+  /** Direction of the stretch, in degrees. */
+  angle: number;
+  /** Along and across the stretch direction. */
+  sx: number;
+  sy: number;
+  /** How shapeless (0 = the letter itself). */
+  melt: number;
+  ripple: number;
+}
+
+/** Where the puddle is and how formed it is at time `t` (ms since start). */
+function poseAt(plan: Plan, t: number): Pose {
   if (t >= plan.arrive) {
-    // Gentle snap: a small overshoot in scale that settles back to 1.
-    const k = clamp((t - plan.arrive) / SNAP_MS, 0, 1);
-    return { ...target, rot: 0, scale: 1 + 0.06 * Math.sin(k * Math.PI) };
+    // Formed: a small, damped wobble, like a drop coming to rest.
+    const k = t - plan.arrive;
+    const w = 0.07 * Math.exp(-k / 170) * Math.sin((k / 240) * Math.PI * 2);
+    return { ...plan.points[plan.points.length - 1]!, angle: 0, sx: 1 + w, sy: 1 - w, melt: 0, ripple: 0 };
   }
-  const steps = plan.steps;
-  let s = steps[0]!;
-  for (const step of steps) {
-    if (t < step.start) break;
-    s = step;
-  }
-  if (t < s.start) return { ...s.from, rot: s.lean, scale: 1 };
-  const k = clamp((t - s.start) / s.moveMs, 0, 1);
-  const e = easeOutQuad(k);
-  // Straighten up over the last steps before landing.
-  const left = plan.arrive - t;
-  const straighten = clamp(left / 260, 0, 1);
-  return {
-    x: s.from.x + (s.to.x - s.from.x) * e,
-    y: s.from.y + (s.to.y - s.from.y) * e,
-    rot: s.lean * straighten,
-    scale: 1,
-  };
+  const u = clamp((t - plan.start) / plan.travel, 0, 1);
+  const p = posAt(plan, t);
+  const q = posAt(plan, t + 16);
+  const vx = q.x - p.x;
+  const vy = q.y - p.y;
+  const speed = Math.hypot(vx, vy);
+  // Liquid until close: it gathers into the letter over the second half of the way.
+  const shapeless = Math.pow(1 - clamp((u - 0.35) / 0.6, 0, 1), 1.5);
+  // A gentle stretch along the way, and a slow undulation (it creeps rather than slides).
+  const stretch = clamp(speed / 12, 0, 1) * MAX_STRETCH * (0.4 + 0.6 * shapeless);
+  const wave = 0.08 * shapeless * Math.sin(t / 140 + plan.phase);
+  const sx = 1 + stretch + wave;
+  const sy = 1 / sx;
+  return { x: p.x, y: p.y, angle: speed > 0.01 ? (Math.atan2(vy, vx) * 180) / Math.PI : 0, sx, sy, melt: MAX_MELT * shapeless, ripple: MAX_RIPPLE * (0.15 + 0.85 * shapeless) * (1 - u * u) };
 }
 
 const reducedMotion = () => typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
@@ -152,6 +140,9 @@ export function Splash({ ready, onDone }: { ready: boolean; onDone: () => void }
   const rootRef = useRef<HTMLDivElement>(null);
   const measureRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const actorRefs = useRef<(HTMLSpanElement | null)[]>([]);
+  const rippleRefs = useRef<(SVGFEDisplacementMapElement | null)[]>([]);
+  const turbRefs = useRef<(SVGFETurbulenceElement | null)[]>([]);
+  const meltRefs = useRef<(SVGFEGaussianBlurElement | null)[]>([]);
   const onDoneRef = useRef(onDone);
   onDoneRef.current = onDone;
 
@@ -210,13 +201,20 @@ export function Splash({ ready, onDone }: { ready: boolean; onDone: () => void }
       return box;
     };
 
-    const place = (i: number, x: number, y: number, rot: number, scale: number) => {
+    const place = (i: number, pose: Pose) => {
       const el = actorRefs.current[i];
-      if (el) el.style.transform = `translate3d(${x}px, ${y}px, 0) rotate(${rot}deg) scale(${scale})`;
+      if (!el) return;
+      const { x, y, angle, sx, sy, melt, ripple } = pose;
+      el.style.transform = `translate3d(${x}px, ${y}px, 0) rotate(${angle}deg) scale(${sx}, ${sy}) rotate(${-angle}deg)`;
+      // The liquid look: rippled edges, blurred and cut back to a sharp outline (gooey), per letter.
+      rippleRefs.current[i]?.setAttribute("scale", ripple.toFixed(2));
+      meltRefs.current[i]?.setAttribute("stdDeviation", melt.toFixed(2));
+      el.style.filter = ripple > 0.3 || melt > 0.2 ? `url(#sf-drop-${i})` : "none";
     };
 
+    const still = (p: Point): Pose => ({ ...p, angle: 0, sx: 1, sy: 1, melt: 0, ripple: 0 });
     const placeAllAtTargets = () => {
-      targets.forEach((p, i) => place(i, p.x, p.y, 0, 1));
+      targets.forEach((p, i) => place(i, still(p)));
     };
 
     const box = measure();
@@ -237,18 +235,18 @@ export function Splash({ ready, onDone }: { ready: boolean; onDone: () => void }
     }
 
     const plans: (Plan | null)[] = targets.map((p, i) => (WORD[i] === " " || !p ? null : planLetter(p, sizes[i]!, box.width, box.height)));
-    const done = Math.max(...plans.map((p) => (p ? p.arrive + SNAP_MS : 0)));
+    const done = Math.max(...plans.map((p) => (p ? p.arrive + SETTLE_MS : 0)));
     const t0 = performance.now();
     let landed = false;
 
     const frame = (now: number) => {
       const t = now - t0;
       plans.forEach((plan, i) => {
-        const target = targets[i];
-        if (!plan || !target) return;
-        const pose = poseAt(plan, target, t);
-        place(i, pose.x, pose.y, pose.rot, pose.scale);
+        if (!plan || !targets[i]) return;
+        place(i, poseAt(plan, t));
       });
+      // The turbulence drifts, so the ripples flow instead of standing still.
+      turbRefs.current.forEach((n, i) => n?.setAttribute("baseFrequency", `${(0.012 + 0.004 * Math.sin(t / 420 + i)).toFixed(4)} ${(0.024 + 0.006 * Math.cos(t / 360 + i)).toFixed(4)}`));
       if (t < done) raf = requestAnimationFrame(frame);
       else {
         landed = true;
@@ -305,6 +303,19 @@ export function Splash({ ready, onDone }: { ready: boolean; onDone: () => void }
       style={{ transitionDuration: `${FADE_MS}ms` }}
       onPointerDown={() => finish(0)}
     >
+      {/* One liquid filter per letter: rippled, melted edges while it creeps, sharp once formed. */}
+      <svg className="splash__defs" aria-hidden="true" width="0" height="0">
+        {letters.map((ch, i) =>
+          ch === " " ? null : (
+            <filter key={i} id={`sf-drop-${i}`} x="-50%" y="-50%" width="200%" height="200%">
+              <feTurbulence ref={(el) => (turbRefs.current[i] = el)} type="fractalNoise" baseFrequency="0.012 0.024" numOctaves={2} seed={i + 1} result="noise" />
+              <feDisplacementMap ref={(el) => (rippleRefs.current[i] = el)} in="SourceGraphic" in2="noise" scale="0" xChannelSelector="R" yChannelSelector="G" result="rippled" />
+              <feGaussianBlur ref={(el) => (meltRefs.current[i] = el)} in="rippled" stdDeviation="0" result="soft" />
+              <feColorMatrix in="soft" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -9" />
+            </filter>
+          ),
+        )}
+      </svg>
       {/* Laid-out copy of the word: only used to measure each letter's slot. */}
       <div className="splash__measure" aria-hidden="true">
         {letters.map((ch, i) => (

@@ -18,12 +18,15 @@ Abrir la app ──▶ 0. Pantalla de carga ──▶ 1. Dashboard ──▶ 2. 
 
 ## 0. Pantalla de carga
 
-- Fondo de la app. Las letras de **Sweet Flow** entran desde fuera de la
-  pantalla, cada una por un lado, **como si las llevaran hormigas vistas desde
-  arriba** (sin que se vean hormigas):
-  - pasos cortos con pequeños tirones, pausas breves y algún rodeo;
-  - cada letra gira ligeramente hacia donde avanza y se endereza al llegar;
-  - llegan desordenadas y encajan una a una hasta formar el nombre.
+- Fondo de la app, **visto desde arriba como una superficie**. Las letras de
+  **Sweet Flow** entran desde los bordes de la pantalla, cada una por un lado,
+  **como líquido que se arrastra por la superficie**:
+  - recorrido continuo y serpenteante (el de las antiguas hormigas, sin
+    tirones ni pausas), que se frena suavemente al llegar;
+  - empiezan como manchas sin forma, con los bordes ondulando, y se estiran un
+    poco en la dirección en que avanzan;
+  - a medida que se acercan van cogiendo la forma de la letra, y al colocarse
+    hacen un pequeño rebote, como una gota que se asienta.
 - Cuando la app ha cargado (y el nombre está completo), el logo **se desvanece**
   y aparece el dashboard.
 - Duración mínima de unos 2 s aunque la carga termine antes; un clic la salta.

@@ -39,10 +39,12 @@
   top: 0;
   left: 0;
   color: var(--fg-0);
-  transform-origin: 50% 60%;
+  transform-origin: 50% 50%;
   will-change: transform;
 }
 
 /* Reduced motion: letters sit in place and fade in. */
 .splash--still .splash__letter { animation: splash-in 0.4s ease both; }
 @keyframes splash-in { from { opacity: 0; } to { opacity: 1; } }
+
+.splash__defs { position: absolute; width: 0; height: 0; overflow: hidden; }
