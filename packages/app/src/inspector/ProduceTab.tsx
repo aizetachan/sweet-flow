@@ -605,22 +605,27 @@ type RefCtx = ReturnType<typeof useRefFiles>;
 /** Accept files dragged from the computer. */
 function fileDrop(onFiles: (files: File[]) => void, on?: (over: boolean) => void, onMedia?: (ids: Id[]) => void) {
   // Files from this computer, or images dragged from the library (docs/INTERFAZ.md §2.8).
-  const ours = (e: DragEvent) => hasFiles(e.dataTransfer) || (!!onMedia && e.dataTransfer.types.includes(MEDIA_DRAG));
+  // Library images first: dragging an <img> can also look like a file to the browser.
+  const isMedia = (e: DragEvent) => !!onMedia && e.dataTransfer.types.includes(MEDIA_DRAG);
+  const ours = (e: DragEvent) => isMedia(e) || hasFiles(e.dataTransfer);
+  const accept = (e: DragEvent) => {
+    if (!ours(e)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = "copy";
+    on?.(true);
+  };
   return {
-    onDragOver: (e: DragEvent) => {
-      if (!ours(e)) return;
-      e.preventDefault();
-      e.stopPropagation();
-      e.dataTransfer.dropEffect = "copy";
-      on?.(true);
-    },
+    // Both: the drop target is chosen on enter, and kept while hovering.
+    onDragEnter: accept,
+    onDragOver: accept,
     onDragLeave: () => on?.(false),
     onDrop: (e: DragEvent) => {
       if (!ours(e)) return;
       e.preventDefault();
       e.stopPropagation();
       on?.(false);
-      if (hasFiles(e.dataTransfer)) return onFiles([...e.dataTransfer.files]);
+      if (!isMedia(e)) return onFiles([...e.dataTransfer.files]);
       let ids = draggedMedia();
       if (!ids.length) {
         try {
@@ -660,6 +665,9 @@ function RefSlot({ ctx, label, icon, accept, node, value, disabled, disabledHint
 }) {
   const snap = useSnap();
   const [over, setOver] = useState(false);
+  // A library group opened in the list, and the images marked in it.
+  const [openCard, setOpenCard] = useState<{ card: ProdNode; refs: Media[]; all: Media[] } | null>(null);
+  const [marks, setMarks] = useState<Id[]>([]);
   const input = useRef<HTMLInputElement>(null);
   const drop = onFiles && !disabled ? fileDrop(onFiles, setOver, onMedia) : {};
   const up = value && isUp(value) ? ctx.ups[value] : undefined;
@@ -691,7 +699,7 @@ function RefSlot({ ctx, label, icon, accept, node, value, disabled, disabledHint
         if (card.lib?.kind !== "card") return [];
         const imgs = snap.media.filter((m) => m.nodeId === card.id && m.kind === "image" && m.status === "ready" && !m.archived);
         const refs = imgs.some((m) => m.chosen) ? imgs.filter((m) => m.chosen) : imgs;
-        return refs.length ? [{ card, refs }] : [];
+        return refs.length ? [{ card, refs, all: imgs }] : [];
       })
     : [];
   return (
@@ -732,19 +740,51 @@ function RefSlot({ ctx, label, icon, accept, node, value, disabled, disabledHint
           {cards.length ? (
             <>
               <div className="menu__title">De la biblioteca</div>
-              <div className="gen__pick-grid">
-                {cards.map(({ card, refs }) => (
-                  <button key={card.id} className="menu__item gen__pick" title={`${card.title}: ${refs.length} ${refs.length === 1 ? "imagen elegida" : "imágenes elegidas"}`}
-                    onClick={() => {
-                      for (const m of refs) ctx.media(m);
-                      if (onPickMany) onPickMany(refs.map((m) => m.id), card);
-                      else onPick(refs[0]!.id, "image");
+              {openCard ? (
+                // A group opened: its images, to pick the ones that go (docs/INTERFAZ.md §2.8).
+                <div className="gen__libpick">
+                  <div className="gen__libpick-head">
+                    <button className="link" onClick={() => { setOpenCard(null); setMarks([]); }}>← {openCard.card.title}</button>
+                    <span className="sf-faint sf-small">{onPickMany ? "Marca las que quieras añadir" : "Elige una"}</span>
+                  </div>
+                  <div className="gen__pick-grid">
+                    {openCard.all.map((m) => {
+                      const on = marks.includes(m.id);
+                      return onPickMany ? (
+                        <button key={m.id} className={cx("gen__pick gen__libimg", on && "is-on")} onClick={() => setMarks(on ? marks.filter((x) => x !== m.id) : [...marks, m.id])}>
+                          <Thumb media={m} badge={false} />
+                          {on ? <span className="gen__libcheck"><IconCheck size={11} stroke={3} /></span> : null}
+                        </button>
+                      ) : (
+                        <button key={m.id} className="menu__item gen__pick gen__libimg" onClick={() => { ctx.media(m); onPick(m.id, "image"); setOpenCard(null); }}>
+                          <Thumb media={m} badge={false} />
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {onPickMany ? (
+                    <button className="menu__item gen__libadd" disabled={!marks.length} onClick={() => {
+                      const list = openCard.all.filter((m) => marks.includes(m.id));
+                      for (const m of list) ctx.media(m);
+                      onPickMany(list.map((m) => m.id), openCard.card);
+                      setOpenCard(null);
+                      setMarks([]);
                     }}>
-                    <Thumb media={refs[0]} badge={false} />
-                    <span className="sf-small">{card.title}{onPickMany && refs.length > 1 ? ` · ${refs.length}` : ""}</span>
-                  </button>
-                ))}
-              </div>
+                      <IconPlus size={14} /> <span className="menu__label">{marks.length ? `Añadir ${marks.length}` : "Marca alguna"}</span>
+                    </button>
+                  ) : null}
+                </div>
+              ) : (
+                <div className="gen__pick-grid">
+                  {cards.map((c) => (
+                    <button key={c.card.id} className="gen__pick gen__libgroup" title={`${c.card.title}: ${c.all.length} ${c.all.length === 1 ? "imagen" : "imágenes"}`}
+                      onClick={() => { setOpenCard(c); setMarks(c.all.filter((m) => m.chosen).map((m) => m.id)); }}>
+                      <Thumb media={c.refs[0]} badge={false} />
+                      <span className="sf-small">{c.card.title} · {c.all.length}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </>
           ) : null}
       </>

@@ -70,6 +70,9 @@ export function LibraryBoard() {
       {/* Below the last row: a new group, by click or by dropping images here. */}
       <div className={cx("libb__newrow", over && "is-over", !groups.length && "libb__newrow--first")}
         onClick={() => newGroup()}
+        onDragEnter={(e) => {
+          if (e.dataTransfer.types.includes(MEDIA_DRAG)) e.preventDefault();
+        }}
         onDragOver={(e) => {
           if (!e.dataTransfer.types.includes(MEDIA_DRAG)) return;
           e.preventDefault();
@@ -136,6 +139,9 @@ function GroupRow({ group, picked, setPicked }: { group: ProdNode; picked: Id[];
   return (
     <section className={cx("libb__lane", on && "is-on")}
       onContextMenu={(e) => { e.preventDefault(); setMenu({ x: e.clientX, y: e.clientY }); }}
+      onDragEnter={(e) => {
+        if (e.dataTransfer.types.includes(MEDIA_DRAG)) e.preventDefault();
+      }}
       onDragOver={(e) => {
         if (!e.dataTransfer.types.includes(MEDIA_DRAG)) return;
         e.preventDefault();

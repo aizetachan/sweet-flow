@@ -694,8 +694,10 @@ centrada en la imagen y sin tipos fijos (decidido el 19 oct 2026):
   inicial / final** como fotograma; soltada sobre la zona de referencias, va
   donde la admita el modelo.
 - **Usar en los planos:** en las referencias de Generar, «De la biblioteca»
-  lista los grupos por su nombre; al elegir uno entran sus imágenes elegidas
-  (o todas) hasta el máximo del modelo.
+  lista los grupos por su nombre. Al elegir uno se ven **sus imágenes** para
+  marcar las que se quieren (empiezan marcadas sus ★ elegidas) y **Añadir N**;
+  en un hueco de una sola imagen (Estilo, imagen inicial o final) se elige una.
+  «←» vuelve a la lista de grupos.
 - Los grupos son también el **desglose** de escenas y planos (chips de la
   cabecera del plano y filtro del tablero).
 - **En el disco:** `Biblioteca/<Nombre>/_media/` dentro de la carpeta de la
