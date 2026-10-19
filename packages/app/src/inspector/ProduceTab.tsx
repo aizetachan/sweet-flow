@@ -25,6 +25,7 @@ import { OnStage } from "./stage";
 import { memberName } from "../state/selectors";
 import { modelsFor, nearest, REF_LABEL, specOf, useModelsVersion, type GenKind, type RefType } from "../data/models";
 import { refreshCatalog } from "../integrations/magnific/catalog";
+import { mentionsIn, PromptTags, type Mentions } from "./PromptTags";
 import { kindOfFile, type GenerateArgs } from "../data/source";
 import { Popover } from "../components/Popover";
 import { Composer } from "./ReviewTab";
@@ -254,6 +255,8 @@ function GenerateBox({ node }: { node: ProdNode }) {
   }, [shown, model]);
   const spec = specOf(kind, model);
   const [prompt, setPrompt] = useState("");
+  // Library groups called with «@» and the images picked for each (docs/INTERFAZ.md §2.8).
+  const [mentions, setMentions] = useState<Mentions>({});
   const [count, setCount] = useState(1);
   const [ratio, setRatio] = useState("16:9");
   const [resolution, setResolution] = useState<string | undefined>(undefined);
@@ -303,9 +306,18 @@ function GenerateBox({ node }: { node: ProdNode }) {
     ...(start ? (isUp(start) ? { sourceRef: ref.ups[start]?.ref } : { sourceMediaId: start }) : {}),
     ...(start && end ? (isUp(end) ? { endRef: ref.ups[end]?.ref } : { endMediaId: end }) : {}),
     ...(refs.length ? { references: refs.map((r) => (isUp(r.mediaId) ? { type: r.type, ref: ref.ups[r.mediaId]?.ref } : r)) } : {}),
+    ...(called.length ? { mentions: called } : {}),
   });
+  // Images of the groups called that the provider doesn't have yet go up first.
+  const called = mentionsIn(prompt, mentions);
+  useEffect(() => {
+    for (const c of called) for (const id of c.mediaIds) {
+      const m = snap.media.find((x) => x.id === id);
+      if (m && !m.remote?.id && !ref.sending.includes(id) && snap.me.magnificConnected) ref.media(m);
+    }
+  }, [called.map((c) => c.mediaIds.join(",")).join("|")]); // eslint-disable-line react-hooks/exhaustive-deps
   // Files still on their way to the provider (or that failed) hold Generate back.
-  const inUse = [start, start ? end : null, ...refs.map((r) => r.mediaId)].filter((v): v is string => !!v);
+  const inUse = [start, start ? end : null, ...refs.map((r) => r.mediaId), ...called.flatMap((c) => c.mediaIds)].filter((v): v is string => !!v);
   const waiting = inUse.some((v) => (isUp(v) ? !ref.ups[v]?.ref : ref.sending.includes(v)));
   const failed = inUse.some((v) => isUp(v) && !!ref.ups[v]?.error);
 
@@ -450,7 +462,7 @@ function GenerateBox({ node }: { node: ProdNode }) {
       ) : null}
 
       <div className="gen__label">Prompt</div>
-      <textarea className="sf-textarea" rows={4} placeholder={placeholder} value={prompt} onChange={(e) => setPrompt(e.target.value)} />
+      <PromptTags value={prompt} onChange={setPrompt} placeholder={snap.library.some((n) => n.lib?.kind === "card") ? `${placeholder} (@ para llamar a un grupo de la biblioteca)` : placeholder} mentions={mentions} setMentions={setMentions} />
 
       <div className="gen__opts">
         {spec.maxCount > 1 ? (

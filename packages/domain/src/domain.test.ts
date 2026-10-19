@@ -90,3 +90,12 @@ describe("entry folder names", () => {
     expect(Object.fromEntries(names)).toEqual({ a: "temporada-1", b: "Temporada-1-2", c: "Nandu-piloto", d: "Sin-nombre" });
   });
 });
+
+describe("library tags", () => {
+  it("turns a group's name into what a prompt can call", async () => {
+    const { libTag } = await import("./naming");
+    expect(libTag("Casa de Robida")).toBe("Casa_de_Robida");
+    expect(libTag("Señora Núñez (joven)")).toBe("Senora_Nunez_joven");
+    expect(libTag("  ")).toBe("Grupo");
+  });
+});

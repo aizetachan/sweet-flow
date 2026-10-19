@@ -21,6 +21,99 @@ const DONE = new Set(["completed", "complete", "done", "success", "succeeded", "
 const FAILED = new Set(["failed", "error", "errored", "cancelled", "canceled", "rejected"]);
 
 const FOLDERS_KEY = "sweetflow:magnific:folders";
+const LIBRARY_KEY = "sweetflow:magnific:library";
+
+/** A library group as an asset of this account's Magnific library. */
+interface Asset {
+  id: number;
+  name: string;
+  kind: "character" | "product" | "locations";
+  /** The images it was made with, to know when to update it. */
+  images: string;
+}
+
+function readAssets(): Record<string, Asset> {
+  try {
+    return JSON.parse(localStorage.getItem(LIBRARY_KEY) ?? "{}") as Record<string, Asset>;
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * The Magnific library asset of a group, in this account: made the first time
+ * (its name is the group's tag, «Casa_de_Robida»; «_2»… if taken) and updated
+ * when its images or its name change. Up to 6 images, the first is the cover.
+ */
+async function ensureAsset(m: { key: string; tag: string; kind: Asset["kind"]; description?: string; ids: string[] }): Promise<Asset> {
+  const known = readAssets();
+  const images = m.ids.slice(0, 6);
+  const sig = images.join(",");
+  const save = (a: Asset) => {
+    localStorage.setItem(LIBRARY_KEY, JSON.stringify({ ...readAssets(), [m.key]: a }));
+    return a;
+  };
+  const cur = known[m.key];
+  if (cur && cur.kind === m.kind) {
+    if (cur.images === sig && cur.name === m.tag) return cur;
+    try {
+      await callTool("library_edit", {
+        id: cur.id,
+        ...(cur.images !== sig ? { images: images.map((c) => ({ creationIdentifier: c })) } : {}),
+        ...(cur.name !== m.tag ? { name: m.tag } : {}),
+      });
+      return save({ ...cur, images: sig, name: m.tag });
+    } catch (e) {
+      // The new name is taken: keep the old one, with the new images.
+      if (cur.name !== m.tag && cur.images !== sig) {
+        await callTool("library_edit", { id: cur.id, images: images.map((c) => ({ creationIdentifier: c })) }).catch(() => undefined);
+        return save({ ...cur, images: sig });
+      }
+      if (cur.name !== m.tag) return cur;
+      throw e;
+    }
+  }
+  let lastError: unknown;
+  for (let n = 1; n <= 5; n++) {
+    const name = n === 1 ? m.tag : `${m.tag}_${n}`.slice(0, 50);
+    try {
+      const r = await callTool("library_create", {
+        name,
+        type: m.kind,
+        images: images.map((c) => ({ creationIdentifier: c })),
+        ...(m.description ? { description: m.description.slice(0, 1000) } : {}),
+      });
+      const id = Number(findNumber(r.data, "id") ?? /"?id"?\s*[:=]\s*(\d+)/.exec(r.text)?.[1]);
+      if (!Number.isFinite(id) || id <= 0) throw new Error("Magnific no ha devuelto el recurso de la biblioteca.");
+      return save({ id, name, kind: m.kind, images: sig });
+    } catch (e) {
+      lastError = e;
+      // Try the next name only when this one is taken.
+      if (!/name|exist|unique|taken|ya/i.test(e instanceof Error ? e.message : String(e))) break;
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error("Magnific no ha podido crear el recurso de la biblioteca.");
+}
+
+/** First number under `key`, searching nested objects and arrays. */
+function findNumber(data: unknown, key: string, depth = 0): number | undefined {
+  if (!data || typeof data !== "object" || depth > 6) return undefined;
+  if (Array.isArray(data)) {
+    for (const x of data) {
+      const v = findNumber(x, key, depth + 1);
+      if (v !== undefined) return v;
+    }
+    return undefined;
+  }
+  const d = data as Record<string, unknown>;
+  if (typeof d[key] === "number") return d[key] as number;
+  if (typeof d[key] === "string" && /^\d+$/.test(d[key] as string)) return Number(d[key]);
+  for (const v of Object.values(d)) {
+    const n = findNumber(v, key, depth + 1);
+    if (n !== undefined) return n;
+  }
+  return undefined;
+}
 
 /** What creations_request_upload takes. */
 const UPLOAD_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "video/mp4", "video/quicktime", "video/webm", "video/x-m4v", "audio/wav", "audio/x-wav", "audio/mpeg", "audio/mp4", "audio/ogg", "audio/flac"]);
@@ -158,21 +251,54 @@ export class MagnificGenerator implements Generator {
   // ---------- internals ----------
 
   private async launch(req: GenerationRequest, folder: string): Promise<string> {
-    const { tool, args } = this.call(req, folder);
+    const { tool, args } = this.call(req, folder, await this.assets(req));
     const r = await callTool(tool, args);
     const id = firstIdentifier(r.data) ?? /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.exec(r.text)?.[0];
     if (!id) throw new Error("Magnific no ha devuelto la generación.");
     return id;
   }
 
+  /**
+   * The library groups called in the prompt as Magnific library assets of
+   * this account (docs/INTERFAZ.md §2.8), made the first time and updated
+   * when their name or images change. Only what the model takes by name.
+   */
+  private async assets(req: GenerationRequest): Promise<Map<string, Asset>> {
+    const out = new Map<string, Asset>();
+    const m = specOf(req.kind === "video" ? "video" : "image", req.model);
+    for (const mention of req.mentions ?? []) {
+      const kind = mention.kind;
+      if (kind !== "character" && kind !== "product" && kind !== "locations") continue;
+      if (!m.library?.includes(kind)) continue;
+      out.set(mention.key, await ensureAsset({ ...mention, kind }));
+    }
+    return out;
+  }
+
   /** The tool and its arguments, with only what the model allows (data/models.ts). */
-  private call(req: GenerationRequest, folder: string | undefined): { tool: string; args: Record<string, unknown> } {
+  private call(req: GenerationRequest, folder: string | undefined, assets = new Map<string, Asset>()): { tool: string; args: Record<string, unknown> } {
     const at = folder ? { folderReference: folder } : {};
     const m = specOf(req.kind === "audio" ? "audio" : req.kind === "video" ? "video" : "image", req.model);
     const ratio = req.aspectRatio && m.aspectRatios.includes(req.aspectRatio) ? req.aspectRatio : m.aspectRatios[0];
     const resolution = m.resolutions ? (req.resolution && m.resolutions.includes(req.resolution) ? req.resolution : m.resolutions[0]) : undefined;
     const duration = m.durations ? nearest(m.durations, req.durationSec ?? m.durations[0]!) : undefined;
     const refs = m.references ? (req.references ?? []).filter((r) => m.references!.types.includes(r.type)).slice(0, m.references.max) : [];
+    // Groups called in the prompt: as library assets by name, or their images as references.
+    let prompt = req.prompt;
+    const named: Array<{ type: string; id: string; name: string }> = [];
+    for (const mention of req.mentions ?? []) {
+      const asset = assets.get(mention.key);
+      if (asset) {
+        if (asset.name !== mention.tag) prompt = prompt.split(`@${mention.tag}`).join(`@${asset.name}`);
+        named.push({ type: asset.kind, id: String(asset.id), name: asset.name });
+        continue;
+      }
+      if (!m.references) continue;
+      const room = m.references.max - refs.length - named.length;
+      if (room <= 0) continue;
+      if (mention.kind === "style" && m.references.types.includes("style")) refs.push({ type: "style", id: mention.ids[0]! });
+      else if (m.references.types.includes("image")) for (const id of mention.ids.slice(0, room)) refs.push({ type: "image", id });
+    }
 
     if (req.kind === "audio") {
       if (m.audio === "sfx") return { tool: "audio_sfx_generate", args: { prompt: req.prompt, durationSeconds: duration ?? 5, ...(m.loop && req.loop ? { loop: true } : {}), ...at } };
@@ -190,13 +316,13 @@ export class MagnificGenerator implements Generator {
       return {
         tool: "video_generate",
         args: {
-          prompt: req.prompt,
+          prompt,
           aspectRatio: ratio,
           ...(m.slug ? { slug: m.slug, duration } : duration ? { duration } : {}),
           ...(resolution ? { resolution } : {}),
           ...(m.sound ? { withSoundEffects: !!req.sound } : {}),
           ...frames,
-          ...(refs.length ? { references: refs.map((r) => ({ type: r.type, url: r.id })) } : {}),
+          ...(refs.length || named.length ? { references: [...refs.map((r) => ({ type: r.type, url: r.id })), ...named.map((a) => ({ type: a.type, custom_model_id: a.id, name: a.name }))] } : {}),
           ...at,
         },
       };
@@ -205,12 +331,12 @@ export class MagnificGenerator implements Generator {
     return {
       tool: "images_generate",
       args: {
-        prompt: req.prompt,
+        prompt,
         mode: m.slug ?? "auto",
         aspectRatio: ratio,
         count: 1,
         ...(resolution ? { resolution } : {}),
-        ...(refs.length ? { references: refs.map((r) => ({ type: r.type, identifier: r.id })) } : {}),
+        ...(refs.length || named.length ? { references: [...refs.map((r) => ({ type: r.type, identifier: r.id })), ...named.map((a) => ({ type: a.type, identifier: a.id }))] } : {}),
         ...at,
       },
     };

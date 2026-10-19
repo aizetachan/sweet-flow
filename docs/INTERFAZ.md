@@ -672,7 +672,7 @@ centrada en la imagen y sin tipos fijos (decidido el 19 oct 2026):
 - **Grupos con nombre**, uno por fila, que muestran sus imágenes. El nombre lo
   pone el equipo («Personaje 1», «Casa de Robida», «Linterna»…) y es la
   **etiqueta** con la que se llama al grupo desde los planos. Al crearlo se
-  llama «Grupo 1», «Grupo 2»… hasta que se le pone nombre (doble clic).
+  llama «Nuevo grupo» hasta que se le pone nombre (doble clic).
 - **Crear sobre la marcha:** **+ Grupo** arriba, **Nuevo grupo** debajo de la
   última fila (clic, o soltar imágenes ahí) o «+» en Explorer.
 - **Generar:** el panel de la izquierda genera en el grupo seleccionado (al
@@ -695,10 +695,24 @@ centrada en la imagen y sin tipos fijos (decidido el 19 oct 2026):
 - **En el disco:** `Biblioteca/<Nombre>/_media/` dentro de la carpeta de la
   producción («-2» si dos grupos se llaman igual). Mover una imagen de grupo
   mueve su archivo.
-- **Pendiente: la etiqueta en el prompt.** Magnific solo entiende «@nombre» en
-  el prompt para los recursos de *su* biblioteca (personaje, objeto o lugar,
-  nombre sin espacios, creado con 1–6 imágenes, en la cuenta de cada persona).
-  Ver la decisión en §2.8.1.
+- **Qué es:** al crear un grupo, su fila pregunta «¿Qué es?»: Personaje,
+  Objeto, Lugar, Estilo u Otro. Se cambia después en su fila (clic en el tipo)
+  o en el panel.
+- **Etiquetas en el prompt:** al escribir **@** en el prompt de cualquier
+  plano o grupo salen los grupos de la biblioteca (miniatura, nombre, etiqueta
+  y tipo); flechas e Intro, o clic. Se escribe su etiqueta («@Casa_de_Robida»:
+  el nombre sin espacios ni acentos) y se abre un **menú con sus imágenes**
+  para marcar las que se usan como referencia (hasta 6; empiezan marcadas sus
+  ★ elegidas, o las primeras). Debajo del prompt, un chip por grupo llamado
+  («@Elena · 3») vuelve a abrir ese menú. Si se borra la etiqueta del texto,
+  el grupo deja de mandarse.
+- **Al generar:** si el grupo es Personaje, Objeto o Lugar y el modelo lo
+  admite, Sweet Flow lo crea como recurso de la **biblioteca de Magnific** de
+  quien genera (con su nombre y las imágenes marcadas; si el nombre está
+  cogido, «_2») y lo actualiza cuando cambian las imágenes o el nombre; el
+  prompt lo nombra y Magnific lo reconoce. Si no (Estilo, Otro, o un modelo
+  sin biblioteca), sus imágenes van como referencias normales. Las imágenes
+  que Magnific aún no tiene se suben antes; Generar espera.
 
 #### 2.8.1 Bibliotecas compartidas entre producciones (propuesta, como Figma)
 

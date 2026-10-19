@@ -547,6 +547,14 @@ export class LocalSource implements DataSource {
       startFrom: args.sourceRef ?? remote(args.sourceMediaId),
       endOn: args.endRef ?? remote(args.endMediaId),
       references,
+      mentions: (args.mentions ?? []).flatMap((m) => {
+        const group = s.nodes.find((n) => n.id === m.groupId);
+        const ids = m.mediaIds.map((id) => remote(id)).filter((x): x is string => !!x);
+        if (!group || !ids.length) return [];
+        const t = group.lib?.kind === "card" ? group.lib.type : undefined;
+        const kind = t === "cast" ? "character" : t === "prop" ? "product" : t === "location" ? "locations" : t === "style" ? "style" : null;
+        return [{ key: group.id, tag: m.tag, kind, ...(group.notes.trim() ? { description: group.notes.trim() } : {}), ids }];
+      }),
       aspectRatio: args.aspectRatio,
       resolution: args.resolution,
       sound: args.sound,

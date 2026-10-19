@@ -148,6 +148,11 @@ export interface GenerateArgs {
   endRef?: string;
   /** What guides it (style, images, videos, audio): media of the production, or uploaded files (`ref`). */
   references?: Array<{ type: RefType; mediaId?: Id; ref?: string }>;
+  /**
+   * Library groups called in the prompt («@Elena», docs/INTERFAZ.md §2.8),
+   * with the images picked for each.
+   */
+  mentions?: Array<{ groupId: Id; tag: string; mediaIds: Id[] }>;
   /** How many results (one version each). */
   count?: number;
   aspectRatio?: string;

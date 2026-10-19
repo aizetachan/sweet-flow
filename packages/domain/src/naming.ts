@@ -95,3 +95,13 @@ export function groupFolderNames(groups: Array<{ id: string; name: string; creat
   });
   return entryFolderNames(named);
 }
+
+/**
+ * A library group's tag (docs/INTERFAZ.md §2.8): how it is called in a prompt,
+ * «@Casa_de_Robida». What Magnific accepts as a library name: letters,
+ * digits, «_» and «-», up to 50.
+ */
+export function libTag(title: string): string {
+  const ascii = title.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ß/g, "ss").replace(/æ/gi, "ae").replace(/ø/gi, "o");
+  return ascii.replace(/[^A-Za-z0-9_-]+/g, "_").replace(/_+/g, "_").replace(/^[_-]+|[_-]+$/g, "").slice(0, 50) || "Grupo";
+}

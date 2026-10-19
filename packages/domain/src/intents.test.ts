@@ -3,7 +3,6 @@ import {
   planCreateLibNode,
   planMoveToLib,
   planPlaceLibMedia,
-  nextGroupName,
   childrenOf,
   defaultLevels,
   defaultStatuses,
@@ -437,11 +436,9 @@ describe("library groups", () => {
   const group = (id: string, title: string, number: number) => ({ id, productionId: "p", parentId: null, levelId: "lib", number, title, notes: "", statusId: "s", assigneeIds: [], assetIds: [], lib: { kind: "card" as const }, updatedAt: 0, updatedBy: "u" });
   const img = (id: string, nodeId: string, createdAt: number, version = 1) => ({ id, nodeId, kind: "image" as const, version, createdAt, archived: false });
 
-  it("names new groups «Grupo N» until the team names them", () => {
-    expect(nextGroupName([])).toBe("Grupo 1");
-    expect(nextGroupName(["Grupo 1", "Casa de Robida", "grupo 2"])).toBe("Grupo 3");
-    const plan = planCreateLibNode(p, { kind: "card" }, "", "g3", [group("g1", "Grupo 1", 1), group("g2", "Elena", 4)]);
-    expect(plan.events[0]).toMatchObject({ type: "node.created", node: { title: "Grupo 2", number: 5 } });
+  it("calls new groups «Nuevo grupo» until the team names them", () => {
+    const plan = planCreateLibNode(p, { kind: "card" }, "", "g3", [group("g1", "Nuevo grupo", 1), group("g2", "Elena", 4)]);
+    expect(plan.events[0]).toMatchObject({ type: "node.created", node: { title: "Nuevo grupo", number: 5 } });
   });
 
   it("gives two groups with the same name their own folder", async () => {

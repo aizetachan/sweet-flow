@@ -24,12 +24,12 @@ import { ReviewTab } from "./ReviewTab";
 import { ActivityTab } from "./ActivityTab";
 import { nameOf, useShowCodes } from "../state/names";
 
-const ASSET_LABEL = { cast: "Personaje", prop: "Prop", location: "Espacio", style: "Estilo", other: "Otro" } as const;
+const ASSET_LABEL = { cast: "Personaje", prop: "Objeto", location: "Lugar", style: "Estilo", other: "Otro" } as const;
 /** Kinds of library card, in the order they show (docs/INTERFAZ.md §2.8). */
 export const LIB_TYPES: Array<{ id: AssetType; label: string; plural: string }> = [
   { id: "cast", label: "Personaje", plural: "Personajes" },
-  { id: "location", label: "Espacio", plural: "Espacios" },
-  { id: "prop", label: "Prop", plural: "Props" },
+  { id: "prop", label: "Objeto", plural: "Objetos" },
+  { id: "location", label: "Lugar", plural: "Lugares" },
   { id: "style", label: "Estilo", plural: "Estilos" },
   { id: "other", label: "Otro", plural: "Otros" },
 ];
@@ -229,7 +229,11 @@ function InspectorBody({ floatKey, onDragHandle }: { floatKey?: string; onDragHa
         {node.lib ? (
           // A card of the library: its kind and its description (the base of its prompt); the desk, a hint.
           <div className="nhead__row nhead__row--code">
-            <span className="sf-faint sf-small">Grupo de la biblioteca · lo que generes aquí entra en él</span>
+            <select className="sf-select libtype" value={node.lib.kind === "card" ? node.lib.type ?? "" : ""} title="Qué es: con personaje, objeto o lugar se puede llamar por su nombre en el prompt («@Nombre»)"
+              onChange={(e) => e.target.value && source.setLibType(node.id, e.target.value as AssetType)}>
+              <option value="" disabled>¿Qué es?</option>
+              {LIB_TYPES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+            </select>
             <button className={cx("notes__btn", node.notes.trim() && "notes__btn--on")} title={node.notes.trim() ? node.notes : "Describir: cómo es (base del prompt)"}
               onClick={() => set({ modal: "notes", notesFor: node.id })}>
               <IconNote size={13} /> Descripción

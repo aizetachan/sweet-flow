@@ -582,18 +582,15 @@ export function lastMadeFrom(nodes: ProdNode[], takes: Take[], original: ProdNod
 export function planCreateLibNode(p: Production, lib: LibKind, title: string, newId: Id, nodes: ProdNode[] = []): Plan {
   const statusId = p.statuses.slice().sort((a, b) => a.order - b.order)[0]?.id ?? "";
   const groups = nodes.filter((n) => n.lib?.kind === "card");
-  // Generic until the team names it: «Grupo 1», «Grupo 2»…
-  const name = lib.kind === "desk" ? "Mesa de trabajo" : title.trim() || nextGroupName(groups.map((g) => g.title));
+  // «Nuevo grupo» until the team names it.
+  const name = lib.kind === "desk" ? "Mesa de trabajo" : title.trim() || NEW_GROUP;
   // `number`: creation order among the library's groups (who keeps a folder name first).
   const number = Math.max(0, ...groups.map((g) => g.number)) + 1;
   return { nodeId: newId, events: [{ type: "node.created", node: { id: newId, parentId: null, levelId: LIB_LEVEL, number, title: name, statusId, lib } }] };
 }
 
-/** «Grupo N» with the first N not taken. */
-export function nextGroupName(taken: string[]): string {
-  const used = new Set(taken.map((t) => t.trim().toLowerCase()));
-  for (let i = 1; ; i++) if (!used.has(`grupo ${i}`)) return `Grupo ${i}`;
-}
+/** Name of a new library group, until the team gives it its own. */
+export const NEW_GROUP = "Nuevo grupo";
 
 /** Where an image sorts in its library group. */
 export const libOrder = (m: Pick<Media, "order" | "createdAt">) => m.order ?? m.createdAt;

@@ -15,6 +15,8 @@ import { useSnap, useStore } from "../state/store";
 import { Thumb } from "../components/media";
 import { ContextMenu, type MenuAt } from "../components/ContextMenu";
 import { InlineEdit } from "../board/Board";
+import { LIB_TYPES } from "../inspector/Inspector";
+import type { AssetType } from "@sweetflow/domain";
 
 const MEDIA_DRAG = "application/x-sweetflow-media";
 
@@ -152,6 +154,7 @@ function GroupRow({ group, picked, setPicked }: { group: ProdNode; picked: Id[];
         onContextMenu={(e) => { e.preventDefault(); setMenu({ x: e.clientX, y: e.clientY }); }}>
         <InlineEdit className="libb__gname" value={group.title} placeholder="Sin nombre" label="Doble clic para cambiar el nombre" startSignal={rename}
           onSave={(title) => source.updateNode(group.id, { title })} />
+        <KindChip group={group} />
         <span className="sf-faint sf-small">{images.length || ""}{pending ? ` · generando ${pending}` : ""}</span>
         {group.notes.trim() ? <span className="libb__gdesc sf-faint sf-small" title={group.notes}>{group.notes}</span> : null}
       </div>
@@ -191,6 +194,35 @@ function GroupRow({ group, picked, setPicked }: { group: ProdNode; picked: Id[];
         </ContextMenu>
       ) : null}
     </section>
+  );
+}
+
+/**
+ * What a group is (docs/INTERFAZ.md §2.8). A new group asks right away, in
+ * its row; it can be changed later from here or the panel. Characters,
+ * objects and places can be called by name in a prompt («@Elena»).
+ */
+function KindChip({ group }: { group: ProdNode }) {
+  const source = useStore((s) => s.source);
+  const [open, setOpen] = useState(false);
+  const type = group.lib?.kind === "card" ? group.lib.type : undefined;
+  if (group.lib?.kind !== "card") return null;
+  const choose = (t: AssetType) => {
+    source.setLibType(group.id, t);
+    setOpen(false);
+  };
+  if (!type || open) {
+    return (
+      <span className="libkind__ask" onClick={(e) => e.stopPropagation()}>
+        {!type ? <span className="sf-small">¿Qué es?</span> : null}
+        {LIB_TYPES.map((t) => <button key={t.id} className={cx("libkind__opt", type === t.id && "is-on")} onClick={() => choose(t.id)}>{t.label}</button>)}
+      </span>
+    );
+  }
+  return (
+    <button className="libkind" title="Cambiar qué es" onClick={(e) => { e.stopPropagation(); setOpen(true); }}>
+      {LIB_TYPES.find((t) => t.id === type)?.label}
+    </button>
   );
 }
 

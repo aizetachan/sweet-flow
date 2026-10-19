@@ -21,6 +21,13 @@ export interface GenerationRequest {
   endOn?: string;
   /** Provider ids of what guides it. */
   references?: Array<{ type: RefType; id: string }>;
+  /**
+   * Library groups called in the prompt («@Elena»): what the group is
+   * (character, product, place; null when none of those) and the provider ids
+   * of its picked images. The provider makes it a library asset of its own
+   * when it can (Magnific), or sends the images as references.
+   */
+  mentions?: Array<{ key: string; tag: string; kind: "character" | "product" | "locations" | "style" | null; description?: string; ids: string[] }>;
   aspectRatio?: string;
   resolution?: string;
   sound?: boolean;

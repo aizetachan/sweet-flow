@@ -7,7 +7,7 @@
  * have (a driving video, a voice track…) are left out.
  */
 
-import { catalogReadAt, setLiveCatalog, STATIC_CATALOG, type ModelSpec, type RefType } from "../../data/models";
+import { catalogReadAt, setLiveCatalog, STATIC_CATALOG, type LibAssetType, type ModelSpec, type RefType } from "../../data/models";
 import { isConnected } from "./auth";
 import { callTool } from "./mcp";
 
@@ -34,7 +34,14 @@ function imageModel(m: Raw): ModelSpec | null {
     ...(strings(m.resolutions).length ? { resolutions: strings(m.resolutions) } : {}),
     maxCount: 8,
     ...(m.supportsReferences && types.length ? { references: { types, max: 12 } } : {}),
+    ...libraryOf(strings(m.referenceTypes)),
   };
+}
+
+const LIB_TYPES: LibAssetType[] = ["character", "product", "locations"];
+function libraryOf(types: string[]): { library?: LibAssetType[] } {
+  const lib = types.filter((t): t is LibAssetType => LIB_TYPES.includes(t as LibAssetType));
+  return lib.length ? { library: lib } : {};
 }
 
 function videoModel(m: Raw): ModelSpec | null {
@@ -58,6 +65,8 @@ function videoModel(m: Raw): ModelSpec | null {
     ...(m.supportsStartFrame ? { startFrame: true } : {}),
     ...(m.supportsEndFrame ? { endFrame: true } : {}),
     ...(m.supportsSoundEffects ? { sound: true } : {}),
+    // Video takes characters and products from the library (places go as images).
+    ...libraryOf(refs.map((r) => String(r.type)).filter((t) => t !== "locations")),
   };
 }
 

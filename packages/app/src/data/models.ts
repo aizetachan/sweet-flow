@@ -14,6 +14,9 @@ export type GenKind = "image" | "video" | "audio";
 /** What a reference is for, as the provider names it. */
 export type RefType = "image" | "style" | "video" | "audio";
 
+/** Library assets the provider can be given by name («@Elena» in the prompt): docs/INTERFAZ.md §2.8. */
+export type LibAssetType = "character" | "product" | "locations";
+
 export interface ModelSpec {
   kind: GenKind;
   /** Name shown in the UI (and kept in the log). */
@@ -28,6 +31,8 @@ export interface ModelSpec {
   maxCount: number;
   /** Reference types it takes, and how many in total. */
   references?: { types: RefType[]; max: number };
+  /** Library assets it takes by name (characters, products, places). */
+  library?: LibAssetType[];
   /** Start / end frame (video); exclusive with `references`. */
   startFrame?: boolean;
   endFrame?: boolean;
@@ -70,7 +75,8 @@ export const STATIC_CATALOG: ModelSpec[] = [
 
 // ---------- live catalog and the models chosen to show ----------
 
-const LIVE_KEY = "sweetflow:models-live";
+// v2: models say which library assets they take.
+const LIVE_KEY = "sweetflow:models-live:v2";
 const SHOWN_KEY = "sweetflow:models-shown";
 
 /** Identity of a model across catalogs: its kind and provider id. */
