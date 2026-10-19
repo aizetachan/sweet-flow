@@ -7,6 +7,10 @@ import "./styles/splash.css";
 import { initStorage } from "./data";
 import { handleCallback } from "./integrations/magnific/auth";
 import { handleCloudCallback } from "./integrations/oauth";
+import { isDesktop } from "./platform";
+
+// The Mac app draws its own title bar: room for the window buttons and a strip to drag the window.
+if (isDesktop() && window.sweetflow?.platform === "darwin") document.documentElement.classList.add("is-mac-app");
 
 // Magnific's sign-in comes back to this page in a popup: hand over and close.
 if (handleCallback() || handleCloudCallback()) {

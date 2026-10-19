@@ -1166,3 +1166,13 @@ button.topbar__me { position: relative; padding: 0; border: 0; border-radius: 50
 .libstrip__img .version__acts { z-index: 2; }
 .gen__pick-audio { position: absolute; left: 6px; bottom: 6px; display: grid; place-items: center; width: 20px; height: 20px; border-radius: 5px; background: #000a; color: var(--fg-1); }
 .gen__pick--img { position: relative; }
+
+/* Mac app (hiddenInset title bar): the top strip drags the window (double click
+   zooms it, as the system does) and leaves room for the window buttons. */
+.is-mac-app .dside { padding-top: 0; }
+.is-mac-app .dside__brand { margin: 0 -10px; padding: 40px 18px 16px; -webkit-app-region: drag; }
+.is-mac-app .dash { padding-top: 0; }
+.is-mac-app .dash__head { padding-top: 22px; -webkit-app-region: drag; }
+.is-mac-app .topbar { padding-left: 84px; -webkit-app-region: drag; }
+.is-mac-app .insp--window .insp__top { padding-top: 34px; -webkit-app-region: drag; }
+.is-mac-app :is(.dside__brand, .dash__head, .topbar, .insp--window .insp__top) :is(button, a, input, select, textarea, label, [role="button"], [role="tab"], [role="tablist"], [draggable="true"], .pop, .menu) { -webkit-app-region: no-drag; }
