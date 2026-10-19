@@ -682,7 +682,7 @@ centrada en la imagen y sin tipos fijos (decidido el 19 oct 2026):
 - **Organizar:** arrastrar imágenes para reordenarlas en su fila o llevarlas a
   otra (una línea azul marca dónde caen). Clic selecciona una (y la muestra en
   el panel), ⌘ suma o quita, ⇧ selecciona un tramo; se arrastran juntas.
-- **En cada imagen** (al pasar el ratón):
+- **En cada imagen** (al pasar el ratón, con los mismos botones que la galería):
   - **★ Favorita:** sale ya marcada al usar el grupo como referencia (con @ o
     «De la biblioteca»); siempre se puede cambiar la selección allí.
   - **Papelera:** la quita del grupo, con «Deshacer» en el aviso.
@@ -719,7 +719,8 @@ centrada en la imagen y sin tipos fijos (decidido el 19 oct 2026):
   o en el panel.
 - **Etiquetas en el prompt:** al escribir **@** en el prompt de cualquier
   plano o grupo, de imagen o de vídeo, salen los grupos de la biblioteca
-  (miniatura, nombre, etiqueta y tipo; también los que aún no tienen imágenes); flechas e Intro, o clic. Se escribe su etiqueta («@Casa_de_Robida»:
+  (miniatura, nombre y tipo; también los que aún no tienen imágenes; la
+  etiqueta «@…» solo se ve al aplicarla); flechas e Intro, o clic. Se escribe su etiqueta («@Casa_de_Robida»:
   el nombre sin espacios ni acentos) y se abre un **menú con sus imágenes**
   para marcar las que se usan como referencia (hasta 6; empiezan marcadas sus
   ★ elegidas, o las primeras). Debajo del prompt, un chip por grupo llamado

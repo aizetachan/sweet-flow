@@ -184,12 +184,13 @@ function GroupRow({ group, picked, setPicked }: { group: ProdNode; picked: Id[];
             onDragEnd={() => { dragging = []; document.body.classList.remove("sf-drag-media"); }}
             onClick={(e) => click(e, m)}>
             <Thumb media={m} badge={false} />
-            <span className="libimg__acts">
-              <button className={cx("libimg__act", m.chosen && "is-on")} title={m.chosen ? "Favorita: sale marcada al usar el grupo como referencia. Clic para quitarla" : "Marcar como favorita: sale ya marcada al usar el grupo como referencia (@ o «De la biblioteca»)"}
+            {/* Same buttons as the gallery's versions. */}
+            <span className={cx("version__acts", m.chosen && "version__acts--show")} onClick={(e) => e.stopPropagation()}>
+              <button className={cx("version__act", m.chosen && "version__act--on")} title={m.chosen ? "Favorita: sale marcada al usar el grupo como referencia. Clic para quitarla" : "Marcar como favorita: sale ya marcada al usar el grupo como referencia (@ o «De la biblioteca»)"}
                 onClick={(e) => { e.stopPropagation(); source.setChosen([m.id], !m.chosen); }}>
                 {m.chosen ? <IconStarFilled size={13} /> : <IconStar size={13} />}
               </button>
-              <button className="libimg__act" title="Eliminar esta imagen del grupo"
+              <button className="version__act" title="Eliminar esta imagen del grupo"
                 onClick={(e) => {
                   e.stopPropagation();
                   source.setArchived(m.id, true);

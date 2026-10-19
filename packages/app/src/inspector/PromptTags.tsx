@@ -111,7 +111,7 @@ export function PromptTags({ value, onChange, placeholder, mentions, setMentions
                 onMouseDown={(e) => { e.preventDefault(); insert(g); }} onMouseEnter={() => setHi(i)}>
                 {first ? <Thumb media={first} badge={false} /> : <IconPhoto size={14} />}
                 <span className="menu__label">{g.title}</span>
-                <span className="menu__hint">@{libTag(g.title)}{kind ? ` · ${kind}` : ""}</span>
+                {kind ? <span className="menu__hint">{kind}</span> : null}
               </button>
             );
           })}
