@@ -1096,3 +1096,8 @@ button.topbar__me { position: relative; padding: 0; border: 0; border-radius: 50
 .gen__libgroup { display: flex; flex-direction: column; gap: 3px; background: none; border: 0; text-align: left; border-radius: 6px; padding: 4px; color: var(--fg-1); }
 .gen__libgroup:hover { background: var(--ghost); }
 .gen__libadd { justify-content: center; }
+/* Popovers drawn above everything (a list opened from the side panel doesn't scroll it sideways) */
+.pop__panel--float { z-index: 200; right: auto; }
+.gen__libadd:disabled { opacity: .45; cursor: default; }
+.gen__libadd:not(:disabled) { background: var(--brand-500, #2f7dff); color: #fff; }
+.gen__libadd:not(:disabled):hover { background: var(--brand-700, #1648d8); }

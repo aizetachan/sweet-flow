@@ -703,7 +703,7 @@ function RefSlot({ ctx, label, icon, accept, node, value, disabled, disabledHint
       })
     : [];
   return (
-    <Popover className="gen__picker" button={({ open, toggle }) => (
+    <Popover float className="gen__picker" button={({ open, toggle }) => (
       <button className={cx("gen__ref", wide && "gen__ref--wide", (open || over) && "is-on")} disabled={disabled}
         title={disabled ? disabledHint : `${label}: elige de la producción, súbelo del ordenador o arrastra un archivo aquí`} onClick={toggle} {...drop}>
         {icon ?? <IconPlus size={16} />}
@@ -770,7 +770,7 @@ function RefSlot({ ctx, label, icon, accept, node, value, disabled, disabledHint
                       setOpenCard(null);
                       setMarks([]);
                     }}>
-                      <IconPlus size={14} /> <span className="menu__label">{marks.length ? `Añadir ${marks.length}` : "Marca alguna"}</span>
+                      <IconPlus size={14} /> <span className="menu__label">{marks.length ? `Seleccionar ${marks.length}` : "Seleccionar"}</span>
                     </button>
                   ) : null}
                 </div>
