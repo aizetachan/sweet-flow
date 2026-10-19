@@ -760,7 +760,18 @@ export class LocalSource implements DataSource {
     const s = this.loaded();
     const media = s.media.find((m) => m.id === mediaId);
     if (!media) return undefined;
-    return this.apply(planExtractVersion(s.production, this.board(), nodeId, media, this.newId, this.me.uid, this.now(), segment, { media: s.media, takes: s.takes }));
+    return this.apply(planExtractVersion(s.production, this.board(), nodeId, media, this.newId, this.me.uid, this.now(), segment, { media: s.media, takes: s.takes, chosenBefore: this.chosenHistory(nodeId) }));
+  }
+
+  /** The takes a node has had chosen, newest first, from the log. */
+  private chosenHistory(nodeId: Id): Id[] {
+    const seen: Id[] = [];
+    const events = [...this.events.values()].sort((x, y) => (x.at < y.at ? 1 : -1));
+    for (const e of events) {
+      if (e.type !== "node.updated" || e.id !== nodeId || !e.patch.selectedTakeId) continue;
+      if (!seen.includes(e.patch.selectedTakeId)) seen.push(e.patch.selectedTakeId);
+    }
+    return seen;
   }
 
   splitTakeShot(nodeId: Id, segments: Segment[]): Id[] {

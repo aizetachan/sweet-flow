@@ -381,6 +381,24 @@ describe("structure intents", () => {
     expect(state().takes.find((t) => t.id === shot.selectedTakeId)?.mediaId).toBe("m3");
   });
 
+  it("taking out the chosen version goes back to the one chosen before it", () => {
+    const { run, state } = session();
+    const sq = run((s) => planCreateNode(s.production!, s.nodes, null, "q")).nodeId!;
+    const sc = run((s) => planCreateNode(s.production!, s.nodes, sq, "c")).nodeId!;
+    const a = run((s) => planCreateNode(s.production!, s.nodes, sc, "ya", "Faro")).nodeId!;
+    for (const [mid, v, at] of [["k1", 1, 1], ["k2", 2, 2], ["k3", 3, 3]] as const)
+      run(() => ({ events: [{ type: "media.added", media: { id: mid, nodeId: a, kind: "video", origin: "generated", archived: false, createdBy: "u", createdAt: at, version: v, status: "ready", progress: 100, durationSec: 6 } }] }));
+    run(() => ({ events: [
+      { type: "take.added", take: { id: "tk1", nodeId: a, mediaId: "k1", inSec: 0, outSec: 6, createdBy: "u", createdAt: 1 } },
+      { type: "take.added", take: { id: "tk2", nodeId: a, mediaId: "k2", inSec: 0, outSec: 6, createdBy: "u", createdAt: 2 } },
+      { type: "node.updated", id: a, patch: { selectedTakeId: "tk2" } },
+    ] }));
+    // k1 was chosen before k2 (k3 is newer, but was never chosen).
+    run((s) => planExtractVersion(s.production!, s.nodes, a, { id: "k2", durationSec: 6 }, id, "u", 9, undefined, { media: s.media, takes: s.takes, chosenBefore: ["tk2", "tk1"] }));
+    const shot = state().nodes.find((n) => n.id === a)!;
+    expect(state().takes.find((t) => t.id === shot.selectedTakeId)?.mediaId).toBe("k1");
+  });
+
   it("cuts a cut shot again: it keeps the first stretch, the rest go right after it", () => {
     const { run, state } = session();
     const sq = run((s) => planCreateNode(s.production!, s.nodes, null, "q")).nodeId!;

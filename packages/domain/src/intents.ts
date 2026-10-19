@@ -422,9 +422,11 @@ export function planPlaceInRow(
  * Take a version out to the row (docs/INTERFAZ.md §2.0.1): a new shot right
  * after `nodeId`, with the same title, whose chosen take is that version
  * (whole). With `own` (what the production has), a version of that shot goes
- * with it — it leaves the shot's gallery, its file moves to the new shot. If
- * it was the shot's chosen one, the shot takes its latest version left (or
- * none). A stretch of another video only makes the new shot.
+ * with it, as a shot of its own: it leaves the shot's gallery and its file
+ * moves to the new shot. If it was the shot's chosen one, the shot goes back
+ * to the one it had chosen before (`chosenBefore`, newest first), else its
+ * latest version left, else none. A stretch of another video only makes the
+ * new shot.
  */
 export function planExtractVersion(
   p: Production,
@@ -436,7 +438,12 @@ export function planExtractVersion(
   now: Millis,
   /** Only a stretch of it (a shot cut from a video); the whole of it by default. */
   segment?: Segment,
-  own?: { media: Array<Pick<Media, "id" | "nodeId" | "kind" | "version" | "status" | "archived" | "createdAt" | "durationSec">>; takes: Array<Pick<Take, "id" | "nodeId" | "mediaId">> },
+  own?: {
+    media: Array<Pick<Media, "id" | "nodeId" | "kind" | "version" | "status" | "archived" | "createdAt" | "durationSec">>;
+    takes: Array<Pick<Take, "id" | "nodeId" | "mediaId">>;
+    /** The takes the shot had chosen, newest first (from its history). */
+    chosenBefore?: Id[];
+  },
 ): Plan {
   const base = planInsertAfter(p, nodes, nodeId, newId("n"));
   const created = base.events[0];
@@ -455,7 +462,15 @@ export function planExtractVersion(
     // Its takes in the shot it leaves would show it there again.
     for (const t of own.takes) if (t.nodeId === nodeId && t.mediaId === m.id) events.push({ type: "take.removed", id: t.id });
     if (chosen?.mediaId === m.id) {
-      // It was the chosen one: the shot takes its latest version left, whole.
+      // It was the chosen one: the shot goes back to the one it had before.
+      const left = (t?: Pick<Take, "id" | "nodeId" | "mediaId">) =>
+        !!t && t.nodeId === nodeId && t.mediaId !== m.id && own.media.some((x) => x.id === t.mediaId && !x.archived && x.status === "ready");
+      const back = (own.chosenBefore ?? []).map((tid) => own.takes.find((t) => t.id === tid)).find(left);
+      if (back) {
+        events.push({ type: "node.updated", id: nodeId, patch: { selectedTakeId: back.id } });
+        return { nodeId: base.nodeId, events };
+      }
+      // Else its latest version left, whole.
       const next = own.media
         .filter((x) => x.nodeId === nodeId && x.id !== m.id && x.status === "ready" && !x.archived && x.kind !== "audio")
         .sort((a, b) => b.createdAt - a.createdAt)[0];
