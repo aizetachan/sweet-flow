@@ -26,7 +26,7 @@ import { memberName } from "../state/selectors";
 import { modelsFor, nearest, REF_LABEL, specOf, useModelsVersion, type GenKind, type RefType } from "../data/models";
 import { refreshCatalog } from "../integrations/magnific/catalog";
 import { mentionsIn, PromptTags, type Mentions } from "./PromptTags";
-import { draggedMedia, MEDIA_DRAG, mediaDrag } from "../library/LibraryBoard";
+import { draggedMedia, LibImageActs, MEDIA_DRAG, mediaDrag } from "../library/LibraryBoard";
 import { sharedGroup, sharedMedia, useSharedLibraries } from "../library/shared";
 import { kindOfFile, type GenerateArgs, type ImportItem, type RemoteCreation } from "../data/source";
 import { Popover } from "../components/Popover";
@@ -152,12 +152,15 @@ export function ProduceTab({ node }: { node: ProdNode }) {
           {node.lib && mode === "window" ? (
             <div className="libstrip">
               {all.filter((m) => !m.archived).map((m) => (
-                <button key={m.id} className={cx("libstrip__img", m.id === active.media.id && "is-on")} data-tip={`${node.title} · ${versionTag(m.version)}`}
+                <div key={m.id} role="button" tabIndex={0} className={cx("libstrip__img", m.id === active.media.id && "is-on")} data-tip={`${node.title} · ${versionTag(m.version)}`}
                   {...(m.status === "ready" ? mediaDrag([m.id]) : {})}
                   onClick={() => { setActiveKey(`m:${m.id}`); setPanel({ activeMediaId: m.id, playhead: 0, playing: false }); }}>
                   <Thumb media={m.status === "ready" ? m : undefined} pending={m.status === "queued" || m.status === "rendering" ? m : undefined} badge={false} />
                   {m.status === "failed" ? <span className="libstrip__bad">Fallida</span> : null}
-                </button>
+                  {m.status === "ready" || m.status === "failed" ? (
+                    <LibImageActs media={m} onRecreate={() => { setActiveKey(`m:${m.id}`); setPanel({ activeMediaId: m.id }); useStore.getState().set({ recreate: m.id }); }} />
+                  ) : null}
+                </div>
               ))}
             </div>
           ) : null}

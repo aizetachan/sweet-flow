@@ -706,7 +706,9 @@ centrada en la imagen y sin tipos fijos (decidido el 19 oct 2026):
 - **El panel en la Biblioteca** no tiene galería (las imágenes del grupo ya
   están a la vista): generar, y debajo el visor de la imagen elegida con sus
   datos y el prompt con el que se hizo. **En una ventana aparte**, debajo del
-  visor salen todas las imágenes del grupo para pasar de una a otra. La
+  visor salen todas las imágenes del grupo para pasar de una a otra, con los
+  mismos botones al pasar el ratón que en la biblioteca (Recrear, Favorita,
+  Eliminar). La
   ventana se abre sobre la imagen seleccionada (clic en ella antes de abrirla);
   sin ninguna, sobre la última generada.
 - **Misma forma de trabajar en todas partes:** cualquier imagen de una galería

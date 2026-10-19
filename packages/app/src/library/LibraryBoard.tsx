@@ -63,6 +63,32 @@ if (typeof window !== "undefined") {
   window.addEventListener("drop", clear, true);
 }
 
+/**
+ * The buttons of a library image on hover (docs/INTERFAZ.md §2.8): Recrear,
+ * Favorita, Eliminar. The same in the library and in a group's own window.
+ */
+export function LibImageActs({ media: m, onRecreate }: { media: Media; onRecreate: () => void }) {
+  const source = useStore((s) => s.source);
+  return (
+    <span className={cx("version__acts", m.chosen && "version__acts--show")} onClick={(e) => e.stopPropagation()}>
+      {m.generation ? (
+        <button className="version__act" title="Recrear: carga en Generar el prompt, el modelo y las referencias con los que se hizo"
+          onClick={(e) => { e.stopPropagation(); onRecreate(); }}><IconRefresh size={13} /></button>
+      ) : null}
+      <button className={cx("version__act", m.chosen && "version__act--on")} title={m.chosen ? "Favorita: sale marcada al usar el grupo como referencia. Clic para quitarla" : "Marcar como favorita: sale ya marcada al usar el grupo como referencia (@ o «De la biblioteca»)"}
+        onClick={(e) => { e.stopPropagation(); source.setChosen([m.id], !m.chosen); }}>
+        {m.chosen ? <IconStarFilled size={13} /> : <IconStar size={13} />}
+      </button>
+      <button className="version__act" title="Eliminar esta imagen del grupo"
+        onClick={(e) => {
+          e.stopPropagation();
+          source.setArchived(m.id, true);
+          useStore.getState().notify("Imagen eliminada del grupo.", { label: "Deshacer", run: () => { source.setArchived(m.id, false); useStore.getState().set({ notice: null }); } });
+        }}><IconTrash size={13} /></button>
+    </span>
+  );
+}
+
 /** A group's images in their order (not archived). */
 function imagesOf(media: Media[], nodeId: Id): Media[] {
   return media.filter((m) => m.nodeId === nodeId && !m.archived && m.kind === "image").sort((a, b) => libOrder(a) - libOrder(b));
@@ -327,22 +353,7 @@ function GroupRow({ group, picked, setPicked }: { group: ProdNode; picked: Id[];
             onClick={(e) => click(e, m)}>
             <Thumb media={m} badge={false} />
             {/* Same buttons as the gallery's versions. */}
-            <span className={cx("version__acts", m.chosen && "version__acts--show")} onClick={(e) => e.stopPropagation()}>
-              {m.generation ? (
-                <button className="version__act" title="Recrear: carga en Generar el prompt, el modelo y las referencias con los que se hizo"
-                  onClick={(e) => { e.stopPropagation(); select(group.id, "produce"); set({ recreate: m.id, activeMediaId: m.id }); }}><IconRefresh size={13} /></button>
-              ) : null}
-              <button className={cx("version__act", m.chosen && "version__act--on")} title={m.chosen ? "Favorita: sale marcada al usar el grupo como referencia. Clic para quitarla" : "Marcar como favorita: sale ya marcada al usar el grupo como referencia (@ o «De la biblioteca»)"}
-                onClick={(e) => { e.stopPropagation(); source.setChosen([m.id], !m.chosen); }}>
-                {m.chosen ? <IconStarFilled size={13} /> : <IconStar size={13} />}
-              </button>
-              <button className="version__act" title="Eliminar esta imagen del grupo"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  source.setArchived(m.id, true);
-                  useStore.getState().notify("Imagen eliminada del grupo.", { label: "Deshacer", run: () => { source.setArchived(m.id, false); useStore.getState().set({ notice: null }); } });
-                }}><IconTrash size={13} /></button>
-            </span>
+            <LibImageActs media={m} onRecreate={() => { select(group.id, "produce"); set({ recreate: m.id, activeMediaId: m.id }); }} />
           </div>
         ))}
         {/* The end of the row: generate into this group (the panel) — also where drops land last. */}

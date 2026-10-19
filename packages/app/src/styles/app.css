@@ -1161,3 +1161,6 @@ button.topbar__me { position: relative; padding: 0; border: 0; border-radius: 50
   box-shadow: 0 0 3px rgb(var(--brand-500-rgb) / .8), inset 0 0 3px rgb(var(--brand-500-rgb) / .5), inset 0 0 14px rgb(var(--brand-500-rgb) / .3);
 }
 .libimg .version__acts { z-index: 2; }
+.libstrip__img { cursor: pointer; }
+.libstrip__img:hover .version__acts, .libstrip__img:focus-visible .version__acts { opacity: 1; }
+.libstrip__img .version__acts { z-index: 2; }
