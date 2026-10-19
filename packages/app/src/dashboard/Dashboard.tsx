@@ -5,7 +5,7 @@
  */
 
 import { useMemo, useState, type DragEvent, type ReactNode } from "react";
-import { IconClock, IconFolder, IconHome, IconMovie, IconPin, IconPinnedOff, IconSettings, IconTrash } from "@tabler/icons-react";
+import { IconClock, IconUsersGroup, IconFolder, IconHome, IconMovie, IconPin, IconPinnedOff, IconSettings, IconTrash } from "@tabler/icons-react";
 import type { Id } from "@sweetflow/domain";
 import { Avatar, Button, cx } from "@sweetflow/ui";
 import { openTeamFolder, storageStatus } from "../data";
@@ -14,6 +14,7 @@ import { isInTrash, pinKey, type LibraryEntry, type LibraryState, type Pin } fro
 import { useStore, type DashSection } from "../state/store";
 import { Browse, DRAG_TYPE, useDropInto } from "./Browse";
 import { Settings } from "./Settings";
+import { TeamPage } from "./Team";
 
 export function Dashboard() {
   const lib = useStore((s) => s.lib);
@@ -24,7 +25,7 @@ export function Dashboard() {
       <Sidebar lib={lib} />
       <main className="dapp__main">
         <ReconnectBar />
-        {section === "settings" ? <Settings lib={lib} /> : <Browse lib={lib} section={section} />}
+        {section === "settings" ? <Settings lib={lib} /> : section === "team" ? <TeamPage lib={lib} /> : <Browse lib={lib} section={section} />}
       </main>
     </div>
   );
@@ -54,6 +55,7 @@ function ReconnectBar() {
 const NAV: Array<{ id: Exclude<DashSection, "settings">; label: string; icon: typeof IconHome }> = [
   { id: "home", label: "Inicio", icon: IconHome },
   { id: "recent", label: "Recientes", icon: IconClock },
+  { id: "team", label: "Equipo", icon: IconUsersGroup },
   { id: "trash", label: "Papelera", icon: IconTrash },
 ];
 

@@ -217,6 +217,26 @@ export class DriveFolderFs implements FolderFs {
     this.forget(path);
   }
 
+  /** Gives their Google account edit access to the folder; Drive emails them. */
+  async share(path: string, email: string): Promise<void> {
+    const id = await this.folder(path, false);
+    if (!id) throw new DriveError(404, "no se encuentra la carpeta que compartir.");
+    await call(`${API}/files/${id}/permissions?${ALL}&sendNotificationEmail=true`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type: "user", role: "writer", emailAddress: email }),
+    });
+  }
+
+  async unshare(path: string, email: string): Promise<void> {
+    const id = await this.folder(path, false);
+    if (!id) return;
+    const list = await json<{ permissions?: Array<{ id: string; emailAddress?: string }> }>(`${API}/files/${id}/permissions?${ALL}&fields=permissions(id,emailAddress)`);
+    for (const p of list.permissions ?? []) {
+      if (p.emailAddress?.toLowerCase() === email.toLowerCase()) await call(`${API}/files/${id}/permissions/${p.id}?${ALL}`, { method: "DELETE" });
+    }
+  }
+
   private children(parent: string, extra = ""): Promise<DriveFile[]> {
     return query(`${quote(parent)} in parents and trashed=false${extra}`, this.root);
   }

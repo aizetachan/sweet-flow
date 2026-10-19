@@ -140,7 +140,8 @@ function AccountMenu() {
   // The demo shows its pretend account; elsewhere, the real connection.
   const mag = demo ? { connected: snap.me.magnificConnected, credits: snap.me.magnificCredits } : real;
   const m = snap.mirror;
-  const team = snap.features.team;
+  const canInvite = !!lib?.team?.canInvite;
+  const productionId = useStore((s) => s.productionId);
   const folder = lib?.storage.kind === "folder" ? lib.storage.name : m.rootPath || null;
   // Profile and integrations open in the production's Ajustes; the team folder is in the dashboard's.
   const toSettings = (tab: "storage" | "integrations" | "profile") => {
@@ -182,9 +183,9 @@ function AccountMenu() {
         <IconUsersGroup size={15} />
         <span className="menu__label">Equipo<span className="menu__hint">{snap.members.length} {snap.members.length === 1 ? "persona" : "personas"} en la producción</span></span>
       </button>
-      <button className="menu__item" disabled={!team} onClick={() => set({ modal: "invite" })}>
+      <button className="menu__item" disabled={!canInvite} onClick={() => productionId && set({ inviteTo: { access: [productionId] } })}>
         <IconUsers size={15} />
-        <span className="menu__label">Invitar al equipo{!team ? <span className="menu__hint">Próximamente</span> : null}</span>
+        <span className="menu__label">Invitar a esta producción{!lib?.team ? <span className="menu__hint">Necesita una carpeta del equipo</span> : !canInvite ? <span className="menu__hint">El propietario no deja invitar</span> : null}</span>
       </button>
       <div className="menu__sep" />
       <button className="menu__item" onClick={() => toSettings("profile")}>

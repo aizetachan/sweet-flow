@@ -25,8 +25,7 @@ import {
   IconPlus,
   IconSearch,
   IconTrash,
-  IconTrashX,
-} from "@tabler/icons-react";
+  IconTrashX, IconUserPlus } from "@tabler/icons-react";
 import { ContextMenu, type MenuAt } from "../components/ContextMenu";
 import { revealEntry } from "../data/reveal";
 import { copyEntryLink } from "../data/share";
@@ -37,12 +36,12 @@ import { useStore, type DashLayout, type DashSection } from "../state/store";
 
 export const DRAG_TYPE = "application/x-sweetflow-entries";
 
-const TITLES: Record<Exclude<DashSection, "settings" | "home">, { title: string; empty: string; icon: typeof IconClock }> = {
+const TITLES: Record<Exclude<DashSection, "settings" | "home" | "team">, { title: string; empty: string; icon: typeof IconClock }> = {
   recent: { title: "Recientes", empty: "Aquí aparecerán las producciones y carpetas que abras.", icon: IconClock },
   trash: { title: "Papelera", empty: "La papelera está vacía.", icon: IconTrash },
 };
 
-export function Browse({ lib, section }: { lib: LibraryState; section: Exclude<DashSection, "settings"> }) {
+export function Browse({ lib, section }: { lib: LibraryState; section: Exclude<DashSection, "settings" | "team"> }) {
   const { folderId, dashLayout, set, library, openProduction } = useStore();
   const [query, setQuery] = useState("");
   const [picked, setPicked] = useState<Id[]>([]);
@@ -306,6 +305,7 @@ function EntryItem(p: EntryItemProps) {
       }}><IconDots size={15} /></IconButton>
     </span>
   );
+  const canShare = useStore((s) => !!s.lib?.team?.canInvite);
   const menuEl = menu && p.editable ? (
     <ContextMenu at={menu} onClose={() => setMenu(null)}>
       {inTrash ? (
@@ -322,6 +322,9 @@ function EntryItem(p: EntryItemProps) {
             {p.pinned ? <IconPinFilled size={14} /> : <IconPin size={14} />} <span className="menu__label">{p.pinned ? "Quitar de Fijados" : "Fijar en el menú lateral"}</span>
           </button>
           <button className="menu__item" onClick={p.onStartRename}><IconPencil size={14} /> <span className="menu__label">Renombrar</span></button>
+          {canShare ? (
+            <button className="menu__item" onClick={() => useStore.getState().set({ inviteTo: { access: [p.entry.id] } })}><IconUserPlus size={14} /> <span className="menu__label">Compartir con alguien del equipo…</span></button>
+          ) : null}
           <div className="menu__sep" />
           <button className="menu__item menu__item--danger" onClick={() => library.trash(p.dragIds)}><IconTrash size={14} /> <span className="menu__label">Mover a la papelera</span></button>
         </>

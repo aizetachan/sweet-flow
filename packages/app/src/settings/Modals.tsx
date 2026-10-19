@@ -1,8 +1,9 @@
-import { useState } from "react";
-import { IconArrowDown, IconArrowUp, IconArchive, IconBolt, IconCircleDot, IconCpu, IconEye, IconLink, IconMail, IconPlugConnected, IconPlus, IconStack2, IconUser } from "@tabler/icons-react";
-import { codeFor, folderName, ROLE_LABEL, safeTitle, type LevelDef, type Role, type StatusCategory, type StatusDef } from "@sweetflow/domain";
-import { Avatar, Button, cx, IconButton, Modal, Pill } from "@sweetflow/ui";
+import { IconArrowDown, IconArrowUp, IconArchive, IconBolt, IconCircleDot, IconCpu, IconEye, IconPlugConnected, IconPlus, IconStack2, IconUser } from "@tabler/icons-react";
+import { codeFor, folderName, normEmail, safeTitle, type LevelDef, type StatusCategory, type StatusDef } from "@sweetflow/domain";
+import { Avatar, Button, cx, IconButton, Modal } from "@sweetflow/ui";
 import { Integrations, ModelsSettings, Profile } from "../dashboard/Settings";
+import { entryWithin } from "../data/folder/folderEntries";
+import { uidForEmail } from "../integrations/magnific/identity";
 import { useMagnific } from "../integrations/magnific/useMagnific";
 import { useSnap, useStore, type SettingsTab } from "../state/store";
 import { newId } from "../data/mock/seed";
@@ -12,7 +13,6 @@ export function Modals() {
   const set = useStore((s) => s.set);
   const close = () => set({ modal: null });
   if (modal === "settings") return <ProductionSettings onClose={close} />;
-  if (modal === "invite") return <InviteModal onClose={close} />;
   if (modal === "team") return <TeamModal onClose={close} />;
   if (modal === "notes") return <NotesModal onClose={close} />;
   return null;
@@ -124,8 +124,22 @@ function TeamModal({ onClose }: { onClose: () => void }) {
   const real = useMagnific();
   const mag = demo ? { connected: snap.me.magnificConnected, credits: snap.me.magnificCredits } : real;
   const online = new Set(snap.presence.map((p) => p.uid));
+  // Who has this production (docs/USUARIOS.md §2): the owner, and members given it or a folder above it.
+  const lib = useStore((s) => s.lib);
+  const productionId = useStore((s) => s.productionId);
+  const team = lib?.team;
+  const entries = lib?.entries ?? [];
+  const people = team && productionId ? [
+    ...(team.owner ? [{ email: team.owner.email, name: team.owner.name, how: "Propietario" }] : []),
+    ...team.members.flatMap((m) => {
+      if (m.access === "all") return [{ email: m.email, name: m.name, how: "Todo el equipo" }];
+      const via = m.access.find((a) => entryWithin(entries, productionId, a));
+      if (!via) return [];
+      return [{ email: m.email, name: m.name, how: via === productionId ? "Esta producción" : `Desde «${entries.find((e) => e.id === via)?.name ?? "una carpeta"}»` }];
+    }),
+  ] : [];
   return (
-    <Modal title="Equipo" onClose={onClose} width={640}>
+    <Modal title="Equipo" onClose={onClose} width={680}>
       <p className="sf-muted modal-lead">Todos ven la misma producción. Cada uno genera con su propia cuenta de Magnific y sus créditos.</p>
       <div className="mycard">
         <Avatar name={snap.me.displayName} size={36} />
@@ -140,21 +154,42 @@ function TeamModal({ onClose }: { onClose: () => void }) {
           </Button>
         ) : null}
       </div>
-      <table className="team">
-        <thead><tr><th>Miembro</th><th>Rol</th><th>Asignados</th><th /></tr></thead>
-        <tbody>
-          {snap.members.map((m) => (
-            <tr key={m.uid}>
-              <td><div className="team__who"><Avatar name={m.displayName} size={26} /><div><b>{m.displayName}</b><div className="sf-faint sf-small">{m.email}</div></div></div></td>
-              <td><Pill>{ROLE_LABEL[m.role]}</Pill></td>
-              <td className="sf-muted">{snap.nodes.filter((n) => n.assigneeIds.includes(m.uid)).length}</td>
-              <td>{online.has(m.uid) && m.uid !== snap.me.uid ? <span className="sf-small online"><span className="live-dot" /> En línea</span> : null}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {team ? (
+        <table className="team">
+          <thead><tr><th>Persona</th><th>Acceso</th><th>Asignados</th><th /></tr></thead>
+          <tbody>
+            {people.map((m) => {
+              // The person in this production's log: by email (their id may come from another computer).
+              const uid = snap.members.find((x) => normEmail(x.email) === m.email)?.uid ?? uidForEmail(m.email);
+              return (
+                <tr key={m.email}>
+                  <td><div className="team__who"><Avatar name={m.name} size={26} /><div><b>{m.name}{m.email === normEmail(snap.me.email) && m.name !== "Tú" ? " (tú)" : ""}</b><div className="sf-faint sf-small">{m.email}</div></div></div></td>
+                  <td className="sf-muted sf-small">{m.how}</td>
+                  <td className="sf-muted">{snap.nodes.filter((n) => n.assigneeIds.includes(uid)).length}</td>
+                  <td>{online.has(uid) && uid !== snap.me.uid ? <span className="sf-small online"><span className="live-dot" /> En línea</span> : null}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      ) : (
+        <table className="team">
+          <thead><tr><th>Miembro</th><th>Asignados</th><th /></tr></thead>
+          <tbody>
+            {snap.members.map((m) => (
+              <tr key={m.uid}>
+                <td><div className="team__who"><Avatar name={m.displayName} size={26} /><div><b>{m.displayName}</b><div className="sf-faint sf-small">{m.email}</div></div></div></td>
+                <td className="sf-muted">{snap.nodes.filter((n) => n.assigneeIds.includes(m.uid)).length}</td>
+                <td>{online.has(m.uid) && m.uid !== snap.me.uid ? <span className="sf-small online"><span className="live-dot" /> En línea</span> : null}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
       <div className="modal-foot">
-        <Button variant="primary" disabled={!snap.features.team} title={snap.features.team ? undefined : "Próximamente"} onClick={() => set({ modal: "invite" })}><IconPlus size={15} /> Invitar</Button>
+        {!team ? <span className="sf-faint sf-small grow">Para invitar, guarda las producciones en una carpeta del equipo (Ajustes › Almacenamiento, en el inicio).</span> : null}
+        <Button variant="primary" disabled={!team?.canInvite || !productionId} title={team && !team.canInvite ? "El propietario no deja invitar a los miembros" : undefined}
+          onClick={() => { onClose(); set({ inviteTo: { access: [productionId!] } }); }}><IconPlus size={15} /> Invitar a esta producción</Button>
       </div>
     </Modal>
   );
@@ -253,30 +288,3 @@ function StatusesBody() {
   );
 }
 
-function InviteModal({ onClose }: { onClose: () => void }) {
-  const snap = useSnap();
-  const [email, setEmail] = useState("");
-  const [role, setRole] = useState<Role>("artist");
-  const [sent, setSent] = useState<string[]>([]);
-  return (
-    <Modal title={`Invitar a ${snap.workspace.name}`} onClose={onClose} width={520}>
-      <p className="sf-muted modal-lead">
-        El equipo comparte el espacio de trabajo y ve lo mismo. Cada persona genera con <b>su propia cuenta de Magnific</b> y sus créditos; lo generado se sube a la producción para que todos tengan acceso.
-      </p>
-      <div className="modal-row">
-        <input className="sf-input grow" placeholder="email@estudio.com" value={email} onChange={(e) => setEmail(e.target.value)} />
-        <select className="sf-select" value={role} onChange={(e) => setRole(e.target.value as Role)}>
-          {(["admin", "supervisor", "artist", "viewer"] as Role[]).map((r) => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}
-        </select>
-        <Button variant="primary" disabled={!email.includes("@")} onClick={() => { setSent([...sent, `${email} · ${ROLE_LABEL[role]}`]); setEmail(""); }}>
-          <IconMail size={14} /> Invitar
-        </Button>
-      </div>
-      {sent.map((s) => <div key={s} className="sf-small sf-muted invite-sent">✓ Invitación enviada a {s}</div>)}
-      <div className="modal-row">
-        <Button size="sm" variant="ghost"><IconLink size={13} /> Copiar enlace de invitación</Button>
-        <span className="sf-faint sf-small">El enlace pide aprobación del admin antes de entrar.</span>
-      </div>
-    </Modal>
-  );
-}

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { ImportDialog } from "./components/ImportDialog";
+import { InviteDialog } from "./dashboard/Team";
 import { Button, cx, Modal, Spinner } from "@sweetflow/ui";
 import { useStore } from "./state/store";
 import { Dock, Topbar } from "./shell/Shell";
@@ -23,6 +24,7 @@ export function App() {
       {phase === "window" ? <PoppedWindow /> : phase === "production" ? <Production /> : <Dashboard />}
       {/* Notices show everywhere: in the dashboard too. */}
       {phase !== "window" ? <Notice /> : null}
+      {phase !== "window" ? <InviteDialog /> : null}
       {splash ? <Splash ready={!!lib} onDone={() => setSplash(false)} /> : null}
     </>
   );

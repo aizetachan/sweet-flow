@@ -62,6 +62,25 @@ aplicación completa con **menú lateral**:
   eliminar definitivamente. El clic derecho sobre algo no seleccionado lo
   selecciona primero, como en el Finder.
 
+### 1.0 Equipo (docs/USUARIOS.md)
+
+- **Equipo** en el menú del dashboard: el propietario (quien creó el equipo de
+  la carpeta) y cada miembro con su email de Magnific, el de su Dropbox/Drive
+  si es otro, y lo que tiene («Todo el equipo» o sus carpetas y producciones).
+  **Cambiar acceso** y **Quitar** para el propietario y para quien lo invitó.
+  El propietario decide **Los miembros pueden invitar** (activado por defecto).
+- **Invitar:** email de su cuenta de Magnific, nombre (opcional), «Su Dropbox o
+  Drive usa otro email» y **Qué tiene**: «Todo el equipo» (solo quien lo tiene
+  todo) o carpetas y producciones marcadas en una lista (una carpeta da lo de
+  dentro). Al invitar, Dropbox o Drive le comparten esas carpetas y le avisan;
+  con una carpeta de este ordenador, la app pide compartirla a mano.
+- Desde una carpeta o producción: **Compartir con alguien del equipo…** en su
+  menú. Dentro de la producción, la ventana **Equipo** (menú del avatar)
+  muestra quién la tiene y por qué («Propietario», «Todo el equipo», «Desde
+  «Mareas»», «Esta producción») e **Invitar a esta producción**.
+- Cada uno ve en el dashboard solo lo que tiene. Quien abre una carpeta
+  compartida con él la ve arriba de su dashboard.
+
 ### 1.1 Ajustes
 
 En el dashboard están los ajustes generales:

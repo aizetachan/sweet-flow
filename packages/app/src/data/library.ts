@@ -12,6 +12,7 @@
  *   production is a folder with `.sweetflow/` inside.
  */
 
+import { accessOf, normEmail, shareRoots, type Access, type TeamMember } from "@sweetflow/domain";
 import { IDENTITY_EVENT, IDENTITY_KEY, readIdentity, uidForEmail } from "../integrations/magnific/identity";
 import {
   defaultLevels,
@@ -26,7 +27,9 @@ import {
 } from "@sweetflow/domain";
 import { LocalSource } from "./local/LocalSource";
 import { BrowserLogStore, MemoryLogStore, type LogStore } from "./local/store";
-import { FolderEntries } from "./folder/folderEntries";
+import { entryWithin, FolderEntries, openDashboard } from "./folder/folderEntries";
+import { TeamLog, type TeamHost } from "./folder/teamLog";
+import { MemoryFolderFs } from "./folder/fs";
 import { FolderLogStore } from "./folder/FolderLogStore";
 import type { FolderFs } from "./folder/fs";
 import { ProductionFiles } from "./folder/ProductionFiles";
@@ -88,6 +91,36 @@ export type StorageInfo =
 
 export type Profile = Pick<Member, "displayName" | "email">;
 
+/** The team of the team folder as the UI shows it (docs/USUARIOS.md §2). */
+export interface TeamView {
+  owner: { email: string; name: string } | null;
+  members: TeamMember[];
+  membersCanInvite: boolean;
+  /** What I have; null: I'm not in this team. */
+  myAccess: Access | null;
+  canInvite: boolean;
+  /** The shared folder this device opened, when it is not the whole team folder. */
+  mounted: { entryId: Id; name: string } | null;
+  /** Whether inviting also shares the folders at the service (Dropbox, Drive). */
+  sharesInStorage: boolean;
+}
+
+/** How sharing at the service went. */
+export interface ShareResult {
+  /** Shared there (or nothing to share). */
+  ok: boolean;
+  /** The folder is on this computer: share it by hand in Dropbox or Drive. */
+  manual?: boolean;
+  error?: string;
+}
+
+export interface TeamApi {
+  invite(p: { email: string; name?: string; storageEmail?: string; access: Access }): Promise<ShareResult>;
+  setAccess(email: string, access: Access): Promise<ShareResult>;
+  remove(email: string): Promise<ShareResult>;
+  setMembersCanInvite(on: boolean): void;
+}
+
 export interface LibraryState {
   /** Where the library lives, for the UI ("Dropbox/Estudio", "Este equipo"). */
   label: string;
@@ -99,9 +132,13 @@ export interface LibraryState {
   entries: LibraryEntry[];
   summaries: Record<Id, ProductionSummary>;
   prefs: UserPrefs;
+  /** Absent without a team folder (this browser only). */
+  team?: TeamView;
 }
 
 export interface Library {
+  /** The team: invite, change access, remove. Absent without a team folder. */
+  team?: TeamApi;
   subscribe(cb: (s: LibraryState) => void): () => void;
   /** Stop watching for changes (switching to another storage). */
   dispose?(): void;
@@ -169,6 +206,7 @@ interface EntryLibraryOptions {
   deviceId: Id;
   /** Productions handled outside the log (the demo episode). */
   special?: Record<Id, { open: () => DataSource; summary: ProductionSummary }>;
+  team?: { view: () => TeamView; api: TeamApi; watch: (cb: () => void) => () => void };
 }
 
 const newId = (p: string) => `${p}_${crypto.randomUUID()}`;
@@ -181,7 +219,10 @@ class EntryLibrary implements Library {
   private listeners = new Set<(s: LibraryState) => void>();
   private unwatch: () => void = () => undefined;
 
+  readonly team?: TeamApi;
+
   constructor(private readonly o: EntryLibraryOptions) {
+    this.team = o.team?.api;
     this.entries = o.entries.load();
     this.prefs = normalizePrefs(o.prefs.load());
     this.me = o.profile.load();
@@ -193,9 +234,13 @@ class EntryLibrary implements Library {
       void this.refreshSummaries();
     });
     void this.refreshSummaries();
+    this.unteam = o.team?.watch(() => this.emit()) ?? (() => undefined);
   }
 
+  private unteam: () => void;
+
   dispose(): void {
+    this.unteam();
     this.unwatch();
     this.listeners.clear();
   }
@@ -382,7 +427,21 @@ class EntryLibrary implements Library {
   }
 
   private state(): LibraryState {
-    return { label: this.o.label, mode: this.o.mode, storage: this.o.storage, me: this.me, entries: this.entries, summaries: { ...this.summaries }, prefs: this.prefs };
+    const team = this.o.team?.view();
+    return { label: this.o.label, mode: this.o.mode, storage: this.o.storage, me: this.me, entries: this.visible(team), summaries: { ...this.summaries }, prefs: this.prefs, ...(team ? { team } : {}) };
+  }
+
+  /**
+   * What I see (docs/USUARIOS.md §2): everything with access to all, else the
+   * folders and productions I was given, at the top. Opened from a shared
+   * folder, the dashboard already holds only that.
+   */
+  private visible(team: TeamView | undefined): LibraryEntry[] {
+    if (!team || team.mounted || team.myAccess === "all") return this.entries;
+    const access = team.myAccess ?? [];
+    const shown = this.entries.filter((e) => access.some((a) => entryWithin(this.entries, e.id, a)));
+    const ids = new Set(shown.map((e) => e.id));
+    return shown.map((e) => (e.parentId && !ids.has(e.parentId) ? { ...e, parentId: null } : e));
   }
 
   private emit(): void {
@@ -426,22 +485,32 @@ export function demoLibrary(mock: { open: () => DataSource; summary: ProductionS
   const t = Date.now() - 2 * 24 * 3600_000;
   const at = (kind: EntryKind, id: Id, name: string, parentId: Id | null): LibraryEntry => ({ id, kind, name, parentId, createdAt: t, updatedAt: t });
   const stores = new Map<Id, MemoryLogStore>();
+  const entries = memory([
+    at("folder", "f_mareas", "Mareas", null),
+    at("folder", "f_mareas_t1", "Temporada 1", "f_mareas"),
+    at("production", "p_demo", mock.name, "f_mareas_t1"),
+    at("folder", "f_spots", "Spots", null),
+  ]);
+  // A pretend team, in memory: you own it; Laura has everything, Marc the series, Iris the episode.
+  const host: TeamHost = { within: (i, o) => entryWithin(entries.load(), i, o), sharedPlaces: () => [], mounted: null };
+  const fs = new MemoryFolderFs();
+  const team = new TeamLog(fs, "demo", host, () => ({ email: mock.me.email, name: mock.me.displayName }));
+  team.claimIfNeeded();
+  team.invite({ email: "laura@estudio.com", name: "Laura Méndez", access: "all" });
+  team.invite({ email: "marc@estudio.com", name: "Marc Soler", storageEmail: "marc.soler@gmail.com", access: ["f_mareas"] });
+  team.invite({ email: "iris@estudio.com", name: "Iris Navarro", access: ["p_demo"] });
   return new EntryLibrary({
     label: "Demo",
     mode: "demo",
     storage: { kind: "demo" },
-    entries: memory([
-      at("folder", "f_mareas", "Mareas", null),
-      at("folder", "f_mareas_t1", "Temporada 1", "f_mareas"),
-      at("production", "p_demo", mock.name, "f_mareas_t1"),
-      at("folder", "f_spots", "Spots", null),
-    ]),
+    entries,
     prefs: memory<UserPrefs>({ pins: [{ entryId: "f_mareas" }, { entryId: "p_demo" }], opened: { p_demo: t } }),
     profile: memory(mock.me),
     watch: () => () => undefined,
     logStoreFor: (id) => stores.get(id) ?? stores.set(id, new MemoryLogStore()).get(id)!,
     deviceId: "demo",
     special: { p_demo: { open: mock.open, summary: mock.summary } },
+    team: { view: () => teamView(team, mock.me, null, false), api: teamApi(team, fs, { pathOf: () => null, within: host.within }, async () => undefined), watch: (cb) => team.watch(cb) },
   });
 }
 
@@ -532,8 +601,20 @@ export function browserLibrary(generator?: Generator): Library {
  */
 export async function folderLibrary(fs: FolderFs, generator?: Generator): Promise<Library> {
   const me = personal();
-  const entries = new FolderEntries(fs, me.deviceId, () => me.profile.load().uid);
+  const person = () => {
+    const m = me.profile.load();
+    return m.email ? { email: m.email, name: m.displayName } : null;
+  };
+  let team: TeamLog | null = null;
+  const entries = new FolderEntries(fs, me.deviceId, () => me.profile.load().uid, () => (team ? shareRoots(team.state()) : []));
   await entries.init();
+  team = new TeamLog(fs, me.deviceId, entries, person);
+  await openDashboard(entries, team);
+  const t = team;
+  const api = teamApi(t, fs, entries, async () => {
+    await entries.syncShares();
+    await t.syncShares();
+  });
   return new EntryLibrary({
     label: fs.label,
     mode: "local",
@@ -559,5 +640,89 @@ export async function folderLibrary(fs: FolderFs, generator?: Generator): Promis
     pathOf: (id) => entries.pathOf(id),
     generator,
     deviceId: me.deviceId,
+    team: {
+      view: () => teamView(t, person(), entries.mounted, !!fs.share),
+      api,
+      watch: (cb) => {
+        const offTeam = t.watch(() => {
+          void entries.syncShares().then(() => t.syncShares());
+          cb();
+        });
+        // What is inside what changed: the team's rules depend on it.
+        const offEntries = entries.watch(() => {
+          t.refold();
+          cb();
+        });
+        t.startPolling();
+        return () => {
+          offTeam();
+          offEntries();
+          t.stopPolling();
+        };
+      },
+    },
   });
+}
+
+function teamView(t: TeamLog, me: { email: string } | null, mounted: { entryId: Id; name: string } | null, sharesInStorage: boolean): TeamView {
+  const s = t.state();
+  return {
+    owner: s.owner,
+    members: s.members,
+    membersCanInvite: s.membersCanInvite,
+    myAccess: me ? accessOf(s, me.email) : s.owner ? null : "all",
+    canInvite: t.canInvite(),
+    mounted: mounted ? { entryId: mounted.entryId, name: mounted.name } : null,
+    sharesInStorage,
+  };
+}
+
+/**
+ * Inviting, changing access and removing, in the team's log and at the
+ * storage service: the folders someone has in Sweet Flow are the ones shared
+ * with their Dropbox or Drive (docs/USUARIOS.md §2).
+ */
+function teamApi(t: TeamLog, fs: FolderFs, entries: { pathOf(id: Id): string | null; within(i: Id, o: Id): boolean }, sync: () => Promise<void>): TeamApi {
+  const paths = (a: Access) => (a === "all" ? [""] : a.map((id) => entries.pathOf(id)).filter((p): p is string => p !== null));
+  const run = async (work: () => Promise<void>): Promise<ShareResult> => {
+    await t.flushed();
+    await sync();
+    if (!fs.share) return { ok: false, manual: true };
+    try {
+      await work();
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: e instanceof Error ? e.message : String(e) };
+    }
+  };
+  const member = (email: string) => t.state().members.find((m) => m.email === normEmail(email));
+  return {
+    async invite(p) {
+      t.invite(p);
+      const to = p.storageEmail || p.email;
+      return run(async () => {
+        for (const path of paths(p.access)) await fs.share!(path, to);
+      });
+    },
+    async setAccess(email, access) {
+      const before = member(email);
+      t.setAccess(email, access);
+      const to = before?.storageEmail || email;
+      return run(async () => {
+        const old = before ? paths(before.access) : [];
+        const now = paths(access);
+        for (const path of now) if (!old.includes(path)) await fs.share!(path, to);
+        for (const path of old) if (!now.includes(path)) await fs.unshare?.(path, to);
+      });
+    },
+    async remove(email) {
+      const before = member(email);
+      t.remove(email);
+      const to = before?.storageEmail || email;
+      return run(async () => {
+        for (const path of before ? paths(before.access) : []) await fs.unshare?.(path, to);
+      });
+    },
+    setMembersCanInvite: (on) => t.setMembersCanInvite(on),
+  };
 }

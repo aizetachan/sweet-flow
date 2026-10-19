@@ -1,8 +1,10 @@
 # Usuarios, equipo y revisión del cliente
 
-> Estado: **análisis con decisiones** (19 oct 2026). No hay nada implementado
-> aún, salvo el perfil manual y la conexión de Magnific, Dropbox y Drive por
-> persona. Relacionado: `ARCHITECTURE.md` §2.1 (primero local, sin servidor)
+> Estado (19 oct 2026): **hechos los pasos 1 a 4 del plan** (§6): identidad
+> por Magnific, registro del equipo, invitar compartiendo las carpetas y acceso
+> en la interfaz. Compartir en Dropbox y Drive está sin probar con cuentas
+> reales (se prueba con la app de escritorio). La revisión del cliente (§4–5)
+> sigue aparcada. Relacionado: `ARCHITECTURE.md` §2.1 (primero local, sin servidor)
 > y §4 (roles), `INTERFAZ.md` §1.1.
 
 ## Decisiones (19 oct 2026)
@@ -161,6 +163,31 @@ Dropbox.
    Dashboard montable desde cada carpeta compartida.
 4. **Acceso en la interfaz** según el registro.
 5. **Más adelante: revisión del cliente** (§4 y §5).
+
+## 6.1 Cómo quedó hecho
+
+- **Identidad:** `integrations/magnific/identity.ts`. El id de la persona sale
+  de su email de Magnific (`u_` + hash), el mismo en cualquier ordenador. Quien
+  ya trabajaba con el id de su navegador aparece una vez más en las
+  producciones antiguas (con el mismo nombre).
+- **Reglas del equipo:** `packages/domain/src/team.ts` (`foldTeam`, con tests):
+  el primero que reclama la carpeta es propietario; invitan el propietario y,
+  si él lo permite, los miembros, a lo que tienen ellos; quita o cambia el
+  propietario o quien invitó. Un evento sin derecho se ignora.
+- **En la carpeta:** el equipo en `.sweetflow/team/`; cada carpeta o
+  producción compartida por separado guarda `.sweetflow/share.json` y su copia
+  de los registros del dashboard y del equipo (`data/folder/folderLog.ts`). Cada
+  cambio se escribe en la raíz y en las carpetas compartidas que lo contienen.
+  Quien abre una carpeta compartida la ve arriba de su dashboard, con lo de
+  dentro. El equipo se copia entero a cada carpeta compartida (sus miembros ven
+  quién está en el equipo).
+- **Compartir en el servicio:** `share`/`unshare` de `FolderFs` (Dropbox:
+  carpeta compartida + miembro editor; Drive: permiso de edición). Con una
+  carpeta de este ordenador, se avisa de compartirla a mano.
+- **Interfaz:** «Equipo» en el menú del dashboard, «Compartir con alguien del
+  equipo…» en el menú de carpetas y producciones, y la ventana Equipo de la
+  producción con «Invitar a esta producción». La demo tiene un equipo de
+  ejemplo en memoria.
 
 ## 7. Decisiones pendientes
 

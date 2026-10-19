@@ -103,6 +103,10 @@ Anotadas el 15 oct 2026, pendientes de que el usuario elija orden:
   mismos vídeos (sin copias), comenta y marca «Validado» (un comentario que
   avisa al equipo, que aprueba). **Revisión del cliente aparcada** hasta tener
   lo demás: buscar un servidor mínimo y barato (opciones en USUARIOS.md §5).
+  **Hecho (19 oct 2026):** identidad por Magnific, equipo en la carpeta,
+  invitar compartiendo carpetas en Dropbox/Drive y acceso por carpeta en la
+  interfaz (USUARIOS.md §6.1). Compartir en Dropbox y Drive se prueba con la app
+  de escritorio.
 
 ### Fase 1 · Producción en carpeta (etapa A)
 

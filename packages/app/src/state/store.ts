@@ -7,7 +7,7 @@
 
 import { create } from "zustand";
 import { parseAppLink } from "../data/share";
-import { type Id, type RowItem } from "@sweetflow/domain";
+import { type Access, type Id, type RowItem } from "@sweetflow/domain";
 import type { DataSource, Snapshot } from "../data/source";
 import type { Library, LibraryState, Pin } from "../data/library";
 import { createLibrary } from "../data";
@@ -19,7 +19,7 @@ export type View = "board" | "library" | "trash";
 export type CardSize = "s" | "m" | "l";
 export type PanelTab = "produce" | "cut" | "review" | "activity";
 export type DashLayout = "grid" | "list";
-export type DashSection = "home" | "recent" | "trash" | "settings";
+export type DashSection = "home" | "recent" | "team" | "trash" | "settings";
 /** Ajustes tabs: the dashboard's, plus the production's own (settings/Modals.tsx). */
 export type SettingsTab = "profile" | "storage" | "integrations" | "models" | "about" | "levels" | "statuses" | "view";
 /** Left column of the production screen: the work panel or the structure tree. */
@@ -76,11 +76,13 @@ interface UiState {
   playing: boolean;
   filters: Filters;
   /** `team`: who works on the production (opened from the avatar menu). */
-  modal: null | "settings" | "invite" | "team" | "notes";
+  modal: null | "settings" | "team" | "notes";
   /** The node whose notes the `notes` modal shows. */
   notesFor: Id | null;
   /** The «Importar» window: as versions of a shot, or as new shots in a row. */
   importTo: ImportTarget | null;
+  /** The invite window (docs/USUARIOS.md §2): to what, or a member whose access is being changed. */
+  inviteTo: { access: Access } | { member: string } | null;
   /** Show the codes (SQ010, SH0020…) on screen; off, things go by their title (a setting of this computer). */
   showCodes: boolean;
   collapsed: Record<Id, boolean>;
@@ -197,6 +199,7 @@ export const useStore = create<Store>((set, get) => ({
   filters: { query: "", statusIds: [], assigneeId: null, assetId: null },
   modal: null,
   importTo: null,
+  inviteTo: null,
   showCodes: readShowCodes(),
   notesFor: null,
   collapsed: {},

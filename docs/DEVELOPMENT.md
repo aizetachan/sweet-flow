@@ -59,8 +59,9 @@ dice «Sin configurar». Cada persona conecta después su propia cuenta con
 1. <https://www.dropbox.com/developers/apps> › **Create app** › *Scoped
    access* › *Full Dropbox* › nombre (p. ej. «Sweet Flow»).
 2. Pestaña **Permissions**: marcar `account_info.read`,
-   `files.metadata.read`, `files.metadata.write`, `files.content.read` y
-   `files.content.write`, y **Submit**.
+   `files.metadata.read`, `files.metadata.write`, `files.content.read`,
+   `files.content.write`, `sharing.read` y `sharing.write` (para compartir
+   carpetas al invitar), y **Submit**.
 3. Pestaña **Settings**:
    - *OAuth 2 › Redirect URIs*: `http://localhost:5180/auth/dropbox` (y
      `http://localhost:5173/auth/dropbox` si se usa ese puerto).

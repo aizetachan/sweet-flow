@@ -213,6 +213,52 @@ export class DropboxFolderFs implements FolderFs {
       if (!(e instanceof DropboxError && e.notFound)) throw e;
     }
   }
+
+  /** Makes the folder a Dropbox shared folder (if it isn't one) and adds them as editor. */
+  async share(path: string, email: string): Promise<void> {
+    const id = await this.sharedFolderId(path, true);
+    try {
+      await rpc("sharing/add_folder_member", {
+        shared_folder_id: id,
+        members: [{ member: { ".tag": "email", email }, access_level: { ".tag": "editor" } }],
+        quiet: false,
+      });
+    } catch (e) {
+      if (e instanceof DropboxError && /already/.test(e.summary)) return;
+      throw e;
+    }
+  }
+
+  async unshare(path: string, email: string): Promise<void> {
+    const id = await this.sharedFolderId(path, false);
+    if (!id) return;
+    try {
+      await rpc("sharing/remove_folder_member", { shared_folder_id: id, member: { ".tag": "email", email }, leave_a_copy: false });
+    } catch (e) {
+      if (!(e instanceof DropboxError && /not_a_member|member_error/.test(e.summary))) throw e;
+    }
+  }
+
+  private async sharedFolderId(path: string, create: boolean): Promise<string | null> {
+    const meta = await rpc<{ shared_folder_id?: string; sharing_info?: { shared_folder_id?: string } }>("files/get_metadata", { path: this.abs(path) });
+    const known = meta.shared_folder_id ?? meta.sharing_info?.shared_folder_id;
+    if (known || !create) return known ?? null;
+    try {
+      let r = await rpc<{ ".tag": string; shared_folder_id?: string; async_job_id?: string }>("sharing/share_folder", { path: this.abs(path), force_async: false });
+      for (let i = 0; r[".tag"] === "async_job_id" && i < 20; i++) {
+        await new Promise((res) => setTimeout(res, 1000));
+        r = await rpc("sharing/check_share_job_status", { async_job_id: r.async_job_id });
+      }
+      if (!r.shared_folder_id) throw new Error("Dropbox no ha terminado de compartir la carpeta.");
+      return r.shared_folder_id;
+    } catch (e) {
+      // Dropbox doesn't share a folder inside another shared folder (docs/USUARIOS.md §2).
+      if (e instanceof DropboxError && /inside_shared_folder|contains_shared_folder/.test(e.summary)) {
+        throw new Error("Dropbox no deja compartir una carpeta que está dentro de otra ya compartida (ni una que contiene otra compartida). Comparte la carpeta de arriba o reorganiza las carpetas.");
+      }
+      throw e;
+    }
+  }
 }
 
 function toEntry(e: DbxEntry): FsEntry {

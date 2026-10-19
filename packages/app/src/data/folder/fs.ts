@@ -39,6 +39,14 @@ export interface FolderFs {
   listFiles?(dir: string): Promise<Array<FsEntry & { path: string }>>;
   /** How often to look for other devices' changes; POLL_MS when absent. */
   readonly pollMs?: number;
+  /**
+   * Shares a folder ("" is the team folder) with someone's account at the
+   * service, so it shows in their Dropbox or Drive; the service sends its own
+   * notice. Absent on a folder of this computer (shared by hand there).
+   */
+  share?(path: string, email: string): Promise<void>;
+  /** Takes the folder away from them again. */
+  unshare?(path: string, email: string): Promise<void>;
 }
 
 /**
