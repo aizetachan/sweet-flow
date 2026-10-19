@@ -62,6 +62,7 @@ function Production() {
       <FloatingInspectors />
       <LeaveConfirm />
       <DeleteKey />
+      <UndoKeys />
       <Modals />
       <ImportDialog />
     </div>
@@ -170,6 +171,31 @@ function SidePanel() {
 }
 
 /** Leaving the production closes every floating panel and popped window: ask first. */
+/**
+ * ⌘Z / Ctrl+Z undoes the last thing done by hand; ⌘⇧Z, Ctrl+Y redo it
+ * (docs/INTERFAZ.md §2.9). While typing, the text's own undo works instead.
+ */
+function UndoKeys() {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey) || e.altKey) return;
+      const k = e.key.toLowerCase();
+      const redo = (k === "z" && e.shiftKey) || (k === "y" && e.ctrlKey && !e.metaKey);
+      if (k !== "z" && !redo) return;
+      const t = e.target as HTMLElement | null;
+      if (t?.closest("input, textarea, select, [contenteditable=true]")) return;
+      const { source, productionId, notify } = useStore.getState();
+      if (!productionId) return;
+      e.preventDefault();
+      const done = redo ? source.redo() : source.undo();
+      notify(done ? `${redo ? "Rehecho" : "Deshecho"}: ${done}.` : redo ? "No hay nada que rehacer." : "No hay nada que deshacer.");
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+  return null;
+}
+
 /** Delete / Backspace on the board moves the selection to the trash (never while typing). */
 function DeleteKey() {
   useEffect(() => {

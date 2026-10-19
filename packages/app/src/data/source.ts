@@ -190,6 +190,10 @@ export interface NewComment {
 
 export interface DataSource {
   subscribe(cb: (s: Snapshot) => void): () => void;
+  /** ⌘Z: undo the last thing done by hand here (docs/INTERFAZ.md §2.9); what it was, or null. */
+  undo(): string | null;
+  /** ⌘⇧Z: do it again. */
+  redo(): string | null;
   /** Stop listeners and timers when the production is closed. */
   dispose?(): void;
 

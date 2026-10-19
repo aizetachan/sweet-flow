@@ -394,6 +394,14 @@ export class FirebaseSource implements DataSource {
     throw new NotImplemented("Biblioteca", "etapa C");
   }
 
+  undo(): string | null {
+    return null;
+  }
+
+  redo(): string | null {
+    return null;
+  }
+
   retryMedia(_mediaId: Id): void {
     throw new NotImplemented("Reintentar", "etapa C");
   }

@@ -810,6 +810,21 @@ Sweet Flow, solo activar o desactivar y decir para quién.
   se usa; avisar al invitar a una producción que usa la biblioteca de otra a
   la que esa persona no tiene acceso.
 
+### 2.9 Deshacer y rehacer
+
+- **⌘Z** (Ctrl+Z) deshace lo último que se hizo a mano en la producción;
+  **⌘⇧Z** (Ctrl+Y) lo rehace. Un aviso dice qué («Deshecho: mover a la
+  papelera»). Mientras se escribe en un campo, ⌘Z deshace el texto.
+- Se deshace: crear, mover, agrupar, renombrar, editar, cambiar códigos,
+  mandar a la papelera y restaurar, elegir versión, quitar de la galería,
+  sacar a la fila, cortar, favoritas, comentarios, niveles y estados.
+- **No se deshace** lo que ya ha gastado créditos o tiempo (generar, subir,
+  importar), ni borrar para siempre desde la papelera, ni lo que hacen otras
+  personas. Deshacer la creación de un plano lo manda a la papelera, nunca lo
+  borra: lo que se hubiera generado en él no se pierde.
+- Cada producción abierta guarda sus últimos 100 pasos; al cerrarla se
+  olvidan (la papelera sigue ahí).
+
 ## 3. Ventanas aparte
 
 - **Tamaño:** se abre como una pantalla de portátil de 13–14″ (1440×900),

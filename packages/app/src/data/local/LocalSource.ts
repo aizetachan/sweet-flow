@@ -12,6 +12,7 @@
  */
 
 import {
+  invertEvents,
   foldLog,
   formatStamp,
   hlcObserve,
@@ -73,6 +74,7 @@ import {
   planPlaceLibMedia,
   type LibraryShare,
 } from "@sweetflow/domain";
+import { History, recordIntents } from "../history";
 import { assetsFromLibrary } from "../libraryCards";
 import { importKind, type BrowsePage, type BrowseQuery, type DataSource, type GenerateArgs, type ImportItem, type NewComment, type Placement, type RemoteFolder, type Snapshot, type UploadedRef } from "../source";
 import type { Generator, GenerationRequest } from "../generation";
@@ -113,6 +115,10 @@ export class LocalSource implements DataSource {
   private events = new Map<string, LogEvent>();
   private clock: Hlc = ZERO_HLC;
   private state: LogState | null = null;
+  /** Undo and redo (data/history.ts): the inverse events of each intent done here. */
+  private history = new History<LogEventBody[]>();
+  private recording: { undo: LogEventBody[]; label: string } | null = null;
+  private replaying = false;
   private unsaved: LogEvent[] = [];
   private saving: Promise<void> = Promise.resolve();
   private saveError = false;
@@ -132,6 +138,15 @@ export class LocalSource implements DataSource {
   readonly ready: Promise<void>;
 
   constructor(opts: LocalSourceOptions) {
+    recordIntents(
+      this,
+      (label) => (this.recording = { undo: [], label }),
+      () => {
+        const r = this.recording;
+        this.recording = null;
+        if (r?.undo.length) this.history.push({ undo: r.undo, label: r.label });
+      },
+    );
     this.store = opts.store;
     this.deviceId = opts.deviceId;
     this.me = opts.me;
@@ -200,8 +215,32 @@ export class LocalSource implements DataSource {
 
   // ---------- writing ----------
 
+  undo(): string | null {
+    return this.history.undo((s) => this.replay(s));
+  }
+
+  redo(): string | null {
+    return this.history.redo((s) => this.replay(s));
+  }
+
+  /** Writes a step's events; returns the step that reverses them. */
+  private replay(s: { undo: LogEventBody[]; label: string }): { undo: LogEventBody[]; label: string } {
+    const back = this.state ? invertEvents(this.state, s.undo) : [];
+    this.replaying = true;
+    try {
+      this.write(s.undo);
+    } finally {
+      this.replaying = false;
+    }
+    return { undo: back, label: s.label };
+  }
+
   private write(bodies: LogEventBody[]): void {
     if (!bodies.length) return;
+    // Done by hand (inside an intent): how to undo it, from the state right before.
+    if (this.recording && !this.replaying && this.state) {
+      this.recording.undo.unshift(...invertEvents(this.state, bodies));
+    }
     const before = this.state?.nodes ?? [];
     const groupsBefore = this.state?.groups ?? [];
     const mediaBefore = this.state?.media ?? [];

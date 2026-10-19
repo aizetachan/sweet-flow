@@ -397,7 +397,7 @@ if (popped) {
     });
   }
 } else {
-  // A link into the app (`#/abrir/…`, docs/INTERFAZ.md §1–2): a dashboard folder, a production, or a
+  // A link into the app (`#/abrir/…`, docs/INTERFAZ.md §2.9): a dashboard folder, a production, or a
   // shot in it, opened once the dashboard is known.
   const openLink = () => {
     const link = parseAppLink(location.hash);

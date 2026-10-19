@@ -50,6 +50,7 @@ import {
   type Asset,
   type LibraryShare,
 } from "@sweetflow/domain";
+import { History, recordIntents } from "../history";
 import { ALL_FEATURES, importKind, type BrowsePage, type BrowseQuery, type DataSource, type GenerateArgs, type ImportItem, type NewComment, type Placement, type RemoteCreation, type RemoteFolder, type Snapshot, type UploadedRef } from "../source";
 import { frame, type Mood } from "./frames";
 import { assetsFromLibrary } from "../libraryCards";
@@ -83,13 +84,55 @@ function seedLibrary(p: Snapshot["production"], me: Id, assets: Asset[]): { node
   return { nodes, media };
 }
 
+type Kept = Pick<Snapshot, "nodes" | "trash" | "shelf" | "library" | "groups" | "takes" | "comments" | "production"> & {
+  media: Map<Id, Pick<Media, "archived" | "chosen" | "nodeId" | "version" | "order">>;
+};
+
 export class MockSource implements DataSource {
   private s: Snapshot;
   private listeners = new Set<(s: Snapshot) => void>();
   private moods: Record<Id, Mood>;
   private teamTimer: ReturnType<typeof setInterval> | null = null;
 
+  /** Undo and redo (data/history.ts): how things were before each intent. */
+  private history = new History<Kept>();
+  private before: { kept: Kept; label: string } | null = null;
+
+  /** What an intent can change: the structure, and what people set on media. */
+  private keep(): Kept {
+    const { nodes, trash, shelf, library, groups, takes, comments, production } = this.s;
+    return { nodes, trash, shelf, library, groups, takes, comments, production, media: new Map(this.s.media.map((m) => [m.id, { archived: m.archived, chosen: m.chosen, nodeId: m.nodeId, version: m.version, order: m.order }])) };
+  }
+
+  private put(k: Kept): Kept {
+    const now = this.keep();
+    const { media, ...rest } = k;
+    this.commit({ ...rest, media: this.s.media.map((m) => (media.has(m.id) ? { ...m, ...media.get(m.id) } : m)) }, true);
+    return now;
+  }
+
+  undo(): string | null {
+    return this.history.undo((s) => ({ undo: this.put(s.undo), label: s.label }));
+  }
+
+  redo(): string | null {
+    return this.history.redo((s) => ({ undo: this.put(s.undo), label: s.label }));
+  }
+
   constructor() {
+    recordIntents(
+      this,
+      (label) => (this.before = { kept: this.keep(), label }),
+      () => {
+        const label = this.before?.label ?? "cambio";
+        const b = this.before?.kept;
+        this.before = null;
+        const k = this.keep();
+        const changed = !!b && (["nodes", "trash", "shelf", "library", "groups", "takes", "comments", "production"] as const).some((x) => b[x] !== k[x]);
+        const media = !!b && [...k.media].some(([id, v]) => JSON.stringify(v) !== JSON.stringify(b.media.get(id)));
+        if (b && (changed || media)) this.history.push({ undo: b, label });
+      },
+    );
     const { moods, ...seed } = buildSeed();
     this.moods = moods;
     const lib = seedLibrary(seed.production, seed.me.uid, seed.assets);
