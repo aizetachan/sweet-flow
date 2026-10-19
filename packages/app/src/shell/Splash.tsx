@@ -16,7 +16,8 @@ import { OUTER_POINTS, traceGlyph, type Glyph } from "./liquid";
 
 const WORD = "Sweet Flow";
 const MIN_MS = 2000;
-const HOLD_MS = 250;
+/** How long the finished word stays before fading out. */
+const HOLD_MS = 1300;
 const FADE_MS = 450;
 /**
  * Landing: as soon as the drop reaches its slot it bounces — it grows and
@@ -276,11 +277,16 @@ export function Splash({ ready, onDone }: { ready: boolean; onDone: () => void }
       return box;
     };
 
-    // Each letter's outline, traced from the font (again once the web font has loaded).
+    // The splash's font, as the canvas needs it to trace the letters.
+    const fontOf = () => {
+      const el = measureRefs.current.find(Boolean);
+      const cs = el ? getComputedStyle(el) : null;
+      return cs ? `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}` : "";
+    };
+    // Each letter's outline, traced from the font.
     let glyphs: (Glyph | null)[] = [];
     const trace = () => {
-      const cs = measureRefs.current.find(Boolean) ? getComputedStyle(measureRefs.current.find(Boolean)!) : null;
-      const font = cs ? `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}` : "";
+      const font = fontOf();
       glyphs = [...WORD].map((ch, i) => (ch === " " || !sizes[i] || !font ? null : traceGlyph(ch, font, sizes[i]!.x, sizes[i]!.y)));
     };
     const phases = [...WORD].map(() => rand(0, Math.PI * 2));
@@ -317,10 +323,8 @@ export function Splash({ ready, onDone }: { ready: boolean; onDone: () => void }
       targets.forEach((p, i) => place(i, still(p)));
     };
 
-    const box = measure();
-    trace();
-
     if (reduced.current) {
+      measure();
       placeAllAtTargets();
       root.classList.add("splash--still");
       const t = window.setTimeout(() => setSettled(true), 400);
@@ -335,42 +339,54 @@ export function Splash({ ready, onDone }: { ready: boolean; onDone: () => void }
       };
     }
 
-    const plans: (Plan | null)[] = targets.map((p, i) => (WORD[i] === " " || !p ? null : planLetter(p, sizes[i]!, box.width, box.height)));
-    const done = Math.max(...plans.map((p) => (p ? p.arrive + LAND_MS : 0)));
-    const t0 = performance.now();
+    // Start once the web font is there: the slots and the letters' outlines come from it, so a
+    // letter formed with a fallback font would jump when the real text takes over.
+    let alive = true;
     let landed = false;
-
-    const frame = (now: number) => {
-      const t = now - t0;
-      clock = t;
-      plans.forEach((plan, i) => {
-        if (plan && targets[i]) place(i, poseAt(plan, t));
-      });
-      if (t < done) raf = requestAnimationFrame(frame);
-      else {
+    let safety = 0;
+    let plans: (Plan | null)[] = [];
+    const start = () => {
+      if (!alive || plans.length) return;
+      const box = measure();
+      trace();
+      plans = targets.map((p, i) => (WORD[i] === " " || !p ? null : planLetter(p, sizes[i]!, box.width, box.height)));
+      const done = Math.max(...plans.map((p) => (p ? p.arrive + LAND_MS : 0)));
+      const t0 = performance.now();
+      const frame = (now: number) => {
+        const t = now - t0;
+        clock = t;
+        plans.forEach((plan, i) => {
+          if (plan && targets[i]) place(i, poseAt(plan, t));
+        });
+        if (t < done) raf = requestAnimationFrame(frame);
+        else {
+          landed = true;
+          placeAllAtTargets();
+          setSettled(true);
+        }
+      };
+      // First pose right away, so no letter flashes at the corner before the first frame.
+      frame(t0);
+      // Browsers pause animation frames in hidden windows: settle on time anyway.
+      safety = window.setTimeout(() => {
+        if (landed) return;
+        cancelAnimationFrame(raf);
         landed = true;
         placeAllAtTargets();
         setSettled(true);
-      }
+      }, done + 300);
     };
-    // First pose right away, so no letter flashes at the corner before the first frame.
-    frame(t0);
-
-    // Browsers pause animation frames in hidden windows: settle on time anyway.
-    const safety = window.setTimeout(() => {
-      if (landed) return;
-      cancelAnimationFrame(raf);
-      landed = true;
-      placeAllAtTargets();
-      setSettled(true);
-    }, done + 300);
-
-    // Slots measured before the web font loads are off (letters overlap): re-measure.
-    let alive = true;
-    void document.fonts?.ready.then(() => {
-      if (!alive) return;
+    const font = fontOf();
+    const fontLoaded = document.fonts && font ? document.fonts.load(font, WORD).then(() => undefined, () => undefined) : Promise.resolve();
+    // Don't wait long for it, though: if it comes later, the drops are sent to the new slots.
+    void Promise.race([fontLoaded, new Promise((r) => window.setTimeout(r, 1200))]).then(start);
+    void fontLoaded.then(() => {
+      if (!alive || !plans.length) return;
       measure();
       trace();
+      plans.forEach((plan, i) => {
+        if (plan && targets[i]) plan.points[plan.points.length - 1] = targets[i]!;
+      });
       if (landed) placeAllAtTargets();
     });
 

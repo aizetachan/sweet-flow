@@ -36,8 +36,10 @@ Abrir la app ──▶ 0. Pantalla de carga ──▶ 1. Dashboard ──▶ 2. 
     de líquido), aún con volumen; al final del rebote pierde el sombreado y la
     sombra y queda como el texto nítido;
   - el recorrido dura unos 2,5 s, y el rebote con la transformación, algo más de 1 s.
-- Cuando la app ha cargado (y el nombre está completo), el logo **se desvanece**
-  y aparece el dashboard.
+- Cuando la app ha cargado y el nombre está completo, el logo **se queda
+  quieto algo más de 1 s** y luego **se desvanece** y aparece el dashboard.
+- La animación espera a que esté cargada la tipografía, para que las letras
+  que forman las gotas sean exactamente las del texto final (sin saltos).
 - Duración mínima de unos 2 s aunque la carga termine antes; un clic la salta.
 - Con "reducir movimiento" activado en el sistema, el nombre aparece con un
   fundido, sin recorrido.

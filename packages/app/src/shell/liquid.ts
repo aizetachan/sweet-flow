@@ -20,7 +20,7 @@ export interface Glyph {
   radius: number;
 }
 
-export const OUTER_POINTS = 140;
+export const OUTER_POINTS = 240;
 export const HOLE_POINTS = 60;
 /** Canvas pixels per CSS pixel when tracing: smoother outlines. */
 const RES = 2;
