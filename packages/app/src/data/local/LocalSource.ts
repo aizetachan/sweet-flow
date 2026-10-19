@@ -721,7 +721,7 @@ export class LocalSource implements DataSource {
     const s = this.loaded();
     const media = s.media.find((m) => m.id === mediaId);
     if (!media) return undefined;
-    return this.apply(planExtractVersion(s.production, this.board(), nodeId, media, this.newId, this.me.uid, this.now(), segment));
+    return this.apply(planExtractVersion(s.production, this.board(), nodeId, media, this.newId, this.me.uid, this.now(), segment, { media: s.media, takes: s.takes }));
   }
 
   splitTakeShot(nodeId: Id, segments: Segment[]): Id[] {

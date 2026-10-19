@@ -585,16 +585,19 @@ export class MockSource implements DataSource {
     const media = this.s.media.find((m) => m.id === mediaId);
     if (!media) return undefined;
     const now = Date.now();
-    const plan = planExtractVersion(this.s.production, this.s.nodes, nodeId, media, newId, this.s.me.uid, now, segment);
+    const plan = planExtractVersion(this.s.production, this.s.nodes, nodeId, media, newId, this.s.me.uid, now, segment, { media: this.s.media, takes: this.s.takes });
     if (!plan.nodeId) return undefined;
     let nodes = this.s.nodes;
-    const takes: Take[] = [...this.s.takes];
+    let takes: Take[] = [...this.s.takes];
+    let all = this.s.media;
     for (const e of plan.events) {
-      if (e.type === "node.created") nodes = [...nodes, { ...e.node, productionId: this.s.production.id, notes: "", assigneeIds: [], assetIds: [], updatedAt: now, updatedBy: this.s.me.uid }];
+      if (e.type === "media.updated") all = all.map((m) => (m.id === e.id ? { ...m, ...e.patch } as Media : m));
+      else if (e.type === "take.removed") takes = takes.filter((t) => t.id !== e.id);
+      else if (e.type === "node.created") nodes = [...nodes, { ...e.node, productionId: this.s.production.id, notes: "", assigneeIds: [], assetIds: [], updatedAt: now, updatedBy: this.s.me.uid }];
       else if (e.type === "take.added") takes.push({ ...e.take, productionId: this.s.production.id });
       else if (e.type === "node.updated") nodes = nodes.map((n) => (n.id === e.id ? { ...n, ...e.patch } : n));
     }
-    this.commit({ nodes, takes, activity: [this.log("take", "sacó una versión a la fila", plan.nodeId), ...this.s.activity] }, true);
+    this.commit({ nodes, takes, media: all, activity: [this.log("take", "sacó una versión a la fila", plan.nodeId), ...this.s.activity] }, true);
     return plan.nodeId;
   }
 

@@ -362,6 +362,22 @@ describe("structure intents", () => {
     expect(s.media.find((m) => m.id === "mx")?.nodeId).toBe(a);
   });
 
+  it("a version taken out leaves its shot's gallery (unless it is the shot's chosen one)", () => {
+    const { run, state } = session();
+    const sq = run((s) => planCreateNode(s.production!, s.nodes, null, "q")).nodeId!;
+    const sc = run((s) => planCreateNode(s.production!, s.nodes, sq, "c")).nodeId!;
+    const a = run((s) => planCreateNode(s.production!, s.nodes, sc, "xa", "Faro")).nodeId!;
+    const add = (mid: string, version: number) => run(() => ({ events: [{ type: "media.added", media: { id: mid, nodeId: a, kind: "video", origin: "generated", archived: false, createdBy: "u", createdAt: 1, version, status: "ready", progress: 100, durationSec: 6 } }] }));
+    add("m1", 1);
+    add("m2", 2);
+    run(() => ({ events: [{ type: "take.added", take: { id: "t1", nodeId: a, mediaId: "m1", inSec: 0, outSec: 6, createdBy: "u", createdAt: 1 } }, { type: "node.updated", id: a, patch: { selectedTakeId: "t1" } }] }));
+    const own = () => ({ media: state().media, takes: state().takes });
+    const out = run((s) => planExtractVersion(s.production!, s.nodes, a, { id: "m2", durationSec: 6 }, id, "u", 5, undefined, own())).nodeId!;
+    expect(state().media.find((m) => m.id === "m2")).toMatchObject({ nodeId: out, version: 1 });
+    run((s) => planExtractVersion(s.production!, s.nodes, a, { id: "m1", durationSec: 6 }, id, "u", 6, undefined, own()));
+    expect(state().media.find((m) => m.id === "m1")?.nodeId).toBe(a);
+  });
+
   it("cuts a cut shot again: it keeps the first stretch, the rest go right after it", () => {
     const { run, state } = session();
     const sq = run((s) => planCreateNode(s.production!, s.nodes, null, "q")).nodeId!;

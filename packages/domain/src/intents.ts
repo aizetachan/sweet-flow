@@ -421,7 +421,10 @@ export function planPlaceInRow(
 /**
  * Take a version out to the row (docs/INTERFAZ.md §2.0.1): a new shot right
  * after `nodeId`, with the same title, whose chosen take is that version
- * (whole). The file stays where it is; the version stays in its shot too.
+ * (whole). With `own` (what the production has), a version of that shot goes
+ * with it — it leaves the shot's gallery, its file moves to the new shot —
+ * unless it is the shot's chosen one (still used there). A stretch of another
+ * video only makes the new shot.
  */
 export function planExtractVersion(
   p: Production,
@@ -433,20 +436,26 @@ export function planExtractVersion(
   now: Millis,
   /** Only a stretch of it (a shot cut from a video); the whole of it by default. */
   segment?: Segment,
+  own?: { media: Array<Pick<Media, "id" | "nodeId" | "kind" | "version">>; takes: Array<Pick<Take, "id" | "nodeId" | "mediaId">> },
 ): Plan {
   const base = planInsertAfter(p, nodes, nodeId, newId("n"));
   const created = base.events[0];
   const from = nodes.find((n) => n.id === nodeId);
   if (!base.nodeId || !created || created.type !== "node.created" || !from) return EMPTY;
   const takeId = newId("tk");
-  return {
-    nodeId: base.nodeId,
-    events: [
-      { ...created, node: { ...created.node, title: from.title } },
-      { type: "take.added", take: { id: takeId, nodeId: base.nodeId, mediaId: media.id, inSec: segment?.inSec ?? 0, outSec: segment?.outSec ?? media.durationSec ?? 0, createdBy: by, createdAt: now } },
-      { type: "node.updated", id: base.nodeId, patch: { selectedTakeId: takeId, ...(from.groupId ? { groupId: from.groupId } : {}) } },
-    ],
-  };
+  const events: LogEventBody[] = [
+    { ...created, node: { ...created.node, title: from.title } },
+    { type: "take.added", take: { id: takeId, nodeId: base.nodeId, mediaId: media.id, inSec: segment?.inSec ?? 0, outSec: segment?.outSec ?? media.durationSec ?? 0, createdBy: by, createdAt: now } },
+    { type: "node.updated", id: base.nodeId, patch: { selectedTakeId: takeId, ...(from.groupId ? { groupId: from.groupId } : {}) } },
+  ];
+  const m = own?.media.find((x) => x.id === media.id);
+  const chosen = own?.takes.find((t) => t.id === from.selectedTakeId);
+  if (own && m && m.nodeId === nodeId && !segment && chosen?.mediaId !== media.id) {
+    events.push({ type: "media.updated", id: m.id, patch: { nodeId: base.nodeId, version: nextMediaVersion(own.media, base.nodeId, m.kind) } });
+    // Its takes in the shot it leaves (none chosen) would show it there again.
+    for (const t of own.takes) if (t.nodeId === nodeId && t.mediaId === m.id) events.push({ type: "take.removed", id: t.id });
+  }
+  return { nodeId: base.nodeId, events };
 }
 
 /**

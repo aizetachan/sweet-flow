@@ -444,8 +444,10 @@ y «Tomas» por separado):
 - **Sacar a la fila** (flecha): esa
   versión pasa a ser un **plano nuevo justo al lado** de este (con el código
   libre que toque, p. ej. SH0025, y el mismo título), con ella como elegida.
-  Un tramo sale como plano con solo su tramo. El archivo no se mueve ni se
-  copia, y la versión sigue también aquí. Aviso con «Ver».
+  La versión **se va** de esta galería (no queda duplicada): pasa al plano
+  nuevo con su archivo (a su carpeta), como su v001. Si es la elegida de este
+  plano, se queda también aquí, porque este plano la usa. Un tramo sale como
+  plano con solo su tramo (el vídeo sigue donde está). Aviso con «Ver».
 - Al pasar el ratón, dos botones en la miniatura:
   - **Elegir (✓):** el plano pasa a ser esa. Es la que cuenta: portada de la
     tarjeta, duración y montaje. La elegida lleva «Elegida» y un borde verde.
