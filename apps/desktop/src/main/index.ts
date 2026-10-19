@@ -12,6 +12,18 @@ import { registerIpc } from "./ipc";
 import { startMirror, stopMirror } from "./mirror";
 import { checkForUpdates } from "./updater";
 
+/** Every window of ours, popped-out ones too: the same hardened preferences and the bridge. */
+function webPreferences(): Electron.WebPreferences {
+  return {
+    preload: path.join(__dirname, "preload.cjs"),
+    contextIsolation: true,
+    nodeIntegration: false,
+    sandbox: true,
+    webSecurity: true,
+    additionalArguments: [`${VERSION_ARG}${app.getVersion()}`],
+  };
+}
+
 function createWindow(): BrowserWindow {
   const win = new BrowserWindow({
     width: 1440,
@@ -22,14 +34,7 @@ function createWindow(): BrowserWindow {
     backgroundColor: "#0b0b0c",
     show: false,
     titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "default",
-    webPreferences: {
-      preload: path.join(__dirname, "preload.cjs"),
-      contextIsolation: true,
-      nodeIntegration: false,
-      sandbox: true,
-      webSecurity: true,
-      additionalArguments: [`${VERSION_ARG}${app.getVersion()}`],
-    },
+    webPreferences: webPreferences(),
   });
 
   win.once("ready-to-show", () => win.show());
@@ -64,6 +69,7 @@ function lockNavigation(win: BrowserWindow): void {
           minHeight: 480,
           backgroundColor: "#0b0b0c",
           titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "default",
+          webPreferences: webPreferences(),
         },
       };
     }
