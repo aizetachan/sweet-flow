@@ -54,10 +54,10 @@ function TrashRow({ node, all }: { node: ProdNode; all: ProdNode[] }) {
   const inside = descendantsOf(all, node.id);
   const counts = new Map<string, number>();
   for (const d of inside) {
-    const name = levelOf(p, d).name.toLowerCase();
+    const name = d.lib ? "grupo" : levelOf(p, d).name.toLowerCase();
     counts.set(name, (counts.get(name) ?? 0) + 1);
   }
-  const where = ancestorsOf(all, node).slice(0, -1).map((a) => nameOf(p, a)).join(" / ") || "la raíz de la producción";
+  const where = node.lib ? "la Biblioteca" : ancestorsOf(all, node).slice(0, -1).map((a) => nameOf(p, a)).join(" / ") || "la raíz de la producción";
   const restore = () => {
     const was = nameOf(p, node);
     const renumbered = source.restoreNode(node.id);
@@ -65,7 +65,7 @@ function TrashRow({ node, all }: { node: ProdNode; all: ProdNode[] }) {
     notify(renumbered === undefined ? `${was} ha vuelto a su sitio.` : `${was} ha vuelto como ${now}: su código estaba ocupado.`, {
       label: "Ver",
       run: () => {
-        set({ view: "board", notice: null });
+        set({ view: node.lib ? "library" : "board", notice: null });
         select(node.id);
       },
     });
@@ -76,7 +76,7 @@ function TrashRow({ node, all }: { node: ProdNode; all: ProdNode[] }) {
       <span className="trash__main">
         <span className="trash__title">{node.title || <i className="sf-faint">Sin título</i>}</span>
         <span className="sf-faint sf-small">
-          {levelOf(p, node).name} · en {where}
+          {node.lib ? "Grupo" : levelOf(p, node).name} · en {where}
           {counts.size ? ` · con ${[...counts].map(([name, c]) => `${c} ${name}${c === 1 ? "" : "s"}`).join(", ")}` : ""}
         </span>
       </span>

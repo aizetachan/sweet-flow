@@ -221,27 +221,28 @@ export class MockSource implements DataSource {
     return plan.renumbered;
   }
 
-  /** Board, trash and «Vídeos editados» in one list. */
+  /** Board, trash, «Vídeos editados» and the library in one list. */
   private all(): ProdNode[] {
-    return [...this.s.nodes, ...this.s.trash, ...this.s.shelf];
+    return [...this.s.nodes, ...this.s.trash, ...this.s.shelf, ...this.s.library];
   }
 
-  /** Board, trash and «Vídeos editados» from one list. */
+  /** Board, trash, «Vídeos editados» and the library from one list. */
   private setAll(all: ProdNode[], extra: Partial<Snapshot> = {}): void {
-    const { live, trash, shelf } = splitTrash(all);
-    this.commit({ ...extra, nodes: live, trash, shelf }, true);
+    const { live, trash, shelf, library } = splitTrash(all);
+    this.commit({ ...extra, nodes: live, trash, shelf, library }, true);
   }
 
   deleteNode(nodeId: Id): void {
     const all = this.all();
     const ids = new Set([nodeId, ...descendantsOf(all, nodeId).map((d) => d.id)]);
     const mediaIds = new Set(this.s.media.filter((m) => ids.has(m.nodeId)).map((m) => m.id));
-    const { live, trash, shelf } = splitTrash(all.filter((n) => !ids.has(n.id)));
+    const { live, trash, shelf, library } = splitTrash(all.filter((n) => !ids.has(n.id)));
     this.commit(
       {
         nodes: live,
         trash,
         shelf,
+        library,
         media: this.s.media.filter((m) => !mediaIds.has(m.id)),
         takes: this.s.takes.filter((t) => !ids.has(t.nodeId) && !mediaIds.has(t.mediaId)),
         comments: this.s.comments.filter((c) => !ids.has(c.nodeId)),

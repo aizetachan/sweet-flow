@@ -150,6 +150,8 @@ export function planTrashNode(nodes: ProdNode[], nodeId: Id): Plan {
 export function planRestoreNode(p: Production, nodes: ProdNode[], nodeId: Id): Plan & { renumbered?: number } {
   const n = nodes.find((x) => x.id === nodeId);
   if (!n || n.trashedAt === undefined) return EMPTY;
+  // A library group has no code to keep free.
+  if (n.lib) return { events: [{ type: "node.restored", id: nodeId }] };
   const number = freeOnBoard(p, nodes, n);
   return { events: [{ type: "node.restored", id: nodeId, ...(number === undefined ? {} : { number }) }], renumbered: number };
 }

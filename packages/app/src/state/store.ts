@@ -321,7 +321,9 @@ export const useStore = create<Store>((set, get) => ({
     const { snap, source, selectedId, multi } = get();
     if (!snap || !ids.length) return;
     const asked = new Set(ids);
-    const byId = new Map(snap.nodes.map((n) => [n.id, n]));
+    // The board's nodes and the library's groups (docs/INTERFAZ.md §2.8).
+    const all = [...snap.nodes, ...snap.library];
+    const byId = new Map(all.map((n) => [n.id, n]));
     // A node inside another one being trashed goes with it.
     const isInside = (id: Id) => {
       for (let n = byId.get(id); n?.parentId; n = byId.get(n.parentId)) if (asked.has(n.parentId)) return true;
@@ -329,7 +331,7 @@ export const useStore = create<Store>((set, get) => ({
     };
     const top = ids.filter((id) => byId.has(id) && !isInside(id));
     if (!top.length) return;
-    const gone = new Set(snap.nodes.filter((n) => asked.has(n.id) || isInside(n.id)).map((n) => n.id));
+    const gone = new Set(all.filter((n) => asked.has(n.id) || isInside(n.id)).map((n) => n.id));
     for (const id of top) {
       closePoppedWindow(id);
       source.trashNode(id);
