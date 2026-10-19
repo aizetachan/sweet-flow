@@ -26,6 +26,7 @@ import { memberName } from "../state/selectors";
 import { modelsFor, nearest, REF_LABEL, specOf, useModelsVersion, type GenKind, type RefType } from "../data/models";
 import { refreshCatalog } from "../integrations/magnific/catalog";
 import { mentionsIn, PromptTags, type Mentions } from "./PromptTags";
+import { draggedMedia, MEDIA_DRAG } from "../library/LibraryBoard";
 import { kindOfFile, type GenerateArgs } from "../data/source";
 import { Popover } from "../components/Popover";
 import { Composer } from "./ReviewTab";
@@ -332,6 +333,27 @@ function GenerateBox({ node }: { node: ProdNode }) {
     setRefs([...refs.filter((r) => !(type === "style" && r.type === "style")), ...fresh.map((mediaId) => ({ type, mediaId }))]);
   };
 
+  /** Library images dropped: the provider gets them first if it doesn't have them. */
+  const libMedia = (ids: Id[]) => {
+    const list = ids.map((id) => snap.media.find((m) => m.id === id)).filter((m): m is Media => !!m && m.kind === "image" && m.status === "ready");
+    for (const m of list) ref.media(m);
+    return list.map((m) => m.id);
+  };
+  /** Library images as references (or as the start frame, when the model has no references). */
+  const addMedia = (raw: Id[]) => {
+    const ids = libMedia(raw);
+    if (!ids.length) return;
+    if (refTypes.includes("image") && !start) {
+      const room = (spec.references?.max ?? 0) - refs.length;
+      const fresh = ids.filter((id) => !refs.some((r) => r.mediaId === id)).slice(0, Math.max(0, room));
+      if (fresh.length < ids.length) useStore.getState().notify(`${spec.name} admite ${spec.references?.max ?? 0} referencias.`);
+      setRefs([...refs, ...fresh.map((mediaId) => ({ type: "image" as RefType, mediaId }))]);
+    } else if (spec.startFrame && !refs.length) {
+      if (!start) setStart(ids[0]!);
+      else if (spec.endFrame && !end) setEnd(ids[0]!);
+    } else useStore.getState().notify(`${spec.name} no admite más imágenes como referencia.`);
+  };
+
   /** Files dropped on the references: each where the model takes it (references first, then the frames). */
   const dropFiles = (files: File[]) => {
     let list = refs;
@@ -420,20 +442,21 @@ function GenerateBox({ node }: { node: ProdNode }) {
             Referencias
             {spec.references && refTypes.includes("image") ? <span className="sf-faint">{refs.length}/{spec.references.max}</span> : null}
           </div>
-          <div className="gen__refs" {...fileDrop(dropFiles)}>
+          <div className="gen__refs" {...fileDrop(dropFiles, undefined, addMedia)}>
             {spec.startFrame ? (
               <RefSlot ctx={ref} label="Imagen inicial" icon={<IconPhotoUp size={16} />} accept={["image"]} node={node} value={start} disabled={refs.length > 0}
-                disabledHint="No se combina con referencias" onPick={(id) => setStart(id)} onFiles={([f]) => f && setStart(ref.send(f))} onClear={() => { setStart(null); setEnd(null); }} />
+                disabledHint="No se combina con referencias" onPick={(id) => setStart(id)} onFiles={([f]) => f && setStart(ref.send(f))} onMedia={(ids) => { const [id] = libMedia(ids); if (id) setStart(id); }} onClear={() => { setStart(null); setEnd(null); }} />
             ) : null}
             {spec.endFrame ? (
               <RefSlot ctx={ref} label="Imagen final" icon={<IconPhotoDown size={16} />} accept={["image"]} node={node} value={end} disabled={!start}
-                disabledHint="Primero la imagen inicial" onPick={(id) => setEnd(id)} onFiles={([f]) => f && setEnd(ref.send(f))} onClear={() => setEnd(null)} />
+                disabledHint="Primero la imagen inicial" onPick={(id) => setEnd(id)} onFiles={([f]) => f && setEnd(ref.send(f))} onMedia={(ids) => { const [id] = libMedia(ids); if (id) setEnd(id); }} onClear={() => setEnd(null)} />
             ) : null}
             {refTypes.includes("style") ? (
               <RefSlot ctx={ref} label="Estilo" icon={<IconSparkles size={16} />} accept={["image"]} node={node}
                 value={refs.find((r) => r.type === "style")?.mediaId ?? null} disabled={usesFrames} disabledHint="No se combina con imagen inicial"
                 onPick={(id) => setRefs([...refs.filter((r) => r.type !== "style"), { type: "style", mediaId: id }])}
                 onFiles={([f]) => f && kindOfFile(f) === "image" && setRefs([...refs.filter((r) => r.type !== "style"), { type: "style", mediaId: ref.send(f) }])}
+                onMedia={(ids) => { const [id] = libMedia(ids); if (id) setRefs([...refs.filter((r) => r.type !== "style"), { type: "style", mediaId: id }]); }}
                 onClear={() => setRefs(refs.filter((r) => r.type !== "style"))} />
             ) : null}
             {refs.filter((r) => r.type !== "style").map((r) => (
@@ -441,14 +464,14 @@ function GenerateBox({ node }: { node: ProdNode }) {
                 onPick={() => undefined} onClear={() => setRefs(refs.filter((x) => x !== r))} />
             ))}
             {kind !== "video" && refTypes.some((t) => t !== "style") && refs.length < (spec.references?.max ?? 0) ? (
-              <RefSlot ctx={ref} label="Añadir" icon={<IconPlus size={16} />} node={node} value={null} disabled={usesFrames} disabledHint="No se combina con imagen inicial" onFiles={dropFiles} onPickMany={addFromCard}
+              <RefSlot ctx={ref} label="Añadir" icon={<IconPlus size={16} />} node={node} value={null} disabled={usesFrames} disabledHint="No se combina con imagen inicial" onFiles={dropFiles} onMedia={addMedia} onPickMany={addFromCard}
                 accept={refTypes.filter((t) => t !== "style").map((t) => (t === "audio" ? "audio" : t === "video" ? "video" : "image"))}
                 onPick={(id, k) => setRefs([...refs, { type: k === "video" ? "video" : k === "audio" ? "audio" : "image", mediaId: id }])} onClear={() => undefined} />
             ) : null}
           </div>
           {/* Video: like Magnific, «Añadir media» is its own wide row under the frames, with what the model takes. */}
           {kind === "video" && refTypes.length > 0 && refs.length < (spec.references?.max ?? 0) ? (
-            <RefSlot ctx={ref} wide label="Añadir media" node={node} value={null} disabled={usesFrames} disabledHint="No se combina con imagen inicial ni final" onFiles={dropFiles} onPickMany={addFromCard}
+            <RefSlot ctx={ref} wide label="Añadir media" node={node} value={null} disabled={usesFrames} disabledHint="No se combina con imagen inicial ni final" onFiles={dropFiles} onMedia={addMedia} onPickMany={addFromCard}
               icon={<span className="gen__media-icons">
                 {refTypes.includes("image") ? <span><IconPhoto size={14} /></span> : null}
                 {refTypes.includes("video") ? <span><IconVideo size={14} /></span> : null}
@@ -580,10 +603,12 @@ function useRefFiles(node: ProdNode) {
 type RefCtx = ReturnType<typeof useRefFiles>;
 
 /** Accept files dragged from the computer. */
-function fileDrop(onFiles: (files: File[]) => void, on?: (over: boolean) => void) {
+function fileDrop(onFiles: (files: File[]) => void, on?: (over: boolean) => void, onMedia?: (ids: Id[]) => void) {
+  // Files from this computer, or images dragged from the library (docs/INTERFAZ.md §2.8).
+  const ours = (e: DragEvent) => hasFiles(e.dataTransfer) || (!!onMedia && e.dataTransfer.types.includes(MEDIA_DRAG));
   return {
     onDragOver: (e: DragEvent) => {
-      if (!hasFiles(e.dataTransfer)) return;
+      if (!ours(e)) return;
       e.preventDefault();
       e.stopPropagation();
       e.dataTransfer.dropEffect = "copy";
@@ -591,11 +616,20 @@ function fileDrop(onFiles: (files: File[]) => void, on?: (over: boolean) => void
     },
     onDragLeave: () => on?.(false),
     onDrop: (e: DragEvent) => {
-      if (!hasFiles(e.dataTransfer)) return;
+      if (!ours(e)) return;
       e.preventDefault();
       e.stopPropagation();
       on?.(false);
-      onFiles([...e.dataTransfer.files]);
+      if (hasFiles(e.dataTransfer)) return onFiles([...e.dataTransfer.files]);
+      let ids = draggedMedia();
+      if (!ids.length) {
+        try {
+          ids = JSON.parse(e.dataTransfer.getData(MEDIA_DRAG)) as Id[];
+        } catch {
+          ids = [];
+        }
+      }
+      if (ids.length) onMedia?.(ids);
     },
   };
 }
@@ -605,7 +639,7 @@ function fileDrop(onFiles: (files: File[]) => void, on?: (over: boolean) => void
  * Picks from what the production has (this shot, its scene, then the rest),
  * or from this computer: «Subir del ordenador», or a file dropped on it.
  */
-function RefSlot({ ctx, label, icon, accept, node, value, disabled, disabledHint, onPick, onPickMany, onFiles, onClear, wide }: {
+function RefSlot({ ctx, label, icon, accept, node, value, disabled, disabledHint, onPick, onPickMany, onFiles, onMedia, onClear, wide }: {
   ctx: RefCtx;
   /** The wide «Añadir media» row of videos. */
   wide?: boolean;
@@ -620,12 +654,14 @@ function RefSlot({ ctx, label, icon, accept, node, value, disabled, disabledHint
   /** A library card picked: its chosen images (slots that take several). */
   onPickMany?: (mediaIds: Id[], card: ProdNode) => void;
   onFiles?: (files: File[]) => void;
+  /** Library images dropped on it. */
+  onMedia?: (mediaIds: Id[]) => void;
   onClear: () => void;
 }) {
   const snap = useSnap();
   const [over, setOver] = useState(false);
   const input = useRef<HTMLInputElement>(null);
-  const drop = onFiles && !disabled ? fileDrop(onFiles, setOver) : {};
+  const drop = onFiles && !disabled ? fileDrop(onFiles, setOver, onMedia) : {};
   const up = value && isUp(value) ? ctx.ups[value] : undefined;
   const picked = value && !up ? snap.media.find((m) => m.id === value) : undefined;
   if (up || picked) {

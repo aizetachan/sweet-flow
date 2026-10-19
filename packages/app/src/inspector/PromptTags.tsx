@@ -41,7 +41,8 @@ export function PromptTags({ value, onChange, placeholder, mentions, setMentions
   const [query, setQuery] = useState<{ text: string; at: number } | null>(null);
   const [hi, setHi] = useState(0);
   const [picking, setPicking] = useState<Id | null>(null);
-  const groups = snap.library.filter((n) => n.lib?.kind === "card" && imagesOf(snap.media, n.id).length);
+  // Every group, also those still without images (they show what to do).
+  const groups = snap.library.filter((n) => n.lib?.kind === "card");
   const q = query?.text.toLowerCase() ?? "";
   const list = query ? groups.filter((g) => g.title.toLowerCase().includes(q) || libTag(g.title).toLowerCase().includes(q)).slice(0, 8) : [];
 
@@ -119,6 +120,7 @@ export function PromptTags({ value, onChange, placeholder, mentions, setMentions
       {pickGroup && mentions[pickGroup.id] ? (
         <div className="menu ptags__pick" onMouseDown={(e) => e.preventDefault()}>
           <div className="menu__title">@{mentions[pickGroup.id]!.tag} · imágenes de referencia ({mentions[pickGroup.id]!.mediaIds.length}/{MAX_IMAGES})</div>
+          {!imagesOf(snap.media, pickGroup.id).length ? <p className="sf-faint sf-small ptags__empty">Este grupo aún no tiene imágenes: genera en él desde la Biblioteca.</p> : null}
           <div className="ptags__grid">
             {imagesOf(snap.media, pickGroup.id).map((m) => {
               const on = mentions[pickGroup.id]!.mediaIds.includes(m.id);

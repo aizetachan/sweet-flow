@@ -18,10 +18,14 @@ import { InlineEdit } from "../board/Board";
 import { LIB_TYPES } from "../inspector/Inspector";
 import type { AssetType } from "@sweetflow/domain";
 
-const MEDIA_DRAG = "application/x-sweetflow-media";
+/** Library images being dragged (also onto the references of Generar). */
+export const MEDIA_DRAG = "application/x-sweetflow-media";
 
 /** Images being dragged (dataTransfer can't be read during dragover). */
 let dragging: Id[] = [];
+
+/** The library images being dragged right now, for drop targets elsewhere (references). */
+export const draggedMedia = () => dragging;
 
 /** A group's images in their order (not archived). */
 function imagesOf(media: Media[], nodeId: Id): Media[] {
@@ -131,6 +135,7 @@ function GroupRow({ group, picked, setPicked }: { group: ProdNode; picked: Id[];
 
   return (
     <section className={cx("libb__lane", on && "is-on")}
+      onContextMenu={(e) => { e.preventDefault(); setMenu({ x: e.clientX, y: e.clientY }); }}
       onDragOver={(e) => {
         if (!e.dataTransfer.types.includes(MEDIA_DRAG)) return;
         e.preventDefault();
@@ -150,8 +155,7 @@ function GroupRow({ group, picked, setPicked }: { group: ProdNode; picked: Id[];
         dragging = [];
         setPicked([]);
       }}>
-      <div className="libb__lanehead" onClick={() => select(group.id, "produce", true)}
-        onContextMenu={(e) => { e.preventDefault(); setMenu({ x: e.clientX, y: e.clientY }); }}>
+      <div className="libb__lanehead" onClick={() => select(group.id, "produce", true)}>
         <InlineEdit className="libb__gname" value={group.title} placeholder="Sin nombre" label="Doble clic para cambiar el nombre" startSignal={rename}
           onSave={(title) => source.updateNode(group.id, { title })} />
         <KindChip group={group} />

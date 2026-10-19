@@ -686,7 +686,13 @@ centrada en la imagen y sin tipos fijos (decidido el 19 oct 2026):
   grupo; si no hay ninguna marcada, van todas.
 - **Descripción** del grupo (panel o menú del clic derecho en su nombre):
   cómo es; es la base del prompt al generar en él. Se ve junto al nombre.
-- **Clic derecho en el nombre:** cambiar el nombre, descripción, papelera.
+- **Clic derecho en cualquier parte de la fila:** cambiar el nombre,
+  descripción, papelera.
+- **Arrastrar a las referencias:** una imagen (o varias seleccionadas) de un
+  grupo se puede soltar en un hueco de referencias del panel: en **Añadir**
+  entra como imagen de referencia, en **Estilo** como estilo, en **Imagen
+  inicial / final** como fotograma; soltada sobre la zona de referencias, va
+  donde la admita el modelo.
 - **Usar en los planos:** en las referencias de Generar, «De la biblioteca»
   lista los grupos por su nombre; al elegir uno entran sus imágenes elegidas
   (o todas) hasta el máximo del modelo.
@@ -699,8 +705,8 @@ centrada en la imagen y sin tipos fijos (decidido el 19 oct 2026):
   Objeto, Lugar, Estilo u Otro. Se cambia después en su fila (clic en el tipo)
   o en el panel.
 - **Etiquetas en el prompt:** al escribir **@** en el prompt de cualquier
-  plano o grupo salen los grupos de la biblioteca (miniatura, nombre, etiqueta
-  y tipo); flechas e Intro, o clic. Se escribe su etiqueta («@Casa_de_Robida»:
+  plano o grupo, de imagen o de vídeo, salen los grupos de la biblioteca
+  (miniatura, nombre, etiqueta y tipo; también los que aún no tienen imágenes); flechas e Intro, o clic. Se escribe su etiqueta («@Casa_de_Robida»:
   el nombre sin espacios ni acentos) y se abre un **menú con sus imágenes**
   para marcar las que se usan como referencia (hasta 6; empiezan marcadas sus
   ★ elegidas, o las primeras). Debajo del prompt, un chip por grupo llamado
