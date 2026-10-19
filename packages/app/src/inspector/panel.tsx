@@ -58,8 +58,8 @@ export function DockedPanel({ nodeId, children }: { nodeId: Id; children: ReactN
 }
 
 /** Panel with its own state (floating panel, popped-out window). */
-export function OwnPanel({ nodeId, mode, children }: { nodeId: Id; mode: "floating" | "window"; children: ReactNode }) {
-  const [s, setS] = useState<PanelState>({ nodeId, tab: "produce", activeMediaId: null, playhead: 0, playing: false });
+export function OwnPanel({ nodeId, mode, children, mediaId = null }: { nodeId: Id; mode: "floating" | "window"; children: ReactNode; mediaId?: Id | null }) {
+  const [s, setS] = useState<PanelState>({ nodeId, tab: "produce", activeMediaId: mediaId, playhead: 0, playing: false });
   const api = useMemo<PanelApi>(
     () => ({
       ...s,

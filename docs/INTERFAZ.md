@@ -695,13 +695,20 @@ centrada en la imagen y sin tipos fijos (decidido el 19 oct 2026):
   otra (una línea azul marca dónde caen). Clic selecciona una (y la muestra en
   el panel), ⌘ suma o quita, ⇧ selecciona un tramo; se arrastran juntas.
 - **En cada imagen** (al pasar el ratón, con los mismos botones que la galería):
+  - **Recrear:** selecciona su grupo y carga en Generar el prompt, el modelo,
+    las referencias y los ajustes con los que se hizo, para repetirla o
+    retocarla (también en las versiones de la galería de los planos). Las
+    referencias que venían del ordenador o de Magnific no se pueden volver a
+    cargar; se avisa.
   - **★ Favorita:** sale ya marcada al usar el grupo como referencia (con @ o
     «De la biblioteca»); siempre se puede cambiar la selección allí.
   - **Papelera:** la quita del grupo, con «Deshacer» en el aviso.
 - **El panel en la Biblioteca** no tiene galería (las imágenes del grupo ya
   están a la vista): generar, y debajo el visor de la imagen elegida con sus
   datos y el prompt con el que se hizo. **En una ventana aparte**, debajo del
-  visor salen todas las imágenes del grupo para pasar de una a otra.
+  visor salen todas las imágenes del grupo para pasar de una a otra. La
+  ventana se abre sobre la imagen seleccionada (clic en ella antes de abrirla);
+  sin ninguna, sobre la última generada.
 - **Una generación fallida** dice por qué y tiene **Reintentar**: se vuelve a
   lanzar con los mismos ajustes (una versión nueva; la fallida se quita). Si
   Magnific responde con un error de servidor sin explicación, Sweet Flow lo

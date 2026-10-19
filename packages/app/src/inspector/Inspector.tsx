@@ -12,7 +12,7 @@ import {
 } from "@tabler/icons-react";
 import { ancestorsOf, codeOf, folderPath, isUnit, levelOf, type AssetType, type ProdNode } from "@sweetflow/domain";
 import { Avatar, Button, cx, IconButton, Tabs } from "@sweetflow/ui";
-import { useSnap, useStore, type FloatingPanel, type PanelTab } from "../state/store";
+import { windowMediaId, useSnap, useStore, type FloatingPanel, type PanelTab } from "../state/store";
 import { coverOf, presenceAt } from "../state/selectors";
 import { StatusPicker } from "../components/StatusPicker";
 import { DockedPanel, OwnPanel, usePanel } from "./panel";
@@ -148,7 +148,7 @@ function startDrag(e: ReactPointerEvent, f: FloatingPanel, update: (key: string,
 export function WindowInspector({ nodeId }: { nodeId: string }) {
   return (
     <div className="insp insp--window">
-      <OwnPanel nodeId={nodeId} mode="window"><InspectorBody /></OwnPanel>
+      <OwnPanel nodeId={nodeId} mode="window" mediaId={windowMediaId}><InspectorBody /></OwnPanel>
     </div>
   );
 }
@@ -209,7 +209,9 @@ function InspectorBody({ floatKey, onDragHandle }: { floatKey?: string; onDragHa
               label="Abrir en una ventana aparte (puedes llevarla a otro monitor)"
               size="sm"
               onClick={() => {
-                popOut(node.id);
+                // With an image picked (in the library, or in the gallery), the window opens on it; else on the latest.
+                const picked = panel.activeMediaId && snap.media.some((m) => m.id === panel.activeMediaId && m.nodeId === node.id) ? panel.activeMediaId : null;
+                popOut(node.id, picked);
                 if (floatKey) closeFloating(floatKey);
               }}
             ><IconExternalLink size={14} /></IconButton>

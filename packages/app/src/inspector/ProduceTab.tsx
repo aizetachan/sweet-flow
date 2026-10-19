@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type DragEvent, type ReactNode } from "re
 import {
   IconFileImport,
   IconArchiveOff, IconArrowUpRight, IconAspectRatio, IconMessagePlus, IconBolt, IconCheck, IconClock, IconCut, IconMusic, IconPhoto, IconPhotoDown, IconPhotoScan,
-  IconPhotoUp, IconPlus, IconRepeat, IconSparkles, IconTrash, IconVideo, IconVolume, IconVolumeOff, IconWand, IconX,
+  IconPhotoUp, IconPlus, IconRefresh, IconRepeat, IconSparkles, IconTrash, IconVideo, IconVolume, IconVolumeOff, IconWand, IconX,
 } from "@tabler/icons-react";
 import {
   ancestorsOf,
@@ -194,6 +194,10 @@ export function ProduceTab({ node }: { node: ProdNode }) {
                 {ready && !m.archived ? (
                   // All three on the right: out to the row, choose (green while it is the chosen one), remove.
                   <span className={cx("version__acts", isChosen && "version__acts--show")} onClick={(e) => e.stopPropagation()}>
+                    {m.generation && !i.foreign ? (
+                      <button className="version__act" title="Recrear: carga en Generar el prompt, el modelo y las referencias con los que se hizo"
+                        onClick={() => useStore.getState().set({ recreate: m.id })}><IconRefresh size={13} /></button>
+                    ) : null}
                     {isUnit(snap.production, node) ? (
                       <button className="version__act" title="Sacar a la fila: un plano nuevo, al lado de este, con esta versión" onClick={() => extract(i)}><IconArrowUpRight size={13} /></button>
                     ) : null}
@@ -287,6 +291,33 @@ function GenerateBox({ node }: { node: ProdNode }) {
   const [prompt, setPrompt] = useState("");
   // Library groups called with «@» and the images picked for each (docs/INTERFAZ.md §2.8).
   const [mentions, setMentions] = useState<Mentions>({});
+
+  // «Recrear» (docs/INTERFAZ.md §2.0): what a version was made with, back in the box to make it again or tweak it.
+  const recreate = useStore((s) => s.recreate);
+  useEffect(() => {
+    if (!recreate) return;
+    const m = snap.media.find((x) => x.id === recreate);
+    if (!m || m.nodeId !== node.id || !m.generation) return;
+    useStore.getState().set({ recreate: null });
+    const g = m.generation;
+    const p = (g.params ?? {}) as Partial<GenerateArgs>;
+    const known = (id?: Id) => !!id && snap.media.some((x) => x.id === id);
+    setKind(m.kind as GenKind);
+    setModel(g.model);
+    setPrompt(g.prompt);
+    setRefs((p.references ?? []).flatMap((r) => (r.mediaId && known(r.mediaId) ? [{ type: r.type, mediaId: r.mediaId }] : [])));
+    setStart(known(g.sourceMediaId) ? g.sourceMediaId! : null);
+    setEnd(known(p.endMediaId) ? p.endMediaId! : null);
+    if (p.aspectRatio) setRatio(p.aspectRatio);
+    if (p.resolution) setResolution(p.resolution);
+    if (p.durationSec) setDur(p.durationSec);
+    if (p.sound !== undefined) setSound(p.sound);
+    if (p.instrumental !== undefined) setInstrumental(p.instrumental);
+    if (p.loop !== undefined) setLoop(p.loop);
+    setMentions(Object.fromEntries((p.mentions ?? []).map((x) => [x.groupId, { tag: x.tag, mediaIds: x.mediaIds }])));
+    const lost = (p.references ?? []).filter((r) => !r.mediaId || !known(r.mediaId)).length;
+    useStore.getState().notify(`Cargado lo que se usó para ${versionTag(m.version)}: prompt, modelo y referencias.${lost ? ` ${lost} referencia${lost === 1 ? "" : "s"} del ordenador o de Magnific no se pueden volver a cargar.` : ""}`);
+  }, [recreate]); // eslint-disable-line react-hooks/exhaustive-deps
   const [count, setCount] = useState(1);
   const [ratio, setRatio] = useState("16:9");
   const [resolution, setResolution] = useState<string | undefined>(undefined);

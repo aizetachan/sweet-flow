@@ -8,7 +8,7 @@
  */
 
 import { useEffect, useState, type DragEvent, type MouseEvent } from "react";
-import { IconBooks, IconPhotoPlus, IconPlus, IconStar, IconStarFilled, IconTrash } from "@tabler/icons-react";
+import { IconBooks, IconPhotoPlus, IconPlus, IconRefresh, IconStar, IconStarFilled, IconTrash } from "@tabler/icons-react";
 import { libOrder, type Id, type LibraryShare, type Media, type ProdNode } from "@sweetflow/domain";
 import { Button, cx } from "@sweetflow/ui";
 import { useSnap, useStore } from "../state/store";
@@ -307,6 +307,10 @@ function GroupRow({ group, picked, setPicked }: { group: ProdNode; picked: Id[];
             <Thumb media={m} badge={false} />
             {/* Same buttons as the gallery's versions. */}
             <span className={cx("version__acts", m.chosen && "version__acts--show")} onClick={(e) => e.stopPropagation()}>
+              {m.generation ? (
+                <button className="version__act" title="Recrear: carga en Generar el prompt, el modelo y las referencias con los que se hizo"
+                  onClick={(e) => { e.stopPropagation(); select(group.id, "produce"); set({ recreate: m.id, activeMediaId: m.id }); }}><IconRefresh size={13} /></button>
+              ) : null}
               <button className={cx("version__act", m.chosen && "version__act--on")} title={m.chosen ? "Favorita: sale marcada al usar el grupo como referencia. Clic para quitarla" : "Marcar como favorita: sale ya marcada al usar el grupo como referencia (@ o «De la biblioteca»)"}
                 onClick={(e) => { e.stopPropagation(); source.setChosen([m.id], !m.chosen); }}>
                 {m.chosen ? <IconStarFilled size={13} /> : <IconStar size={13} />}

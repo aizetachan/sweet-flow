@@ -65,6 +65,8 @@ interface UiState {
   view: View;
   /** The library card open (docs/INTERFAZ.md §2.8): its chosen images and its exploration. */
   libOpenId: Id | null;
+  /** «Recrear» a version: its node's generate box loads its prompt, model, references and settings. */
+  recreate: Id | null;
   selectedId: Id | null;
   /** Extra nodes picked with ⌘/⇧ for drag and drop (includes selectedId when set). */
   multi: Id[];
@@ -148,7 +150,8 @@ interface Store extends UiState {
   closeFloating: (key: string) => void;
   updateFloating: (key: string, patch: Partial<Omit<FloatingPanel, "key">>) => void;
   /** Opens a node in its own OS window (desktop) or browser window. */
-  popOut: (nodeId: Id) => void;
+  /** Open a node in its own window; with `mediaId`, showing that version (else its latest). */
+  popOut: (nodeId: Id, mediaId?: Id | null) => void;
   /** Bring a node's popped window to the front, glowing. */
   focusPopped: (nodeId: Id) => void;
   /** Close a node's popped window and show it in the side panel again. */
@@ -196,6 +199,7 @@ export const useStore = create<Store>((set, get) => ({
   windowNodeId: null,
   view: "board",
   libOpenId: null,
+  recreate: null,
   selectedId: null,
   multi: [],
   scopeId: null,
@@ -358,23 +362,28 @@ export const useStore = create<Store>((set, get) => ({
     closePoppedWindow(nodeId);
     get().select(nodeId);
   },
-  popOut: (nodeId) => {
+  popOut: (nodeId, mediaId) => {
     const { productionId } = get();
     if (!productionId) return;
     // href without the hash: also right for file:// in the packaged desktop app (origin is "null" there).
-    const url = `${location.href.split("#")[0]}#/ventana/${encodeURIComponent(productionId)}/${encodeURIComponent(nodeId)}`;
+    const url = `${location.href.split("#")[0]}#/ventana/${encodeURIComponent(productionId)}/${encodeURIComponent(nodeId)}${mediaId ? `/${encodeURIComponent(mediaId)}` : ""}`;
     popOutWindow(url, productionId, nodeId);
   },
 }));
 
 unsubscribeLibrary = library.subscribe((lib) => useStore.setState({ lib }));
 
+/** The version a popped window opens on (from its address). */
+export let windowMediaId: Id | null = null;
+
 // A popped-out window opens straight on its node (no splash, no dashboard) on
 // its opener's own DataSource; a main window lends its source and tracks them.
-const popped = /^#\/ventana\/([^/]+)\/([^/]+)$/.exec(location.hash);
+const popped = /^#\/ventana\/([^/]+)\/([^/]+)(?:\/([^/]+))?$/.exec(location.hash);
 if (popped) {
   const productionId = decodeURIComponent(popped[1]!);
   const nodeId = decodeURIComponent(popped[2]!);
+  // The version it was opened on (a selected image); none: its latest.
+  if (popped[3]) windowMediaId = decodeURIComponent(popped[3]);
   const share = openerShare(productionId);
   useStore.getState().openProduction(productionId, { windowNodeId: nodeId, source: share?.source() });
   onFlashRequest(() => useStore.setState({ flash: Date.now() }));
