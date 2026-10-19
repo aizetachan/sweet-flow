@@ -201,7 +201,8 @@ export function ProduceTab({ node }: { node: ProdNode }) {
                 {ready && !m.archived ? (
                   // All three on the right: out to the row, choose (green while it is the chosen one), remove.
                   <span className={cx("version__acts", isChosen && "version__acts--show")} onClick={(e) => e.stopPropagation()}>
-                    {m.generation && !i.foreign ? (
+                    {/* Also a version another shot keeps (a shot taken out to the row): it was made somehow. */}
+                    {m.generation ? (
                       <button className="version__act" title="Recrear: carga en Generar el prompt, el modelo y las referencias con los que se hizo"
                         onClick={() => useStore.getState().set({ recreate: m.id })}><IconRefresh size={13} /></button>
                     ) : null}
@@ -304,7 +305,9 @@ function GenerateBox({ node }: { node: ProdNode }) {
   useEffect(() => {
     if (!recreate) return;
     const m = snap.media.find((x) => x.id === recreate);
-    if (!m || m.nodeId !== node.id || !m.generation) return;
+    // Its own version, or one of another shot it uses (taken out to the row).
+    const here = m && (m.nodeId === node.id || snap.takes.some((t) => t.nodeId === node.id && t.mediaId === m.id));
+    if (!m || !here || !m.generation) return;
     useStore.getState().set({ recreate: null });
     const g = m.generation;
     const p = (g.params ?? {}) as Partial<GenerateArgs>;
