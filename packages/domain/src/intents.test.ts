@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  planCreateLibNode,
+  planMoveToLib,
   childrenOf,
   defaultLevels,
   defaultStatuses,
@@ -392,5 +394,38 @@ describe("structure intents", () => {
     expect(row.map((n) => `${n.number}:${n.title}`)).toEqual(["10:Faro", "15:Faro", "17:Faro", "20:Muelle"]);
     expect(row.slice(1, 3).map((n) => { const t = s.takes.find((x) => x.id === n.selectedTakeId)!; return `${t.mediaId}@${t.inSec}-${t.outSec}`; })).toEqual(["me@8-12", "me@15-20"]);
     expect(s.nodes.find((n) => n.id === a)!.shelvedAt).toBeDefined();
+  });
+});
+
+describe("library", () => {
+  it("makes the desk and cards apart from the board, with their own folders", async () => {
+    const { foldLog, LOG_VERSION, formatStamp, ZERO_HLC, hlcTick, splitTrash, folderPath, codeOf, defaultLevels, defaultStatuses } = await import("./index");
+    let clock = ZERO_HLC;
+    let k = 0;
+    const id = (p: string) => `${p}${k++}`;
+    const p = { id: "p", workspaceId: "w", name: "Mareas", levels: defaultLevels(id), statuses: defaultStatuses(id), createdAt: 0, updatedAt: 0 };
+    const emit = (events: import("./log").LogEventBody[]) => events.map((b, i) => {
+      clock = hlcTick(clock, 1000 + i + k++);
+      return { ...b, v: LOG_VERSION, at: formatStamp(clock, "d"), userId: "u" } as import("./log").LogEvent;
+    });
+    const evs = [
+      ...emit([{ type: "production.created", production: p }]),
+      ...emit(planCreateLibNode(p, { kind: "desk" }, "", "desk").events),
+      ...emit(planCreateLibNode(p, { kind: "card", type: "cast" }, "Elena Ruiz", "elena").events),
+      ...emit([1, 2, 3].map((v) => ({ type: "media.added" as const, media: { id: `m${v}`, nodeId: "desk", kind: "image" as const, version: v, origin: "generated" as const, status: "ready" as const, progress: 100, archived: false, createdBy: "u", createdAt: 0 } }))),
+    ];
+    let s = foldLog(evs);
+    const split = splitTrash(s.nodes);
+    expect(split.live).toEqual([]);
+    expect(split.library.map((n) => n.id)).toEqual(["desk", "elena"]);
+    const elena = s.nodes.find((n) => n.id === "elena")!;
+    expect(folderPath(s.production!, s.nodes, elena)).toBe("Biblioteca/Personajes/Elena-Ruiz");
+    expect(folderPath(s.production!, s.nodes, s.nodes.find((n) => n.id === "desk")!)).toBe("Biblioteca/_mesa");
+    expect(codeOf(s.production!, elena)).toBe("Elena-Ruiz");
+
+    // Two images chosen into Elena's card: they become her v001 and v002 references.
+    s = foldLog([...evs, ...emit(planMoveToLib(s.media, s.nodes, ["m2", "m3"], "elena", true).events)]);
+    expect(s.media.filter((m) => m.nodeId === "elena").map((m) => [m.id, m.version, m.chosen])).toEqual([["m2", 1, true], ["m3", 2, true]]);
+    expect(s.media.find((m) => m.id === "m1")).toMatchObject({ nodeId: "desk", version: 1 });
   });
 });

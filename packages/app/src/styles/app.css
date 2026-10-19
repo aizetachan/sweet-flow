@@ -1039,3 +1039,39 @@ button.topbar__me { position: relative; padding: 0; border: 0; border-radius: 50
 .share__row:first-child { border-top: 0; }
 .share__link { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px dashed var(--line-2); border-radius: var(--r-md); }
 @media (max-width: 700px) { .share__entries { grid-template-columns: 1fr; } }
+
+/* ---------- Biblioteca (docs/INTERFAZ.md §2.8) ---------- */
+.libb { --card: 240px; min-width: 0; overflow: auto; display: flex; flex-direction: column; gap: 12px; padding: 18px 22px 120px; }
+.libb__head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.libb__head h1 { margin: 0; font-size: 20px; font-weight: 650; letter-spacing: -.01em; }
+.libb__head--card { align-items: center; }
+.libb__kind { padding: 2px 8px; border-radius: 999px; background: var(--bg-3); color: var(--fg-2); }
+.libb__name { font-size: 20px; font-weight: 650; }
+.libb__desc { margin: -4px 0 4px; max-width: 80ch; }
+.libb__desk, .libb__lane, .libb__sec { background: #101012; border-radius: var(--r-xl); padding: 12px; }
+.libb__deskhead, .libb__lanehead { display: flex; align-items: center; gap: 10px; margin: 0 2px 10px; min-height: 28px; flex-wrap: wrap; }
+.libb__actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.libb__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; }
+.libb__empty { display: flex; align-items: center; gap: 10px; padding: 26px 14px; border: 1px dashed var(--line-1); border-radius: var(--r-lg); }
+.libb__hint { margin: 0 2px 4px; }
+.libb__cards { display: flex; flex-wrap: wrap; gap: 12px; padding: 22px; margin: -22px; }
+.libb__new { width: var(--card); min-height: 150px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; border: 1px dashed var(--line-1); border-radius: var(--r-lg); background: none; color: var(--fg-3); }
+.libb__new:hover { color: var(--fg-1); border-color: var(--line-2); }
+.libcard .gmosaic { min-height: 0; }
+.libcard__blank { display: grid; place-items: center; aspect-ratio: 16 / 9; background: var(--bg-3); color: var(--fg-4); }
+.libimg { position: relative; border-radius: var(--r-md); overflow: hidden; cursor: pointer; outline: 2px solid transparent; outline-offset: -2px; transition: outline-color .12s; }
+.libimg .thumb { aspect-ratio: 16 / 9; width: 100%; border-radius: 0; }
+.libimg:hover { outline-color: var(--line-2); }
+.libimg.is-picked { outline-color: var(--brand-300, #6cb6ff); box-shadow: 0 0 0 1px var(--brand-500, #2f7dff), 0 0 14px -2px color-mix(in srgb, var(--brand-500, #2f7dff) 70%, transparent); }
+.libimg__star, .libimg__desk { position: absolute; top: 6px; width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; background: #000a; color: #fff; padding: 0; line-height: 0; opacity: 0; transition: opacity .12s; }
+.libimg__star { right: 6px; }
+.libimg__desk { right: 38px; }
+.libimg:hover .libimg__star, .libimg:hover .libimg__desk, .libimg__star.is-on { opacity: 1; }
+.libimg__star.is-on { color: #ffd166; }
+.libimg__state { position: absolute; left: 6px; bottom: 6px; padding: 1px 6px; border-radius: 999px; background: #000b; color: #fff; }
+.libb__types { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 8px 8px; }
+.libb__type { height: 26px; padding: 0 10px; border-radius: 999px; border: 1px solid var(--line-1); background: none; color: var(--fg-2); font-size: 12px; }
+.libb__type.is-on { border-color: var(--brand-300, #6cb6ff); color: var(--fg-0); background: color-mix(in srgb, var(--brand-500, #2f7dff) 14%, transparent); }
+.libb__create .sf-input { margin: 0 8px 6px; width: calc(100% - 16px); }
+.libb__create { width: 280px; }
+.libtype { height: 26px; font-size: 12px; }

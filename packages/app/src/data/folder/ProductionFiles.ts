@@ -70,6 +70,11 @@ export class ProductionFiles {
    * deleted ones are removed. Nodes in the trash keep their folder. Shots
    * follow their group's folder; a group folder left empty is removed.
    */
+  /** Moves a media file to another node's folder (library: from the desk into a card). */
+  async moveFile(from: string, to: string): Promise<void> {
+    if (from !== to) await this.fs.move(from, to);
+  }
+
   async follow(p: Production, before: ProdNode[], after: ProdNode[], groupsBefore: ShotGroup[] = [], groupsAfter: ShotGroup[] = []): Promise<void> {
     const base = this.base();
     if (base === null) return;

@@ -67,7 +67,11 @@ import {
   type Segment,
   type StatusDef,
   type ClientEntry,
+  type AssetType,
+  planCreateLibNode,
+  planMoveToLib,
 } from "@sweetflow/domain";
+import { assetsFromLibrary } from "../libraryCards";
 import { importKind, type BrowsePage, type BrowseQuery, type DataSource, type GenerateArgs, type ImportItem, type NewComment, type Placement, type RemoteFolder, type Snapshot, type UploadedRef } from "../source";
 import type { Generator, GenerationRequest } from "../generation";
 import type { ProductionFiles } from "../folder/ProductionFiles";
@@ -191,6 +195,7 @@ export class LocalSource implements DataSource {
     if (!bodies.length) return;
     const before = this.state?.nodes ?? [];
     const groupsBefore = this.state?.groups ?? [];
+    const mediaBefore = this.state?.media ?? [];
     for (const body of bodies) {
       this.clock = hlcTick(this.clock, this.now());
       const e = { ...body, v: LOG_VERSION, at: formatStamp(this.clock, this.deviceId), userId: this.me.uid } as LogEvent;
@@ -209,6 +214,28 @@ export class LocalSource implements DataSource {
         .then(() => files.follow(p, before, after, groupsBefore, groupsAfter))
         .catch((err) => console.error("[carpeta] no se pudieron mover las carpetas", err))
         // Files read while their folder was moving are found now.
+        .then(() => this.emit());
+    }
+    // Media moved to another node (library): its file goes along.
+    const moved = bodies.flatMap((b) => (b.type === "media.updated" && b.patch.nodeId ? [b.id] : []));
+    if (this.files && p && moved.length) {
+      const files = this.files;
+      const after = this.state!.nodes;
+      const groupsAfter = this.state!.groups;
+      this.filing = this.filing
+        .then(async () => {
+          for (const id of moved) {
+            const old = mediaBefore.find((m) => m.id === id);
+            const from = old && before.find((n) => n.id === old.nodeId);
+            const now = this.state?.media.find((m) => m.id === id);
+            const to = now && after.find((n) => n.id === now.nodeId);
+            if (!old?.file || !from || !to) continue;
+            const a = files.mediaPath(p, before, from, old.file, groupsBefore);
+            const b = files.mediaPath(p, after, to, old.file, groupsAfter);
+            if (a && b) await files.moveFile(a, b);
+          }
+        })
+        .catch((err) => console.error("[carpeta] no se pudieron mover los archivos", err))
         .then(() => this.emit());
     }
   }
@@ -266,11 +293,12 @@ export class LocalSource implements DataSource {
       nodes: split.live,
       trash: split.trash,
       shelf: split.shelf,
+      library: split.library,
       groups: s.groups,
       media: s.media.map((m) => this.withUrl(m, s)),
       takes: s.takes,
       comments: s.comments,
-      assets: [],
+      assets: assetsFromLibrary(split.library, s.media.map((m) => this.withUrl(m, s))),
       activity: this.activity(s),
       presence: [],
       mirror: { status: this.saveError ? "offline" : pending ? "syncing" : "synced", rootPath: this.store.label, pending },
@@ -368,6 +396,37 @@ export class LocalSource implements DataSource {
 
   updateNode(nodeId: Id, patch: Partial<Pick<ProdNode, "title" | "notes" | "statusId" | "assigneeIds" | "assetIds">>): void {
     this.apply(planUpdateNode(this.loaded().nodes, nodeId, patch as NodePatch));
+  }
+
+  // ---------- library (docs/INTERFAZ.md §2.8) ----------
+
+  libraryDesk(): Id {
+    const s = this.loaded();
+    const desk = s.nodes.find((n) => n.lib?.kind === "desk" && !n.trashedAt);
+    return desk?.id ?? this.apply(planCreateLibNode(s.production, { kind: "desk" }, "", this.newId("n")))!;
+  }
+
+  createLibCard(type: AssetType, name: string, mediaIds: Id[] = []): Id {
+    const s = this.loaded();
+    const id = this.apply(planCreateLibNode(s.production, { kind: "card", type }, name, this.newId("n")))!;
+    if (mediaIds.length) this.moveToLib(mediaIds, id, true);
+    return id;
+  }
+
+  moveToLib(mediaIds: Id[], toNodeId: Id, chosen?: boolean): void {
+    const s = this.loaded();
+    this.apply(planMoveToLib(s.media, s.nodes, mediaIds, toNodeId, chosen));
+  }
+
+  setChosen(mediaIds: Id[], chosen: boolean): void {
+    const s = this.loaded();
+    this.write(mediaIds.filter((id) => s.media.some((m) => m.id === id && !!m.chosen !== chosen)).map((id) => ({ type: "media.updated" as const, id, patch: { chosen } })));
+  }
+
+  setLibType(nodeId: Id, type: AssetType): void {
+    const n = this.loaded().nodes.find((x) => x.id === nodeId);
+    if (n?.lib?.kind !== "card" || n.lib.type === type) return;
+    this.write([{ type: "node.updated", id: nodeId, patch: { lib: { kind: "card", type } } }]);
   }
 
   setForClient(nodeIds: Id[], on: boolean): void {

@@ -16,6 +16,7 @@ import {
   type Media,
   type ProdNode,
   type Take,
+  type LevelDef,
 } from "@sweetflow/domain";
 import { Avatar, Button, cx, Spinner } from "@sweetflow/ui";
 import { useSnap, useStore } from "../state/store";
@@ -43,12 +44,16 @@ interface GalleryItem {
   foreign: boolean;
 }
 
+/** What the library's nodes allow when generating: everything, videos up to 15 s. */
+const LIB_LEVEL_DEF: LevelDef = { id: "lib", name: "Ficha", prefix: "", step: 1, pad: 1, canGenerate: true, maxVideoSec: 15 };
+
 export function ProduceTab({ node }: { node: ProdNode }) {
   const snap = useSnap();
   const { source, notify } = useStore();
   const { activeMediaId, setPanel, playhead, playing } = usePanel();
   const [showArchived, setShowArchived] = useState(false);
-  const level = levelOf(snap.production, node);
+  // The library's desk and cards always generate (docs/INTERFAZ.md §2.8).
+  const level = node.lib ? LIB_LEVEL_DEF : levelOf(snap.production, node);
 
   // The gallery (docs/INTERFAZ.md §2.0): versions generated here and stretches placed here, in one place.
   const mine = snap.takes.filter((t) => t.nodeId === node.id);
@@ -234,9 +239,9 @@ function GenerateBox({ node }: { node: ProdNode }) {
   const snap = useSnap();
   const { source } = useStore();
   const { setPanel } = usePanel();
-  const level = levelOf(snap.production, node);
+  const level = node.lib ? LIB_LEVEL_DEF : levelOf(snap.production, node);
   const unit = isUnit(snap.production, node);
-  const [kind, setKind] = useState<GenKind>(unit ? "image" : "video");
+  const [kind, setKind] = useState<GenKind>(unit || node.lib ? "image" : "video");
   const [model, setModel] = useState(modelsFor(kind)[0]!.name);
   // The live catalog and the models chosen in Ajustes › Modelos.
   useModelsVersion();
@@ -303,6 +308,17 @@ function GenerateBox({ node }: { node: ProdNode }) {
   const inUse = [start, start ? end : null, ...refs.map((r) => r.mediaId)].filter((v): v is string => !!v);
   const waiting = inUse.some((v) => (isUp(v) ? !ref.ups[v]?.ref : ref.sending.includes(v)));
   const failed = inUse.some((v) => isUp(v) && !!ref.ups[v]?.error);
+
+  /** A library card's chosen images as references (a style card as style, when the model takes it), up to the model's maximum. */
+  const addFromCard = (ids: Id[], card: ProdNode) => {
+    const type: RefType = card.lib?.kind === "card" && card.lib.type === "style" && refTypes.includes("style") ? "style" : "image";
+    // The style slot takes one image: the card's first chosen.
+    if (type === "style") ids = ids.slice(0, 1);
+    const room = (spec.references?.max ?? 0) - refs.filter((r) => !(type === "style" && r.type === "style")).length;
+    const fresh = ids.filter((id) => !refs.some((r) => r.mediaId === id)).slice(0, Math.max(0, room));
+    if (fresh.length < ids.length) useStore.getState().notify(`${spec.name} admite ${spec.references?.max ?? 0} referencias: se han añadido ${fresh.length} de «${card.title}».`);
+    setRefs([...refs.filter((r) => !(type === "style" && r.type === "style")), ...fresh.map((mediaId) => ({ type, mediaId }))]);
+  };
 
   /** Files dropped on the references: each where the model takes it (references first, then the frames). */
   const dropFiles = (files: File[]) => {
@@ -413,14 +429,14 @@ function GenerateBox({ node }: { node: ProdNode }) {
                 onPick={() => undefined} onClear={() => setRefs(refs.filter((x) => x !== r))} />
             ))}
             {kind !== "video" && refTypes.some((t) => t !== "style") && refs.length < (spec.references?.max ?? 0) ? (
-              <RefSlot ctx={ref} label="Añadir" icon={<IconPlus size={16} />} node={node} value={null} disabled={usesFrames} disabledHint="No se combina con imagen inicial" onFiles={dropFiles}
+              <RefSlot ctx={ref} label="Añadir" icon={<IconPlus size={16} />} node={node} value={null} disabled={usesFrames} disabledHint="No se combina con imagen inicial" onFiles={dropFiles} onPickMany={addFromCard}
                 accept={refTypes.filter((t) => t !== "style").map((t) => (t === "audio" ? "audio" : t === "video" ? "video" : "image"))}
                 onPick={(id, k) => setRefs([...refs, { type: k === "video" ? "video" : k === "audio" ? "audio" : "image", mediaId: id }])} onClear={() => undefined} />
             ) : null}
           </div>
           {/* Video: like Magnific, «Añadir media» is its own wide row under the frames, with what the model takes. */}
           {kind === "video" && refTypes.length > 0 && refs.length < (spec.references?.max ?? 0) ? (
-            <RefSlot ctx={ref} wide label="Añadir media" node={node} value={null} disabled={usesFrames} disabledHint="No se combina con imagen inicial ni final" onFiles={dropFiles}
+            <RefSlot ctx={ref} wide label="Añadir media" node={node} value={null} disabled={usesFrames} disabledHint="No se combina con imagen inicial ni final" onFiles={dropFiles} onPickMany={addFromCard}
               icon={<span className="gen__media-icons">
                 {refTypes.includes("image") ? <span><IconPhoto size={14} /></span> : null}
                 {refTypes.includes("video") ? <span><IconVideo size={14} /></span> : null}
@@ -577,7 +593,7 @@ function fileDrop(onFiles: (files: File[]) => void, on?: (over: boolean) => void
  * Picks from what the production has (this shot, its scene, then the rest),
  * or from this computer: «Subir del ordenador», or a file dropped on it.
  */
-function RefSlot({ ctx, label, icon, accept, node, value, disabled, disabledHint, onPick, onFiles, onClear, wide }: {
+function RefSlot({ ctx, label, icon, accept, node, value, disabled, disabledHint, onPick, onPickMany, onFiles, onClear, wide }: {
   ctx: RefCtx;
   /** The wide «Añadir media» row of videos. */
   wide?: boolean;
@@ -589,6 +605,8 @@ function RefSlot({ ctx, label, icon, accept, node, value, disabled, disabledHint
   disabled?: boolean;
   disabledHint?: string;
   onPick: (mediaId: Id, kind: Pickable) => void;
+  /** A library card picked: its chosen images (slots that take several). */
+  onPickMany?: (mediaIds: Id[], card: ProdNode) => void;
   onFiles?: (files: File[]) => void;
   onClear: () => void;
 }) {
@@ -612,11 +630,22 @@ function RefSlot({ ctx, label, icon, accept, node, value, disabled, disabledHint
     );
   }
   const where = (m: Media) => (m.nodeId === node.id ? 0 : m.nodeId === node.parentId || snap.nodes.find((n) => n.id === m.nodeId)?.parentId === node.parentId ? 1 : 2);
+  // The library's images are picked by card, below (docs/INTERFAZ.md §2.8).
+  const libIds = new Set(snap.library.map((n) => n.id));
   const options = snap.media
-    .filter((m) => m.status === "ready" && !m.archived && accept.includes(m.kind as Pickable))
+    .filter((m) => m.status === "ready" && !m.archived && accept.includes(m.kind as Pickable) && !libIds.has(m.nodeId))
     .sort((a, b) => where(a) - where(b) || b.createdAt - a.createdAt)
     .slice(0, 48);
   const mime = accept.map((k) => `${k}/*`).join(",");
+  // Library cards that can go here: their chosen images (or all of them, if none is chosen yet).
+  const cards = accept.includes("image")
+    ? snap.library.flatMap((card) => {
+        if (card.lib?.kind !== "card") return [];
+        const imgs = snap.media.filter((m) => m.nodeId === card.id && m.kind === "image" && m.status === "ready" && !m.archived);
+        const refs = imgs.some((m) => m.chosen) ? imgs.filter((m) => m.chosen) : imgs;
+        return refs.length ? [{ card, refs }] : [];
+      })
+    : [];
   return (
     <Popover className="gen__picker" button={({ open, toggle }) => (
       <button className={cx("gen__ref", wide && "gen__ref--wide", (open || over) && "is-on")} disabled={disabled}
@@ -652,6 +681,24 @@ function RefSlot({ ctx, label, icon, accept, node, value, disabled, disabledHint
           ) : (
             <p className="sf-faint sf-small gen__pick-empty">Aún no hay {accept.map((k) => (k === "image" ? "imágenes" : k === "video" ? "vídeos" : "audios")).join(" ni ")} en la producción. Súbelo del ordenador o arrástralo aquí.</p>
           )}
+          {cards.length ? (
+            <>
+              <div className="menu__title">De la biblioteca</div>
+              <div className="gen__pick-grid">
+                {cards.map(({ card, refs }) => (
+                  <button key={card.id} className="menu__item gen__pick" title={`${card.title}: ${refs.length} ${refs.length === 1 ? "imagen elegida" : "imágenes elegidas"}`}
+                    onClick={() => {
+                      for (const m of refs) ctx.media(m);
+                      if (onPickMany) onPickMany(refs.map((m) => m.id), card);
+                      else onPick(refs[0]!.id, "image");
+                    }}>
+                    <Thumb media={refs[0]} badge={false} />
+                    <span className="sf-small">{card.title}{onPickMany && refs.length > 1 ? ` · ${refs.length}` : ""}</span>
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : null}
       </>
     </Popover>
   );

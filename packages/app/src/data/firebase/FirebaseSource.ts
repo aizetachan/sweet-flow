@@ -30,6 +30,7 @@ import type {
   Take,
   Workspace,
   ClientEntry,
+  AssetType,
 } from "@sweetflow/domain";
 import {
   CALLABLES,
@@ -186,6 +187,7 @@ export class FirebaseSource implements DataSource {
       // The production trash lands with stage C; until then deletes are for good.
       trash: [],
       shelf: [],
+      library: [],
       groups: [],
       media: l.media.map((m) => this.withUrls(m)),
       takes: l.takes,
@@ -365,6 +367,26 @@ export class FirebaseSource implements DataSource {
 
   importShots(_rowId: Id, _items: ImportItem[], _before: RowItem | null, _groupId: Id | null): Id[] {
     throw new NotImplemented("Importar", "etapa C");
+  }
+
+  libraryDesk(): Id {
+    throw new NotImplemented("Biblioteca", "etapa C");
+  }
+
+  createLibCard(_type: AssetType, _name: string, _mediaIds?: Id[]): Id {
+    throw new NotImplemented("Biblioteca", "etapa C");
+  }
+
+  moveToLib(_mediaIds: Id[], _toNodeId: Id, _chosen?: boolean): void {
+    throw new NotImplemented("Biblioteca", "etapa C");
+  }
+
+  setChosen(_mediaIds: Id[], _chosen: boolean): void {
+    throw new NotImplemented("Biblioteca", "etapa C");
+  }
+
+  setLibType(_nodeId: Id, _type: AssetType): void {
+    throw new NotImplemented("Biblioteca", "etapa C");
   }
 
   setForClient(_nodeIds: Id[], _on: boolean): void {

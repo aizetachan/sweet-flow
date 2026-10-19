@@ -42,12 +42,45 @@ import {
   type StatusDef,
   type Take,
   type ClientEntry,
+  type AssetType,
+  LIB_LEVEL,
+  planCreateLibNode,
+  planMoveToLib,
+  type Asset,
 } from "@sweetflow/domain";
 import { ALL_FEATURES, importKind, type BrowsePage, type BrowseQuery, type DataSource, type GenerateArgs, type ImportItem, type NewComment, type Placement, type RemoteCreation, type RemoteFolder, type Snapshot, type UploadedRef } from "../source";
 import { frame, type Mood } from "./frames";
+import { assetsFromLibrary } from "../libraryCards";
 import { buildSeed, newId } from "./seed";
 
 const MOODS: Mood[] = ["dawn", "noon", "dusk", "night", "storm", "interior"];
+
+/**
+ * A pretend library for the demo (docs/INTERFAZ.md §2.8): a desk with what is
+ * being explored, and a card of each kind, some images chosen.
+ */
+function seedLibrary(p: Snapshot["production"], me: Id, assets: Asset[]): { nodes: ProdNode[]; media: Media[] } {
+  const t = Date.now() - 3 * 3600_000;
+  const statusId = [...p.statuses].sort((a, b) => a.order - b.order)[0]!.id;
+  const node = (id: string, title: string, lib: ProdNode["lib"], notes = ""): ProdNode => ({ id, productionId: p.id, parentId: null, levelId: LIB_LEVEL, number: 0, title, notes, statusId, assigneeIds: [], assetIds: [], lib, updatedAt: t, updatedBy: me });
+  // The breakdown's cast, places, props and look are the library's cards (same ids).
+  const nodes = [node("lib_desk", "Mesa de trabajo", { kind: "desk" }), ...assets.map((a) => node(a.id, a.name, { kind: "card", type: a.type }, a.description))];
+  const moodOf: Record<string, Mood> = { cast: "interior", location: "dusk", prop: "night", style: "dawn", other: "noon" };
+  const plan: Array<[string, number, Mood, number]> = [
+    ["lib_desk", 9, "dawn", 0],
+    ...assets.map((a, i): [string, number, Mood, number] => [a.id, 2 + (i % 3), moodOf[a.type] ?? "noon", 1 + (i % 2)]),
+  ];
+  const media: Media[] = plan.flatMap(([nodeId, n, mood, chosen]) => Array.from({ length: n }, (_, i): Media => {
+    const url = frame(`${nodeId}-${i}`, i % 2 ? mood : MOODS[(MOODS.indexOf(mood) + i) % MOODS.length]!);
+    return {
+      id: `${nodeId}_m${i}`, productionId: p.id, nodeId, kind: "image", version: i + 1, origin: "generated", status: "ready", progress: 100, archived: false, url, thumbUrl: url, width: 1920, height: 1080,
+      ...(i < chosen ? { chosen: true } : {}),
+      generation: { provider: "magnific", model: "Nano Banana Pro", prompt: nodes.find((x) => x.id === nodeId)!.notes || "Exploración", launchedBy: me, credits: 8 },
+      createdBy: me, createdAt: t + i * 60_000,
+    };
+  }));
+  return { nodes, media };
+}
 
 export class MockSource implements DataSource {
   private s: Snapshot;
@@ -58,8 +91,11 @@ export class MockSource implements DataSource {
   constructor() {
     const { moods, ...seed } = buildSeed();
     this.moods = moods;
+    const lib = seedLibrary(seed.production, seed.me.uid, seed.assets);
     this.s = {
       ...seed,
+      media: [...seed.media, ...lib.media],
+      library: lib.nodes,
       trash: [],
       shelf: [],
       groups: [],
@@ -88,6 +124,8 @@ export class MockSource implements DataSource {
 
   private commit(next: Partial<Snapshot>, touchesFiles = false): void {
     this.s = { ...this.s, ...next };
+    // The breakdown follows the library's cards.
+    if (next.library || next.media) this.s = { ...this.s, assets: assetsFromLibrary(this.s.library, this.s.media) };
     if (touchesFiles && this.s.mirror.status !== "unlinked") this.bumpMirror();
     for (const l of this.listeners) l(this.s);
   }
@@ -235,6 +273,11 @@ export class MockSource implements DataSource {
   }
 
   updateNode(nodeId: Id, patch: Partial<ProdNode>): void {
+    // A card of the library: its name and description.
+    if (this.s.library.some((n) => n.id === nodeId)) {
+      this.commit({ library: this.s.library.map((n) => (n.id === nodeId ? { ...n, ...patch, updatedAt: Date.now() } : n)) });
+      return;
+    }
     const prev = this.s.nodes.find((n) => n.id === nodeId);
     if (!prev) return;
     const activity = [...this.s.activity];
@@ -246,6 +289,47 @@ export class MockSource implements DataSource {
       { nodes: this.patchNodes((n) => (n.id === nodeId ? { ...n, ...patch, updatedAt: Date.now(), updatedBy: this.s.me.uid } : n)), activity },
       "title" in patch || "statusId" in patch,
     );
+  }
+
+  // ---------- library (docs/INTERFAZ.md §2.8) ----------
+
+  libraryDesk(): Id {
+    const desk = this.s.library.find((n) => n.lib?.kind === "desk");
+    if (desk) return desk.id;
+    const id = newId("n");
+    const plan = planCreateLibNode(this.s.production, { kind: "desk" }, "", id);
+    const created = plan.events[0]!.type === "node.created" ? plan.events[0]!.node : null;
+    if (created) this.commit({ library: [...this.s.library, this.libNode(created)] });
+    return id;
+  }
+
+  createLibCard(type: AssetType, name: string, mediaIds: Id[] = []): Id {
+    const id = newId("n");
+    const plan = planCreateLibNode(this.s.production, { kind: "card", type }, name, id);
+    const created = plan.events[0]!.type === "node.created" ? plan.events[0]!.node : null;
+    if (created) this.commit({ library: [...this.s.library, this.libNode(created)], activity: [this.log("structure", `creó la ficha «${created.title}»`, id), ...this.s.activity] });
+    if (mediaIds.length) this.moveToLib(mediaIds, id, true);
+    return id;
+  }
+
+  moveToLib(mediaIds: Id[], toNodeId: Id, chosen?: boolean): void {
+    const plan = planMoveToLib(this.s.media, this.s.library, mediaIds, toNodeId, chosen);
+    const patches = new Map(plan.events.flatMap((e) => (e.type === "media.updated" ? [[e.id, e.patch] as const] : [])));
+    if (!patches.size) return;
+    this.commit({ media: this.s.media.map((m) => (patches.has(m.id) ? { ...m, ...patches.get(m.id) } : m)) }, true);
+  }
+
+  setChosen(mediaIds: Id[], chosen: boolean): void {
+    const set = new Set(mediaIds);
+    this.commit({ media: this.s.media.map((m) => (set.has(m.id) ? { ...m, chosen } : m)) });
+  }
+
+  setLibType(nodeId: Id, type: AssetType): void {
+    this.commit({ library: this.s.library.map((n) => (n.id === nodeId && n.lib?.kind === "card" ? { ...n, lib: { kind: "card", type } } : n)) });
+  }
+
+  private libNode(n: Pick<ProdNode, "id" | "parentId" | "levelId" | "number" | "title" | "statusId"> & { lib?: ProdNode["lib"] }): ProdNode {
+    return { ...n, productionId: this.s.production.id, notes: "", assigneeIds: [], assetIds: [], updatedAt: Date.now(), updatedBy: this.s.me.uid };
   }
 
   setForClient(nodeIds: Id[], on: boolean): void {

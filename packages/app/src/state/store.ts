@@ -62,6 +62,8 @@ interface UiState {
   /** Node shown by a popped-out window (phase "window"). */
   windowNodeId: Id | null;
   view: View;
+  /** The library card open (docs/INTERFAZ.md §2.8): its chosen images and its exploration. */
+  libOpenId: Id | null;
   selectedId: Id | null;
   /** Extra nodes picked with ⌘/⇧ for drag and drop (includes selectedId when set). */
   multi: Id[];
@@ -165,7 +167,7 @@ const IDLE: DataSource = new Proxy({} as DataSource, {
 });
 
 // Nothing selected yet: the left column shows the structure, never an empty panel.
-const PANEL_RESET = { selectedId: null, multi: [], scopeId: null, activeMediaId: null, playhead: 0, playing: false, floating: [], view: "board" as View, sideTab: "structure" as SideTab };
+const PANEL_RESET = { selectedId: null, multi: [], scopeId: null, activeMediaId: null, playhead: 0, playing: false, floating: [], view: "board" as View, sideTab: "structure" as SideTab, libOpenId: null };
 
 const library = createLibrary();
 let unsubscribeLibrary: () => void = () => undefined;
@@ -188,6 +190,7 @@ export const useStore = create<Store>((set, get) => ({
   productionId: null,
   windowNodeId: null,
   view: "board",
+  libOpenId: null,
   selectedId: null,
   multi: [],
   scopeId: null,

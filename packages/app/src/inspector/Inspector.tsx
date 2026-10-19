@@ -10,7 +10,7 @@ import {
   IconTrash,
   IconX,
 } from "@tabler/icons-react";
-import { ancestorsOf, codeOf, folderPath, isUnit, levelOf, type ProdNode } from "@sweetflow/domain";
+import { ancestorsOf, codeOf, folderPath, isUnit, levelOf, type AssetType, type ProdNode } from "@sweetflow/domain";
 import { Avatar, Button, cx, IconButton, Tabs } from "@sweetflow/ui";
 import { useSnap, useStore, type FloatingPanel, type PanelTab } from "../state/store";
 import { coverOf, presenceAt } from "../state/selectors";
@@ -24,7 +24,15 @@ import { ReviewTab } from "./ReviewTab";
 import { ActivityTab } from "./ActivityTab";
 import { nameOf, useShowCodes } from "../state/names";
 
-const ASSET_LABEL = { cast: "Reparto", prop: "Prop", location: "Localización", style: "Estilo" } as const;
+const ASSET_LABEL = { cast: "Personaje", prop: "Prop", location: "Espacio", style: "Estilo", other: "Otro" } as const;
+/** Kinds of library card, in the order they show (docs/INTERFAZ.md §2.8). */
+export const LIB_TYPES: Array<{ id: AssetType; label: string; plural: string }> = [
+  { id: "cast", label: "Personaje", plural: "Personajes" },
+  { id: "location", label: "Espacio", plural: "Espacios" },
+  { id: "prop", label: "Prop", plural: "Props" },
+  { id: "style", label: "Estilo", plural: "Estilos" },
+  { id: "other", label: "Otro", plural: "Otros" },
+];
 
 /**
  * A scene or shot pinned in the dashboard's side menu keeps its code and title
@@ -47,7 +55,7 @@ export function DockedInspector() {
   const snap = useSnap();
   const selectedId = useStore((s) => s.selectedId);
   const popped = useStore((s) => s.popped);
-  const node = snap.nodes.find((n) => n.id === selectedId) ?? snap.shelf.find((n) => n.id === selectedId);
+  const node = snap.nodes.find((n) => n.id === selectedId) ?? snap.shelf.find((n) => n.id === selectedId) ?? snap.library.find((n) => n.id === selectedId);
   if (!node) {
     return (
       <div className="insp insp--empty">
@@ -150,7 +158,7 @@ function InspectorBody({ floatKey, onDragHandle }: { floatKey?: string; onDragHa
   const snap = useSnap();
   const panel = usePanel();
   const { select, dockPanel, closeFloating, popOut, source, set, trashNodes } = useStore();
-  const node = snap.nodes.find((n) => n.id === panel.nodeId) ?? snap.shelf.find((n) => n.id === panel.nodeId);
+  const node = snap.nodes.find((n) => n.id === panel.nodeId) ?? snap.shelf.find((n) => n.id === panel.nodeId) ?? snap.library.find((n) => n.id === panel.nodeId);
   const p = snap.production;
   // A popped window wide enough: tabs on the left, the viewer on the right (docs/INTERFAZ.md §3).
   const wide = useWide(panel.mode === "window");
@@ -180,17 +188,17 @@ function InspectorBody({ floatKey, onDragHandle }: { floatKey?: string; onDragHa
           <input
             className="sf-input sf-input--bare nhead__title"
             value={node.title}
-            placeholder={`Título del ${levelOf(p, node).name.toLowerCase()}`}
+            placeholder={node.lib ? "Nombre de la ficha" : `Título del ${levelOf(p, node).name.toLowerCase()}`}
             title={node.title}
             onChange={(e) => source.updateNode(node.id, { title: e.target.value })}
           />
           {panel.mode === "floating" && floatKey ? (
             <IconButton label="Acoplar al panel lateral" size="sm" onClick={() => dockPanel(floatKey)}><IconLayoutSidebarLeftExpand size={14} /></IconButton>
           ) : null}
-          {panel.mode !== "window" ? (
+          {panel.mode !== "window" && node.lib?.kind !== "desk" ? (
             <IconButton label={`Mover ${nameOf(p, node)} a la papelera (Supr)`} size="sm" onClick={() => trashNodes([node.id])}><IconTrash size={14} /></IconButton>
           ) : null}
-          <PinLabelSync node={node} />
+          {node.lib ? null : <PinLabelSync node={node} />}
           {/* Its folder path, to paste in the Finder or send (it says sequence, scene and shot). */}
           <IconButton label={`Copiar la ruta: ${path}`} size="sm" onClick={() => {
             void navigator.clipboard?.writeText(path);
@@ -218,17 +226,36 @@ function InspectorBody({ floatKey, onDragHandle }: { floatKey?: string; onDragHa
           ><IconX size={14} /></IconButton>
         </div>
         {/* Row 2, under the title: the code (only with «Mostrar códigos»), the status and the notes; who works on it on the right. */}
-        <div className="nhead__row nhead__row--code">
-          {showCodes ? <CodeEditor node={node} /> : null}
-          <StatusPicker statuses={p.statuses} value={node.statusId} onChange={(id) => source.updateNode(node.id, { statusId: id })} onEdit={() => set({ modal: "settings", settingsTab: "statuses" })} />
-          <button className={cx("notes__btn", node.notes.trim() && "notes__btn--on")} title={node.notes.trim() ? node.notes : "Escribir notas: acción, diálogo, dirección (base del prompt)"}
-            onClick={() => set({ modal: "notes", notesFor: node.id })}>
-            <IconNote size={13} /> Notas
-          </button>
-          <span className="insp__spacer" />
-          <Assignees node={node} />
-        </div>
-        <NodeHeader node={node} />
+        {node.lib ? (
+          // A card of the library: its kind and its description (the base of its prompt); the desk, a hint.
+          <div className="nhead__row nhead__row--code">
+            {node.lib.kind === "card" ? (
+              <>
+                <select className="sf-select libtype" value={node.lib.type} title="Tipo de ficha" onChange={(e) => source.setLibType(node.id, e.target.value as AssetType)}>
+                  {LIB_TYPES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+                </select>
+                <button className={cx("notes__btn", node.notes.trim() && "notes__btn--on")} title={node.notes.trim() ? node.notes : "Describir: cómo es (base del prompt)"}
+                  onClick={() => set({ modal: "notes", notesFor: node.id })}>
+                  <IconNote size={13} /> Descripción
+                </button>
+              </>
+            ) : <span className="sf-faint sf-small">Lo que generas sin elegir ficha cae aquí.</span>}
+          </div>
+        ) : (
+          <>
+            <div className="nhead__row nhead__row--code">
+              {showCodes ? <CodeEditor node={node} /> : null}
+              <StatusPicker statuses={p.statuses} value={node.statusId} onChange={(id) => source.updateNode(node.id, { statusId: id })} onEdit={() => set({ modal: "settings", settingsTab: "statuses" })} />
+              <button className={cx("notes__btn", node.notes.trim() && "notes__btn--on")} title={node.notes.trim() ? node.notes : "Escribir notas: acción, diálogo, dirección (base del prompt)"}
+                onClick={() => set({ modal: "notes", notesFor: node.id })}>
+                <IconNote size={13} /> Notas
+              </button>
+              <span className="insp__spacer" />
+              <Assignees node={node} />
+            </div>
+            <NodeHeader node={node} />
+          </>
+        )}
       </div>
       <Tabs<PanelTab>
         value={tab}

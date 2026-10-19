@@ -27,6 +27,7 @@ import type {
   Take,
   Workspace,
   ClientEntry,
+  AssetType,
 } from "@sweetflow/domain";
 
 export interface Snapshot {
@@ -42,6 +43,8 @@ export interface Snapshot {
   trash: ProdNode[];
   /** Shots set aside in their scene's «Vídeos editados» (docs/INTERFAZ.md §2.3). */
   shelf: ProdNode[];
+  /** The library (docs/INTERFAZ.md §2.8): the desk and the cards, apart from the board. */
+  library: ProdNode[];
   /** Groups of shots inside each scene (docs/INTERFAZ.md §2.4). */
   groups: ShotGroup[];
   media: Media[];
@@ -263,6 +266,15 @@ export interface DataSource {
    * the production keeps the provider's id, so it is sent only once.
    */
   uploadReference(nodeId: Id, from: File | { mediaId: Id }): Promise<UploadedRef>;
+  /** The library's desk (made the first time). Returns its node id. */
+  libraryDesk(): Id;
+  /** A new card of the library; `mediaIds` go in as its chosen references. Returns its node id. */
+  createLibCard(type: AssetType, name: string, mediaIds?: Id[]): Id;
+  /** Images into the desk or a card (`chosen`: as references, or as exploration). */
+  moveToLib(mediaIds: Id[], toNodeId: Id, chosen?: boolean): void;
+  /** Mark images of a card as its references, or back to exploration. */
+  setChosen(mediaIds: Id[], chosen: boolean): void;
+  setLibType(nodeId: Id, type: AssetType): void;
   /** Show these shots to the client on the review page, or stop (docs/USUARIOS.md §4). */
   setForClient(nodeIds: Id[], on: boolean): void;
   /** How the client gets in: invitation to their email, or the link with their name (and email). */

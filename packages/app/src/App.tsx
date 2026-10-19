@@ -10,7 +10,7 @@ import { StructureTree } from "./board/StructureTree";
 import { Board } from "./board/Board";
 import { DockedInspector, FloatingInspectors, WindowInspector } from "./inspector/Inspector";
 import { Modals } from "./settings/Modals";
-import { LibraryView } from "./views/OtherViews";
+import { LibraryBoard, LibraryTree } from "./library/LibraryBoard";
 import { TrashView } from "./views/TrashView";
 
 /** Splash → dashboard → production (docs/INTERFAZ.md). Popped-out windows show one node. */
@@ -48,7 +48,13 @@ function Production() {
             <SidePanel />
             <Board />
           </Workspace>
-        ) : view === "library" ? <LibraryView /> : <TrashView />}
+        ) : view === "library" ? (
+          // The library has the same layout: the panel generates into the desk or the selected card (§2.8).
+          <Workspace>
+            <SidePanel />
+            <LibraryBoard />
+          </Workspace>
+        ) : <TrashView />}
       </div>
       <Dock />
       <FloatingInspectors />
@@ -144,6 +150,7 @@ function Workspace({ children }: { children: ReactNode }) {
 
 function SidePanel() {
   const sideTab = useStore((s) => s.sideTab);
+  const view = useStore((s) => s.view);
   const set = useStore((s) => s.set);
   return (
     <aside className="side">
@@ -155,7 +162,7 @@ function SidePanel() {
           Explorer
         </button>
       </div>
-      {sideTab === "work" ? <DockedInspector /> : <StructureTree />}
+      {sideTab === "work" ? <DockedInspector /> : view === "library" ? <LibraryTree /> : <StructureTree />}
     </aside>
   );
 }

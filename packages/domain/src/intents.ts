@@ -9,11 +9,11 @@
  * node moves into a parent where its number is already taken.
  */
 
-import { codeFor } from "./naming";
+import { codeFor, nextMediaVersion } from "./naming";
 import type { LogEventBody, NodePatch } from "./log";
-import { byNumber, byPosition, childrenOf, descendantsOf, groupOf, isUnit, levelIndex, nextNumber, numberBetween, sortValue, splitTrash } from "./tree";
+import { byNumber, byPosition, childrenOf, descendantsOf, groupOf, isUnit, levelIndex, LIB_LEVEL, nextNumber, numberBetween, sortValue, splitTrash } from "./tree";
 import type { Segment } from "./cuts";
-import type { Id, Media, Millis, ProdNode, Production, ShotGroup, Take } from "./types";
+import type { Id, LibKind, Media, Millis, ProdNode, Production, ShotGroup, Take } from "./types";
 
 export interface Plan {
   events: LogEventBody[];
@@ -574,4 +574,37 @@ export function lastMadeFrom(nodes: ProdNode[], takes: Take[], original: ProdNod
   const mine = new Set(takes.filter((t) => t.mediaId === mediaId).map((t) => t.id));
   const row = childrenOf(nodes.filter((n) => n.shelvedAt === undefined && n.trashedAt === undefined), original.parentId);
   return row.filter((n) => n.selectedTakeId && mine.has(n.selectedTakeId)).at(-1)?.id ?? null;
+}
+
+// ---------- library (docs/INTERFAZ.md §2.8) ----------
+
+/** The desk of the library, or a new card of a kind. Lives apart from the board. */
+export function planCreateLibNode(p: Production, lib: LibKind, title: string, newId: Id): Plan {
+  const statusId = p.statuses.slice().sort((a, b) => a.order - b.order)[0]?.id ?? "";
+  const name = lib.kind === "desk" ? "Mesa de trabajo" : title.trim() || "Ficha sin nombre";
+  return { nodeId: newId, events: [{ type: "node.created", node: { id: newId, parentId: null, levelId: LIB_LEVEL, number: 0, title: name, statusId, lib } }] };
+}
+
+/**
+ * Images into a library node (the desk or a card): each takes the next
+ * version there. `chosen`: whether they go in as the card's references (true
+ * when a card is made from them) or into its exploration.
+ */
+export function planMoveToLib(media: Array<Pick<Media, "id" | "nodeId" | "kind" | "version" | "chosen">>, nodes: ProdNode[], mediaIds: Id[], toNodeId: Id, chosen?: boolean): Plan {
+  const to = nodes.find((n) => n.id === toNodeId && n.lib);
+  if (!to) return EMPTY;
+  const known = [...media];
+  const events: LogEventBody[] = [];
+  for (const id of mediaIds) {
+    const m = known.find((x) => x.id === id);
+    if (!m) continue;
+    if (m.nodeId === toNodeId) {
+      if (chosen !== undefined && !!m.chosen !== chosen) events.push({ type: "media.updated", id, patch: { chosen } });
+      continue;
+    }
+    const version = nextMediaVersion(known, toNodeId, m.kind);
+    known.push({ ...m, nodeId: toNodeId, version });
+    events.push({ type: "media.updated", id, patch: { nodeId: toNodeId, version, chosen: !!chosen && to.lib?.kind === "card" } });
+  }
+  return { events };
 }

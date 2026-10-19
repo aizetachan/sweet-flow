@@ -665,6 +665,87 @@ y «Tomas» por separado):
   al cliente». La card lo indica con «👁 Cliente» sobre la imagen, y queda en
   Actividad.
 
+### 2.8 Biblioteca (imágenes de referencia)
+
+La sección **Biblioteca** del dock tiene la misma estructura que Producción,
+centrada en la imagen:
+- **A la izquierda, el panel:** Producción (generar, galería, revisión y
+  actividad de lo seleccionado) y Explorer (la Mesa de trabajo y las fichas por
+  tipo).
+- **A la derecha:**
+  - **Mesa de trabajo:** cuadrícula grande con todo lo que se genera sin
+    elegir ficha. Al entrar en la Biblioteca el panel se abre sobre ella, listo
+    para generar.
+  - **Una fila por tipo:** Personajes, Espacios, Props, Estilos y Otros, con
+    sus **fichas** (mosaico de sus imágenes elegidas, nombre, «2 elegidas · 5
+    imágenes») y un «+» para crear una vacía.
+- **Organizar mientras se genera:**
+  - En la mesa, clic selecciona una imagen (y la muestra en el panel); ⌘ suma
+    o quita y ⇧ selecciona un tramo.
+  - Con selección: **Crear ficha** (tipo y nombre; las seleccionadas entran
+    como sus **elegidas**), **Añadir a…** (una ficha existente), archivar o
+    quitar la selección.
+  - También se pueden **arrastrar** imágenes a una ficha: entran como
+    elegidas.
+- **Abrir una ficha** (doble clic, o «Abrir» en su menú):
+  - Arriba, el tipo y el nombre (editable); debajo, su descripción.
+  - Dos partes: **Elegidas** (las referencias que se mandan al usarla) y
+    **Exploración** (el resto).
+  - Cada imagen lleva **★** para elegirla o quitarla y **↩** para devolverla a
+    la mesa. Con varias seleccionadas: Elegir, A exploración, A la mesa.
+  - Generar con la ficha abierta (o seleccionada) la llena: lo nuevo va a su
+    exploración.
+- **En el panel de una ficha:**
+  - Su **tipo** (se puede cambiar) y **Descripción**, que es la base del
+    prompt. Con el prompt vacío se genera con ella.
+  - No tiene estado ni responsables. La papelera la manda con sus imágenes.
+- **Clic derecho en una ficha:** abrir, cambiar el nombre, cambiar el tipo,
+  mandar a la papelera.
+- **Usar en los planos:** en las referencias de Generar, la lista de cada hueco
+  tiene **«De la biblioteca»**, con sus fichas. Al elegir una:
+  - En «Añadir» entran sus imágenes elegidas (o todas si aún no hay
+    elegidas), hasta el máximo del modelo.
+  - Una ficha de estilo ocupa el hueco Estilo con su primera elegida.
+  - En imagen inicial o final entra su primera imagen.
+- Las fichas son también el **desglose** de escenas y planos (los chips
+  «Personaje / Prop…» de la cabecera del plano y el filtro del tablero).
+- **En el disco:** `Biblioteca/_mesa/` y `Biblioteca/<Tipo>/<Nombre>/_media/`
+  dentro de la carpeta de la producción. Mover una imagen a una ficha mueve su
+  archivo.
+- **Más adelante:** tipos de referencia propios de Magnific (personaje,
+  producto, localización) en lugar de «imagen».
+
+#### 2.8.1 Bibliotecas compartidas entre producciones (propuesta, como Figma)
+
+Una biblioteca nace en una producción, pero puede servir a otras (los 10
+episodios de una temporada) sin salir de ella:
+- **Publicar:** en la Biblioteca de una producción, **Publicar la
+  biblioteca** con un alcance: la carpeta del dashboard donde está (y todo lo
+  de dentro), una carpeta de más arriba o todo el equipo.
+- **Se ve dónde está:** en el dashboard, la tarjeta de esa producción lleva un
+  **icono de biblioteca**, como un archivo de Figma que comparte componentes:
+  «Biblioteca de «Ep. 01» · se usa en 9 producciones».
+- **Usarla:** las producciones dentro del alcance la ven en su Biblioteca, en
+  **«Bibliotecas del proyecto»**, con su origen («de Ep. 01») y en solo
+  lectura. Sus fichas salen en «De la biblioteca» al generar, agrupadas por
+  origen.
+- **Editarla:** solo en su producción. «Abrir en «Ep. 01»» lleva allí; lo que
+  cambia (nuevas elegidas, descripción) llega a todas al momento.
+- **Sin copias:** los archivos siguen en la carpeta de la producción de origen;
+  las demás los leen de allí. Opcional: «Copiar a esta producción» para
+  desvincular una ficha.
+- **Accesos:** para usarla hay que tener la producción de origen. Al invitar a
+  alguien a «Ep. 05», si usa la biblioteca de «Ep. 01», se avisa y se ofrece
+  darle también acceso a «Ep. 01».
+- **Papelera:** mandar a la papelera una producción cuya biblioteca se usa
+  pide confirmación y dice dónde se usa.
+- También vale una producción hecha solo para la biblioteca («Biblia de
+  Mareas»): mismo mecanismo.
+- **Por decidir:**
+  1. ¿Las producciones del alcance se conectan solas a la biblioteca o hay que
+     activarla en cada una?
+  2. ¿Los cambios llegan en vivo o al «publicar una versión», como Figma?
+
 ## 3. Ventanas aparte
 
 - **Tamaño:** se abre como una pantalla de portátil de 13–14″ (1440×900),

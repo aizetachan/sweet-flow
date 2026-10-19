@@ -103,11 +103,11 @@ function ShowCodesSetting() {
 function NotesModal({ onClose }: { onClose: () => void }) {
   const snap = useSnap();
   const { source, notesFor } = useStore();
-  const node = snap.nodes.find((n) => n.id === notesFor);
+  const node = snap.nodes.find((n) => n.id === notesFor) ?? snap.library.find((n) => n.id === notesFor);
   if (!node) return null;
   return (
-    <Modal title={<>Notas · {codeFor(snap.production.levels.find((l) => l.id === node.levelId)!, node.number)}{node.title ? ` · ${node.title}` : ""}</>} onClose={onClose} width={560}>
-      <textarea className="sf-textarea notes__area" autoFocus rows={10} placeholder="Acción, diálogo, notas de dirección… (base del prompt)"
+    <Modal title={node.lib ? <>Descripción · {node.title}</> : <>Notas · {codeFor(snap.production.levels.find((l) => l.id === node.levelId)!, node.number)}{node.title ? ` · ${node.title}` : ""}</>} onClose={onClose} width={560}>
+      <textarea className="sf-textarea notes__area" autoFocus rows={10} placeholder={node.lib ? "Cómo es: rasgos, ropa, materiales, luz… (base del prompt al usar la ficha)" : "Acción, diálogo, notas de dirección… (base del prompt)"}
         value={node.notes} onChange={(e) => source.updateNode(node.id, { notes: e.target.value })} />
       <div className="modal-foot"><span className="sf-faint sf-small notes__hint">Se guarda al escribir.</span><Button variant="primary" onClick={onClose}>Listo</Button></div>
     </Modal>

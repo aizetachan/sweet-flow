@@ -11,13 +11,13 @@
 
 import { parseStamp, type Stamp } from "./clock";
 import { byNumber, splitTrash } from "./tree";
-import type { ClientEntry, ClientGuest, Comment, Id, LevelDef, Media, Member, Millis, ProdNode, Production, ShotGroup, StatusDef, Take } from "./types";
+import type { ClientEntry, ClientGuest, Comment, Id, LevelDef, LibKind, Media, Member, Millis, ProdNode, Production, ShotGroup, StatusDef, Take } from "./types";
 
 /** Bump when an event's shape changes incompatibly. */
 export const LOG_VERSION = 1;
 
 /** Node fields that change with last-writer-wins, one field at a time. */
-export type NodePatch = Partial<Pick<ProdNode, "title" | "notes" | "statusId" | "assigneeIds" | "assetIds" | "selectedTakeId" | "groupId" | "forClient">>;
+export type NodePatch = Partial<Pick<ProdNode, "title" | "notes" | "statusId" | "assigneeIds" | "assetIds" | "selectedTakeId" | "groupId" | "forClient" | "lib">>;
 
 export type LogEventBody =
   | {
@@ -35,7 +35,7 @@ export type LogEventBody =
   | { type: "statuses.set"; statuses: StatusDef[] }
   | {
       type: "node.created";
-      node: Pick<ProdNode, "id" | "parentId" | "levelId" | "number" | "title" | "statusId"> & { order?: number };
+      node: Pick<ProdNode, "id" | "parentId" | "levelId" | "number" | "title" | "statusId"> & { order?: number; lib?: LibKind };
     }
   | { type: "node.updated"; id: Id; patch: NodePatch }
   /** New numbers (codes) for existing nodes: making room before an insert. */
@@ -75,7 +75,7 @@ export type MediaRecord = Omit<Media, "productionId" | "url" | "thumbUrl">;
 export type CommentRecord = Omit<Comment, "productionId">;
 export type GroupRecord = Omit<ShotGroup, "productionId">;
 export type TakeRecord = Omit<Take, "productionId" | "thumbUrl">;
-export type MediaPatch = Partial<Pick<Media, "status" | "progress" | "archived" | "error" | "file" | "remote" | "width" | "height" | "durationSec">>;
+export type MediaPatch = Partial<Pick<Media, "status" | "progress" | "archived" | "error" | "file" | "remote" | "width" | "height" | "durationSec" | "chosen" | "nodeId" | "version">>;
 
 export type LogEvent = LogEventBody & {
   v: number;

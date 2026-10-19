@@ -3,8 +3,8 @@
  * they run the same in the UI, in Cloud Functions and in the folder mirror.
  */
 
-import { codeFor, folderName, groupFolderNames, SHELF_DIR } from "./naming";
-import type { Id, LevelDef, ProdNode, Production, ShotGroup } from "./types";
+import { codeFor, folderName, groupFolderNames, safeTitle, SHELF_DIR } from "./naming";
+import type { AssetType, Id, LevelDef, ProdNode, Production, ShotGroup } from "./types";
 
 export type LevelRole = "group" | "production" | "unit";
 
@@ -26,8 +26,28 @@ export function roleOf(p: Production, n: ProdNode): LevelRole {
   return levelOf(p, n).canGenerate ? "production" : "group";
 }
 
-export const codeOf = (p: Production, n: ProdNode) => codeFor(levelOf(p, n), n.number);
+/** Level of the library's nodes (docs/INTERFAZ.md §2.8): none of the production's. */
+export const LIB_LEVEL = "lib";
+
+/** Folder of each kind of library card, inside `Biblioteca/`. */
+export const LIB_TYPE_DIR: Record<AssetType, string> = { cast: "Personajes", location: "Espacios", prop: "Props", style: "Estilos", other: "Otros" };
+export const LIB_DIR = "Biblioteca";
+export const DESK_DIR = "_mesa";
+
+/** A library node's code: what its files are named after («MESA_img_v004.png», «Elena_img_v001.png»). */
+function libCode(n: ProdNode): string {
+  if (n.lib?.kind === "desk") return "MESA";
+  return safeTitle(n.title, 40) || "Ficha";
+}
+
+export const codeOf = (p: Production, n: ProdNode) => (n.lib ? libCode(n) : codeFor(levelOf(p, n), n.number));
 export const folderOf = (p: Production, n: ProdNode) => folderName(codeOf(p, n), n.title);
+
+/** Folder of a library node, from the production folder. */
+export function libFolder(n: ProdNode): string {
+  if (!n.lib || n.lib.kind === "desk") return `${LIB_DIR}/${DESK_DIR}`;
+  return `${LIB_DIR}/${LIB_TYPE_DIR[n.lib.type]}/${safeTitle(n.title, 60) || `Ficha-${n.id.slice(-4)}`}`;
+}
 
 export function byNumber(a: ProdNode, b: ProdNode): number {
   return a.number - b.number;
@@ -79,6 +99,7 @@ export function codePath(p: Production, nodes: ProdNode[], n: ProdNode): string[
  * group's folder inside the scene.
  */
 export function folderPath(p: Production, nodes: ProdNode[], n: ProdNode, groups: ShotGroup[] = []): string {
+  if (n.lib) return libFolder(n);
   return ancestorsOf(nodes, n)
     .map((a) => {
       if (a.shelvedAt !== undefined) return `${SHELF_DIR}/${folderOf(p, a)}`;
@@ -132,7 +153,7 @@ export function renumbered(siblings: ProdNode[], step: number): Map<Id, number> 
  * trashed node — what the trash lists and restores. `shelf`: shelved nodes
  * not in the trash (the «Vídeos editados» of each scene), off the board too.
  */
-export function splitTrash(nodes: ProdNode[]): { live: ProdNode[]; trash: ProdNode[]; roots: ProdNode[]; shelf: ProdNode[] } {
+export function splitTrash(nodes: ProdNode[]): { live: ProdNode[]; trash: ProdNode[]; roots: ProdNode[]; shelf: ProdNode[]; library: ProdNode[] } {
   const byId = new Map(nodes.map((n) => [n.id, n]));
   const memo = new Map<Id, boolean>();
   const trashed = (n: ProdNode, depth = 0): boolean => {
@@ -146,10 +167,11 @@ export function splitTrash(nodes: ProdNode[]): { live: ProdNode[]; trash: ProdNo
   const live: ProdNode[] = [];
   const trash: ProdNode[] = [];
   const shelf: ProdNode[] = [];
-  for (const n of nodes) (trashed(n) ? trash : n.shelvedAt !== undefined ? shelf : live).push(n);
+  const library: ProdNode[] = [];
+  for (const n of nodes) (trashed(n) ? trash : n.lib ? library : n.shelvedAt !== undefined ? shelf : live).push(n);
   const roots = trash.filter((n) => {
     const parent = n.parentId ? byId.get(n.parentId) : undefined;
     return n.trashedAt !== undefined && !(parent && trashed(parent));
   });
-  return { live, trash, roots, shelf };
+  return { live, trash, roots, shelf, library };
 }
