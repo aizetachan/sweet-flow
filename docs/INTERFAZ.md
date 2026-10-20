@@ -157,6 +157,9 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
   salir de carpetas, búsqueda.
 - **Vistas:** cuadrícula (tarjetas) y lista. Cada producción muestra:
   miniatura, progreso por estados, última modificación y quién trabaja en ella.
+  En la cuadrícula, la tarjeta de una carpeta tiene arriba la **pestaña de una
+  carpeta**; por lo demás es igual que antes (al pasar el ratón o
+  seleccionarla, la pestaña se ilumina con el mismo neón).
 - **Acciones:** crear carpeta, crear producción, renombrar, marcar como
   favorito, mover arrastrando (también varias a la vez) y mover a la papelera.
 - **Relación con Dropbox:** la organización del dashboard **es** la de la

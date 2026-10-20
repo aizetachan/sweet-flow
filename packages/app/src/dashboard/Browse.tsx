@@ -270,7 +270,7 @@ function EntryItem(p: EntryItemProps) {
   const canDrop = isFolder && !inTrash;
 
   const common = {
-    className: cx(p.layout === "grid" ? "dcard" : "drow", p.picked && "is-picked", drop.over && canDrop && "is-drop"),
+    className: cx(p.layout === "grid" ? "dcard" : "drow", p.layout === "grid" && isFolder && "dcard--folder", p.picked && "is-picked", drop.over && canDrop && "is-drop"),
     draggable: p.editable && !p.renaming && !inTrash,
     onDragStart: (e: DragEvent) => {
       e.dataTransfer.setData(DRAG_TYPE, JSON.stringify(p.dragIds));
@@ -366,7 +366,22 @@ function EntryItem(p: EntryItemProps) {
   return (
     <div {...common}>
       {isFolder ? (
-        <div className="dcard__folder"><IconFolder size={40} stroke={1.2} /></div>
+        <>
+          {/* The folder's tab, on top of the card's top edge. */}
+          <svg className="dcard__tab" width="120" height="20" viewBox="0 0 120 20" aria-hidden="true">
+            <defs>
+              <linearGradient id="dcard-tab-seam" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stopColor="var(--bg-3)" />
+                <stop offset="1" stopColor="var(--bg-3)" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+            {/* Hides the card's lit top edge where the tab joins it. */}
+            <rect x="2" y="14" width="100" height="6" fill="url(#dcard-tab-seam)" />
+            <path className="dcard__tab-fill" d="M0 14V12.5Q0 .5 12 .5H78C86 .5 89 2.5 93 7S100 13.5 108 13.5H120V14Z" />
+            <path className="dcard__tab-edge" d="M.5 14V12.5Q.5 .5 12 .5H78C86 .5 89 2.5 93 7S100 13.5 108 13.5H120" />
+          </svg>
+          <div className="dcard__folder"><IconFolder size={40} stroke={1.2} /></div>
+        </>
       ) : (
         <div className="dcard__thumb">
           {s?.thumbUrl ? <img src={s.thumbUrl} alt="" /> : <span className="dcard__initials">{initials(p.entry.name)}</span>}

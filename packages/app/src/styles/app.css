@@ -606,6 +606,19 @@ button.tree__hint { padding: 0 14px 8px; }
 .dcard__initials { font-size: 30px; font-weight: 700; letter-spacing: -.03em; color: var(--fg-1); opacity: .85; }
 .dcard__format { position: absolute; left: 8px; bottom: 8px; padding: 2px 7px; border-radius: 99px; font-size: 11px; background: #000a; color: var(--fg-1); }
 .dcard__folder { background: var(--bg-3); color: var(--warn); }
+/* Folder card: a tab rises from its top edge, as on a folder. It takes the
+   space above the card, so the card itself keeps its size. */
+.dcard--folder { margin-top: 13px; border-top-left-radius: 0; }
+.dcard--folder .dcard__folder { border-top-left-radius: 0; }
+.dcard__tab { position: absolute; top: -14px; left: -1px; z-index: 2; overflow: visible; pointer-events: none; }
+.dcard__tab-fill { fill: var(--bg-3); }
+.dcard__tab-edge { fill: none; stroke: var(--line-0); stroke-width: 1; transition: stroke .12s; }
+/* Hover and picked: the tab's edge lights up with the card's neon. */
+.dcard--folder:hover .dcard__tab-edge { stroke: rgb(var(--brand-500-rgb) / .8); filter: drop-shadow(0 0 3px rgb(var(--brand-500-rgb) / .5)); }
+.dcard--folder.is-picked .dcard__tab-edge { stroke: var(--brand-300); filter: drop-shadow(0 0 3px rgb(var(--brand-500-rgb) / .9)) drop-shadow(0 0 8px rgb(var(--brand-500-rgb) / .45)); }
+.dcard--folder.is-drop .dcard__tab-edge { stroke: var(--primary); }
+/* Picked folder: the glow stays outside, so it does not draw a line inside the card under the tab. */
+.dcard--folder.is-picked { box-shadow: 0 0 2px 0 rgb(var(--neon) / .9), 0 0 8px 1px rgb(var(--neon) / .45), 0 0 18px 3px rgb(var(--neon-deep) / .3); }
 .dcard__body { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px 12px; min-width: 0; }
 .dcard__foot { display: flex; align-items: center; gap: 6px; }
 .dentry__name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
