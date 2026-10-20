@@ -674,7 +674,7 @@ button.tree__hint { padding: 0 14px 8px; }
 /* Like «⋯» on the right, its corner on the cover's corner. Pinned: yellow, on a slightly darker background. */
 .dentry__pin { position: absolute; top: 6px; left: 6px; z-index: 3; display: flex; padding: 2px; border-radius: var(--r-md); background: var(--bg-3); opacity: 0; transition: opacity .1s; }
 .dcard:hover .dentry__pin, .dcard:has(:focus-visible) .dentry__pin, .dentry__pin.is-on { opacity: 1; }
-.dentry__pin.is-on { background: color-mix(in srgb, var(--bg-3) 65%, #000); }
+.dentry__pin.is-on { background: color-mix(in srgb, var(--bg-3) 88%, #000); }
 .dentry__pin.is-on .sf-icon-btn { color: var(--warn); }
 .dentry__acts { position: absolute; top: 6px; right: 6px; display: flex; gap: 2px; padding: 2px; border-radius: var(--r-md); background: var(--bg-3); opacity: 0; transition: opacity .1s; }
 /* Only on hover, or keyboard focus: a mouse click leaves focus on the button and must not keep them shown. */
