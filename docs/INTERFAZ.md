@@ -16,6 +16,11 @@ Abrir la app ──▶ 0. Pantalla de carga ──▶ 1. Dashboard ──▶ 2. 
                                                                           (un plano o escena cada una)
 ```
 
+**Tamaño de los botones:** en cabeceras, barras de herramientas, paneles y
+ventanas, los botones miden como mínimo 32 px de alto y los cuadrados (solo
+icono) 32×32. Los iconos pequeños dentro de tarjetas, filas del árbol,
+miniaturas y comentarios siguen siendo más pequeños para no agrandar esas filas.
+
 ## 0. Pantalla de carga
 
 - Fondo de la app, **visto desde arriba como una superficie**. El logo,
@@ -88,6 +93,13 @@ aplicación completa con **menú lateral**:
 
 - **Inicio:** las carpetas y producciones, navegando por carpetas. Un clic
   selecciona (⌘ añade); un clic fuera de las tarjetas quita la selección.
+- **Cabecera de cada sección** (Inicio, Recientes, Equipo, Papelera), en una
+  sola fila: a la izquierda el icono y el nombre de la sección, solo
+  informativo; a la derecha sus herramientas: el buscador, el tipo de vista y,
+  en Inicio, **Carpeta** y **Producción** (Equipo: Invitar; Papelera: vaciar).
+  Dentro de una carpeta, a la izquierda va la ruta «Inicio › SERIE › …»: lo de
+  antes sirve para volver (y para soltar lo que se mueve); la carpeta en la que
+  se está es solo texto.
 - **Recientes:** lo último que has abierto (es personal, no se comparte).
 - **Papelera:** lo que se borra va aquí y desaparece del resto del dashboard,
   con su contenido. Se puede **restaurar** (vuelve a su carpeta, o a Inicio si
@@ -251,7 +263,7 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
   **tu avatar**.
   - **App de escritorio:** la barra no lleva «Inicio › nombre» (ya están en
     la barra de pestañas, §0.1; el nombre se cambia con doble clic en su
-    pestaña). El botón de información va a la izquierda del buscador. En el
+    pestaña). El botón de información (32×32) abre la barra, a la izquierda. En el
     tablero y en Biblioteca la columna de la izquierda llega hasta arriba y la
     barra ocupa solo el ancho de la derecha.
   - Entre el buscador y el avatar, **mostrar la carpeta** (icono de carpeta con

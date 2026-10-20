@@ -17,7 +17,7 @@ export function StructureTree() {
     <div className="tree">
       <div className="tree__head">
         <span>{top.name}s</span>
-        <IconButton label={`Nuevo ${top.name.toLowerCase()}`} size="sm" onClick={() => {
+        <IconButton label={`Nuevo ${top.name.toLowerCase()}`} onClick={() => {
           const id = source.createNode(null, "");
           // Like on the board: a new sequence comes with its first scene, never empty.
           let row = id;

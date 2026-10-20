@@ -160,7 +160,7 @@ function FromMagnific({ onImport, initialKind = "video" }: { onImport: (items: I
               );
             })}
           </div>
-          {loading ? <div className="imp__more"><Spinner /></div> : more ? <div className="imp__more"><Button size="sm" variant="ghost" onClick={() => setPage(page + 1)}>Ver más</Button></div> : null}
+          {loading ? <div className="imp__more"><Spinner /></div> : more ? <div className="imp__more"><Button variant="ghost" onClick={() => setPage(page + 1)}>Ver más</Button></div> : null}
           {!loading && !error && !items.length ? <p className="note">No hay nada aquí.</p> : null}
         </div>
       </div>

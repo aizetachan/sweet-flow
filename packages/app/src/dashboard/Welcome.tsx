@@ -90,7 +90,7 @@ export function FirstRun({ lib }: { lib: LibraryState }) {
             {error ? <span className="welcome__error sf-small">{error}</span> : null}
           </span>
           {connected ? null : (
-            <Button variant="primary" size="sm" disabled={busy} onClick={() => void signIn()}>
+            <Button variant="primary" disabled={busy} onClick={() => void signIn()}>
               <IconBolt size={14} /> {busy ? "Esperando a Magnific…" : "Conectarse"}
             </Button>
           )}
@@ -105,7 +105,7 @@ export function FirstRun({ lib }: { lib: LibraryState }) {
             {folderError ? <span className="welcome__error sf-small">{folderError}</span> : null}
           </span>
           {folder ? null : (
-            <Button size="sm" variant={connected ? "primary" : undefined} disabled={picking} onClick={() => void pick()}>
+            <Button variant={connected ? "primary" : undefined} disabled={picking} onClick={() => void pick()}>
               <IconFolder size={14} /> {picking ? "Abriendo…" : "Elegir carpeta"}
             </Button>
           )}

@@ -583,13 +583,16 @@ button.tree__hint { padding: 0 14px 8px; }
 .dash { height: 100%; overflow: auto; padding: 22px 32px 40px; background: var(--bg-0); }
 .dash__title { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 19px; font-weight: 650; }
 .dash__note { margin: -4px 0 16px; }
-.dash__head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+/* One row in every section: title (or path) on the left, search and tools on the right (Browse.tsx). */
+.dash__head { display: flex; align-items: center; gap: 8px; min-height: 34px; margin-bottom: 18px; }
+.dash__head > .dash__title, .dash__head > .crumbs { min-width: 0; margin-right: 4px; }
 /* Breadcrumbs as the page title: same size, weight and colour as the other sections' titles. */
 .crumbs--title .crumbs__btn { height: 34px; gap: 10px; font-size: 19px; font-weight: 650; color: var(--fg-3); }
 .crumbs--title > .crumbs__btn:first-child { margin-left: -8px; }
 .crumbs--title > .crumbs__btn:last-child, .crumbs--title .crumbs__item:last-child .crumbs__btn { color: var(--fg-0); }
+/* Where you are, at the end of the path: text, not a button. */
+.crumbs__now { display: inline-flex; align-items: center; height: 34px; padding: 0 8px; font-size: 19px; font-weight: 650; color: var(--fg-0); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .dash__where { margin-left: auto; }
-.dash__tools { display: flex; align-items: center; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
 .dash__search { width: min(320px, 100%); }
 .dash__spacer { flex: 1; }
 .dash__items--grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }

@@ -151,7 +151,7 @@ function TeamModal({ onClose }: { onClose: () => void }) {
         </div>
         {mag.connected && mag.credits !== undefined ? <span className="credits"><IconBolt size={15} /> {mag.credits.toLocaleString("es-ES")}</span> : null}
         {!demo ? (
-          <Button size="sm" onClick={() => set({ modal: "settings", settingsTab: "integrations" })}>
+          <Button onClick={() => set({ modal: "settings", settingsTab: "integrations" })}>
             <IconPlugConnected size={14} /> {mag.connected ? "Gestionar" : "Conectar Magnific"}
           </Button>
         ) : null}
@@ -227,11 +227,11 @@ function LevelsBody() {
         </tbody>
       </table>
       <div className="modal-row">
-        <Button size="sm" onClick={() => source.updateLevels([{ id: newId("lv"), name: "Episodio", prefix: "EP", step: 1, pad: 2, canGenerate: false, maxVideoSec: 30 }, ...levels])}>
+        <Button onClick={() => source.updateLevels([{ id: newId("lv"), name: "Episodio", prefix: "EP", step: 1, pad: 2, canGenerate: false, maxVideoSec: 30 }, ...levels])}>
           <IconPlus size={13} /> Añadir nivel arriba (p. ej. Episodio)
         </Button>
         <span className="modal-row__spacer" />
-        <Button size="sm" variant="ghost" onClick={() => set({ settingsTab: "statuses" })}>Editar estados →</Button>
+        <Button variant="ghost" onClick={() => set({ settingsTab: "statuses" })}>Editar estados →</Button>
       </div>
       <div className="pathpreview">
         <span className="sf-faint sf-small">Así se verá en la carpeta del escritorio (macOS y Windows):</span>
@@ -283,7 +283,7 @@ function StatusesBody() {
           </div>
         ))}
       </div>
-      <Button size="sm" onClick={() => save([...list, { id: newId("st"), name: "Nuevo estado", color: "#9c82e5", category: "active", order: list.length }])}>
+      <Button onClick={() => save([...list, { id: newId("st"), name: "Nuevo estado", color: "#9c82e5", category: "active", order: list.length }])}>
         <IconPlus size={13} /> Añadir estado
       </Button>
     </>

@@ -94,46 +94,50 @@ export function Browse({ lib, section }: { lib: LibraryState; section: Exclude<D
   return (
     // A click anywhere but on an entry (or its buttons) clears the selection.
     <div className="dash" onClick={(e) => !(e.target as HTMLElement).closest(".dcard, .drow") && setPicked([])}>
+      {/* One row, the same in every section: where you are on the left, its tools on the right. */}
       <header className="dash__head">
         {meta ? (
           <h1 className="dash__title"><meta.icon size={20} stroke={1.6} /> {meta.title}</h1>
+        ) : !trail.length ? (
+          // Inicio itself is only a title.
+          <h1 className="dash__title"><IconHome size={20} stroke={1.6} /> Inicio</h1>
         ) : (
+          // Inside a folder it is a path: what is above takes you back (and takes drops); where you are is text.
           <nav className="crumbs crumbs--title" aria-label="Ubicación">
             <Crumb label={<><IconHome size={20} stroke={1.6} /> Inicio</>} onOpen={() => set({ folderId: null })} target={null} />
-            {trail.map((f) => (
+            {trail.map((f, i) => (
               <span key={f.id} className="crumbs__item">
                 <IconChevronRight size={13} className="sf-faint" />
-                <Crumb label={f.name} onOpen={() => set({ folderId: f.id })} target={f.id} />
+                {i === trail.length - 1 ? <span className="crumbs__now">{f.name}</span> : <Crumb label={f.name} onOpen={() => set({ folderId: f.id })} target={f.id} />}
               </span>
             ))}
           </nav>
         )}
         <span className="dash__spacer" />
-        {section === "trash" && visible.length && editable ? <EmptyTrash ids={visible.map((e) => e.id)} /> : null}
+        {section !== "trash" ? (
+          <>
+            <label className="filters__search dash__search">
+              <IconSearch size={14} />
+              <input placeholder="Buscar en todas las carpetas…" value={query} onChange={(e) => setQuery(e.target.value)} />
+            </label>
+            <Segmented<DashLayout>
+              value={dashLayout}
+              onChange={(v) => set({ dashLayout: v })}
+              items={[{ id: "grid", label: <IconLayoutGrid size={14} />, title: "Cuadrícula" }, { id: "list", label: <IconList size={14} />, title: "Lista" }]}
+            />
+            {editable && section === "home" ? (
+              <>
+                <Button onClick={() => setRenaming(library.createFolder(folderId, "Nueva carpeta"))}><IconFolderPlus size={14} /> Carpeta</Button>
+                <Button variant="primary" onClick={() => void library.createProduction(folderId, "Nueva producción").then(setRenaming)}><IconPlus size={14} /> Producción</Button>
+              </>
+            ) : null}
+          </>
+        ) : visible.length && editable ? <EmptyTrash ids={visible.map((e) => e.id)} /> : null}
       </header>
 
-      {section !== "trash" ? (
-        <div className="dash__tools">
-          <label className="filters__search dash__search">
-            <IconSearch size={14} />
-            <input placeholder="Buscar en todas las carpetas…" value={query} onChange={(e) => setQuery(e.target.value)} />
-          </label>
-          <div className="dash__spacer" />
-          <Segmented<DashLayout>
-            value={dashLayout}
-            onChange={(v) => set({ dashLayout: v })}
-            items={[{ id: "grid", label: <IconLayoutGrid size={14} />, title: "Cuadrícula" }, { id: "list", label: <IconList size={14} />, title: "Lista" }]}
-          />
-          {editable && section === "home" ? (
-            <>
-              <Button size="sm" onClick={() => setRenaming(library.createFolder(folderId, "Nueva carpeta"))}><IconFolderPlus size={14} /> Carpeta</Button>
-              <Button size="sm" variant="primary" onClick={() => void library.createProduction(folderId, "Nueva producción").then(setRenaming)}><IconPlus size={14} /> Producción</Button>
-            </>
-          ) : null}
-        </div>
-      ) : (
+      {section === "trash" ? (
         <p className="sf-muted sf-small dash__note">Lo que está en la papelera no aparece en el resto del dashboard. Puedes restaurarlo o eliminarlo definitivamente; no se borra solo.</p>
-      )}
+      ) : null}
 
       {firstRun ? <FirstRun lib={lib} /> : null}
 
@@ -189,7 +193,7 @@ function EmptyTrash({ ids }: { ids: Id[] }) {
   const library = useStore((s) => s.library);
   const [armed, setArmed] = useArmed();
   return (
-    <Button size="sm" className={armed ? "danger" : undefined} onClick={() => (armed ? void library.deleteForever(ids) : setArmed(true))}>
+    <Button className={armed ? "danger" : undefined} onClick={() => (armed ? void library.deleteForever(ids) : setArmed(true))}>
       <IconTrashX size={14} /> {armed ? "Pulsa otra vez para vaciar" : "Vaciar papelera"}
     </Button>
   );

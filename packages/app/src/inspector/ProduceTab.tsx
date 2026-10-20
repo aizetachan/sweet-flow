@@ -251,7 +251,7 @@ function MediaMeta({ media, take }: { media: Media; take?: Take }) {
         {!take && g?.credits ? <span className="sf-faint sf-small" title={`Créditos de ${memberName(snap, g.launchedBy)}`}><IconBolt size={11} /> {g.credits}</span> : null}
         <span className="mmeta__spacer" />
         {!take && media.status === "ready" && media.kind === "video" ? (
-          <Button size="sm" onClick={() => setPanel({ tab: "cut", activeMediaId: media.id })}><IconCut size={13} /> Cortar</Button>
+          <Button onClick={() => setPanel({ tab: "cut", activeMediaId: media.id })}><IconCut size={13} /> Cortar</Button>
         ) : null}
       </div>
       {g?.prompt ? (
@@ -265,7 +265,7 @@ function MediaMeta({ media, take }: { media: Media; take?: Take }) {
         <div className="mmeta__failed">
           <p className="mmeta__error">{media.error ?? "No se ha podido generar."}</p>
           {media.generation ? (
-            <Button size="sm" title="Generar otra vez con los mismos ajustes (una versión nueva; esta se quita)" onClick={() => useStore.getState().source.retryMedia(media.id)}>Reintentar</Button>
+            <Button title="Generar otra vez con los mismos ajustes (una versión nueva; esta se quita)" onClick={() => useStore.getState().source.retryMedia(media.id)}>Reintentar</Button>
           ) : null}
         </div>
       ) : null}
@@ -502,7 +502,7 @@ function GenerateBox({ node }: { node: ProdNode }) {
     return (
       <div className="note note--cta">
         <IconBolt size={16} /> Conecta tu cuenta de Magnific para generar con tus créditos.
-        <Button size="sm" variant="primary" onClick={() => {
+        <Button variant="primary" onClick={() => {
           const st = useStore.getState();
           if (st.lib?.mode === "demo") return st.set({ modal: "team" });
           // Ajustes › Integraciones, without leaving the production.

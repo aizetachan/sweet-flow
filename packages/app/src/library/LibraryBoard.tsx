@@ -128,7 +128,7 @@ export function LibraryBoard() {
         <h1>Biblioteca</h1>
         <span className="sf-muted sf-small grow">Grupos de imágenes de referencia. El nombre de cada grupo es el que se usa al llamarlo en los planos.</span>
         <ShareLibrary />
-        <Button size="sm" variant="primary" onClick={() => newGroup()}><IconPlus size={14} /> Grupo</Button>
+        <Button variant="primary" onClick={() => newGroup()}><IconPlus size={14} /> Grupo</Button>
       </header>
       {groups.map((g) => <GroupRow key={g.id} group={g} picked={picked} setPicked={setPicked} />)}
       {/* Below the last row: a new group, by click or by dropping images here. */}
@@ -235,7 +235,7 @@ function ShareLibrary() {
   const on = (s: LibraryShare) => JSON.stringify(s) === JSON.stringify(share ?? null);
   return (
     <Popover align="right" className="libshare" button={({ open, toggle }) => (
-      <Button size="sm" className={cx(share && "libshare__on", open && "is-on")} onClick={toggle}><IconBooks size={14} /> {label}</Button>
+      <Button className={cx(share && "libshare__on", open && "is-on")} onClick={toggle}><IconBooks size={14} /> {label}</Button>
     )}>
       <div className="menu__title">Compartir la biblioteca</div>
       <label className="libshare__switch">

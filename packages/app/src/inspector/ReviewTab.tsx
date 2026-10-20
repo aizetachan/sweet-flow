@@ -368,9 +368,9 @@ export function Composer({ node, mediaId, parentId, isVideo, playhead = 0, mark,
         <span className="composer__spacer" />
         {/* Changed your mind: nothing is kept, neither the text nor the mark. */}
         {text.trim() || mark || compact ? (
-          <Button size="sm" variant="ghost" title="Descartar (Esc)" onClick={() => { setText(""); onCancel?.(); }}>Cancelar</Button>
+          <Button variant="ghost" title="Descartar (Esc)" onClick={() => { setText(""); onCancel?.(); }}>Cancelar</Button>
         ) : null}
-        <Button size="sm" variant="primary" onClick={send} disabled={!text.trim()} title="Enviar (⌘↵)"><IconSend size={13} /> Enviar</Button>
+        <Button variant="primary" onClick={send} disabled={!text.trim()} title="Enviar (⌘↵)"><IconSend size={13} /> Enviar</Button>
       </div>
     </div>
   );

@@ -202,7 +202,7 @@ export function CutTab({ node }: { node: ProdNode }) {
       <div className="cut__bar">
         <input className="cut__scrub" type="range" min={0} max={dur} step={0.1} value={ph} onChange={(e) => seek(+e.target.value)} />
         <span className="sf-mono">{formatTc(ph)}</span>
-        <Button size="sm" onClick={() => setCuts([...cuts, round1(ph)])} disabled={ph <= 0 || ph >= dur}>
+        <Button onClick={() => setCuts([...cuts, round1(ph)])} disabled={ph <= 0 || ph >= dur}>
           <IconCut size={13} /> Cortar <span className="sf-kbd">C</span>
         </Button>
       </div>

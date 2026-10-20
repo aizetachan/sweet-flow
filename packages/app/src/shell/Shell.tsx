@@ -68,7 +68,7 @@ export function Topbar() {
 
   const infoButton = (
     <Popover button={({ open, toggle }) => (
-      <IconButton size="sm" label="Información de la producción" className={open ? "is-on" : undefined} onClick={toggle}><IconInfoCircle size={16} stroke={1.6} /></IconButton>
+      <IconButton label="Información de la producción" className={open ? "is-on" : undefined} onClick={toggle}><IconInfoCircle size={18} stroke={1.6} /></IconButton>
     )}>
       <ProductionInfo scopeId={scopeId} />
     </Popover>
@@ -89,10 +89,10 @@ export function Topbar() {
         {infoButton}
         {format}
       </nav>}
+      {/* Desktop app: the information opens the bar, on the left. */}
+      {TABS ? <>{infoButton}{format}</> : null}
 
       <div className="topbar__spacer" />
-      {/* Desktop app: the information goes just left of the search. */}
-      {TABS ? <>{format}{infoButton}</> : null}
 
       {view === "board" ? <BoardFilters /> : null}
 
@@ -103,7 +103,7 @@ export function Topbar() {
         </div>
       ) : null}
 
-      <Button size="sm" variant="primary" className="topbar__share" onClick={() => useStore.getState().set({ modal: "share" })}>
+      <Button variant="primary" className="topbar__share" onClick={() => useStore.getState().set({ modal: "share" })}>
         <IconShare size={14} /> Compartir
       </Button>
       <Notifications />

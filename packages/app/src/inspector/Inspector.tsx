@@ -86,7 +86,7 @@ function OpenElsewhere({ node }: { node: ProdNode }) {
         <p className="sf-muted">Está abierto en una ventana aparte. Trabaja en esa ventana, o tráelo aquí para cerrarla.</p>
         <div className="insp__elsewhere-acts">
           <Button variant="primary" onClick={() => focusPopped(node.id)}><IconExternalLink size={14} /> Ir a la ventana</Button>
-          <Button onClick={() => bringBack(node.id)}><IconLayoutSidebarLeftExpand size={14} /> Traer aquí</Button>
+          <Button onClick={() => bringBack(node.id)}><IconLayoutSidebarLeftExpand size={16} /> Traer aquí</Button>
         </div>
       </div>
     </div>
@@ -193,39 +193,37 @@ function InspectorBody({ floatKey, onDragHandle }: { floatKey?: string; onDragHa
             onChange={(e) => source.updateNode(node.id, { title: e.target.value })}
           />
           {panel.mode === "floating" && floatKey ? (
-            <IconButton label="Acoplar al panel lateral" size="sm" onClick={() => dockPanel(floatKey)}><IconLayoutSidebarLeftExpand size={14} /></IconButton>
+            <IconButton label="Acoplar al panel lateral" onClick={() => dockPanel(floatKey)}><IconLayoutSidebarLeftExpand size={14} /></IconButton>
           ) : null}
           {panel.mode !== "window" ? (
-            <IconButton label={`Mover ${nameOf(p, node)} a la papelera (Supr)`} size="sm" onClick={() => trashNodes([node.id])}><IconTrash size={14} /></IconButton>
+            <IconButton label={`Mover ${nameOf(p, node)} a la papelera (Supr)`} onClick={() => trashNodes([node.id])}><IconTrash size={16} /></IconButton>
           ) : null}
           {node.lib ? null : <PinLabelSync node={node} />}
           {/* Its folder path, to paste in the Finder or send (it says sequence, scene and shot). */}
-          <IconButton label={`Copiar la ruta: ${path}`} size="sm" onClick={() => {
+          <IconButton label={`Copiar la ruta: ${path}`} onClick={() => {
             void navigator.clipboard?.writeText(path);
             useStore.getState().notify(`Ruta de ${nameOf(p, node)} copiada.`);
-          }}><IconCopy size={14} /></IconButton>
+          }}><IconCopy size={16} /></IconButton>
           {panel.mode !== "window" ? (
             <IconButton
               label="Abrir en una ventana aparte (puedes llevarla a otro monitor)"
-              size="sm"
               onClick={() => {
                 // With an image picked (in the library, or in the gallery), the window opens on it; else on the latest.
                 const picked = panel.activeMediaId && snap.media.some((m) => m.id === panel.activeMediaId && m.nodeId === node.id) ? panel.activeMediaId : null;
                 popOut(node.id, picked);
                 if (floatKey) closeFloating(floatKey);
               }}
-            ><IconExternalLink size={14} /></IconButton>
+            ><IconExternalLink size={16} /></IconButton>
           ) : null}
           <IconButton
             label={panel.mode === "window" ? "Cerrar ventana" : "Cerrar panel"}
-            size="sm"
             onClick={() => {
               if (panel.mode === "window") return window.close();
               if (floatKey) return closeFloating(floatKey);
               // Never an empty column: with nothing selected the structure shows.
               select(null);
             }}
-          ><IconX size={14} /></IconButton>
+          ><IconX size={16} /></IconButton>
         </div>
         {/* Row 2, under the title: the code (only with «Mostrar códigos»), the status and the notes; who works on it on the right. */}
         {node.lib ? (

@@ -63,7 +63,7 @@ export function ShareModal({ onClose }: { onClose: () => void }) {
         <div className="share__team">
           <AvatarStack names={people} size={24} max={6} />
           <span className="sf-muted sf-small grow">{people.length === 1 ? "1 persona trabaja" : `${people.length} personas trabajan`} en esta producción, con acceso a su carpeta.</span>
-          <Button size="sm" disabled={!team?.canInvite || !productionId} title={!team ? "Necesita una carpeta del equipo" : undefined}
+          <Button disabled={!team?.canInvite || !productionId} title={!team ? "Necesita una carpeta del equipo" : undefined}
             onClick={() => { onClose(); set({ inviteTo: { access: [productionId!] } }); }}><IconUserPlus size={14} /> Invitar al equipo</Button>
         </div>
       </section>
@@ -90,7 +90,7 @@ export function ShareModal({ onClose }: { onClose: () => void }) {
             <div className="share__add">
               <input className="sf-input grow" type="email" placeholder="correo@cliente.com" value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={(e) => e.key === "Enter" && add()} />
               <input className="sf-input share__name" placeholder="Nombre (opcional)" value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && add()} />
-              <Button size="sm" disabled={!/^\S+@\S+\.\S+$/.test(email.trim())} onClick={add}>Añadir</Button>
+              <Button disabled={!/^\S+@\S+\.\S+$/.test(email.trim())} onClick={add}>Añadir</Button>
             </div>
             {client.guests.length ? (
               <div className="share__list">

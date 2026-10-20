@@ -41,7 +41,7 @@ export function TeamPage({ lib }: { lib: LibraryState }) {
   if (!team) {
     return (
       <div className="dash">
-        <header className="dash__head"><h1 className="dash__title">Equipo</h1></header>
+        <header className="dash__head"><h1 className="dash__title"><IconUsersGroup size={20} stroke={1.6} /> Equipo</h1></header>
         <p className="sf-muted">El equipo vive en la carpeta del equipo. Elige una en Ajustes › Almacenamiento (de este ordenador, Dropbox o Google Drive) para invitar a más gente.</p>
         <Button onClick={() => set({ dashSection: "settings", settingsTab: "storage" })}>Ir a Almacenamiento</Button>
       </div>
@@ -55,7 +55,7 @@ export function TeamPage({ lib }: { lib: LibraryState }) {
   return (
     <div className="dash">
       <header className="dash__head">
-        <h1 className="dash__title">Equipo</h1>
+        <h1 className="dash__title"><IconUsersGroup size={20} stroke={1.6} /> Equipo</h1>
         <span className="grow" />
         {team.canInvite ? <Button variant="primary" onClick={() => set({ inviteTo: { access: [] } })}><IconUserPlus size={15} /> Invitar</Button> : null}
       </header>

@@ -44,7 +44,7 @@ function ReconnectBar() {
     <div className="reconnect">
       <IconFolder size={16} stroke={1.6} />
       <span>Para abrir la carpeta del equipo «{status.name}», el navegador necesita tu permiso otra vez. Mientras tanto ves lo guardado en este navegador.</span>
-      <Button size="sm" variant="primary" disabled={busy} onClick={async () => {
+      <Button variant="primary" disabled={busy} onClick={async () => {
         setBusy(true);
         const lib = (await reconnectLocalFolder().catch(() => false)) ? await openTeamFolder().catch(() => null) : null;
         if (lib) setLibrary(lib);

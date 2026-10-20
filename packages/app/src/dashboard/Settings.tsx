@@ -192,15 +192,15 @@ function LocalFolder({ lib }: { lib: LibraryState }) {
         <span className="scard__spacer" />
         {!supported ? <span className="sbadge">Usa Chrome o Edge</span> : status.status === "reconnect" ? (
           <>
-            <Button size="sm" variant="primary" disabled={busy} onClick={reconnect}>Abrir «{status.name}»</Button>
-            <Button size="sm" disabled={busy} onClick={pick}>Elegir otra</Button>
+            <Button variant="primary" disabled={busy} onClick={reconnect}>Abrir «{status.name}»</Button>
+            <Button disabled={busy} onClick={pick}>Elegir otra</Button>
           </>
         ) : (
           <>
-            <Button size="sm" variant={status.status === "browser" ? "primary" : undefined} disabled={busy} onClick={pick}>
+            <Button variant={status.status === "browser" ? "primary" : undefined} disabled={busy} onClick={pick}>
               <IconFolderOpen size={14} /> {busy ? "Abriendo…" : status.status === "folder" ? "Cambiar carpeta" : "Elegir carpeta"}
             </Button>
-            {status.status === "folder" ? <Button size="sm" disabled={busy} onClick={forget}>Dejar de usarla</Button> : null}
+            {status.status === "folder" ? <Button disabled={busy} onClick={forget}>Dejar de usarla</Button> : null}
           </>
         )}
       </div>
@@ -261,8 +261,8 @@ function MagnificCard() {
           <span className="sf-muted">{connected ? who ?? "Conectada. Comprobando la cuenta…" : "Generación de imágenes y vídeo con tu cuenta y tus créditos."}</span>
         </div>
         <span className="scard__spacer" />
-        {connected ? <Button size="sm" onClick={() => magnific.disconnect()}>Desconectar</Button> : (
-          <Button size="sm" variant="primary" disabled={busy} onClick={() => void connect()}>{busy ? "Esperando a Magnific…" : "Conectar"}</Button>
+        {connected ? <Button onClick={() => magnific.disconnect()}>Desconectar</Button> : (
+          <Button variant="primary" disabled={busy} onClick={() => void connect()}>{busy ? "Esperando a Magnific…" : "Conectar"}</Button>
         )}
       </div>
       {error ? <p className="sf-small" style={{ color: "var(--bad)" }}>{error}</p> : null}
@@ -319,8 +319,8 @@ function CloudCurrent({ status }: { status: Extract<StorageStatus, { status: "cl
           </span>
         </div>
         <span className="scard__spacer" />
-        {status.status === "cloud-reconnect" ? <Button size="sm" variant="primary" disabled={busy} onClick={() => void reconnect()}>{busy ? "Conectando…" : `Conectar ${name}`}</Button> : null}
-        <Button size="sm" disabled={busy} onClick={() => setLibrary(forgetCloudFolder())}>Dejar de usarla</Button>
+        {status.status === "cloud-reconnect" ? <Button variant="primary" disabled={busy} onClick={() => void reconnect()}>{busy ? "Conectando…" : `Conectar ${name}`}</Button> : null}
+        <Button disabled={busy} onClick={() => setLibrary(forgetCloudFolder())}>Dejar de usarla</Button>
       </div>
       {error ? <p className="sf-small" style={{ color: "var(--bad)" }}>{error}</p> : null}
     </>
@@ -395,11 +395,11 @@ function CloudCard({ provider, lib }: { provider: CloudProvider; lib: LibrarySta
         <span className="scard__spacer" />
         {!configured ? <span className="sbadge">Sin configurar</span> : connected ? (
           <>
-            <Button size="sm" variant={inUse ? undefined : "primary"} disabled={busy} onClick={() => setPicking(true)}><IconFolderOpen size={14} /> {inUse ? "Cambiar carpeta" : "Elegir carpeta"}</Button>
-            <Button size="sm" disabled={busy} onClick={() => { if (inUse) setLibrary(forgetCloudFolder()); disconnectCloud(provider); }}>Desconectar</Button>
+            <Button variant={inUse ? undefined : "primary"} disabled={busy} onClick={() => setPicking(true)}><IconFolderOpen size={14} /> {inUse ? "Cambiar carpeta" : "Elegir carpeta"}</Button>
+            <Button disabled={busy} onClick={() => { if (inUse) setLibrary(forgetCloudFolder()); disconnectCloud(provider); }}>Desconectar</Button>
           </>
         ) : (
-          <Button size="sm" variant="primary" disabled={busy} onClick={() => void connect()}>{busy ? `Esperando a ${name}…` : "Conectar"}</Button>
+          <Button variant="primary" disabled={busy} onClick={() => void connect()}>{busy ? `Esperando a ${name}…` : "Conectar"}</Button>
         )}
       </div>
       {error ? <p className="sf-small" style={{ color: "var(--bad)" }}>{error}</p> : null}
@@ -526,8 +526,8 @@ export function ModelsSettings() {
         </span>
         <span className="scard__spacer" />
         <input className="sf-input smodels__filter" placeholder="Filtrar" value={filter} onChange={(e) => setFilter(e.target.value)} />
-        {connected ? <Button size="sm" disabled={busy} onClick={() => void update()}><IconRefresh size={14} /> {busy ? "Actualizando…" : "Actualizar"}</Button> : null}
-        <Button size="sm" variant="ghost" onClick={resetShown} title="Volver a los modelos que se muestran por defecto">Restablecer</Button>
+        {connected ? <Button disabled={busy} onClick={() => void update()}><IconRefresh size={14} /> {busy ? "Actualizando…" : "Actualizar"}</Button> : null}
+        <Button variant="ghost" onClick={resetShown} title="Volver a los modelos que se muestran por defecto">Restablecer</Button>
       </div>
       {error ? <p className="sf-small" style={{ color: "var(--bad)" }}>{error}</p> : null}
       {KINDS.map((k) => {
