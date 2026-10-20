@@ -64,7 +64,9 @@ tanto en el dashboard como en una producción.
 - **Botones del sistema** (cerrar, minimizar, ampliar) dentro de la barra: a la
   izquierda en Mac, a la derecha en Windows. El espacio vacío de la barra
   sirve para arrastrar la ventana.
-- **Botón Inicio** (casa): vuelve al dashboard. Está marcado mientras se está en él.
+- **Botón Inicio** (casa): vuelve al dashboard. Está marcado mientras se está
+  en él (solo el icono; el fondo es el de la barra) y al pasar el ratón se
+  comporta como una pestaña.
 - **Una pestaña por producción abierta**, a la derecha de Inicio, en el orden
   en que se abrieron: icono y nombre de la producción. La que se está viendo
   queda marcada. Se cierra con su ✕ (aparece al pasar el ratón o en la
@@ -215,6 +217,8 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
     fuera.
 - **Acciones:** crear carpeta, crear producción, renombrar, marcar como
   favorito, mover arrastrando (también varias a la vez) y mover a la papelera.
+  - Una producción nueva empieza con uno de cada nivel (una secuencia con una
+    escena con un plano), para tener ya algo con lo que trabajar al entrar.
 - **Relación con Dropbox:** la organización del dashboard **es** la de la
   carpeta de Dropbox.
   - Lo que se crea, renombra o mueve en la app se aplica en Dropbox.

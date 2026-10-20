@@ -1259,8 +1259,8 @@ button.topbar__me { position: relative; padding: 0; border: 0; border-radius: 50
 .tabbar--win { padding-right: 140px; }
 .tabbar :is(button, [role="tab"]) { -webkit-app-region: no-drag; }
 .tabbar__home { flex: none; width: 46px; display: grid; place-items: center; border: 0; border-left: 1px solid var(--line-1); border-right: 1px solid var(--line-1); background: none; color: var(--fg-2); cursor: default; }
-/* The bar's own colour: only its icon says it is on. */
-.tabbar__home:hover { color: var(--fg-0); }
+/* The bar's own colour (its icon says it is on); on hover, the same as a tab. */
+.tabbar__home:hover { background: var(--bg-1); color: var(--fg-1); }
 .tabbar__home.is-on { color: var(--fg-0); }
 .tabbar__tabs { flex: 1; min-width: 0; display: flex; overflow-x: auto; scrollbar-width: none; }
 .tabbar__tabs::-webkit-scrollbar { display: none; }

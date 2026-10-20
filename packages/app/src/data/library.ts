@@ -285,8 +285,12 @@ class EntryLibrary implements Library {
     const id = newId("p");
     // The entry first: in a team folder it gives the production its folder.
     this.commit([...this.entries, this.entry(id, "production", name, parentId)]);
-    const src = this.source(id, { id, name, levels: defaultLevels(newId), statuses: defaultStatuses(newId) });
+    const levels = defaultLevels(newId);
+    const src = this.source(id, { id, name, levels, statuses: defaultStatuses(newId) });
     await src.ready;
+    // It starts with one of each level (a sequence with a scene with a shot), so there is something to work on.
+    let parent: Id | null = null;
+    for (let i = 0; i < levels.length; i++) parent = src.createNode(parent);
     await src.flushed();
     src.dispose();
     void this.refreshSummaries();
