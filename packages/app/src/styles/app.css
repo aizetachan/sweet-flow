@@ -615,41 +615,34 @@ button.tree__hint { padding: 0 14px 8px; }
 .dcard__tab--glow { z-index: 0; clip-path: inset(-40px -40px 6px -40px); }
 .dcard__tab-fill { fill: var(--bg-3); }
 .dcard__tab-edge { fill: none; stroke: var(--line-0); stroke-width: 1; transition: stroke .12s; }
-/* Lines inside the folder's outline (where tabs overlap): never lit. */
-.dcard__tab-inner { fill: none; stroke: var(--line-0); stroke-width: 1; }
-/* Hover and picked: the outline lights up with the card's neon. The glow is a
-   line drawn under the fill, so it only shows outside; the edge on top has the
-   same slight blur as the card's ring. */
+/* Hover and picked: the tab's edge lights up with the card's neon, as soft as
+   its ring. The glow is a line drawn under the tab's fill, so it only shows
+   outside; it is cut at the card's top edge so it never spills into the card. */
+.dcard__tab--glow { z-index: 0; clip-path: inset(-40px -40px 6px -40px); }
 .dcard__tab-glow { fill: none; stroke: none; stroke-width: 1; filter: url(#dcard-glow); }
 .dcard__tab-glow--wide { stroke-width: 3; filter: url(#dcard-glow-wide); }
 .dcard__tab-glow--deep { stroke-width: 7; filter: url(#dcard-glow-deep); }
-.dcard--folder:hover :is(.dcard__tab-edge, .dcard__level-edge) { stroke: rgb(var(--brand-500-rgb) / .8); filter: url(#dcard-soft); }
+.dcard--folder:hover .dcard__tab-edge { stroke: rgb(var(--brand-500-rgb) / .8); filter: url(#dcard-soft); }
 .dcard--folder:hover .dcard__tab-glow { stroke: rgb(var(--brand-500-rgb) / .5); }
 .dcard--folder:hover .dcard__tab-glow--wide { stroke: rgb(var(--brand-500-rgb) / .35); }
-.dcard--folder.is-picked :is(.dcard__tab-edge, .dcard__level-edge) { stroke: var(--brand-300); filter: url(#dcard-soft); }
+.dcard--folder.is-picked .dcard__tab-edge { stroke: var(--brand-300); filter: url(#dcard-soft); }
 .dcard--folder.is-picked .dcard__tab-glow { stroke: rgb(var(--brand-500-rgb) / .9); }
 .dcard--folder.is-picked .dcard__tab-glow--wide { stroke: rgb(var(--brand-500-rgb) / .45); }
 .dcard--folder.is-picked .dcard__tab-glow--deep { stroke: rgb(var(--brand-700-rgb) / .3); }
 .dcard--folder.is-drop .dcard__tab-edge { stroke: var(--primary); }
-/* One tab per level of folders inside, coming out from under the folder's own
-   tab (which never changes): the same shape and height, a little darker, each
-   one's slope lying over the next. They share at most the space up to 85% of
-   the card's width: with more levels each one narrows. */
-.dcard__levels { position: absolute; z-index: 1; top: -14px; left: 77px; width: calc(var(--levels) * 40px); max-width: calc(85% - 107px); height: 14px; display: flex; pointer-events: none; --level-edge: var(--line-0); --level-fill: color-mix(in srgb, var(--bg-3) 70%, var(--bg-0)); }
+/* One tab per level of folders inside, behind the folder: they come out from
+   under its tab (which never changes), the same shape and height, a little
+   darker, each one's slope lying over the next. They never light up: the
+   card's ring and the folder's tab do, over them. They share at most the
+   space up to 85% of the card's width: with more levels each one narrows. */
+.dcard__levels { position: absolute; z-index: 0; top: -14px; left: 77px; width: calc(var(--levels) * 40px); max-width: calc(85% - 107px); height: 14px; display: flex; pointer-events: none; --level-fill: color-mix(in srgb, var(--bg-3) 70%, var(--bg-0)); }
 .dcard__level { position: relative; flex: 1 1 0; min-width: 0; height: 14px; }
-/* Their top edge, one line along all of them: its glow under the tabs (so it
-   only shows above them), the line itself over them. */
-.dcard__levels::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 1px; box-shadow: var(--level-glow, none); }
-.dcard__levels::after { content: ""; position: absolute; z-index: 20; top: 0; left: 0; right: 0; height: 1px; background: var(--level-edge); filter: var(--level-blur, none); }
 .dcard__level-body { position: absolute; inset: 0; background: var(--level-fill); }
-/* Hides the card's lit top edge under the level tabs, as under the folder's tab. */
-.dcard__level-seam { position: absolute; top: 100%; left: 0; right: -24px; height: 6px; background: linear-gradient(var(--bg-3), transparent); }
+/* Their top edge, one line along all of them. */
+.dcard__levels::after { content: ""; position: absolute; z-index: 20; top: 0; left: 0; right: 0; height: 1px; background: var(--line-0); }
 .dcard__level-slope { position: absolute; top: 0; left: 100%; overflow: visible; }
-.dcard__levels-glow { position: absolute; top: 0; left: 100%; overflow: visible; clip-path: inset(-40px -40px 0 -40px); }
 .dcard__level-fill { fill: var(--level-fill); }
-.dcard__level-edge { fill: none; stroke: var(--level-edge); stroke-width: 1; }
-.dcard--folder:hover .dcard__levels { --level-edge: rgb(var(--brand-500-rgb) / .8); --level-glow: 0 0 3px rgb(var(--brand-500-rgb) / .5), 0 0 8px rgb(var(--brand-500-rgb) / .35); --level-blur: blur(.4px); }
-.dcard--folder.is-picked .dcard__levels { --level-edge: var(--brand-300); --level-glow: 0 0 3px rgb(var(--brand-500-rgb) / .9), 0 0 8px 1px rgb(var(--brand-500-rgb) / .45), 0 0 18px 3px rgb(var(--brand-700-rgb) / .3); --level-blur: blur(.4px); }
+.dcard__level-edge { fill: none; stroke: var(--line-0); stroke-width: 1; }
 /* Picked folder: the glow stays outside, so it does not draw a line inside the card under the tab. */
 .dcard--folder.is-picked { box-shadow: 0 0 2px 0 rgb(var(--neon) / .9), 0 0 8px 1px rgb(var(--neon) / .45), 0 0 18px 3px rgb(var(--neon-deep) / .3); }
 .dcard__body { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px 12px; min-width: 0; }

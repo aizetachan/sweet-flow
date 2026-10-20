@@ -261,22 +261,10 @@ interface EntryItemProps {
   onStartRename: () => void;
 }
 
-/** The folder tab's outline (what lights up): whole, or up to where the level tabs come out. */
+/** The folder tab's outline (what lights up). */
 const TAB_LIT = "M.5 15V12.5Q.5 .5 12 .5H78C86 .5 89 2.5 93 7S100 13.5 108 13.5";
-const TAB_LIT_WITH_LEVELS = "M.5 15V12.5Q.5 .5 12 .5H78";
 /** A level tab's slope: the folder tab's, at the same height. */
 const LEVEL_SLOPE = "M0 .5C8 .5 11 2.5 15 7C19 11.5 22 13.5 30 13.5";
-
-/** The neon glow along a stretch of a folder's outline (lit on hover and when picked). */
-function Glow({ d }: { d: string }) {
-  return (
-    <>
-      <path className="dcard__tab-glow dcard__tab-glow--deep" d={d} />
-      <path className="dcard__tab-glow dcard__tab-glow--wide" d={d} />
-      <path className="dcard__tab-glow" d={d} />
-    </>
-  );
-}
 
 /** Past this many levels the tabs would be slivers: they stop at this count. */
 const MAX_LEVEL_TABS = 12;
@@ -390,9 +378,29 @@ function EntryItem(p: EntryItemProps) {
     <div {...common}>
       {isFolder ? (
         <>
-          {/* The outline's glow, under every tab: their fills hide it inside, so the light only shows outside. */}
+          {p.depth ? (
+            // Behind the folder: the card and its own tab cover them and light up over them; they never light up.
+            <span className="dcard__levels" aria-hidden="true" style={{ ["--levels" as string]: Math.min(p.depth, MAX_LEVEL_TABS) }}>
+              {Array.from({ length: Math.min(p.depth, MAX_LEVEL_TABS) }, (_, i) => {
+                const last = i === Math.min(p.depth, MAX_LEVEL_TABS) - 1;
+                return (
+                  <span key={i} className="dcard__level" style={{ zIndex: MAX_LEVEL_TABS - i }}>
+                    <span className="dcard__level-body" />
+                    {/* The folder tab's own slope; all but the last lie over the next tab, leaving its top edge uncovered. */}
+                    <svg className="dcard__level-slope" width="30" height="14" viewBox="0 0 30 14">
+                      <path className="dcard__level-fill" d={last ? `${LEVEL_SLOPE}V14H0Z` : "M0 1.2H6.66C10.16 2.15 12.36 4.03 15 7C19 11.5 22 13.5 30 13.5V14H0Z"} />
+                      <path className="dcard__level-edge" d={last ? LEVEL_SLOPE : "M6.66 1.21C10.16 2.15 12.36 4.03 15 7C19 11.5 22 13.5 30 13.5"} />
+                    </svg>
+                  </span>
+                );
+              })}
+            </span>
+          ) : null}
+          {/* The tab's glow, under its fill: the light only shows outside it. */}
           <svg className="dcard__tab dcard__tab--glow" width="120" height="20" viewBox="0 0 120 20" aria-hidden="true">
-            <Glow d={p.depth ? TAB_LIT_WITH_LEVELS : TAB_LIT} />
+            <path className="dcard__tab-glow dcard__tab-glow--deep" d={TAB_LIT} />
+            <path className="dcard__tab-glow dcard__tab-glow--wide" d={TAB_LIT} />
+            <path className="dcard__tab-glow" d={TAB_LIT} />
           </svg>
           {/* The folder's tab, on top of the card's top edge. */}
           <svg className="dcard__tab" width="120" height="20" viewBox="0 0 120 20" aria-hidden="true">
@@ -409,45 +417,10 @@ function EntryItem(p: EntryItemProps) {
             </defs>
             {/* Hides the card's lit top edge where the tab joins it. */}
             <rect x="2" y="14" width="100" height="6" fill="url(#dcard-tab-seam)" />
-            {/* With level tabs it leaves its slope's top uncovered, where their edge (the outline) carries on.
-                Without, it stops short of the slope's end, so the card's ring joins it whole. */}
-            <path className="dcard__tab-fill" d={p.depth ? "M0 14V12.5Q0 .5 12 .5H78V1.2H84.66C88.16 2.15 90.36 4.03 93 7C97 11.5 100 13.5 108 13.5V14Z" : "M0 14V12.5Q0 .5 12 .5H78C86 .5 89 2.5 93 7S100 13.5 108 13.5L98 14Z"} />
-            <path className="dcard__tab-edge" d={p.depth ? TAB_LIT_WITH_LEVELS : TAB_LIT} />
-            {/* With level tabs, the slope lies over them: inside the outline, so it never lights up. */}
-            {p.depth ? <path className="dcard__tab-inner" d="M84.66 1.21C88.16 2.15 90.36 4.03 93 7C97 11.5 100 13.5 108 13.5" /> : null}
+            {/* It stops short of the slope's end, so the card's ring joins it whole. */}
+            <path className="dcard__tab-fill" d="M0 14V12.5Q0 .5 12 .5H78C86 .5 89 2.5 93 7S100 13.5 108 13.5L98 14Z" />
+            <path className="dcard__tab-edge" d={TAB_LIT} />
           </svg>
-          {p.depth ? (
-            <span className="dcard__levels" aria-hidden="true" style={{ ["--levels" as string]: Math.min(p.depth, MAX_LEVEL_TABS) }}>
-              {/* The last slope's glow, under the tabs. */}
-              <svg className="dcard__levels-glow" width="30" height="14" viewBox="0 0 30 14">
-                <Glow d={LEVEL_SLOPE} />
-              </svg>
-              {Array.from({ length: Math.min(p.depth, MAX_LEVEL_TABS) }, (_, i) => {
-                const last = i === Math.min(p.depth, MAX_LEVEL_TABS) - 1;
-                return (
-                  <span key={i} className="dcard__level" style={{ zIndex: MAX_LEVEL_TABS - i }}>
-                    <span className="dcard__level-body" />
-                    <span className="dcard__level-seam" />
-                    {/* The folder tab's own slope; all but the last lie over the next tab. */}
-                    <svg className="dcard__level-slope" width="30" height="14" viewBox="0 0 30 14">
-                      {last ? (
-                        <>
-                          <path className="dcard__level-fill" d={`${LEVEL_SLOPE}V14H0Z`} />
-                          <path className="dcard__level-edge" d={LEVEL_SLOPE} />
-                        </>
-                      ) : (
-                        <>
-                          {/* Leaves the next tab's top edge (the outline) uncovered. */}
-                          <path className="dcard__level-fill" d="M0 1.2H6.66C10.16 2.15 12.36 4.03 15 7C19 11.5 22 13.5 30 13.5V14H0Z" />
-                          <path className="dcard__tab-inner" d="M6.66 1.21C10.16 2.15 12.36 4.03 15 7C19 11.5 22 13.5 30 13.5" />
-                        </>
-                      )}
-                    </svg>
-                  </span>
-                );
-              })}
-            </span>
-          ) : null}
           <div className="dcard__folder"><IconFolder size={40} stroke={1.2} /></div>
         </>
       ) : (
