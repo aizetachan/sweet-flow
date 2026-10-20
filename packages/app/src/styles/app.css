@@ -611,23 +611,25 @@ button.tree__hint { padding: 0 14px 8px; }
 .dcard--folder { margin-top: 13px; border-top-left-radius: 0; }
 .dcard--folder .dcard__folder { border-top-left-radius: 0; }
 .dcard__tab { position: absolute; top: -14px; left: -1px; z-index: 2; overflow: visible; pointer-events: none; }
-/* Cut at the card's top edge, so the glow never spills into the card. */
-.dcard__tab--glow { z-index: 0; clip-path: inset(-40px -40px 6px -40px); }
 .dcard__tab-fill { fill: var(--bg-3); }
-.dcard__tab-edge { fill: none; stroke: var(--line-0); stroke-width: 1; transition: stroke .12s; }
-/* Hover and picked: the tab's edge lights up with the card's neon, as soft as
-   its ring. The glow is a line drawn under the tab's fill, so it only shows
-   outside; it is cut at the card's top edge so it never spills into the card. */
-.dcard__tab--glow { z-index: 0; clip-path: inset(-40px -40px 6px -40px); }
-.dcard__tab-glow { fill: none; stroke: none; stroke-width: 1; filter: url(#dcard-glow); }
-.dcard__tab-glow--wide { stroke-width: 3; filter: url(#dcard-glow-wide); }
-.dcard__tab-glow--deep { stroke-width: 7; filter: url(#dcard-glow-deep); }
-.dcard--folder:hover .dcard__tab-edge { stroke: rgb(var(--brand-500-rgb) / .8); filter: url(#dcard-soft); }
-.dcard--folder:hover .dcard__tab-glow--wide { stroke: rgb(var(--brand-500-rgb) / .45); stroke-width: 1.5; }
-.dcard--folder.is-picked .dcard__tab-edge { stroke: var(--brand-300); filter: url(#dcard-soft); }
-.dcard--folder.is-picked .dcard__tab-glow { stroke: rgb(var(--brand-500-rgb) / .9); stroke-width: 1.5; }
-.dcard--folder.is-picked .dcard__tab-glow--wide { stroke: rgb(var(--brand-500-rgb) / .45); stroke-width: 3; }
-.dcard--folder.is-picked .dcard__tab-glow--deep { stroke: rgb(var(--brand-700-rgb) / .3); stroke-width: 7; }
+.dcard__tab-edge { fill: none; stroke: var(--line-0); stroke-width: 1; }
+/* Hovered or picked, the folder's whole outline (tab and card) lights up as
+   one line (Browse.tsx FolderOutline), over the level tabs; the card's own
+   ring is not used. Same colours and glow as the other cards' ring. */
+.dcard__outline { position: absolute; top: -14px; left: -1px; z-index: 3; overflow: visible; pointer-events: none; opacity: 0; transition: opacity .18s;
+  --edge: transparent; --glow: transparent; --wide: transparent; --deep: transparent; --inner: transparent; }
+.dcard__outline :is(path) { fill: none; }
+.dcard__outline-edge { stroke: var(--edge); stroke-width: 1; }
+.dcard__outline-glow { stroke: var(--glow); stroke-width: 1.5; }
+.dcard__outline-wide { stroke: var(--wide); stroke-width: 3; }
+.dcard__outline-deep { stroke: var(--deep); stroke-width: 7; }
+.dcard__outline-inner { stroke: var(--inner); stroke-width: 2; }
+.dcard--folder::after { display: none; }
+.dcard--folder:hover .dcard__outline { opacity: 1; --edge: rgb(var(--brand-500-rgb) / .8); --wide: rgb(var(--brand-500-rgb) / .45); --inner: rgb(var(--brand-500-rgb) / .18); }
+.dcard--folder:hover .dcard__tab-edge { stroke: transparent; }
+.dcard--folder:hover:not(.is-picked) .dcard__outline-wide { stroke-width: 1.5; }
+.dcard--folder.is-picked .dcard__outline { opacity: 1; --edge: var(--brand-300); --glow: rgb(var(--brand-500-rgb) / .9); --wide: rgb(var(--brand-500-rgb) / .45); --deep: rgb(var(--brand-700-rgb) / .3); --inner: rgb(var(--brand-500-rgb) / .5); }
+.dcard--folder.is-picked .dcard__tab-edge { stroke: transparent; }
 .dcard--folder.is-drop .dcard__tab-edge { stroke: var(--primary); }
 /* One tab per level of folders inside, behind the folder: they come out from
    under its tab (which never changes), the same shape and height, a little
@@ -642,13 +644,8 @@ button.tree__hint { padding: 0 14px 8px; }
 .dcard__level-slope { position: absolute; top: 0; left: 100%; overflow: visible; }
 .dcard__level-fill { fill: var(--level-fill); }
 .dcard__level-edge { fill: none; stroke: var(--line-0); stroke-width: 1; }
-/* Folder: the card's neon (its ring, and when picked its halo) is drawn by the
-   ring (::after) above the level tabs, so they stay behind the light and the
-   edge looks the same all along; the folder's own tab stays above it. Picked:
-   the halo stays outside, so it does not draw a line inside the card under the tab. */
-.dcard--folder::after { z-index: 1; }
+/* Picked folder: no box glow of its own (the outline draws it). */
 .dcard--folder.is-picked { box-shadow: none; }
-.dcard--folder.is-picked::after { box-shadow: 0 0 3px rgb(var(--neon) / .8), inset 0 0 3px rgb(var(--neon) / .5), 0 0 2px 0 rgb(var(--neon) / .9), 0 0 8px 1px rgb(var(--neon) / .45), 0 0 18px 3px rgb(var(--neon-deep) / .3); }
 .dcard__body { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px 12px; min-width: 0; }
 .dcard__foot { display: flex; align-items: center; gap: 6px; }
 .dentry__name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

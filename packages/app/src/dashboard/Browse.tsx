@@ -4,7 +4,7 @@
  * drag onto a folder, a breadcrumb or a side-menu folder moves.
  */
 
-import { useEffect, useMemo, useRef, useState, type DragEvent, type ReactNode } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type DragEvent, type ReactNode } from "react";
 import {
   IconArrowBackUp,
   IconChevronRight,
@@ -261,8 +261,72 @@ interface EntryItemProps {
   onStartRename: () => void;
 }
 
-/** The folder tab's outline (what lights up). It ends just before the card's top edge, where the card's ring carries on, so the two never overlap. */
-const TAB_LIT = "M.5 15V12.5Q.5 .5 12 .5H78C86 .5 89 2.5 93 7C95.8 10.15 98.11 12.08 101.99 12.95";
+/** The folder tab's edge, in its own box (120×14, sitting on the card's top edge). */
+const TAB_EDGE = "M.5 14V12.5Q.5 .5 12 .5H78C86 .5 89 2.5 93 7S100 13.5 108 13.5";
+/** Card corner radius (--r-lg) and how far the tab rises above the card's border box. */
+const CARD_R = 12;
+const TAB_RISE = 13;
+
+/**
+ * The lit outline of a folder card, hovered or picked: its tab and the card,
+ * drawn as one line, so the light is the same all along with no joins. Its
+ * glow is masked to the outside (a faint one to the inside, as the other
+ * cards' ring), so it never shows through the tabs; the level tabs stay
+ * behind it. Sized from the card it sits in.
+ */
+function FolderOutline() {
+  const ref = useRef<SVGSVGElement>(null);
+  const [size, setSize] = useState<{ w: number; h: number } | null>(null);
+  const id = useId().replace(/:/g, "");
+  useEffect(() => {
+    const card = ref.current?.parentElement;
+    if (!card) return;
+    const measure = () => setSize({ w: card.offsetWidth, h: card.offsetHeight });
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(card);
+    return () => ro.disconnect();
+  }, []);
+  const w = size?.w ?? 0;
+  const h = (size?.h ?? 0) + TAB_RISE;
+  const r = CARD_R - 0.5;
+  const top = TAB_RISE + 0.5;
+  // Line centres half a pixel inside the border box, like the cards' ring.
+  const d = size
+    ? `M.5 12.5Q.5 .5 12 .5H78C86 .5 89 2.5 93 7S100 ${top} 108 ${top}H${w - CARD_R}A${r} ${r} 0 0 1 ${w - 0.5} ${top + r}V${h - CARD_R}A${r} ${r} 0 0 1 ${w - CARD_R} ${h - 0.5}H${CARD_R}A${r} ${r} 0 0 1 .5 ${h - CARD_R}Z`
+    : "";
+  const region = { filterUnits: "userSpaceOnUse" as const, x: -40, y: -40, width: w + 80, height: h + 80 };
+  return (
+    <svg ref={ref} className="dcard__outline" width={w} height={h} viewBox={`0 0 ${w} ${h}`} aria-hidden="true">
+      {size ? (
+        <>
+          <defs>
+            <filter id={`${id}-soft`} {...region}><feGaussianBlur stdDeviation=".4" /></filter>
+            <filter id={`${id}-glow`} {...region}><feGaussianBlur stdDeviation="1.5" /></filter>
+            <filter id={`${id}-wide`} {...region}><feGaussianBlur stdDeviation="4" /></filter>
+            <filter id={`${id}-deep`} {...region}><feGaussianBlur stdDeviation="9" /></filter>
+            <mask id={`${id}-out`} maskUnits="userSpaceOnUse" x={-40} y={-40} width={w + 80} height={h + 80}>
+              <rect x={-40} y={-40} width={w + 80} height={h + 80} fill="#fff" />
+              <path d={d} fill="#000" />
+            </mask>
+            <mask id={`${id}-in`} maskUnits="userSpaceOnUse" x={-40} y={-40} width={w + 80} height={h + 80}>
+              <path d={d} fill="#fff" />
+            </mask>
+          </defs>
+          <g mask={`url(#${id}-out)`}>
+            <path className="dcard__outline-deep" d={d} filter={`url(#${id}-deep)`} />
+            <path className="dcard__outline-wide" d={d} filter={`url(#${id}-wide)`} />
+            <path className="dcard__outline-glow" d={d} filter={`url(#${id}-glow)`} />
+          </g>
+          <g mask={`url(#${id}-in)`}>
+            <path className="dcard__outline-inner" d={d} filter={`url(#${id}-glow)`} />
+          </g>
+          <path className="dcard__outline-edge" d={d} filter={`url(#${id}-soft)`} />
+        </>
+      ) : null}
+    </svg>
+  );
+}
 /** A level tab's slope: the folder tab's, at the same height. */
 const LEVEL_SLOPE = "M0 .5C8 .5 11 2.5 15 7C19 11.5 22 13.5 30 13.5";
 
@@ -396,31 +460,12 @@ function EntryItem(p: EntryItemProps) {
               })}
             </span>
           ) : null}
-          {/* The tab's glow, under its fill: the light only shows outside it. */}
-          <svg className="dcard__tab dcard__tab--glow" width="120" height="20" viewBox="0 0 120 20" aria-hidden="true">
-            <path className="dcard__tab-glow dcard__tab-glow--deep" d={TAB_LIT} />
-            <path className="dcard__tab-glow dcard__tab-glow--wide" d={TAB_LIT} />
-            <path className="dcard__tab-glow" d={TAB_LIT} />
-          </svg>
           {/* The folder's tab, on top of the card's top edge. */}
-          <svg className="dcard__tab" width="120" height="20" viewBox="0 0 120 20" aria-hidden="true">
-            <defs>
-              <linearGradient id="dcard-tab-seam" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stopColor="var(--bg-3)" />
-                <stop offset="1" stopColor="var(--bg-3)" stopOpacity="0" />
-              </linearGradient>
-              {/* Soft edge and glow, as the card's ring (CSS filters don't blur SVG lines reliably). */}
-              <filter id="dcard-soft" filterUnits="userSpaceOnUse" x="-40" y="-40" width="220" height="100"><feGaussianBlur stdDeviation=".4" /></filter>
-              <filter id="dcard-glow" filterUnits="userSpaceOnUse" x="-40" y="-40" width="220" height="100"><feGaussianBlur stdDeviation="1.5" /></filter>
-              <filter id="dcard-glow-wide" filterUnits="userSpaceOnUse" x="-40" y="-40" width="220" height="100"><feGaussianBlur stdDeviation="4" /></filter>
-              <filter id="dcard-glow-deep" filterUnits="userSpaceOnUse" x="-40" y="-40" width="220" height="100"><feGaussianBlur stdDeviation="9" /></filter>
-            </defs>
-            {/* Hides the card's lit top edge where the tab joins it. */}
-            <rect x="2" y="14" width="100" height="6" fill="url(#dcard-tab-seam)" />
-            {/* It ends with its outline, so the card's ring joins it whole. */}
-            <path className="dcard__tab-fill" d="M0 14V12.5Q0 .5 12 .5H78C86 .5 89 2.5 93 7C95.8 10.15 98.11 12.08 101.99 12.95V14Z" />
-            <path className="dcard__tab-edge" d={TAB_LIT} />
+          <svg className="dcard__tab" width="120" height="14" viewBox="0 0 120 14" aria-hidden="true">
+            <path className="dcard__tab-fill" d={`${TAB_EDGE}V14H0Z`} />
+            <path className="dcard__tab-edge" d={TAB_EDGE} />
           </svg>
+          <FolderOutline />
           <div className="dcard__folder"><IconFolder size={40} stroke={1.2} /></div>
         </>
       ) : (
