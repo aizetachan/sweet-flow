@@ -54,7 +54,8 @@ dmg:
     - x: 140
       y: 140
     # No name under it: Finder writes names in black, so «Aplicaciones» is drawn in the
-    # background, light. The app's own name can't be removed: it sits on a dark patch.
+    # background, light. The app's own name can't be removed: it sits on a band of pure
+    # black across the background, where black text does not show.
     - x: 400
       y: 140
       type: link

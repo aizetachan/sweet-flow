@@ -250,9 +250,10 @@ genera el `.icns` y el `.ico`.
   - Icono de Sweetflow: centrado en (140, 140), 112 × 112 → ocupa de (84, 84)
     a (196, 196). Debajo, macOS escribe su nombre (centrado en y ≈ 214)
     **siempre en negro** (no se puede cambiar). Por eso el fondo, oscuro como la
-    app, dibuja los nombres en claro un poco más abajo (y ≈ 236): el acceso a
+    app, dibuja los nombres en claro justo debajo (y ≈ 228): el acceso a
     Aplicaciones no tiene nombre (se llama « ») y el nombre negro de la app queda
-    sobre una zona más oscura del fondo, donde casi no se ve.
+    sobre una franja de negro puro de lado a lado (y 193–237, con los bordes
+    difuminados), donde no se ve.
   - Carpeta Aplicaciones: centrada en (400, 140), igual tamaño, con su nombre debajo.
   - Flecha entre x 210 y 330, a la altura y 140; texto hacia y 250.
   - Lo de abajo (desde y ≈ 300) puede quedar tapado por las barras del Finder
