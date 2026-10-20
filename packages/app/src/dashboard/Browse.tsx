@@ -25,12 +25,14 @@ import {
   IconFolderShare,
   IconPin,
   IconPinFilled,
+  IconPhoto,
   IconPlus,
   IconSearch,
   IconTrash,
   IconTrashX, IconUserPlus, IconBooks } from "@tabler/icons-react";
 import { ContextMenu, type MenuAt } from "../components/ContextMenu";
 import { Popover } from "../components/Popover";
+import { CoverDialog } from "./CoverDialog";
 import { FirstRun, isGuest } from "./Welcome";
 import { revealEntry } from "../data/reveal";
 import { copyEntryLink } from "../data/share";
@@ -106,6 +108,7 @@ export function Browse({ lib, section }: { lib: LibraryState; section: Exclude<D
   const { folderId, dashLayout, set, library, openProduction } = useStore();
   const [query, setQuery] = useState("");
   const [picked, setPicked] = useState<Id[]>([]);
+  const [coverFor, setCoverFor] = useState<LibraryEntry | null>(null);
   const [renaming, setRenaming] = useState<Id | null>(null);
   useEffect(() => setPicked([]), [section, folderId]);
 
@@ -201,6 +204,7 @@ export function Browse({ lib, section }: { lib: LibraryState; section: Exclude<D
         <p className="sf-muted sf-small dash__note">Lo que está en la papelera no aparece en el resto del dashboard. Puedes restaurarlo o eliminarlo definitivamente; no se borra solo.</p>
       ) : null}
 
+      {coverFor ? <CoverDialog entry={coverFor} onClose={() => setCoverFor(null)} /> : null}
       {firstRun ? <FirstRun lib={lib} /> : null}
 
       {visible.length ? (
@@ -235,6 +239,7 @@ export function Browse({ lib, section }: { lib: LibraryState; section: Exclude<D
                 setPicked([e.id]);
               }}
               onStartRename={() => setRenaming(e.id)}
+              onCover={() => setCoverFor(e)}
             />
           ))}
         </div>
@@ -327,6 +332,8 @@ interface EntryItemProps {
   onOpen: () => void;
   onRename: (name: string) => void;
   onStartRename: () => void;
+  /** «Cambiar portada» (productions). */
+  onCover: () => void;
 }
 
 /** The folder tab's edge, in its own box (120×14, sitting on the card's top edge). */
@@ -470,6 +477,7 @@ function EntryItem(p: EntryItemProps) {
             {p.pinned ? <IconPinFilled size={14} /> : <IconPin size={14} />} <span className="menu__label">{p.pinned ? "Quitar de Fijados" : "Fijar en el menú lateral"}</span>
           </button>
           <button className="menu__item" onClick={p.onStartRename}><IconPencil size={14} /> <span className="menu__label">Renombrar</span></button>
+          {!isFolder ? <button className="menu__item" onClick={p.onCover}><IconPhoto size={14} /> <span className="menu__label">Cambiar portada…</span></button> : null}
           {canShare ? (
             <button className="menu__item" onClick={() => useStore.getState().set({ inviteTo: { access: [p.entry.id] } })}><IconUserPlus size={14} /> <span className="menu__label">Compartir con alguien del equipo…</span></button>
           ) : null}
@@ -482,7 +490,7 @@ function EntryItem(p: EntryItemProps) {
   const star = p.pinned && !inTrash ? <IconPinFilled size={12} className="dentry__star dentry__star--badge" /> : null;
   // Its library is shared with other productions (docs/INTERFAZ.md §2.8.1), like a Figma file with a library.
   const sharedLib = !isFolder && s?.libraryShare ? (
-    <span className="dentry__lib" title={`Comparte su biblioteca${s.libraryGroups ? ` (${s.libraryGroups} ${s.libraryGroups === 1 ? "grupo" : "grupos"})` : ""} con ${s.libraryShare.scope === "all" ? "todo Sweet Flow" : "las producciones de su carpeta"}`}>
+    <span className="dentry__lib" title={`Comparte su biblioteca${s.libraryGroups ? ` (${s.libraryGroups} ${s.libraryGroups === 1 ? "grupo" : "grupos"})` : ""} con ${s.libraryShare.scope === "all" ? "todo Sweetflow" : "las producciones de su carpeta"}`}>
       <IconBooks size={13} />
     </span>
   ) : null;
@@ -538,7 +546,10 @@ function EntryItem(p: EntryItemProps) {
         </>
       ) : (
         <div className="dcard__thumb">
-          {s?.thumbUrl ? <img src={s.thumbUrl} alt="" /> : <span className="dcard__initials">{initials(p.entry.name)}</span>}
+          {/* A block in the middle: its cover (Cambiar portada), or its initials. */}
+          <div className="dcard__cover">
+            {s?.thumbUrl ? <img src={s.thumbUrl} alt="" /> : <span className="dcard__initials">{initials(p.entry.name)}</span>}
+          </div>
           {s?.format ? <span className="dcard__format">{s.format}</span> : null}
           {sharedLib ? <span className="dcard__lib">{sharedLib}</span> : null}
         </div>

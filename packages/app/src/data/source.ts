@@ -20,6 +20,7 @@ import type {
   Presence,
   ProdNode,
   Production,
+  ProductionCover,
   RowItem,
   Segment,
   ShotGroup,
@@ -233,6 +234,8 @@ export interface DataSource {
 
   // configuration
   updateLevels(levels: LevelDef[]): void;
+  /** The image of its dashboard card (docs/INTERFAZ.md §1), for the whole team; null: back to its initials. */
+  setCover(cover: ProductionCover | null): void;
   updateStatuses(statuses: StatusDef[]): void;
   openProduction(productionId: Id): void;
 

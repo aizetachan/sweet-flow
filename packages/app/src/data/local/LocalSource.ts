@@ -54,6 +54,7 @@ import {
   type Hlc,
   type Id,
   type LevelDef,
+  type ProductionCover,
   type LogEvent,
   type LogEventBody,
   type LogState,
@@ -521,6 +522,10 @@ export class LocalSource implements DataSource {
   renameProduction(name: string): void {
     if (this.loaded().production.name === name) return;
     this.write([{ type: "production.updated", patch: { name } }]);
+  }
+
+  setCover(cover: ProductionCover | null): void {
+    this.write([{ type: "production.updated", patch: { cover } }]);
   }
 
   // ---------- configuration ----------

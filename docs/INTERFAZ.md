@@ -239,6 +239,12 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
   cambiarlo: creados recientemente, editados recientemente (lo último en que se
   ha trabajado), nombre A → Z o Z → A. Se recuerda en este ordenador y también
   ordena los resultados del buscador.
+- **Portada de una producción:** su tarjeta lleva en el centro un bloque
+  redondeado. Sin portada muestra sus iniciales sobre un negro al 20 %; con
+  portada, la imagen. Se elige con **«Cambiar portada…»** en su menú (clic
+  derecho o «⋯»): una de las imágenes de la producción o una del ordenador (que
+  se guarda en la mesa de su Biblioteca). La ve todo el equipo. «Quitar
+  portada» vuelve a las iniciales. Se puede deshacer dentro de la producción.
 - **Iconos de carpeta:** del mismo color que los de las producciones (no
   amarillos), en las tarjetas, en la lista y en Fijados.
 - **Relación con Dropbox:** la organización del dashboard **es** la de la

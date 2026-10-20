@@ -117,7 +117,8 @@ function inverseOf(s: LogState, e: LogEventBody, created: Set<Id>): LogEventBody
       const p = s.production;
       if (!p) return [];
       const patch: Record<string, unknown> = {};
-      for (const k of Object.keys(e.patch)) patch[k] = (p as unknown as Record<string, unknown>)[k];
+      // A cover that was not there comes back as null (undefined would not reach the log).
+      for (const k of Object.keys(e.patch)) patch[k] = (p as unknown as Record<string, unknown>)[k] ?? (k === "cover" ? null : undefined);
       return [{ type: "production.updated", patch }];
     }
     case "levels.set":

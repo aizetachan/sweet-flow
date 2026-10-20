@@ -148,6 +148,13 @@ export interface Library {
   createFolder(parentId: Id | null, name: string): Id;
   createProduction(parentId: Id | null, name: string): Promise<Id>;
   rename(id: Id, name: string): void;
+  /**
+   * A production's card image (docs/INTERFAZ.md §1), seen by the whole team:
+   * one of its images (`mediaId`), or a file of this computer, which is first
+   * imported to its library's desk. `thumb`: the small copy the card shows.
+   * Null: back to its initials.
+   */
+  setCover(id: Id, cover: { thumb: string; mediaId?: Id; file?: File } | null): Promise<void>;
   /** Move entries into a folder (null = root). Ignores moving a folder into itself or its subfolders. */
   move(ids: Id[], parentId: Id | null): void;
   trash(ids: Id[]): void;
@@ -314,6 +321,26 @@ class EntryLibrary implements Library {
     this.commit(this.entries.map((x) => (x.id === id ? { ...x, name, updatedAt: Date.now() } : x)));
   }
 
+  async setCover(id: Id, cover: { thumb: string; mediaId?: Id; file?: File } | null): Promise<void> {
+    const special = this.o.special?.[id];
+    // Through the production's own source when it is open (never two writing at once).
+    const open = special ? special.open() : this.opened.get(id);
+    const src: DataSource & { ready?: Promise<unknown>; flushed?: () => Promise<unknown> } = open ?? this.source(id);
+    try {
+      await src.ready;
+      let mediaId = cover?.mediaId;
+      if (cover?.file) mediaId = src.importMedia(src.libraryDesk(), { file: cover.file });
+      src.setCover(cover ? { thumb: cover.thumb, ...(mediaId ? { mediaId } : {}) } : null);
+      await src.flushed?.();
+    } finally {
+      if (!open) src.dispose?.();
+    }
+    if (special) {
+      this.summaries[id] = { ...this.summaries[id]!, thumbUrl: cover?.thumb };
+      this.emit();
+    } else await this.refreshSummaries();
+  }
+
   move(ids: Id[], parentId: Id | null): void {
     const blocked = new Set<Id>();
     // A folder cannot go inside itself or any of its subfolders.
@@ -407,6 +434,12 @@ class EntryLibrary implements Library {
     // What its library shares changes the other productions' libraries: keep the summary in step.
     const offShare = src.subscribe((snap) => {
       const cur = this.summaries[id];
+      // Its card image, as soon as it changes here.
+      const thumb = snap.production.cover?.thumb;
+      if (cur && cur.thumbUrl !== thumb) {
+        this.summaries[id] = { ...cur, thumbUrl: thumb };
+        this.emit();
+      }
       const share = snap.production.libraryShare;
       const groups = snap.library.filter((n) => n.lib?.kind === "card").length;
       if (cur && JSON.stringify(cur.libraryShare ?? null) === JSON.stringify(share ?? null) && cur.libraryGroups === groups) return;
@@ -513,6 +546,7 @@ export function summarize(s: Pick<LogState, "production" | "nodes" | "members">)
     updatedAt: Math.max(p.updatedAt, ...s.nodes.map((n) => n.updatedAt)),
     ...(p.libraryShare ? { libraryShare: p.libraryShare } : {}),
     libraryGroups: s.nodes.filter((n) => n.lib?.kind === "card" && !n.trashedAt).length,
+    ...(p.cover?.thumb ? { thumbUrl: p.cover.thumb } : {}),
   };
 }
 

@@ -193,6 +193,7 @@ function singleLibrary(name: string, open: () => DataSource): Library {
     createFolder: unsupported,
     createProduction: unsupported,
     rename: unsupported,
+    setCover: async () => unsupported(),
     move: unsupported,
     trash: unsupported,
     restore: unsupported,

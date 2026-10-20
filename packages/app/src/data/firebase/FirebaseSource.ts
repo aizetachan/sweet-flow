@@ -18,6 +18,7 @@ import type {
   Comment,
   Id,
   LevelDef,
+  ProductionCover,
   Media,
   Member,
   Presence,
@@ -305,6 +306,10 @@ export class FirebaseSource implements DataSource {
 
   updateLevels(levels: LevelDef[]): void {
     this.call<UpdateLevelsRequest>(CALLABLES.updateLevels, { productionId: this.prodId(), levels });
+  }
+
+  setCover(cover: ProductionCover | null): void {
+    this.write(updateDoc(doc(this.fb.db, "productions", this.prodId()), { cover, updatedAt: Date.now() }));
   }
 
   updateStatuses(statuses: StatusDef[]): void {

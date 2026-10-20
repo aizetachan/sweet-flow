@@ -66,8 +66,20 @@ export interface Production {
    * dashboard folder (its id). Absent: only this production.
    */
   libraryShare?: LibraryShare;
+  /** The image its dashboard card shows (docs/INTERFAZ.md §1); null or absent: its initials. */
+  cover?: ProductionCover | null;
   createdAt: Millis;
   updatedAt: Millis;
+}
+
+/**
+ * A production's card image: a small copy of the image (a data URL, so every
+ * device shows it without reaching its file) and, when it is one of the
+ * production's own images, which.
+ */
+export interface ProductionCover {
+  thumb: string;
+  mediaId?: Id;
 }
 
 /**

@@ -608,7 +608,9 @@ button.tree__hint { padding: 0 14px 8px; }
 .dcard.is-drop, .drow.is-drop { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-soft); transform: scale(1.02); }
 .dcard__thumb, .dcard__folder { aspect-ratio: 16 / 9; border-radius: calc(var(--r-lg) - 1px) calc(var(--r-lg) - 1px) 0 0; display: grid; place-items: center; position: relative; overflow: hidden; }
 .dcard__thumb { background: radial-gradient(120% 140% at 0% 0%, rgb(var(--brand-300-rgb) / .16), transparent 55%), radial-gradient(120% 140% at 100% 100%, rgb(var(--brand-500-rgb) / .2), transparent 55%), var(--bg-3); }
-.dcard__thumb img { width: 100%; height: 100%; object-fit: cover; }
+/* The block in the middle of a production card: its cover, or its initials on a 20 % black. */
+.dcard__cover { position: absolute; inset: 12px; display: grid; place-items: center; overflow: hidden; border-radius: 10px; background: rgb(0 0 0 / .2); }
+.dcard__cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .dcard__initials { font-size: 30px; font-weight: 700; letter-spacing: -.03em; color: var(--fg-1); opacity: .85; }
 .dcard__format { position: absolute; left: 8px; bottom: 8px; padding: 2px 7px; border-radius: 99px; font-size: 11px; background: #000a; color: var(--fg-1); }
 /* Folder icons: the same colour as the productions' (sf-faint), not yellow. */
@@ -1294,3 +1296,13 @@ button.topbar__me { position: relative; padding: 0; border: 0; border-radius: 50
 .tabbar__close { flex: none; display: grid; place-items: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 5px; background: none; color: var(--fg-2); opacity: 0; cursor: default; }
 .tabbar__tab:hover .tabbar__close, .tabbar__tab.is-on .tabbar__close, .tabbar__close:focus-visible { opacity: 1; }
 .tabbar__close:hover { background: var(--bg-4); color: var(--fg-0); }
+
+/* «Cambiar portada» (dashboard/CoverDialog.tsx). */
+.cover__lead { margin: 0 0 12px; }
+.cover__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(136px, 1fr)); gap: 8px; max-height: 360px; overflow: auto; padding: 2px; }
+.cover__item { position: relative; aspect-ratio: 16 / 9; padding: 0; border: 1px solid var(--line-1); border-radius: var(--r-md); overflow: hidden; background: var(--bg-3); cursor: pointer; }
+.cover__item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cover__item:hover, .cover__item:focus-visible { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-soft); outline: none; }
+.cover__item:disabled { cursor: progress; }
+.cover__spin { position: absolute; inset: 0; display: grid; place-items: center; background: rgb(0 0 0 / .45); }
+.cover__empty { display: grid; place-items: center; min-height: 140px; text-align: center; border: 1px dashed var(--line-1); border-radius: var(--r-md); padding: 16px; }

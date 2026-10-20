@@ -24,7 +24,7 @@ export type LogEventBody =
       type: "production.created";
       production: Pick<Production, "id" | "workspaceId" | "name" | "format" | "levels" | "statuses">;
     }
-  | { type: "production.updated"; patch: Partial<Pick<Production, "name" | "format">> }
+  | { type: "production.updated"; patch: Partial<Pick<Production, "name" | "format" | "cover">> }
   /** Who is working on the production; written by each user on first open, and on profile changes. */
   | { type: "member.joined"; member: Pick<Member, "uid" | "displayName" | "email" | "role"> }
   | { type: "levels.set"; levels: LevelDef[] }

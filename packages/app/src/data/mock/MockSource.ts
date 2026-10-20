@@ -34,6 +34,7 @@ import {
   type Activity,
   type Id,
   type LevelDef,
+  type ProductionCover,
   type Media,
   type Plan,
   type ProdNode,
@@ -428,6 +429,10 @@ export class MockSource implements DataSource {
 
   updateLevels(levels: LevelDef[]): void {
     this.commit({ production: { ...this.s.production, levels } }, true);
+  }
+
+  setCover(cover: ProductionCover | null): void {
+    this.commit({ production: { ...this.s.production, cover } });
   }
 
   updateStatuses(statuses: StatusDef[]): void {
