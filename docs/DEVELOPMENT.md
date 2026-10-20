@@ -247,11 +247,13 @@ genera el `.icns` y el `.ico`.
 - **`background.png`** (540 × 380 px) y **`background@2x.png`** (1080 × 760 px),
   opcionales: el fondo de la ventana del `.dmg`. Coordenadas en puntos (las de
   540 × 380; en la @2x, el doble), desde la esquina superior izquierda:
-  - Icono de Sweetflow: centrado en (140, 170), 112 × 112 → ocupa de (84, 114)
-    a (196, 226). Debajo, macOS escribe su nombre (hasta y ≈ 250).
-  - Carpeta Aplicaciones: centrada en (400, 170), igual tamaño → de (344, 114)
-    a (456, 226), con su nombre debajo.
-  - Libre para una flecha o línea: entre x 210 y 330, a la altura y 170.
-  - Libre para un texto («Arrastra Sweetflow a Aplicaciones»): centrado en
-    x 270, entre y 280 y 340.
+  - Icono de Sweetflow: centrado en (140, 140), 112 × 112 → ocupa de (84, 84)
+    a (196, 196). Debajo, macOS escribe su nombre (hasta y ≈ 220), **en negro**:
+    por eso el fondo es claro.
+  - Carpeta Aplicaciones: centrada en (400, 140), igual tamaño, con su nombre debajo.
+  - Flecha entre x 210 y 330, a la altura y 140; texto hacia y 250.
+  - Lo de abajo (desde y ≈ 300) puede quedar tapado por las barras del Finder
+    (título y barra de estado o de ruta): no pongas nada ahí.
+  - Al exportar los iconos desde Figma, comprueba que el PNG sale con fondo
+    transparente (no con el gris de la página).
   - Los iconos y sus nombres los pone macOS: el fondo no los lleva.
