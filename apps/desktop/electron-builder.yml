@@ -49,7 +49,7 @@ dmg:
     width: 540
     height: 380
   iconSize: 112
-  iconTextSize: 12
+  iconTextSize: 10
   contents:
     - x: 140
       y: 140
