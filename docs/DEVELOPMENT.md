@@ -252,8 +252,7 @@ genera el `.icns` y el `.ico`.
     **siempre en negro** (no se puede cambiar). Por eso el fondo, oscuro como la
     app, dibuja los nombres en claro justo debajo (y ≈ 228): el acceso a
     Aplicaciones no tiene nombre (se llama « ») y el nombre negro de la app queda
-    sobre una franja de negro puro de lado a lado (y 193–237, con los bordes
-    difuminados), donde no se ve.
+    sobre el fondo negro puro (el brillo azul se acaba antes), donde no se ve.
   - Carpeta Aplicaciones: centrada en (400, 140), igual tamaño, con su nombre debajo.
   - Flecha entre x 210 y 330, a la altura y 140; texto hacia y 250.
   - Lo de abajo (desde y ≈ 300) puede quedar tapado por las barras del Finder
