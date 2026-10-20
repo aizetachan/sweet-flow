@@ -315,6 +315,8 @@ export const useStore = create<Store>((set, get) => ({
     }
     const src = opts?.source ?? get().library.open(id);
     sourceIsShared = !!opts?.source;
+    // Never opened here before: if it is still just as it was made, its shot is selected to start working.
+    let firstOpen = !opts?.windowNodeId && !opts?.nodeId && !get().lib?.prefs.opened[id];
     if (!opts?.windowNodeId) get().library.touch(id);
     // Reset first, then subscribe: a source that is already loaded (the one a
     // popped window borrows) emits at once, and that first snapshot must stay.
@@ -322,6 +324,12 @@ export const useStore = create<Store>((set, get) => ({
     let pending = opts?.nodeId;
     unsubscribeSource = src.subscribe((snap) => {
       set({ snap });
+      if (firstOpen && snap.nodes.length) {
+        firstOpen = false;
+        // A new production: one node per level (a sequence with a scene with a shot).
+        const shot = snap.nodes.length === snap.production.levels.length ? snap.nodes.find((n) => !snap.nodes.some((c) => c.parentId === n.id)) : undefined;
+        if (shot) queueMicrotask(() => get().select(shot.id));
+      }
       if (!pending) return;
       const nodeId = pending;
       pending = undefined;

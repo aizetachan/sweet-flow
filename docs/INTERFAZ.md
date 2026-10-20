@@ -220,7 +220,9 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
 - **Acciones:** crear carpeta, crear producción, renombrar, marcar como
   favorito, mover arrastrando (también varias a la vez) y mover a la papelera.
   - Una producción nueva empieza con uno de cada nivel (una secuencia con una
-    escena con un plano), para tener ya algo con lo que trabajar al entrar.
+    escena con un plano), para tener ya algo con lo que trabajar al entrar. La
+    primera vez que se abre, ese plano aparece seleccionado, con su panel
+    (Producir) abierto.
   - Al crear una carpeta o una producción se escribe su nombre al momento; al
     terminar, queda seleccionada.
 - **Orden de Inicio:** por defecto, lo último creado va primero (carpetas y
