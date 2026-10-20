@@ -17,6 +17,7 @@ import {
 import { splitTrash } from "@sweetflow/domain";
 import { Avatar, AvatarStack, cx, IconButton, Spinner, Button } from "@sweetflow/ui";
 import { useSnap, useStore, type View } from "../state/store";
+import { LogoMark } from "./Logo";
 import { memberName } from "../state/selectors";
 import { useLibraryTrail } from "../dashboard/Dashboard";
 import { BoardFilters, ProductionInfo } from "../board/Board";
@@ -68,7 +69,7 @@ export function Topbar() {
 
   return (
     <header className="topbar">
-      <button className="topbar__logo" title="Volver al inicio" onClick={() => requestLeave()}>sf</button>
+      <button className="topbar__logo" title="Volver al inicio" onClick={() => requestLeave()}><LogoMark /></button>
       <nav className="crumbs crumbs--top" aria-label="Ubicación">
         {/* Only home and the production: going back lands in the folder it is in, so the folders in between are not needed. */}
         <button className="crumbs__btn" onClick={() => requestLeave(trail.at(-1)?.id ?? null)}

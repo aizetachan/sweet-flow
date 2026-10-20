@@ -14,6 +14,7 @@ import { isInTrash, pinKey, type LibraryEntry, type LibraryState, type Pin } fro
 import { useStore, type DashSection } from "../state/store";
 import { Browse, DRAG_TYPE, useDropInto } from "./Browse";
 import { Settings } from "./Settings";
+import { LogoMark } from "../shell/Logo";
 import { TeamPage } from "./Team";
 import { isGuest, SignInButton } from "./Welcome";
 
@@ -69,7 +70,7 @@ function Sidebar({ lib }: { lib: LibraryState }) {
   return (
     <aside className="dside">
       <div className="dside__brand">
-        <span className="dside__logo">sf</span>
+        <span className="dside__logo"><LogoMark /></span>
         <span className="dside__name">Sweet Flow</span>
       </div>
 
