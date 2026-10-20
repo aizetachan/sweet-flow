@@ -41,7 +41,11 @@ dmg:
   # Background (build/background@2x.png for Retina) and the disk's own icon: the floppy.
   background: build/background.png
   icon: build/dmg-icon.icns
+  # Where it opens: macOS keeps a fixed position (it cannot centre on every screen); this
+  # centres it on the usual MacBook screen (1470 × 956 pt), close to centre on the others.
   window:
+    x: 465
+    y: 288
     width: 540
     height: 380
   iconSize: 112
