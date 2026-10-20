@@ -32,6 +32,8 @@ mac:
   notarize: false
 dmg:
   sign: false
+  # Name of the disk (and of its window) when the .dmg is opened.
+  title: "Sweetflow - Contanimation_edition 0.1"
   # The window that opens on the .dmg (docs/DEVELOPMENT.md «Imágenes del instalador»):
   # 540×380, the app on the left and Applications on the right (x, y: icon centres). High
   # in the window: Finder's bars can cover its bottom ~60 pt. Finder writes the icons'
