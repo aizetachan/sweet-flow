@@ -234,6 +234,13 @@ imprescindible.
   Con él se generan el `.icns` (Mac) y el `.ico` (Windows).
 - **`icon-win.png`** (opcional): el mismo dibujo ocupando casi todo el cuadrado
   (unos 16 px de margen), para Windows.
+- **`dmg-icon.png`** y **`installer-icon.png`** (1024 × 1024, opcionales): el
+  icono del instalador. En Mac, el del disco que aparece al abrir el `.dmg`
+  (escritorio y barra lateral del Finder); en Windows, el del programa de
+  instalación. Es el icono de la app con una insignia de descarga. Se
+  convierten a `.icns` y `.ico` al prepararlos (`dmg.icon` y
+  `nsis.installerIcon` en `electron-builder.yml`); sin ellos se usa el icono de
+  la app.
 - **`background.png`** (540 × 380 px) y **`background@2x.png`** (1080 × 760 px),
   opcionales: el fondo de la ventana del `.dmg`. Coordenadas en puntos (las de
   540 × 380; en la @2x, el doble), desde la esquina superior izquierda:
