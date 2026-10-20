@@ -617,11 +617,11 @@ button.tree__hint { padding: 0 14px 8px; }
 .dcard--folder:hover .dcard__tab-edge { stroke: rgb(var(--brand-500-rgb) / .8); filter: drop-shadow(0 0 3px rgb(var(--brand-500-rgb) / .5)); }
 .dcard--folder.is-picked .dcard__tab-edge { stroke: var(--brand-300); filter: drop-shadow(0 0 3px rgb(var(--brand-500-rgb) / .9)) drop-shadow(0 0 8px rgb(var(--brand-500-rgb) / .45)); }
 .dcard--folder.is-drop .dcard__tab-edge { stroke: var(--primary); }
-/* One small tab per level of folders inside, to the right of the folder's own
-   tab (which never changes): the same shape, lower and fainter, each one's
+/* One small tab per level of folders inside, coming out from under the
+   folder's own tab (which never changes): the same shape, lower and fainter, each one's
    slope lying over the next. They share at most the space up to 85% of the
    card's width: with more levels each one narrows. */
-.dcard__levels { position: absolute; z-index: 1; top: -9px; left: 118px; right: calc(15% + 18px); height: 9px; display: flex; pointer-events: none; --level-edge: var(--line-0); --level-fill: color-mix(in srgb, var(--bg-3) 70%, var(--bg-0)); }
+.dcard__levels { position: absolute; z-index: 1; top: -9px; left: 86px; right: calc(15% + 18px); height: 9px; display: flex; pointer-events: none; --level-edge: var(--line-0); --level-fill: color-mix(in srgb, var(--bg-3) 70%, var(--bg-0)); }
 .dcard__level { position: relative; flex: 0 1 34px; min-width: 3px; height: 9px; border: 1px solid var(--level-edge); border-right: 0; border-bottom: 0; border-top-left-radius: 7px; background: var(--level-fill); }
 .dcard__level-slope { position: absolute; top: -1px; left: 100%; overflow: visible; }
 .dcard__level-fill { fill: var(--level-fill); }

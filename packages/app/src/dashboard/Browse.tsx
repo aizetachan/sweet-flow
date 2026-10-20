@@ -384,7 +384,8 @@ function EntryItem(p: EntryItemProps) {
             {/* Hides the card's lit top edge where the tab joins it. */}
             <rect x="2" y="14" width="100" height="6" fill="url(#dcard-tab-seam)" />
             <path className="dcard__tab-fill" d="M0 14V12.5Q0 .5 12 .5H78C86 .5 89 2.5 93 7S100 13.5 108 13.5H120V14Z" />
-            <path className="dcard__tab-edge" d="M.5 14V12.5Q.5 .5 12 .5H78C86 .5 89 2.5 93 7S100 13.5 108 13.5H120" />
+            {/* With level tabs coming out from under it, its edge stops where its slope ends. */}
+            <path className="dcard__tab-edge" d={`M.5 14V12.5Q.5 .5 12 .5H78C86 .5 89 2.5 93 7S100 13.5 108 13.5${p.depth ? "" : "H120"}`} />
           </svg>
           {p.depth ? (
             <span className="dcard__levels" aria-hidden="true">
