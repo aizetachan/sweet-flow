@@ -618,17 +618,18 @@ button.tree__hint { padding: 0 14px 8px; }
    ring is not used. Same colours and glow as the other cards' ring. */
 .dcard__outline { position: absolute; top: -14px; left: -1px; z-index: 3; overflow: visible; pointer-events: none; opacity: 0; transition: opacity .18s;
   --edge: transparent; --glow: transparent; --wide: transparent; --deep: transparent; --inner: transparent; }
-.dcard__outline :is(path) { fill: none; }
+/* Only the drawn lines (the masks' shapes keep their fill). */
+.dcard__outline :is(.dcard__outline-edge, .dcard__outline-glow, .dcard__outline-wide, .dcard__outline-deep, .dcard__outline-inner) { fill: none; }
 .dcard__outline-edge { stroke: var(--edge); stroke-width: 1; }
 .dcard__outline-glow { stroke: var(--glow); stroke-width: 1.5; }
 .dcard__outline-wide { stroke: var(--wide); stroke-width: 3; }
 .dcard__outline-deep { stroke: var(--deep); stroke-width: 7; }
-.dcard__outline-inner { stroke: var(--inner); stroke-width: 2; }
+.dcard__outline-inner { stroke: var(--inner); stroke-width: 1; }
 .dcard--folder::after { display: none; }
-.dcard--folder:hover .dcard__outline { opacity: 1; --edge: rgb(var(--brand-500-rgb) / .8); --wide: rgb(var(--brand-500-rgb) / .45); --inner: rgb(var(--brand-500-rgb) / .18); }
+.dcard--folder:hover .dcard__outline { opacity: 1; --edge: rgb(var(--brand-500-rgb) / .8); --wide: rgb(var(--brand-500-rgb) / .45); --inner: rgb(var(--brand-500-rgb) / .06); }
 .dcard--folder:hover .dcard__tab-edge { stroke: transparent; }
 .dcard--folder:hover:not(.is-picked) .dcard__outline-wide { stroke-width: 1.5; }
-.dcard--folder.is-picked .dcard__outline { opacity: 1; --edge: var(--brand-300); --glow: rgb(var(--brand-500-rgb) / .9); --wide: rgb(var(--brand-500-rgb) / .45); --deep: rgb(var(--brand-700-rgb) / .3); --inner: rgb(var(--brand-500-rgb) / .5); }
+.dcard--folder.is-picked .dcard__outline { opacity: 1; --edge: var(--brand-300); --glow: rgb(var(--brand-500-rgb) / .9); --wide: rgb(var(--brand-500-rgb) / .45); --deep: rgb(var(--brand-700-rgb) / .3); --inner: rgb(var(--brand-500-rgb) / .15); }
 .dcard--folder.is-picked .dcard__tab-edge { stroke: transparent; }
 .dcard--folder.is-drop .dcard__tab-edge { stroke: var(--primary); }
 /* One tab per level of folders inside, behind the folder: they come out from
