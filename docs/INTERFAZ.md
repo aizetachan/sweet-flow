@@ -50,6 +50,36 @@ Abrir la app ──▶ 0. Pantalla de carga ──▶ 1. Dashboard ──▶ 2. 
 - En escritorio es lo primero que se pinta en la ventana; en el navegador,
   igual al cargar la página.
 
+## 0.1 Barra de pestañas (app de escritorio)
+
+Solo en la app de escritorio, en la ventana principal: la barra de título es
+una barra de pestañas, como en Figma o en un navegador. Ocupa 40 px arriba,
+tanto en el dashboard como en una producción.
+
+- **Botones del sistema** (cerrar, minimizar, ampliar) dentro de la barra: a la
+  izquierda en Mac, a la derecha en Windows. El espacio vacío de la barra
+  sirve para arrastrar la ventana.
+- **Botón Inicio** (casa): vuelve al dashboard. Está marcado mientras se está en él.
+- **Una pestaña por producción abierta**, a la derecha de Inicio, en el orden
+  en que se abrieron: icono y nombre de la producción. La que se está viendo
+  queda marcada. Se cierra con su ✕ (aparece al pasar el ratón o en la
+  activa) o con el botón central del ratón.
+  - Al abrir una producción se añade su pestaña (si ya estaba, se va a ella).
+  - Ir a Inicio o a otra pestaña **no cierra la producción**: sigue cargada y
+    al volver está como se dejó (lo seleccionado, la vista, los paneles y la
+    posición del tablero).
+  - **Ventanas aparte y paneles flotantes:** al ir a Inicio o a otra pestaña
+    desde una producción que los tiene abiertos se avisa como antes («¿Estás
+    seguro?»): se cierran esas ventanas, pero la producción sigue en su
+    pestaña y no se pierde nada. Lo mismo al cerrar su pestaña.
+  - Al cerrar la pestaña que se está viendo se pasa a la de al lado (o a
+    Inicio si no quedan).
+  - Al cerrar la app y volver a abrirla vuelven las mismas pestañas; se abre en
+    Inicio y cada producción se carga al pulsar su pestaña.
+  - Una producción borrada o en la papelera pierde su pestaña.
+- En el navegador no hay barra: salir de una producción la cierra, como antes.
+- Las ventanas aparte de un nodo no tienen barra de pestañas.
+
 ## 1. Dashboard
 
 Organización tipo Drive, como Frame.io: aquí están todos los proyectos. Es una

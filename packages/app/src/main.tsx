@@ -11,6 +11,8 @@ import { isDesktop } from "./platform";
 
 // The Mac app draws its own title bar: room for the window buttons and a strip to drag the window.
 if (isDesktop() && window.sweetflow?.platform === "darwin") document.documentElement.classList.add("is-mac-app");
+// The main window has a tab bar as its title bar (popped-out windows do not).
+if (isDesktop() && !/^#\/ventana\//.test(location.hash)) document.documentElement.classList.add("has-tabbar");
 
 // Magnific's sign-in comes back to this page in a popup: hand over and close.
 if (handleCallback() || handleCloudCallback()) {

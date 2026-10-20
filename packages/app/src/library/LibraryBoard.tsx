@@ -11,7 +11,7 @@ import { useEffect, useState, type DragEvent, type MouseEvent } from "react";
 import { IconBooks, IconPhotoPlus, IconPlus, IconRefresh, IconStar, IconStarFilled, IconTrash } from "@tabler/icons-react";
 import { libOrder, type Id, type LibraryShare, type Media, type ProdNode } from "@sweetflow/domain";
 import { Button, cx } from "@sweetflow/ui";
-import { useSnap, useStore } from "../state/store";
+import { useKeptScroll, useSnap, useStore } from "../state/store";
 import { Thumb } from "../components/media";
 import { ContextMenu, type MenuAt } from "../components/ContextMenu";
 import { Popover } from "../components/Popover";
@@ -109,6 +109,7 @@ export function LibraryBoard() {
   const groups = groupsOf(snap.library, snap.media);
   const [picked, setPicked] = useState<Id[]>([]);
   const [over, setOver] = useState(false);
+  const keepScroll = useKeptScroll("library");
 
   // Coming from the board: the panel opens on the first group, ready to generate.
   useEffect(() => {
@@ -122,7 +123,7 @@ export function LibraryBoard() {
   };
 
   return (
-    <div className="libb" onClick={(e) => { if (e.target === e.currentTarget) setPicked([]); }}>
+    <div className="libb" data-keep-scroll="library" ref={keepScroll} onClick={(e) => { if (e.target === e.currentTarget) setPicked([]); }}>
       <header className="libb__head">
         <h1>Biblioteca</h1>
         <span className="sf-muted sf-small grow">Grupos de imágenes de referencia. El nombre de cada grupo es el que se usa al llamarlo en los planos.</span>

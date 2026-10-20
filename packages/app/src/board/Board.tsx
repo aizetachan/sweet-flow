@@ -15,7 +15,7 @@ import {
   type StatusDef,
 } from "@sweetflow/domain";
 import { AvatarStack, Button, cx, IconButton, Pill, Segmented } from "@sweetflow/ui";
-import { useSnap, useStore, type CardSize } from "../state/store";
+import { useKeptScroll, useSnap, useStore, type CardSize } from "../state/store";
 import { approvedDurationOf, countsOf, coverOf, durationOf, filtersActive, matches, memberName, presenceAt, statusOf } from "../state/selectors";
 import { Thumb, useDuration } from "../components/media";
 import { Popover } from "../components/Popover";
@@ -33,9 +33,10 @@ export function Board() {
   const p = snap.production;
   const scope = scopeId ? snap.nodes.find((n) => n.id === scopeId) : undefined;
   const roots = scope ? [scope] : childrenOf(snap.nodes, null);
+  const keepScroll = useKeptScroll("board");
 
   return (
-    <main className="board">
+    <main className="board" data-keep-scroll="board" ref={keepScroll}>
       <div className="board__head">
         <div className="board__title">
           <h1>{scope ? <>{showCodes ? <span className="board__code">{codeOf(p, scope)}</span> : null} {scope.title || UNTITLED}</> : "Espacio de trabajo"}</h1>

@@ -34,7 +34,12 @@ function createWindow(): BrowserWindow {
     title: "Sweetflow",
     backgroundColor: "#0b0b0c",
     show: false,
-    titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "default",
+    // The renderer draws the title bar (Home and the production tabs, docs/INTERFAZ.md §0.1), 40 px
+    // tall: the window buttons sit in it, centred (Mac, on the left) or drawn over it (Windows, on the right).
+    titleBarStyle: "hidden",
+    ...(process.platform === "darwin"
+      ? { trafficLightPosition: { x: 14, y: 14 } }
+      : { titleBarOverlay: { color: "#0c0c0d", symbolColor: "#b4b4bb", height: 40 } }),
     webPreferences: webPreferences(),
   });
 

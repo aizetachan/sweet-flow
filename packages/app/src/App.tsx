@@ -3,7 +3,8 @@ import { ImportDialog } from "./components/ImportDialog";
 import { InviteDialog } from "./dashboard/Team";
 import { DelayedTip } from "./components/DelayedTip";
 import { Button, cx, Modal, Spinner } from "@sweetflow/ui";
-import { useStore } from "./state/store";
+import { TABS, useStore } from "./state/store";
+import { TabBar } from "./shell/TabBar";
 import { Dock, Topbar } from "./shell/Shell";
 import { Splash } from "./shell/Splash";
 import { Dashboard } from "./dashboard/Dashboard";
@@ -21,9 +22,16 @@ export function App() {
   const lib = useStore((s) => s.lib);
   const [splash, setSplash] = useState(phase !== "window");
 
+  const screen = phase === "window" ? <PoppedWindow /> : phase === "production" ? <Production /> : <Dashboard />;
   return (
     <>
-      {phase === "window" ? <PoppedWindow /> : phase === "production" ? <Production /> : <Dashboard />}
+      {TABS ? (
+        // Desktop app: the title bar holds the tabs; the screen goes under it.
+        <div className="frame">
+          <TabBar />
+          <div className="frame__body">{screen}</div>
+        </div>
+      ) : screen}
       {/* Notices show everywhere: in the dashboard too. */}
       {phase !== "window" ? <Notice /> : null}
       {phase !== "window" ? <InviteDialog /> : null}
@@ -226,10 +234,14 @@ function LeaveConfirm() {
   const n = floating + popped;
   return (
     <Modal title="Ventanas emergentes abiertas" onClose={() => set({ leaveAsk: null })} width={420}>
-      <p>Tienes {n === 1 ? "una ventana emergente abierta" : `${n} ventanas emergentes abiertas`}. ¿Estás seguro? Al salir de la producción se cerrarán.</p>
+      <p>
+        Tienes {n === 1 ? "una ventana emergente abierta" : `${n} ventanas emergentes abiertas`}. ¿Estás seguro?{" "}
+        {ask.closeId ? "Al cerrar la pestaña se cerrarán." : "Al salir de la producción se cerrarán."}
+        {TABS && !ask.closeId ? " La producción sigue abierta en su pestaña." : null}
+      </p>
       <div className="modal-actions">
         <Button onClick={() => set({ leaveAsk: null })}>No, quedarme</Button>
-        <Button variant="primary" autoFocus onClick={confirmLeave}>Sí, cerrar y salir</Button>
+        <Button variant="primary" autoFocus onClick={confirmLeave}>{ask.closeId ? "Sí, cerrar" : "Sí, cerrar y salir"}</Button>
       </div>
     </Modal>
   );

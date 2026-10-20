@@ -6,14 +6,16 @@
  */
 
 import type { ImportItem } from "../data/source";
+import { useCallback } from "react";
 import { create } from "zustand";
 import { parseAppLink } from "../data/share";
 import { type Access, type Id, type MediaKind, type RowItem } from "@sweetflow/domain";
 import type { DataSource, Snapshot } from "../data/source";
-import type { Library, LibraryState, Pin } from "../data/library";
+import { isInTrash, type Library, type LibraryState, type Pin } from "../data/library";
 import { createLibrary } from "../data";
 import { closePoppedWindow, closePoppedWindows, focusPoppedWindow, hostWindows, onFlashRequest, openerShare, popOutWindow, watchOpener, type PoppedWindow } from "./windows";
 import { nameOf } from "./names";
+import { isDesktop } from "../platform";
 
 export type Phase = "dashboard" | "production" | "window";
 export type View = "board" | "library" | "editor" | "trash";
@@ -98,8 +100,13 @@ interface UiState {
   flash: number;
   /** Windows popped out from this one (own OS/browser windows). */
   popped: PoppedWindow[];
-  /** Asking to confirm leaving the production with windows open; holds where to go. */
-  leaveAsk: { folderId?: Id | null } | null;
+  /**
+   * Asking to confirm leaving the production with windows open; holds where to
+   * go: the dashboard (`folderId`), another tab (`openId`) or closing its tab (`closeId`).
+   */
+  leaveAsk: { folderId?: Id | null; openId?: Id; closeId?: Id } | null;
+  /** Desktop app: productions open in tabs (title bar), in order (docs/INTERFAZ.md §0.1). */
+  tabs: Id[];
 }
 
 const SHOW_CODES_KEY = "sweetflow:show-codes";
@@ -145,6 +152,10 @@ interface Store extends UiState {
   /** Leave the production, asking first if floating panels or popped windows are open. */
   requestLeave: (folderId?: Id | null) => void;
   confirmLeave: () => void;
+  /** Desktop tabs: show that production (asking first if this one has windows open). */
+  openTab: (id: Id) => void;
+  /** Desktop tabs: close a production's tab (asking first if it is showing with windows open). */
+  closeTab: (id: Id) => void;
   floatPanel: (nodeId: Id) => void;
   dockPanel: (key: string) => void;
   closeFloating: (key: string) => void;
@@ -173,6 +184,43 @@ const IDLE: DataSource = new Proxy({} as DataSource, {
     };
   },
 });
+
+/**
+ * Desktop app: productions stay open in tabs (docs/INTERFAZ.md §0.1). Not in a
+ * popped-out window (one node of its opener's production).
+ */
+export const TABS = isDesktop() && !/^#\/ventana\//.test(location.hash);
+const TABS_KEY = "sweetflow:tabs";
+function readTabs(): Id[] {
+  if (!TABS) return [];
+  try {
+    const v: unknown = JSON.parse(localStorage.getItem(TABS_KEY) ?? "[]");
+    return Array.isArray(v) ? v.filter((x): x is Id => typeof x === "string") : [];
+  } catch {
+    return [];
+  }
+}
+function saveTabs(tabs: Id[]): void {
+  try {
+    localStorage.setItem(TABS_KEY, JSON.stringify(tabs));
+  } catch {
+    // Only a convenience.
+  }
+}
+
+/** Where you were in a production: kept while its tab is in the background, back when you return. */
+const KEPT = ["selectedId", "multi", "scopeId", "activeMediaId", "playhead", "view", "sideTab", "libOpenId", "panelTab"] as const;
+type Kept = Pick<UiState, (typeof KEPT)[number]>;
+/** A production open in a background tab: still loaded and up to date, with where you were. */
+interface Parked {
+  source: DataSource;
+  snap: Snapshot | null;
+  unsubscribe: () => void;
+  ui: Kept;
+}
+const parked = new Map<Id, Parked>();
+/** The board's scroll in each production, kept with its tab (the views read it back: `keptScroll`). */
+export const keptScroll = new Map<string, { top: number; left: number }>();
 
 // Nothing selected yet: the left column shows the structure, never an empty panel.
 const PANEL_RESET = { selectedId: null, multi: [], scopeId: null, activeMediaId: null, playhead: 0, playing: false, floating: [], view: "board" as View, sideTab: "structure" as SideTab, libOpenId: null };
@@ -220,6 +268,7 @@ export const useStore = create<Store>((set, get) => ({
   flash: 0,
   popped: [],
   leaveAsk: null,
+  tabs: readTabs(),
   sideTab: "structure",
   set: (patch) => {
     if (patch.showCodes !== undefined) saveShowCodes(patch.showCodes);
@@ -240,7 +289,30 @@ export const useStore = create<Store>((set, get) => ({
   toggleCollapsed: (id) => set({ collapsed: { ...get().collapsed, [id]: !get().collapsed[id] } }),
 
   openProduction: (id, opts) => {
-    get().closeProduction(get().folderId);
+    const st = get();
+    if (TABS && !opts?.windowNodeId) {
+      if (st.phase === "production" && st.productionId === id) {
+        if (opts?.nodeId) st.select(opts.nodeId);
+        if (opts?.mediaId) set({ activeMediaId: opts.mediaId });
+        return;
+      }
+      // The one showing goes to the background in its tab.
+      if (st.phase === "production") parkProduction();
+      if (!get().tabs.includes(id)) set({ tabs: [...get().tabs, id] });
+      const back = parked.get(id);
+      if (back) {
+        parked.delete(id);
+        back.unsubscribe();
+        get().library.touch(id);
+        set({ ...back.ui, floating: [], playing: false, modal: null, source: back.source, snap: back.snap, productionId: id, phase: "production", windowNodeId: null });
+        unsubscribeSource = back.source.subscribe((snap) => set({ snap }));
+        if (opts?.nodeId) queueMicrotask(() => get().select(opts.nodeId!));
+        if (opts?.mediaId) set({ activeMediaId: opts.mediaId });
+        return;
+      }
+    } else {
+      get().closeProduction(get().folderId);
+    }
     const src = opts?.source ?? get().library.open(id);
     sourceIsShared = !!opts?.source;
     if (!opts?.windowNodeId) get().library.touch(id);
@@ -289,9 +361,26 @@ export const useStore = create<Store>((set, get) => ({
   requestLeave: (folderId) => {
     const { floating, popped } = get();
     if (floating.length || popped.length) set({ leaveAsk: { folderId } });
-    else get().closeProduction(folderId);
+    else leaveProduction(folderId);
   },
-  confirmLeave: () => get().closeProduction(get().leaveAsk?.folderId),
+  confirmLeave: () => {
+    const ask = get().leaveAsk ?? {};
+    set({ leaveAsk: null });
+    if (ask.closeId) return closeTabNow(ask.closeId);
+    if (ask.openId) return get().openProduction(ask.openId);
+    leaveProduction(ask.folderId);
+  },
+  openTab: (id) => {
+    const { phase, productionId, floating, popped } = get();
+    if (phase === "production" && productionId === id) return;
+    if (phase === "production" && (floating.length || popped.length)) return set({ leaveAsk: { openId: id } });
+    get().openProduction(id);
+  },
+  closeTab: (id) => {
+    const { phase, productionId, floating, popped } = get();
+    if (phase === "production" && productionId === id && (floating.length || popped.length)) return set({ leaveAsk: { closeId: id } });
+    closeTabNow(id);
+  },
 
   floatPanel: (nodeId) => {
     const { floating, selectedId } = get();
@@ -322,6 +411,12 @@ export const useStore = create<Store>((set, get) => ({
     const prev = get().library;
     if (prev === next) return;
     unsubscribeLibrary();
+    // Background tabs were open on the old storage.
+    for (const [, p] of parked) {
+      p.unsubscribe();
+      p.source.dispose?.();
+    }
+    parked.clear();
     prev.dispose?.();
     set({ library: next, folderId: null });
     unsubscribeLibrary = next.subscribe((lib) => set({ lib }));
@@ -372,6 +467,67 @@ export const useStore = create<Store>((set, get) => ({
 }));
 
 unsubscribeLibrary = library.subscribe((lib) => useStore.setState({ lib }));
+
+/**
+ * Puts the production showing into the background, in its tab: its windows
+ * and floating panels close (the caller asked first), it stays loaded and up
+ * to date, and where you were is kept for when you return.
+ */
+function parkProduction(): void {
+  const st = useStore.getState();
+  const id = st.productionId;
+  if (!id || st.phase !== "production") return;
+  closePoppedWindows();
+  unsubscribeSource();
+  unsubscribeSource = () => undefined;
+  const ui = Object.fromEntries(KEPT.map((k) => [k, st[k]])) as Kept;
+  const board = document.querySelector<HTMLElement>("[data-keep-scroll]");
+  if (board) keptScroll.set(`${id}:${board.dataset.keepScroll}`, { top: board.scrollTop, left: board.scrollLeft });
+  const entry: Parked = { source: st.source, snap: st.snap, unsubscribe: () => undefined, ui };
+  entry.unsubscribe = st.source.subscribe((snap) => (entry.snap = snap));
+  parked.set(id, entry);
+  useStore.setState({ ...PANEL_RESET, source: IDLE, snap: null, productionId: null, phase: "dashboard", popped: [], leaveAsk: null, modal: null });
+}
+
+/** Leaves the production for the dashboard: into its tab in the desktop app, closed in a browser. */
+function leaveProduction(folderId?: Id | null): void {
+  if (!TABS) return useStore.getState().closeProduction(folderId);
+  parkProduction();
+  if (folderId !== undefined) useStore.setState({ folderId, dashSection: "home" });
+}
+
+/** Closes a production's tab: unloaded; if it was showing, the next tab (or the dashboard) shows. */
+function closeTabNow(id: Id): void {
+  const st = useStore.getState();
+  const tabs = st.tabs.filter((t) => t !== id);
+  const p = parked.get(id);
+  if (p) {
+    p.unsubscribe();
+    p.source.dispose?.();
+    parked.delete(id);
+  }
+  if (st.phase === "production" && st.productionId === id) {
+    const at = st.tabs.indexOf(id);
+    const next = tabs[at] ?? tabs[at - 1];
+    st.closeProduction();
+    useStore.setState({ tabs });
+    if (next) st.openProduction(next);
+  } else useStore.setState({ tabs });
+  for (const k of [...keptScroll.keys()]) if (k.startsWith(`${id}:`)) keptScroll.delete(k);
+}
+
+if (TABS) {
+  useStore.subscribe((s, prev) => {
+    if (s.tabs !== prev.tabs) saveTabs(s.tabs);
+    // A production deleted or sent to the trash loses its tab.
+    if (s.lib && s.lib !== prev.lib) {
+      const byId = new Map(s.lib.entries.map((e) => [e.id, e]));
+      const live = new Set(s.lib.entries.filter((e) => e.kind === "production" && !isInTrash(byId, e)).map((e) => e.id));
+      const gone = s.tabs.filter((t) => !live.has(t) && t !== s.productionId);
+      for (const t of gone) closeTabNow(t);
+    }
+  });
+}
 
 /** The version a popped window opens on (from its address). */
 export let windowMediaId: Id | null = null;
@@ -432,6 +588,29 @@ if (popped) {
   hostWindows(
     { productionId: () => useStore.getState().productionId, source: () => useStore.getState().source },
     (list) => useStore.setState({ popped: list }),
+  );
+}
+
+/**
+ * A scrolling view that keeps its scroll with the production's tab: mark it
+ * `data-keep-scroll={key}` and give it this ref; coming back to the tab puts
+ * it where it was.
+ */
+export function useKeptScroll(key: string): (el: HTMLElement | null) => void {
+  const productionId = useStore((s) => s.productionId);
+  return useCallback(
+    (el: HTMLElement | null) => {
+      if (!el || !productionId) return;
+      const k = `${productionId}:${key}`;
+      const at = keptScroll.get(k);
+      if (!at) return;
+      keptScroll.delete(k);
+      requestAnimationFrame(() => {
+        el.scrollTop = at.top;
+        el.scrollLeft = at.left;
+      });
+    },
+    [productionId, key],
   );
 }
 
