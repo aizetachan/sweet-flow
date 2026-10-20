@@ -614,7 +614,8 @@ button.tree__hint { padding: 0 14px 8px; }
 .dcard__thumb, .dcard__folder { aspect-ratio: 16 / 9; border-radius: calc(var(--r-lg) - 1px) calc(var(--r-lg) - 1px) 0 0; display: grid; place-items: center; position: relative; overflow: hidden; }
 .dcard__thumb { background: radial-gradient(120% 140% at 0% 0%, rgb(var(--brand-300-rgb) / .16), transparent 55%), radial-gradient(120% 140% at 100% 100%, rgb(var(--brand-500-rgb) / .2), transparent 55%), var(--bg-3); }
 /* The block in the middle of a production card: its cover, or its initials on a 20 % black. */
-.dcard__cover { position: absolute; inset: 12px; display: grid; place-items: center; overflow: hidden; border-radius: 10px; background: rgb(0 0 0 / .2); }
+/* Same inset and corner as the pin and «⋯» buttons, so their corners line up with it. */
+.dcard__cover { position: absolute; inset: 6px; display: grid; place-items: center; overflow: hidden; border-radius: var(--r-md); background: rgb(0 0 0 / .2); }
 .dcard__cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .dcard__initials { font-size: 30px; font-weight: 700; letter-spacing: -.03em; color: var(--fg-1); opacity: .85; }
 .dcard__format { position: absolute; left: 8px; bottom: 8px; padding: 2px 7px; border-radius: 99px; font-size: 11px; background: #000a; color: var(--fg-1); }
@@ -670,8 +671,10 @@ button.tree__hint { padding: 0 14px 8px; }
 .dentry__rename { height: 26px; padding: 0 6px; width: 100%; }
 .dentry__ficon { color: var(--fg-4); flex: none; }
 /* Pin a card: top left, like «⋯» on the right; shows on hover, and stays (yellow) once pinned. */
-.dentry__pin { position: absolute; top: 6px; left: 6px; z-index: 3; display: flex; padding: 2px; border-radius: var(--r-md); background: var(--bg-3); opacity: 0; transition: opacity .1s; }
+.dentry__pin { position: absolute; top: 6px; left: 6px; z-index: 3; display: flex; padding: 2px; border-radius: var(--r-md); background: var(--bg-3); box-shadow: 0 1px 6px rgb(0 0 0 / .45); opacity: 0; transition: opacity .1s; }
 .dcard:hover .dentry__pin, .dcard:has(:focus-visible) .dentry__pin, .dentry__pin.is-on { opacity: 1; }
+/* Pinned: solid like «⋯» (not the generic .is-on tint), so it shows over a cover. */
+.dentry__pin.is-on { background: var(--bg-3); }
 .dentry__pin.is-on .sf-icon-btn { color: var(--warn); }
 .dentry__acts { position: absolute; top: 6px; right: 6px; display: flex; gap: 2px; padding: 2px; border-radius: var(--r-md); background: var(--bg-3); opacity: 0; transition: opacity .1s; }
 /* Only on hover, or keyboard focus: a mouse click leaves focus on the button and must not keep them shown. */
