@@ -383,16 +383,15 @@ function EntryItem(p: EntryItemProps) {
             </defs>
             {/* Hides the card's lit top edge where the tab joins it. */}
             <rect x="2" y="14" width="100" height="6" fill="url(#dcard-tab-seam)" />
-            <path className="dcard__tab-fill" d="M0 14V12.5Q0 .5 12 .5H78C86 .5 89 2.5 93 7S100 13.5 108 13.5H120V14Z" />
-            {/* With level tabs coming out from under it, its edge stops where its slope ends. */}
+            <path className="dcard__tab-fill" d="M0 14V12.5Q0 .5 12 .5H78C86 .5 89 2.5 93 7S100 13.5 108 13.5V14Z" />
             {p.depth ? (
               <>
                 {/* The slope's lower part lies over the level tabs: inside the outline, so it never lights up. */}
-                <path className="dcard__tab-edge" d="M.5 14V12.5Q.5 .5 12 .5H78C85.04 .5 88.21 2.05 91.59 5.48" />
+                <path className="dcard__tab-edge" d="M.5 15V12.5Q.5 .5 12 .5H78C85.04 .5 88.21 2.05 91.59 5.48" />
                 <path className="dcard__tab-inner" d="M91.59 5.48C92.05 5.95 92.52 6.46 93 7C97 11.5 100 13.5 108 13.5" />
               </>
             ) : (
-              <path className="dcard__tab-edge" d="M.5 14V12.5Q.5 .5 12 .5H78C86 .5 89 2.5 93 7S100 13.5 108 13.5H120" />
+              <path className="dcard__tab-edge" d="M.5 15V12.5Q.5 .5 12 .5H78C86 .5 89 2.5 93 7S100 13.5 108 13.5" />
             )}
           </svg>
           {p.depth ? (
