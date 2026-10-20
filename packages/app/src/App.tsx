@@ -12,6 +12,7 @@ import { Board } from "./board/Board";
 import { DockedInspector, FloatingInspectors, WindowInspector } from "./inspector/Inspector";
 import { Modals } from "./settings/Modals";
 import { LibraryBoard, LibraryTree } from "./library/LibraryBoard";
+import { EditorView } from "./views/EditorView";
 import { TrashView } from "./views/TrashView";
 
 /** Splash → dashboard → production (docs/INTERFAZ.md). Popped-out windows show one node. */
@@ -56,7 +57,7 @@ function Production() {
             <SidePanel />
             <LibraryBoard />
           </Workspace>
-        ) : <TrashView />}
+        ) : view === "editor" ? <EditorView /> : <TrashView />}
       </div>
       <Dock />
       <FloatingInspectors />

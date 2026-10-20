@@ -231,8 +231,10 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
     avatar indica que Magnific está conectada. Es la conexión real hecha en
     Ajustes del dashboard (en la demo, la cuenta de ejemplo).
 - **Cabecera del tablero:** el título y un contador con el número de planos.
-- **Secciones** (Producción, Biblioteca, Papelera, Ajustes): barra **flotante
-  centrada abajo**, para que el tablero tenga todo el ancho.
+- **Secciones:** barra **flotante centrada abajo**, para que el tablero tenga
+  todo el ancho. Producción, Biblioteca y Editor llevan icono y texto. Tras un
+  separador van solo con icono la Papelera (con su número) y Ajustes.
+  - **Editor:** página por definir; de momento muestra «Próximamente».
 - **Clic en una tarjeta** abre siempre su panel en **Producir** (aunque antes
   se estuviera en Revisión o Actividad, y también al pulsar la misma otra vez).
 - **Clic derecho** en una tarjeta abre su menú, titulado «Menú» (sin repetir el
@@ -598,7 +600,8 @@ y «Tomas» por separado):
   - Tecla **Supr** (o borrar) con lo seleccionado en el tablero o el árbol;
     con selección múltiple, todo lo seleccionado. Nunca mientras se escribe.
   - En el árbol de Explorer.
-- **Papelera** en la barra de secciones de abajo, con el número de elementos.
+- **Papelera** en la barra de secciones de abajo, solo con icono, junto a
+  Ajustes, con el número de elementos.
   Lista cada elemento con su código, título, dónde estaba, qué contiene y
   cuándo se quitó:
   - **Restaurar** lo devuelve a su sitio. Si su código se ha usado mientras

@@ -16,7 +16,7 @@ import { closePoppedWindow, closePoppedWindows, focusPoppedWindow, hostWindows, 
 import { nameOf } from "./names";
 
 export type Phase = "dashboard" | "production" | "window";
-export type View = "board" | "library" | "trash";
+export type View = "board" | "library" | "editor" | "trash";
 export type CardSize = "s" | "m" | "l";
 export type PanelTab = "produce" | "cut" | "review" | "activity";
 export type DashLayout = "grid" | "list";

@@ -9,6 +9,7 @@ import {
   IconFolderOff,
   IconLayoutBoard,
   IconLibraryPhoto,
+  IconMovie,
   IconSettings,
   IconTrash,
   IconUsers,
@@ -29,6 +30,7 @@ import { SignInButton } from "../dashboard/Welcome";
 const NAV: Array<{ id: View; label: string; icon: typeof IconLayoutBoard }> = [
   { id: "board", label: "Producción", icon: IconLayoutBoard },
   { id: "library", label: "Biblioteca", icon: IconLibraryPhoto },
+  { id: "editor", label: "Editor", icon: IconMovie },
 ];
 
 /** Production sections, floating at the bottom centre so the board keeps the full width. */
@@ -44,12 +46,11 @@ export function Dock() {
           <span>{n.label}</span>
         </button>
       ))}
-      <button className={cx("dock__item", view === "trash" && "dock__item--on")} onClick={() => set({ view: "trash" })} title="Papelera de la producción">
+      <span className="dock__sep" />
+      <button className={cx("dock__item dock__item--icon", view === "trash" && "dock__item--on")} aria-label="Papelera" onClick={() => set({ view: "trash" })} title="Papelera de la producción">
         <IconTrash size={17} stroke={1.6} />
-        <span>Papelera</span>
         {trashed ? <span className="dock__count">{trashed}</span> : null}
       </button>
-      <span className="dock__sep" />
       <button className="dock__item dock__item--icon" aria-label="Ajustes" title="Ajustes de la producción" onClick={() => set({ modal: "settings", settingsTab: "levels" })}>
         <IconSettings size={17} stroke={1.6} />
       </button>
