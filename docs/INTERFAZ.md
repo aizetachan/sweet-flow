@@ -212,7 +212,8 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
 - **Vistas:** cuadrícula (tarjetas) y lista. Cada producción muestra:
   miniatura, progreso por estados, última modificación y quién trabaja en ella.
   En la cuadrícula, la tarjeta de una carpeta tiene arriba la **pestaña de una
-  carpeta**; por lo demás es igual que antes (al pasar el ratón o
+  carpeta** y es toda de un mismo color (su bloque de nombre no tiene un fondo
+  distinto, a diferencia de las producciones); por lo demás es igual que antes (al pasar el ratón o
   seleccionarla, la pestaña se ilumina con el mismo neón).
   - **Niveles:** de debajo de esa pestaña, que nunca cambia, sale una
     pestaña discreta, con la misma forma y altura, por cada **nivel** de carpetas que hay dentro

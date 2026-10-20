@@ -616,6 +616,9 @@ button.tree__hint { padding: 0 14px 8px; }
 /* Folder card: a tab rises from its top edge, as on a folder. It takes the
    space above the card, so the card itself keeps its size. */
 .dcard--folder { margin-top: 13px; border-top-left-radius: 0; }
+/* The whole folder card in one colour (its info block has no fill of its own): folders read apart from productions. */
+.dcard.dcard--folder { background: var(--bg-3); }
+.dcard.dcard--folder.is-picked { background: linear-gradient(rgb(var(--neon-deep) / .07), rgb(var(--neon-deep) / .07)), var(--bg-3); }
 .dcard--folder .dcard__folder { border-top-left-radius: 0; }
 .dcard__tab { position: absolute; top: -14px; left: -1px; z-index: 2; overflow: visible; pointer-events: none; }
 .dcard__tab-fill { fill: var(--bg-3); }
