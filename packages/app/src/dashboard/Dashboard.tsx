@@ -71,7 +71,7 @@ function Sidebar({ lib }: { lib: LibraryState }) {
     <aside className="dside">
       <div className="dside__brand">
         <span className="dside__logo"><LogoMark /></span>
-        <span className="dside__name">Sweet Flow</span>
+        <span className="dside__name">Sweetflow</span>
       </div>
 
       <nav className="dside__nav">

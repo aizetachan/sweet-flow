@@ -7,14 +7,21 @@
  * pulled into a short tail. At its slot each drop changes shape into its
  * letter — the letter's real outline, traced from the font (liquid.ts), with
  * the same amount of liquid — loses its shine and ends as the crisp text, with
- * a small settling wobble. When the word is complete, the app is ready and a
+ * a small settling wobble. The logo above the word forms the same way: its two
+ * parts (the stroke and the dot) are two more drops. When the word is complete, the app is ready and a
  * minimum time has passed, the overlay fades out.
  */
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { OUTER_POINTS, traceGlyph, type Glyph } from "./liquid";
+import { OUTER_POINTS, traceGlyph, tracePath, type Glyph } from "./liquid";
+import { LOGO_PATHS, LOGO_VIEWBOX } from "./Logo";
 
-const WORD = "Sweet Flow";
+const WORD = "Sweetflow";
+/** What becomes a drop: the logo's parts first, then the word's letters (spaces stay empty). */
+type Piece = { logo: string } | { ch: string };
+const PIECES: Piece[] = [...LOGO_PATHS.map((d) => ({ logo: d })), ...[...WORD].map((ch) => ({ ch }))];
+const isGap = (p: Piece) => "ch" in p && p.ch === " ";
+const FIRST_LETTER = LOGO_PATHS.length;
 const MIN_MS = 2000;
 /** How long the finished word stays before fading out. */
 const HOLD_MS = 1300;
@@ -225,7 +232,7 @@ function dropPath(g: Glyph, pose: Pose, t: number, phase: number): string {
 export function Splash({ ready, onDone }: { ready: boolean; onDone: () => void }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const measureRefs = useRef<(HTMLSpanElement | null)[]>([]);
-  const drops = useRef<DropEls[]>([...WORD].map(() => ({ path: null, glyph: null, mix: null, shine: null, shadow: null })));
+  const drops = useRef<DropEls[]>(PIECES.map(() => ({ path: null, glyph: null, mix: null, shine: null, shadow: null })));
   const onDoneRef = useRef(onDone);
   onDoneRef.current = onDone;
 
@@ -286,17 +293,22 @@ export function Splash({ ready, onDone }: { ready: boolean; onDone: () => void }
 
     // The splash's font, as the canvas needs it to trace the letters.
     const fontOf = () => {
-      const el = measureRefs.current.find(Boolean);
+      const el = measureRefs.current[FIRST_LETTER];
       const cs = el ? getComputedStyle(el) : null;
       return cs ? `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}` : "";
     };
-    // Each letter's outline, traced from the font.
+    // Each letter's outline, traced from the font; the logo's parts, from their paths.
     let glyphs: (Glyph | null)[] = [];
     const trace = () => {
       const font = fontOf();
-      glyphs = [...WORD].map((ch, i) => (ch === " " || !sizes[i] || !font ? null : traceGlyph(ch, font, sizes[i]!.x, sizes[i]!.y)));
+      glyphs = PIECES.map((p, i) => {
+        const size = sizes[i];
+        if (isGap(p) || !size) return null;
+        if ("logo" in p) return tracePath(p.logo, LOGO_VIEWBOX, size.x, size.y);
+        return font ? traceGlyph(p.ch, font, size.x, size.y) : null;
+      });
     };
-    const phases = [...WORD].map(() => rand(0, Math.PI * 2));
+    const phases = PIECES.map(() => rand(0, Math.PI * 2));
     let clock = 0;
 
     const place = (i: number, pose: Pose) => {
@@ -356,7 +368,7 @@ export function Splash({ ready, onDone }: { ready: boolean; onDone: () => void }
       if (!alive || plans.length) return;
       const box = measure();
       trace();
-      plans = targets.map((p, i) => (WORD[i] === " " || !p ? null : planLetter(p, sizes[i]!, box.width, box.height)));
+      plans = targets.map((p, i) => (isGap(PIECES[i]!) || !p ? null : planLetter(p, sizes[i]!, box.width, box.height)));
       const done = Math.max(...plans.map((p) => (p ? p.arrive + LAND_MS : 0)));
       const t0 = performance.now();
       const frame = (now: number) => {
@@ -417,21 +429,20 @@ export function Splash({ ready, onDone }: { ready: boolean; onDone: () => void }
     };
   }, []);
 
-  const letters = [...WORD];
   return (
     <div
       ref={rootRef}
       className={`splash${fading ? " splash--out" : ""}`}
       role="status"
-      aria-label="Cargando Sweet Flow"
+      aria-label="Cargando Sweetflow"
       style={{ ["--word-out" as string]: `${WORD_OUT_MS}ms`, ["--bg-delay" as string]: `${BG_DELAY_MS}ms`, ["--bg-out" as string]: `${BG_OUT_MS}ms` }}
       onPointerDown={() => finish(0)}
     >
       {/* The drops: one outline per letter, each with its light (shading, shine, shadow on the surface). */}
       <svg className="splash__drops" aria-hidden="true">
         <defs>
-          {letters.map((ch, i) =>
-            ch === " " ? null : (
+          {PIECES.map((piece, i) =>
+            isGap(piece) ? null : (
               <filter key={i} id={`sf-drop-${i}`} x="-50%" y="-50%" width="200%" height="200%" colorInterpolationFilters="sRGB">
                 <feGaussianBlur in="SourceAlpha" stdDeviation="6" result="height" />
                 <feDiffuseLighting in="height" surfaceScale="7" diffuseConstant="1.3" lightingColor="#ffffff" result="diffuse">
@@ -455,19 +466,28 @@ export function Splash({ ready, onDone }: { ready: boolean; onDone: () => void }
             ),
           )}
         </defs>
-        {letters.map((ch, i) =>
-          ch === " " ? null : <path key={i} className="splash__drop" fillRule="evenodd" filter={`url(#sf-drop-${i})`} ref={(el) => (drops.current[i]!.path = el)} />,
+        {PIECES.map((piece, i) =>
+          isGap(piece) ? null : <path key={i} className="splash__drop" fillRule="evenodd" filter={`url(#sf-drop-${i})`} ref={(el) => (drops.current[i]!.path = el)} />,
         )}
       </svg>
-      {/* Laid-out copy of the word: only used to measure each letter's slot. */}
+      {/* Laid-out copy of the logo and the word: only used to measure each piece's slot (both logo parts share its box). */}
       <div className="splash__measure" aria-hidden="true">
-        {letters.map((ch, i) => (
-          <span key={i} ref={(el) => (measureRefs.current[i] = el)}>{ch === " " ? " " : ch}</span>
-        ))}
+        <span className="splash__logo" ref={(el) => LOGO_PATHS.forEach((_, i) => (measureRefs.current[i] = el))} />
+        <div className="splash__word">
+          {[...WORD].map((ch, i) => (
+            <span key={i} ref={(el) => (measureRefs.current[FIRST_LETTER + i] = el)}>{ch}</span>
+          ))}
+        </div>
       </div>
-      {letters.map((ch, i) =>
-        ch === " " ? null : (
-          <span key={i} className="splash__letter" aria-hidden="true" ref={(el) => (drops.current[i]!.glyph = el)}>{ch}</span>
+      {PIECES.map((piece, i) =>
+        isGap(piece) ? null : "logo" in piece ? (
+          <span key={i} className="splash__letter splash__logo" aria-hidden="true" ref={(el) => (drops.current[i]!.glyph = el)}>
+            <svg width="100%" height="100%" viewBox={`0 0 ${LOGO_VIEWBOX} ${LOGO_VIEWBOX}`} fill="currentColor">
+              <path d={piece.logo} />
+            </svg>
+          </span>
+        ) : (
+          <span key={i} className="splash__letter" aria-hidden="true" ref={(el) => (drops.current[i]!.glyph = el)}>{piece.ch}</span>
         ),
       )}
     </div>

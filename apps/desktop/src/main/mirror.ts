@@ -13,7 +13,7 @@ let port: MessagePortMain | null = null;
 
 export function startMirror(): void {
   if (child) return;
-  child = utilityProcess.fork(path.join(__dirname, "mirror.cjs"), [], { serviceName: "Sweet Flow Mirror" });
+  child = utilityProcess.fork(path.join(__dirname, "mirror.cjs"), [], { serviceName: "Sweetflow Mirror" });
 
   const { port1, port2 } = new MessageChannelMain();
   port = port1;

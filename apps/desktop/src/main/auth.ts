@@ -12,9 +12,9 @@ import type { AddressInfo } from "node:net";
 export const AUTH_PORT = 53134;
 const TIMEOUT_MS = 10 * 60_000;
 
-const PAGE = `<!doctype html><meta charset="utf-8"><title>Sweet Flow</title>
+const PAGE = `<!doctype html><meta charset="utf-8"><title>Sweetflow</title>
 <body style="font:15px -apple-system,system-ui,sans-serif;background:#0b0b0c;color:#e8e8ea;display:grid;place-items:center;height:100vh;margin:0">
-<p>Listo. Ya puedes volver a Sweet Flow y cerrar esta pestaña.</p></body>`;
+<p>Listo. Ya puedes volver a Sweetflow y cerrar esta pestaña.</p></body>`;
 
 let server: http.Server | null = null;
 let waiting: { path: string; done: Promise<string>; resolve: (q: string) => void; reject: (e: Error) => void; timer: NodeJS.Timeout } | null = null;

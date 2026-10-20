@@ -26,7 +26,7 @@ export async function checkForUpdates(): Promise<void> {
         buttons: ["Descargar", "Más tarde"],
         defaultId: 0,
         cancelId: 1,
-        message: `Hay una versión nueva de Sweet Flow (${info.version})`,
+        message: `Hay una versión nueva de Sweetflow (${info.version})`,
         detail: "Esta versión no está firmada, así que la actualización se instala a mano: descarga el .dmg y reemplaza la app.",
       });
       if (response === 0) void shell.openExternal(RELEASES_URL);

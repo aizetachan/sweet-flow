@@ -60,7 +60,7 @@ export function TeamPage({ lib }: { lib: LibraryState }) {
         {team.canInvite ? <Button variant="primary" onClick={() => set({ inviteTo: { access: [] } })}><IconUserPlus size={15} /> Invitar</Button> : null}
       </header>
       <p className="sf-muted team__lead">
-        Cada persona entra con su cuenta de Magnific. Lo que le das aquí es lo que ve en Sweet Flow y lo que se le comparte en {storageName(lib) ?? "Dropbox o Google Drive"}: nada más.
+        Cada persona entra con su cuenta de Magnific. Lo que le das aquí es lo que ve en Sweetflow y lo que se le comparte en {storageName(lib) ?? "Dropbox o Google Drive"}: nada más.
         {team.mounted ? ` Estás en «${team.mounted.name}», una carpeta compartida contigo.` : ""}
       </p>
       {!lib.me.email ? <p className="note">Conecta Magnific (Ajustes › Integraciones): tu cuenta de Magnific es quien eres en el equipo.</p> : null}
@@ -180,7 +180,7 @@ function InviteForm() {
         {lib.mode === "demo"
           ? "En la demo se apunta en el equipo, pero no se comparte nada."
           : where
-            ? `${where} le compartirá esas carpetas a ${other && storageEmail ? storageEmail : email || "esa persona"} y le avisará. Verá en Sweet Flow y en ${where} solo eso.`
+            ? `${where} le compartirá esas carpetas a ${other && storageEmail ? storageEmail : email || "esa persona"} y le avisará. Verá en Sweetflow y en ${where} solo eso.`
             : "La carpeta del equipo está en este ordenador: tendrás que compartir tú esas carpetas en Dropbox o Drive."}
       </p>
       <div className="modal-foot">

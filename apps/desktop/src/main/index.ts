@@ -31,7 +31,7 @@ function createWindow(): BrowserWindow {
     height: 900,
     minWidth: 1024,
     minHeight: 640,
-    title: "Sweet Flow",
+    title: "Sweetflow",
     backgroundColor: "#0b0b0c",
     show: false,
     titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "default",
@@ -82,6 +82,10 @@ function lockNavigation(win: BrowserWindow): void {
     if (!isAppUrl(url)) e.preventDefault();
   });
 }
+
+// The data folder keeps the app's first name ("Sweet Flow"), so renaming the app
+// does not lose the sessions and the team folder already saved there.
+app.setPath("userData", path.join(app.getPath("appData"), "Sweet Flow"));
 
 registerAppScheme();
 

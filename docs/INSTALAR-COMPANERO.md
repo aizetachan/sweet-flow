@@ -22,27 +22,27 @@ sus propias cuentas.
 6. **Compartir la carpeta del equipo** con su cuenta, desde Dropbox o Drive.
 
 El instalador sale en
-`apps/desktop/release/Sweet Flow-<versión>-mac-universal.dmg`. Vale para Macs
+`apps/desktop/release/Sweetflow-<versión>-mac-universal.dmg`. Vale para Macs
 con chip Apple y para Intel.
 
 ## Lo que hace tu compañero
 
-1. Abre el `.dmg` y arrastra **Sweet Flow** a *Aplicaciones*.
+1. Abre el `.dmg` y arrastra **Sweetflow** a *Aplicaciones*.
 2. La primera vez, hace clic derecho sobre la app y pulsa **Abrir** y otra vez
    **Abrir**. Hace falta porque la app no está firmada por Apple.
 3. Si macOS dice que la app «está dañada», ejecuta en Terminal:
 
    ```bash
-   xattr -dr com.apple.quarantine "/Applications/Sweet Flow.app"
+   xattr -dr com.apple.quarantine "/Applications/Sweetflow.app"
    ```
 
 4. Pulsa **Conectarse** y entra con **su** cuenta de Magnific.
 5. En **Ajustes › Almacenamiento** conecta **su** Google Drive o Dropbox y elige
    la carpeta del equipo que le has compartido.
    - Con Google sale «Google no ha verificado esta aplicación». Tiene que pulsar
-     **Configuración avanzada › Ir a Sweet Flow (no seguro)** y luego
+     **Configuración avanzada › Ir a Sweetflow (no seguro)** y luego
      **Continuar**. Es normal.
-   - El navegador mostrará «Listo. Ya puedes volver a Sweet Flow»: vuelve a la
+   - El navegador mostrará «Listo. Ya puedes volver a Sweetflow»: vuelve a la
      app.
 
 ## Límites a tener en cuenta

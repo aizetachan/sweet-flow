@@ -2,8 +2,8 @@
 # Signing is added later (Developer ID + notarization / Trusted Signing)
 # without touching the app: fill in identity / signing options here.
 appId: com.sweetflow.app
-productName: Sweet Flow
-copyright: Copyright © Sweet Flow
+productName: Sweetflow
+copyright: Copyright © Sweetflow
 directories:
   output: release
   buildResources: build

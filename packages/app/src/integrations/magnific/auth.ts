@@ -55,14 +55,14 @@ async function clientId(redirect: string): Promise<string> {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({
-      client_name: "Sweet Flow",
+      client_name: "Sweetflow",
       redirect_uris: [redirect],
       grant_types: ["authorization_code", "refresh_token"],
       response_types: ["code"],
       token_endpoint_auth_method: "none",
     }),
   });
-  if (!r.ok) throw new Error(`Magnific no ha aceptado registrar Sweet Flow (${r.status}).`);
+  if (!r.ok) throw new Error(`Magnific no ha aceptado registrar Sweetflow (${r.status}).`);
   const id = ((await r.json()) as { client_id: string }).client_id;
   localStorage.setItem(KEY_CLIENT, JSON.stringify({ id, redirect }));
   return id;

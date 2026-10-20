@@ -1,6 +1,6 @@
 /**
  * Vector outlines for the loading splash's drops: each letter is traced from
- * the real font (rendered on a canvas, then followed with marching squares)
+ * the real font (and each part of the logo from its SVG path) (rendered on a canvas, then followed with marching squares)
  * into closed contours, resampled to a fixed number of points so a round drop
  * can turn into the letter point by point.
  */
@@ -133,6 +133,28 @@ function alignStart(c: Pt[], center: Pt): Pt[] {
 
 /** Traces one letter, drawn with `font` in a `w`×`h` box (line-height 1). Null if nothing came out. */
 export function traceGlyph(ch: string, font: string, w: number, h: number): Glyph | null {
+  return traceDrawing(w, h, (ctx) => {
+    ctx.font = font;
+    ctx.textBaseline = "alphabetic";
+    const m = ctx.measureText(ch);
+    const ascent = m.fontBoundingBoxAscent ?? m.actualBoundingBoxAscent;
+    const descent = m.fontBoundingBoxDescent ?? m.actualBoundingBoxDescent;
+    // Where the browser puts the baseline in a line box as tall as the letter's (line-height 1).
+    const baseline = (h - (ascent + descent)) / 2 + ascent;
+    ctx.fillText(ch, 0, baseline);
+  });
+}
+
+/** Traces an SVG path (`d`, in a square `viewBox` units wide) drawn to fill a `w`×`h` box. */
+export function tracePath(d: string, viewBox: number, w: number, h: number): Glyph | null {
+  return traceDrawing(w, h, (ctx) => {
+    ctx.scale(w / viewBox, h / viewBox);
+    ctx.fill(new Path2D(d));
+  });
+}
+
+/** Draws into a `w`×`h` box (with `draw`, in CSS pixels) and traces the ink into a Glyph. */
+function traceDrawing(w: number, h: number, draw: (ctx: CanvasRenderingContext2D) => void): Glyph | null {
   const pad = 4;
   const cw = Math.ceil((w + pad * 2) * RES);
   const chh = Math.ceil((h + pad * 2) * RES);
@@ -142,15 +164,9 @@ export function traceGlyph(ch: string, font: string, w: number, h: number): Glyp
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
   if (!ctx) return null;
   ctx.scale(RES, RES);
-  ctx.font = font;
-  ctx.textBaseline = "alphabetic";
-  const m = ctx.measureText(ch);
-  const ascent = m.fontBoundingBoxAscent ?? m.actualBoundingBoxAscent;
-  const descent = m.fontBoundingBoxDescent ?? m.actualBoundingBoxDescent;
-  // Where the browser puts the baseline in a line box as tall as the letter's (line-height 1).
-  const baseline = (h - (ascent + descent)) / 2 + ascent;
+  ctx.translate(pad, pad);
   ctx.fillStyle = "#000";
-  ctx.fillText(ch, pad, pad + baseline);
+  draw(ctx);
   const loops = contours(ctx.getImageData(0, 0, cw, chh).data, cw, chh).map((l) => l.map((p) => ({ x: p.x / RES - pad, y: p.y / RES - pad })));
   if (!loops.length) return null;
   loops.sort((a, b) => Math.abs(area(b)) - Math.abs(area(a)));

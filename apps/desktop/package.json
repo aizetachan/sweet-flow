@@ -1,10 +1,10 @@
 {
   "name": "@sweetflow/desktop",
-  "productName": "Sweet Flow",
+  "productName": "Sweetflow",
   "version": "0.0.0",
   "private": true,
-  "description": "Sweet Flow — escritorio (macOS + Windows)",
-  "author": "Sweet Flow",
+  "description": "Sweetflow — escritorio (macOS + Windows)",
+  "author": "Sweetflow",
   "main": "out/main.cjs",
   "scripts": {
     "dev": "node scripts/dev.mjs",

@@ -537,7 +537,7 @@ Mac y en Windows, **pesa más que el motor sea idéntico que el tamaño de la ap
   después, sin cambiar la arquitectura.
   - **macOS** (`.dmg`, universal arm64 + x64): clic derecho → Abrir, o
     *Ajustes → Privacidad y seguridad → Abrir igualmente*. Si macOS dice que la
-    app "está dañada": `xattr -dr com.apple.quarantine "/Applications/Sweet Flow.app"`.
+    app "está dañada": `xattr -dr com.apple.quarantine "/Applications/Sweetflow.app"`.
   - **Windows** (instalador NSIS): en SmartScreen, *Más información →
     Ejecutar de todos modos*.
   - **Actualizaciones:** en Windows, el auto-update funciona sin firma. En macOS

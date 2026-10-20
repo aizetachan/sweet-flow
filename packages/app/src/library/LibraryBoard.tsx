@@ -174,7 +174,7 @@ function SharedLibraries() {
         <div key={l.productionId} className="libb__from">
           <div className="libb__fromhead">
             <span>De <b>{l.name}</b></span>
-            <span className="sf-faint sf-small">{l.share.scope === "all" ? "compartida con todo Sweet Flow" : `compartida con «${folderName(l.share.folderId)}»`}</span>
+            <span className="sf-faint sf-small">{l.share.scope === "all" ? "compartida con todo Sweetflow" : `compartida con «${folderName(l.share.folderId)}»`}</span>
             <span className="grow" />
             <button className="link sf-small" onClick={() => { useStore.getState().openProduction(l.productionId); useStore.getState().set({ view: "library" }); }}>Abrir «{l.name}»</button>
           </div>
@@ -229,7 +229,7 @@ function ShareLibrary() {
       if (f) folders.push({ id: f.id, name: f.name });
     }
   }
-  const label = !share ? "Compartir biblioteca" : share.scope === "all" ? "Compartida con todo Sweet Flow" : `Compartida con «${folders.find((f) => f.id === share.folderId)?.name ?? "una carpeta"}»`;
+  const label = !share ? "Compartir biblioteca" : share.scope === "all" ? "Compartida con todo Sweetflow" : `Compartida con «${folders.find((f) => f.id === share.folderId)?.name ?? "una carpeta"}»`;
   const pick = (next: LibraryShare | null) => source.setLibraryShare(next);
   const on = (s: LibraryShare) => JSON.stringify(s) === JSON.stringify(share ?? null);
   return (
@@ -249,7 +249,7 @@ function ShareLibrary() {
               Las producciones de «{f.name}»
             </button>
           ))}
-          <button className={cx("libshare__scope", on({ scope: "all" }) && "is-on")} onClick={() => pick({ scope: "all" })}>Todo Sweet Flow</button>
+          <button className={cx("libshare__scope", on({ scope: "all" }) && "is-on")} onClick={() => pick({ scope: "all" })}>Todo Sweetflow</button>
         </div>
       ) : null}
     </Popover>

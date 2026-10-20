@@ -80,7 +80,7 @@ export function Profile({ lib }: { lib: LibraryState }) {
   // With Magnific connected, the person is their Magnific account (docs/USUARIOS.md §1).
   if (identity && lib.mode !== "demo") {
     return (
-      <Section title="Perfil" hint="Tu cuenta de Magnific es quien eres en Sweet Flow: con ella te reconoce el equipo en cualquier ordenador. Tu cuenta de Dropbox o Drive puede ser otra.">
+      <Section title="Perfil" hint="Tu cuenta de Magnific es quien eres en Sweetflow: con ella te reconoce el equipo en cualquier ordenador. Tu cuenta de Dropbox o Drive puede ser otra.">
         <div className="sprofile">
           <Avatar name={identity.name} size={64} src={identity.avatarUrl} />
           <div className="sform">
@@ -94,7 +94,7 @@ export function Profile({ lib }: { lib: LibraryState }) {
   }
 
   return (
-    <Section title="Perfil" hint="Tu nombre aparece en las producciones en las que trabajas. Al conectar Magnific (Integraciones), tu cuenta de Magnific pasa a ser tu identidad en Sweet Flow.">
+    <Section title="Perfil" hint="Tu nombre aparece en las producciones en las que trabajas. Al conectar Magnific (Integraciones), tu cuenta de Magnific pasa a ser tu identidad en Sweetflow.">
       <div className="sprofile">
         <Avatar name={name || lib.me.displayName} size={64} />
         <div className="sform">
@@ -130,7 +130,7 @@ function Storage({ lib }: { lib: LibraryState }) {
           </div>
         )}
       </Section>
-      <Section title="En la nube" hint="Conecta el servicio del equipo y elige la carpeta compartida: Sweet Flow lee y escribe en ella directamente, sin instalar nada más. Quien tenga acceso a esa carpeta y conecte su cuenta ve lo mismo y trabaja a la vez.">
+      <Section title="En la nube" hint="Conecta el servicio del equipo y elige la carpeta compartida: Sweetflow lee y escribe en ella directamente, sin instalar nada más. Quien tenga acceso a esa carpeta y conecte su cuenta ve lo mismo y trabaja a la vez.">
         <CloudCard provider="dropbox" lib={lib} />
         <CloudCard provider="google" lib={lib} />
       </Section>
@@ -386,7 +386,7 @@ function CloudCard({ provider, lib }: { provider: CloudProvider; lib: LibrarySta
           </strong>
           <span className="sf-muted">
             {!configured
-              ? `Falta registrar Sweet Flow en ${name} y poner su clave en esta instalación (docs/DEVELOPMENT.md).`
+              ? `Falta registrar Sweetflow en ${name} y poner su clave en esta instalación (docs/DEVELOPMENT.md).`
               : connected
                 ? [who ?? "Conectada. Comprobando la cuenta…", inUse ? `En uso: «${inUse}»` : null].filter(Boolean).join(" · ")
                 : provider === "dropbox" ? "Una carpeta compartida de Dropbox del equipo (también las carpetas de equipo)." : "Una carpeta de Mi unidad, compartida contigo o de una unidad compartida."}
@@ -463,7 +463,7 @@ function CloudFolderPicker({ provider, hasLocal, onPick, onClose }: { provider: 
         )) : <p className="sf-faint sf-small">No hay carpetas aquí.</p>}
       </div>
       <p className="sf-faint sf-small">
-        Elige la carpeta compartida con el equipo. Si está vacía, Sweet Flow empieza ahí un dashboard nuevo; si ya la usa el equipo, verás sus producciones.
+        Elige la carpeta compartida con el equipo. Si está vacía, Sweetflow empieza ahí un dashboard nuevo; si ya la usa el equipo, verás sus producciones.
         {hasLocal ? " Lo que ya tienes en este navegador no se copia." : ""}
       </p>
       <div className="modal-foot">
@@ -556,7 +556,7 @@ export function ModelsSettings() {
 function About({ lib }: { lib: LibraryState }) {
   const version = window.sweetflow?.version;
   return (
-    <Section title="Acerca de Sweet Flow">
+    <Section title="Acerca de Sweetflow">
       <dl className="sabout">
         <dt>Versión</dt>
         <dd>{version ? `${version} (escritorio)` : "Web (desarrollo)"}</dd>

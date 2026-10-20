@@ -18,9 +18,11 @@ Abrir la app ──▶ 0. Pantalla de carga ──▶ 1. Dashboard ──▶ 2. 
 
 ## 0. Pantalla de carga
 
-- Fondo de la app, **visto desde arriba como una superficie**. Las letras de
-  **Sweet Flow** entran desde los bordes de la pantalla, cada una por un lado,
+- Fondo de la app, **visto desde arriba como una superficie**. El logo,
+  centrado encima del nombre, y las letras de **Sweetflow** entran desde los bordes de la pantalla, cada una por un lado,
   **como gotas de líquido que se arrastran por la superficie**:
+  - el logo llega como dos gotas más (el trazo y el punto) y toma su forma
+    igual que las letras;
   - cada letra empieza siendo una gota con volumen (iluminada desde arriba a
     la izquierda: brillo, sombreado en los bordes y sombra sobre la
     superficie), con el borde ondulando y una cola que se alarga cuanto más
@@ -197,7 +199,7 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
   ubicación y la chincheta de Fijados se quitaron el 18 oct 2026 (se fija
   desde el dashboard). **El estado es solo la etiqueta**: al hacer clic se
   despliega la lista. Todo lo nuevo empieza en **Pendiente**.
-- **Barra superior:** logo (vuelve al inicio) y, a la izquierda, solo
+- **Barra superior:** sin logo; a la izquierda, solo
   **Inicio › nombre de la producción** (con el botón de información). Las
   carpetas intermedias no se muestran: «Inicio» vuelve a la carpeta del
   dashboard donde está la producción. A
@@ -890,7 +892,7 @@ Sweet Flow, solo activar o desactivar y decir para quién.
   el panel). Las tarjetas y las filas del árbol abiertas aparte llevan un icono
   que también lleva a su ventana.
 - **Solo existen dentro de la producción.** Si hay ventanas aparte abiertas y
-  se sale de la producción (migas de pan, logo), se pregunta: «Tienes ventanas
+  se sale de la producción (migas de pan), se pregunta: «Tienes ventanas
   emergentes abiertas. ¿Estás seguro?». **Sí** las cierra todas y sale; **No**
   se queda en la producción. Recargar o cerrar la ventana principal también
   las cierra.

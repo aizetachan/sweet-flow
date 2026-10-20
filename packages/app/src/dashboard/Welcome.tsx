@@ -77,7 +77,7 @@ export function FirstRun({ lib }: { lib: LibraryState }) {
 
   return (
     <section className="welcome">
-      <h2 className="welcome__title">Bienvenido a Sweet Flow</h2>
+      <h2 className="welcome__title">Bienvenido a Sweetflow</h2>
       <p className="sf-muted">Dos pasos para empezar a trabajar.</p>
       <ol className="welcome__steps">
         <li className={cx("welcome__step", connected && "is-done")}>

@@ -191,7 +191,7 @@ los tokens de Google con el secreto.
 ### Pasar el instalador a un compañero
 
 1. En el Mac con `packages/app/.env.local` relleno: `pnpm dist:mac`.
-2. Pasarle `apps/desktop/release/Sweet Flow-<versión>-mac-universal.dmg`. Vale
+2. Pasarle `apps/desktop/release/Sweetflow-<versión>-mac-universal.dmg`. Vale
    para Apple Silicon y para Intel.
 3. Él lo instala como se explica más abajo y, en la app:
    - se conecta con **su** cuenta de Magnific;
@@ -202,13 +202,13 @@ los tokens de Google con el secreto.
 
 ### Instalar en macOS
 
-1. Abre el `.dmg` y arrastra **Sweet Flow** a *Aplicaciones*.
+1. Abre el `.dmg` y arrastra **Sweetflow** a *Aplicaciones*.
 2. La primera vez, haz clic derecho sobre la app → **Abrir** → **Abrir**. También
    puedes ir a *Ajustes del Sistema → Privacidad y seguridad → Abrir igualmente*.
 3. Si macOS dice que la app «está dañada», quita la cuarentena:
 
    ```bash
-   xattr -dr com.apple.quarantine "/Applications/Sweet Flow.app"
+   xattr -dr com.apple.quarantine "/Applications/Sweetflow.app"
    ```
 
 Mientras la app no esté firmada, macOS no permite actualizarla sola. La app
@@ -216,7 +216,7 @@ avisa cuando hay una versión nueva y abre la página de descarga.
 
 ### Instalar en Windows
 
-1. Ejecuta `Sweet Flow-<versión>-win-x64.exe`.
+1. Ejecuta `Sweetflow-<versión>-win-x64.exe`.
 2. Si aparece SmartScreen («Windows protegió su PC»), pulsa **Más información →
    Ejecutar de todos modos**.
 
