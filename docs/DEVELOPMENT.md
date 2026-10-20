@@ -248,8 +248,9 @@ genera el `.icns` y el `.ico`.
   opcionales: el fondo de la ventana del `.dmg`. Coordenadas en puntos (las de
   540 × 380; en la @2x, el doble), desde la esquina superior izquierda:
   - Icono de Sweetflow: centrado en (140, 140), 112 × 112 → ocupa de (84, 84)
-    a (196, 196). Debajo, macOS escribe su nombre (hasta y ≈ 220), **en negro**:
-    por eso el fondo es claro.
+    a (196, 196). Debajo, macOS escribe su nombre (centrado en y ≈ 214)
+    **siempre en negro**: el fondo es oscuro, como la app, y cada nombre va sobre
+    una placa clara de 124 × 24 (radio 12) centrada ahí.
   - Carpeta Aplicaciones: centrada en (400, 140), igual tamaño, con su nombre debajo.
   - Flecha entre x 210 y 330, a la altura y 140; texto hacia y 250.
   - Lo de abajo (desde y ≈ 300) puede quedar tapado por las barras del Finder

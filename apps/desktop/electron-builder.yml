@@ -34,8 +34,8 @@ dmg:
   sign: false
   # The window that opens on the .dmg (docs/DEVELOPMENT.md «Imágenes del instalador»):
   # 540×380, the app on the left and Applications on the right (x, y: icon centres). High
-  # in the window: Finder's bars can cover its bottom ~60 pt. A light background, since
-  # Finder writes the icons' names in black.
+  # in the window: Finder's bars can cover its bottom ~60 pt. Finder writes the icons'
+  # names in black: the dark background has a light plate under each name.
   # Background (build/background@2x.png for Retina) and the disk's own icon: the floppy.
   background: build/background.png
   icon: build/dmg-icon.icns
