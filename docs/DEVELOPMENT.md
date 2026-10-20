@@ -226,7 +226,10 @@ app.
 ## Imágenes del instalador
 
 Van en `apps/desktop/build/` (el compilador las busca ahí). Solo el icono es
-imprescindible.
+imprescindible. Están diseñadas en Figma (página «Instalador content» del
+archivo Raul- ShiftR, marcos «FINAL»). Tras cambiar `dmg-icon.png` o
+`installer-icon.png`, en un Mac: `node apps/desktop/scripts/installer-icons.mjs`
+genera el `.icns` y el `.ico`.
 
 - **`icon.png`**: icono de la app, 1024 × 1024 px, PNG con transparencia. En
   Mac no se redondea solo: el dibujo va dentro de un cuadrado redondeado de
