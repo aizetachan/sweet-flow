@@ -618,13 +618,16 @@ button.tree__hint { padding: 0 14px 8px; }
 .dcard--folder.is-picked .dcard__tab-edge { stroke: var(--brand-300); filter: drop-shadow(0 0 3px rgb(var(--brand-500-rgb) / .9)) drop-shadow(0 0 8px rgb(var(--brand-500-rgb) / .45)); }
 .dcard--folder.is-drop .dcard__tab-edge { stroke: var(--primary); }
 /* One small tab per level of folders inside, to the right of the folder's own
-   tab (which never changes), lower and fainter. They share at most the
-   space up to 85% of the card's width: with more levels each one narrows. */
-.dcard__levels { position: absolute; z-index: 1; top: -9px; left: 118px; right: 15%; height: 10px; display: flex; pointer-events: none; }
-.dcard__level { position: relative; flex: 0 1 56px; min-width: 6px; height: 10px; margin-left: -6px; border: 1px solid var(--line-0); border-bottom: 0; border-radius: 6px 6px 0 0; background: color-mix(in srgb, var(--bg-3) 70%, var(--bg-0)); transition: border-color .12s; }
-.dcard__level:first-child { margin-left: 0; }
-.dcard--folder:hover .dcard__level { border-color: rgb(var(--brand-500-rgb) / .45); }
-.dcard--folder.is-picked .dcard__level { border-color: rgb(var(--brand-300-rgb) / .6); }
+   tab (which never changes): the same shape, lower and fainter, each one's
+   slope lying over the next. They share at most the space up to 85% of the
+   card's width: with more levels each one narrows. */
+.dcard__levels { position: absolute; z-index: 1; top: -9px; left: 118px; right: calc(15% + 18px); height: 9px; display: flex; pointer-events: none; --level-edge: var(--line-0); --level-fill: color-mix(in srgb, var(--bg-3) 70%, var(--bg-0)); }
+.dcard__level { position: relative; flex: 0 1 34px; min-width: 3px; height: 9px; border: 1px solid var(--level-edge); border-right: 0; border-bottom: 0; border-top-left-radius: 7px; background: var(--level-fill); }
+.dcard__level-slope { position: absolute; top: -1px; left: 100%; overflow: visible; }
+.dcard__level-fill { fill: var(--level-fill); }
+.dcard__level-edge { fill: none; stroke: var(--level-edge); stroke-width: 1; }
+.dcard--folder:hover .dcard__levels { --level-edge: rgb(var(--brand-500-rgb) / .45); }
+.dcard--folder.is-picked .dcard__levels { --level-edge: rgb(var(--brand-300-rgb) / .6); }
 /* Picked folder: the glow stays outside, so it does not draw a line inside the card under the tab. */
 .dcard--folder.is-picked { box-shadow: 0 0 2px 0 rgb(var(--neon) / .9), 0 0 8px 1px rgb(var(--neon) / .45), 0 0 18px 3px rgb(var(--neon-deep) / .3); }
 .dcard__body { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px 12px; min-width: 0; }

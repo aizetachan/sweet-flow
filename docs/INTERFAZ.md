@@ -161,7 +161,7 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
   carpeta**; por lo demás es igual que antes (al pasar el ratón o
   seleccionarla, la pestaña se ilumina con el mismo neón).
   - **Niveles:** a la derecha de esa pestaña, que nunca cambia, sale una
-    pestaña pequeña y discreta por cada **nivel** de carpetas que hay dentro
+    pestaña pequeña y discreta, con la misma forma, por cada **nivel** de carpetas que hay dentro
     (no por cada carpeta): con una o cinco carpetas dentro, una; si alguna de
     ellas tiene carpetas, dos; y así. Nunca llegan al ancho de la tarjeta:
     cuantos más niveles, más estrechas (como mucho se dibujan 12).

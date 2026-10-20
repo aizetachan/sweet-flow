@@ -389,7 +389,13 @@ function EntryItem(p: EntryItemProps) {
           {p.depth ? (
             <span className="dcard__levels" aria-hidden="true">
               {Array.from({ length: Math.min(p.depth, MAX_LEVEL_TABS) }, (_, i) => (
-                <span key={i} className="dcard__level" style={{ zIndex: MAX_LEVEL_TABS - i }} />
+                <span key={i} className="dcard__level" style={{ zIndex: MAX_LEVEL_TABS - i }}>
+                  {/* The same slope as the folder's tab, smaller; it lies over the next level's tab. */}
+                  <svg className="dcard__level-slope" width="18" height="9" viewBox="0 0 18 9">
+                    <path className="dcard__level-fill" d="M0 .5C5 .5 6.8 1.7 9.2 4.5S13.2 8.5 18 8.5V9H0Z" />
+                    <path className="dcard__level-edge" d="M0 .5C5 .5 6.8 1.7 9.2 4.5S13.2 8.5 18 8.5" />
+                  </svg>
+                </span>
               ))}
             </span>
           ) : null}
