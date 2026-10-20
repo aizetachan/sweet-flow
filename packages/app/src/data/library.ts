@@ -180,6 +180,25 @@ export function withDescendants(entries: LibraryEntry[], rootIds: Id[]): Set<Id>
   return out;
 }
 
+/**
+ * How many levels of folders there are inside a folder: 0 with no folder
+ * inside, 1 with folders inside (however many), 2 when one of those has
+ * folders too, and so on. Trashed folders don't count.
+ */
+export function folderDepth(entries: LibraryEntry[], id: Id): number {
+  const children = new Map<Id, Id[]>();
+  for (const e of entries) {
+    if (e.kind !== "folder" || e.trashedAt || !e.parentId) continue;
+    children.set(e.parentId, [...(children.get(e.parentId) ?? []), e.id]);
+  }
+  const depth = (at: Id, seen: Set<Id>): number => {
+    let max = 0;
+    for (const c of children.get(at) ?? []) if (!seen.has(c)) max = Math.max(max, 1 + depth(c, new Set(seen).add(c)));
+    return max;
+  };
+  return depth(id, new Set([id]));
+}
+
 /** True when the entry or any folder above it is in the trash. */
 export function isInTrash(byId: Map<Id, LibraryEntry>, e: LibraryEntry): boolean {
   for (let cur: LibraryEntry | undefined = e; cur; cur = cur.parentId ? byId.get(cur.parentId) : undefined) if (cur.trashedAt) return true;

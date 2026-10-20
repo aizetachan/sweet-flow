@@ -32,7 +32,7 @@ import { revealEntry } from "../data/reveal";
 import { copyEntryLink } from "../data/share";
 import type { Id } from "@sweetflow/domain";
 import { AvatarStack, Button, cx, IconButton, Segmented } from "@sweetflow/ui";
-import { isInTrash, type LibraryEntry, type LibraryState, type ProductionSummary } from "../data/library";
+import { folderDepth, isInTrash, type LibraryEntry, type LibraryState, type ProductionSummary } from "../data/library";
 import { useStore, type DashLayout, type DashSection } from "../state/store";
 
 export const DRAG_TYPE = "application/x-sweetflow-entries";
@@ -152,6 +152,7 @@ export function Browse({ lib, section }: { lib: LibraryState; section: Exclude<D
               section={section}
               summary={lib.summaries[e.id]}
               items={lib.entries.filter((c) => c.parentId === e.id && !c.trashedAt).length}
+              depth={e.kind === "folder" ? folderDepth(lib.entries, e.id) : 0}
               place={showPlace ? pathTo(byId, e.parentId).map((f) => f.name).join(" / ") || "Inicio" : undefined}
               when={section === "trash" ? e.trashedAt! : section === "recent" ? lib.prefs.opened[e.id] ?? e.updatedAt : lib.summaries[e.id]?.updatedAt ?? e.updatedAt}
               pinned={lib.prefs.pins.some((x) => x.entryId === e.id && !x.nodeId)}
@@ -245,6 +246,8 @@ interface EntryItemProps {
   section: Exclude<DashSection, "settings">;
   summary?: ProductionSummary;
   items: number;
+  /** Levels of folders inside (folders only): one small extra tab each. */
+  depth: number;
   place?: string;
   when: number;
   pinned: boolean;
@@ -257,6 +260,9 @@ interface EntryItemProps {
   onRename: (name: string) => void;
   onStartRename: () => void;
 }
+
+/** Past this many levels the tabs would be slivers: they stop at this count. */
+const MAX_LEVEL_TABS = 12;
 
 function EntryItem(p: EntryItemProps) {
   const library = useStore((s) => s.library);
@@ -380,6 +386,13 @@ function EntryItem(p: EntryItemProps) {
             <path className="dcard__tab-fill" d="M0 14V12.5Q0 .5 12 .5H78C86 .5 89 2.5 93 7S100 13.5 108 13.5H120V14Z" />
             <path className="dcard__tab-edge" d="M.5 14V12.5Q.5 .5 12 .5H78C86 .5 89 2.5 93 7S100 13.5 108 13.5H120" />
           </svg>
+          {p.depth ? (
+            <span className="dcard__levels" aria-hidden="true">
+              {Array.from({ length: Math.min(p.depth, MAX_LEVEL_TABS) }, (_, i) => (
+                <span key={i} className="dcard__level" style={{ zIndex: MAX_LEVEL_TABS - i }} />
+              ))}
+            </span>
+          ) : null}
           <div className="dcard__folder"><IconFolder size={40} stroke={1.2} /></div>
         </>
       ) : (

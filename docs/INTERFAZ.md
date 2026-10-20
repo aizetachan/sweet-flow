@@ -160,6 +160,11 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
   En la cuadrícula, la tarjeta de una carpeta tiene arriba la **pestaña de una
   carpeta**; por lo demás es igual que antes (al pasar el ratón o
   seleccionarla, la pestaña se ilumina con el mismo neón).
+  - **Niveles:** a la derecha de esa pestaña, que nunca cambia, sale una
+    pestaña pequeña y discreta por cada **nivel** de carpetas que hay dentro
+    (no por cada carpeta): con una o cinco carpetas dentro, una; si alguna de
+    ellas tiene carpetas, dos; y así. Nunca llegan al ancho de la tarjeta:
+    cuantos más niveles, más estrechas (como mucho se dibujan 12).
 - **Acciones:** crear carpeta, crear producción, renombrar, marcar como
   favorito, mover arrastrando (también varias a la vez) y mover a la papelera.
 - **Relación con Dropbox:** la organización del dashboard **es** la de la
