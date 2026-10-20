@@ -761,6 +761,10 @@ button.tree__hint { padding: 0 14px 8px; }
 .dside__who { display: flex; flex-direction: column; min-width: 0; }
 .dside__who-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .dside__who-where { font-size: 11px; color: var(--fg-4); }
+/* Your profile: one line, 32 px like Ajustes beside it; a long name is cut short before the storage icon. */
+.dside__me--user { height: 32px; padding: 0 8px 0 4px; gap: 8px; }
+.dside__me--user .dside__who-name { flex: 1; min-width: 0; }
+.dside__where { flex: none; color: var(--fg-3); }
 
 .dcard__titlerow { display: flex; align-items: center; gap: 6px; min-width: 0; }
 .dentry__star { color: var(--warn); }
@@ -794,7 +798,7 @@ button.tree__hint { padding: 0 14px 8px; }
 
 @media (max-width: 860px) {
   .dapp { grid-template-columns: 64px minmax(0, 1fr); }
-  .dside__name, .dside__label, .dside__count, .dside__title, .dside__who, .dpin__text, .dpins__empty, .dpin__off { display: none !important; }
+  .dside__name, .dside__label, .dside__count, .dside__title, .dside__who, .dside__me--user .dside__who-name, .dside__where, .dpin__text, .dpins__empty, .dpin__off { display: none !important; }
   .dside__item, .dside__me { justify-content: center; padding: 0; }
   .dside__me { padding: 8px 0; }
   .dside__foot { flex-direction: column; }

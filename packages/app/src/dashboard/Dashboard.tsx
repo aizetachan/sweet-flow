@@ -5,7 +5,7 @@
  */
 
 import { useMemo, useState, type DragEvent, type ReactNode } from "react";
-import { IconClock, IconUsersGroup, IconFolder, IconHome, IconMovie, IconPin, IconPinnedOff, IconSettings, IconTrash } from "@tabler/icons-react";
+import { IconBrandDropbox, IconBrandGoogleDrive, IconClock, IconDeviceDesktop, IconUsersGroup, IconFolder, IconHome, IconMovie, IconPin, IconPinnedOff, IconSettings, IconTrash } from "@tabler/icons-react";
 import type { Id } from "@sweetflow/domain";
 import { Avatar, Button, cx, IconButton } from "@sweetflow/ui";
 import { openTeamFolder, storageStatus } from "../data";
@@ -94,12 +94,11 @@ function Sidebar({ lib }: { lib: LibraryState }) {
 
       <div className="dside__foot">
         {isGuest(lib.me, lib.mode) ? <SignInButton className="dside__me" /> : (
-          <button className="dside__me" title="Tu perfil" onClick={() => set({ dashSection: "settings", settingsTab: "profile" })}>
-            <Avatar name={lib.me.displayName} size={30} />
-            <span className="dside__who">
-              <span className="dside__who-name">{lib.me.displayName}</span>
-              <span className="dside__who-where">{lib.label}</span>
-            </span>
+          // One line, as tall as Ajustes beside it: your name and, on the right, where the team folder is kept.
+          <button className="dside__me dside__me--user" title={`Tu perfil${storageWhere(lib) ? ` · ${storageWhere(lib)}` : ""}`} onClick={() => set({ dashSection: "settings", settingsTab: "profile" })}>
+            <Avatar name={lib.me.displayName} size={24} />
+            <span className="dside__who-name">{lib.me.displayName}</span>
+            <StorageIcon lib={lib} />
           </button>
         )}
         <IconButton label="Ajustes" on={dashSection === "settings"} onClick={() => set({ dashSection: "settings" })}>
@@ -108,6 +107,22 @@ function Sidebar({ lib }: { lib: LibraryState }) {
       </div>
     </aside>
   );
+}
+
+/** Where the team folder is kept, said in words (the profile's tooltip). */
+function storageWhere(lib: LibraryState): string | null {
+  const st = lib.storage;
+  if (st.kind === "browser") return "se guarda en este navegador";
+  if (st.kind !== "folder") return null;
+  const where = st.provider === "dropbox" ? "Dropbox" : st.provider === "drive" ? "Google Drive" : "este ordenador";
+  return `se guarda en «${st.name}» (${where})`;
+}
+
+/** The icon of where the team folder is kept: a folder of this computer, Dropbox or Google Drive. */
+function StorageIcon({ lib }: { lib: LibraryState }) {
+  const st = lib.storage;
+  const Icon = st.kind === "folder" ? (st.provider === "dropbox" ? IconBrandDropbox : st.provider === "drive" ? IconBrandGoogleDrive : IconFolder) : st.kind === "browser" ? IconDeviceDesktop : null;
+  return Icon ? <Icon size={16} stroke={1.6} className="dside__where" aria-label={storageWhere(lib) ?? undefined} /> : null;
 }
 
 const PIN_TYPE = "application/x-sweetflow-pin";

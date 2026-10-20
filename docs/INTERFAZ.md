@@ -120,7 +120,10 @@ aplicación completa con **menú lateral**:
   pasar el ratón. Una carpeta fijada sigue aceptando lo que se suelta encima.
   Si lo fijado se ha borrado, desaparece de la lista y se avisa.
 - Abajo, en una misma fila, **tu avatar** con tu nombre (abre tu perfil) y, a
-  la derecha, **Ajustes** (solo el icono). Al pasar el ratón, el perfil se
+  la derecha, **Ajustes** (solo el icono). El perfil ocupa una sola línea, del
+  alto de Ajustes: el nombre (cortado con «…» si no cabe) y, a su derecha, el
+  icono de dónde se guarda la carpeta del equipo (carpeta del ordenador,
+  Dropbox o Google Drive); al pasar el ratón lo dice con su nombre. Al pasar el ratón, el perfil se
   marca con las cuatro esquinas redondeadas y separado de la línea de encima.
 
 - **Menú de cada carpeta y producción:** un único botón **«⋯»** (al pasar el
