@@ -16,7 +16,7 @@ import {
   IconUsersGroup, IconShare } from "@tabler/icons-react";
 import { splitTrash } from "@sweetflow/domain";
 import { Avatar, AvatarStack, cx, IconButton, Spinner, Button } from "@sweetflow/ui";
-import { useSnap, useStore, type View } from "../state/store";
+import { TABS, useSnap, useStore, type View } from "../state/store";
 import { memberName } from "../state/selectors";
 import { useLibraryTrail } from "../dashboard/Dashboard";
 import { BoardFilters, ProductionInfo } from "../board/Board";
@@ -66,9 +66,19 @@ export function Topbar() {
   const trail = useLibraryTrail(productionId);
   const online = snap.presence.filter((p) => p.uid !== snap.me.uid).map((p) => memberName(snap, p.uid));
 
+  const infoButton = (
+    <Popover button={({ open, toggle }) => (
+      <IconButton size="sm" label="Información de la producción" className={open ? "is-on" : undefined} onClick={toggle}><IconInfoCircle size={16} stroke={1.6} /></IconButton>
+    )}>
+      <ProductionInfo scopeId={scopeId} />
+    </Popover>
+  );
+  const format = snap.production.format ? <span className="topbar__format">{snap.production.format}</span> : null;
+
   return (
-    <header className="topbar">
-      <nav className="crumbs crumbs--top" aria-label="Ubicación">
+    <header className={cx("topbar", TABS && "topbar--tabs")}>
+      {/* Desktop app: the tab above already says where you are and holds the name (double click renames). */}
+      {TABS ? null : <nav className="crumbs crumbs--top" aria-label="Ubicación">
         {/* Only home and the production: going back lands in the folder it is in, so the folders in between are not needed. */}
         <button className="crumbs__btn" onClick={() => requestLeave(trail.at(-1)?.id ?? null)}
           title={trail.length ? `Volver a «${trail.at(-1)!.name}»` : "Volver al inicio"}><IconHome size={14} /> Inicio</button>
@@ -76,15 +86,13 @@ export function Topbar() {
           <IconChevronRight size={13} className="sf-faint" />
           <ProductionName />
         </span>
-        <Popover button={({ open, toggle }) => (
-          <IconButton size="sm" label="Información de la producción" className={open ? "is-on" : undefined} onClick={toggle}><IconInfoCircle size={16} stroke={1.6} /></IconButton>
-        )}>
-          <ProductionInfo scopeId={scopeId} />
-        </Popover>
-        {snap.production.format ? <span className="topbar__format">{snap.production.format}</span> : null}
-      </nav>
+        {infoButton}
+        {format}
+      </nav>}
 
       <div className="topbar__spacer" />
+      {/* Desktop app: the information goes just left of the search. */}
+      {TABS ? <>{format}{infoButton}</> : null}
 
       {view === "board" ? <BoardFilters /> : null}
 

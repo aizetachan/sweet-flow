@@ -52,18 +52,19 @@ function Production() {
   return (
     <div className="app">
       <div className="app__main">
-        <Topbar />
+        {/* Desktop app: the left column reaches the top and the top bar spans only the board's width. */}
+        {TABS && (view === "board" || view === "library") ? null : <Topbar />}
         {view === "board" ? (
           // Work panel and structure share the left column; the board gets the rest (docs/INTERFAZ.md §2).
           <Workspace>
             <SidePanel />
-            <Board />
+            {TABS ? <div className="workcol"><Topbar /><Board /></div> : <Board />}
           </Workspace>
         ) : view === "library" ? (
           // The library has the same layout: the panel generates into the desk or the selected card (§2.8).
           <Workspace>
             <SidePanel />
-            <LibraryBoard />
+            {TABS ? <div className="workcol"><Topbar /><LibraryBoard /></div> : <LibraryBoard />}
           </Workspace>
         ) : view === "editor" ? <EditorView /> : <TrashView />}
       </div>

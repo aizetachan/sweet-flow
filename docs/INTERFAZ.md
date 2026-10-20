@@ -63,7 +63,8 @@ tanto en el dashboard como en una producción.
 - **Una pestaña por producción abierta**, a la derecha de Inicio, en el orden
   en que se abrieron: icono y nombre de la producción. La que se está viendo
   queda marcada. Se cierra con su ✕ (aparece al pasar el ratón o en la
-  activa) o con el botón central del ratón.
+  activa) o con el botón central del ratón. Doble clic en su nombre: se cambia el
+  nombre de la producción (Intro guarda, Esc cancela).
   - Al abrir una producción se añade su pestaña (si ya estaba, se va a ella).
   - Ir a Inicio o a otra pestaña **no cierra la producción**: sigue cargada y
     al volver está como se dejó (lo seleccionado, la vista, los paneles y la
@@ -248,6 +249,11 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
   dashboard donde está la producción. A
   la derecha, el **buscador** (en el tablero), quién está en la producción y
   **tu avatar**.
+  - **App de escritorio:** la barra no lleva «Inicio › nombre» (ya están en
+    la barra de pestañas, §0.1; el nombre se cambia con doble clic en su
+    pestaña). El botón de información va a la izquierda del buscador. En el
+    tablero y en Biblioteca la columna de la izquierda llega hasta arriba y la
+    barra ocupa solo el ancho de la derecha.
   - Entre el buscador y el avatar, **mostrar la carpeta** (icono de carpeta con
     flecha): abre la carpeta de la producción en el Finder / Explorador. En la
     app de escritorio la primera vez pide localizar una vez la carpeta del

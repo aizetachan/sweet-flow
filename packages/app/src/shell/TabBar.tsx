@@ -1,10 +1,10 @@
 /**
  * Desktop title bar (docs/INTERFAZ.md §0.1): the system's window buttons, a
  * Home button and one tab per open production, as browser tabs. The empty
- * space drags the window.
+ * space drags the window. A double click on a tab's name renames the production.
  */
 
-import { useMemo, type MouseEvent } from "react";
+import { useMemo, useState, type MouseEvent } from "react";
 import { IconHome, IconMovie, IconX } from "@tabler/icons-react";
 import { cx } from "@sweetflow/ui";
 import { useStore } from "../state/store";
@@ -17,6 +17,11 @@ export function TabBar() {
   const { openTab, closeTab, requestLeave } = useStore.getState();
   const names = useMemo(() => new Map((lib?.entries ?? []).map((e) => [e.id, e.name])), [lib]);
   const mac = window.sweetflow?.platform === "darwin";
+  const [renaming, setRenaming] = useState<{ id: string; draft: string } | null>(null);
+  const saveName = () => {
+    if (renaming && renaming.draft.trim() && renaming.draft.trim() !== names.get(renaming.id)) useStore.getState().library.rename(renaming.id, renaming.draft.trim());
+    setRenaming(null);
+  };
 
   return (
     <div className={cx("tabbar", mac ? "tabbar--mac" : "tabbar--win")}>
@@ -40,7 +45,20 @@ export function TabBar() {
               // Middle click closes, as in a browser.
               onAuxClick={(e) => e.button === 1 && close(e)}>
               <IconMovie size={15} stroke={1.6} className="tabbar__icon" />
-              <span className="tabbar__name">{name || "Sin título"}</span>
+              {renaming?.id === id ? (
+                <input className="tabbar__rename" autoFocus value={renaming.draft} aria-label="Nombre de la producción"
+                  onFocus={(e) => e.currentTarget.select()}
+                  onChange={(e) => setRenaming({ id, draft: e.target.value })}
+                  onClick={(e) => e.stopPropagation()}
+                  onBlur={saveName}
+                  onKeyDown={(e) => {
+                    e.stopPropagation();
+                    if (e.key === "Enter") saveName();
+                    if (e.key === "Escape") setRenaming(null);
+                  }} />
+              ) : (
+                <span className="tabbar__name" onDoubleClick={() => setRenaming({ id, draft: name })}>{name || "Sin título"}</span>
+              )}
               <button className="tabbar__close" aria-label={`Cerrar ${name}`} title="Cerrar" onClick={close}>
                 <IconX size={13} />
               </button>
