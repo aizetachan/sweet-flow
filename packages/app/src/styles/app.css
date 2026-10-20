@@ -1247,13 +1247,15 @@ button.topbar__me { position: relative; padding: 0; border: 0; border-radius: 50
 .frame__body { flex: 1; min-height: 0; position: relative; }
 /* Same height as the window buttons' strip (apps/desktop main/index.ts). Its empty space drags the window. */
 .tabbar { flex: none; height: 40px; display: flex; align-items: stretch; background: var(--bg-0); border-bottom: 1px solid var(--line-1); user-select: none; -webkit-app-region: drag; }
-/* Room for the window buttons: on the left on a Mac, on the right on Windows. */
-.tabbar--mac { padding-left: 76px; }
+/* Room for the window buttons: on the left on a Mac (they sit 14 px from the
+   edge and end at 66 px: the same 14 px after them), on the right on Windows. */
+.tabbar--mac { padding-left: 80px; }
 .tabbar--win { padding-right: 140px; }
 .tabbar :is(button, [role="tab"]) { -webkit-app-region: no-drag; }
 .tabbar__home { flex: none; width: 46px; display: grid; place-items: center; border: 0; border-left: 1px solid var(--line-1); border-right: 1px solid var(--line-1); background: none; color: var(--fg-2); cursor: default; }
-.tabbar__home:hover { background: var(--bg-1); color: var(--fg-1); }
-.tabbar__home.is-on { background: var(--bg-2); color: var(--fg-0); }
+/* The bar's own colour: only its icon says it is on. */
+.tabbar__home:hover { color: var(--fg-0); }
+.tabbar__home.is-on { color: var(--fg-0); }
 .tabbar__tabs { flex: 1; min-width: 0; display: flex; overflow-x: auto; scrollbar-width: none; }
 .tabbar__tabs::-webkit-scrollbar { display: none; }
 .tabbar__tab { flex: 0 1 230px; min-width: 110px; display: flex; align-items: center; gap: 8px; padding: 0 8px 0 14px; border-right: 1px solid var(--line-1); color: var(--fg-2); font-size: 13px; cursor: default; outline: none; }
