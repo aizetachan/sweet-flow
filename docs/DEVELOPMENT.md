@@ -222,3 +222,26 @@ avisa cuando hay una versión nueva y abre la página de descarga.
 
 En Windows, las actualizaciones se descargan solas y se instalan al cerrar la
 app.
+
+## Imágenes del instalador
+
+Van en `apps/desktop/build/` (el compilador las busca ahí). Solo el icono es
+imprescindible.
+
+- **`icon.png`**: icono de la app, 1024 × 1024 px, PNG con transparencia. En
+  Mac no se redondea solo: el dibujo va dentro de un cuadrado redondeado de
+  824 × 824 px (radio ≈ 185 px), centrado, con 100 px de margen transparente.
+  Con él se generan el `.icns` (Mac) y el `.ico` (Windows).
+- **`icon-win.png`** (opcional): el mismo dibujo ocupando casi todo el cuadrado
+  (unos 16 px de margen), para Windows.
+- **`background.png`** (540 × 380 px) y **`background@2x.png`** (1080 × 760 px),
+  opcionales: el fondo de la ventana del `.dmg`. Coordenadas en puntos (las de
+  540 × 380; en la @2x, el doble), desde la esquina superior izquierda:
+  - Icono de Sweetflow: centrado en (140, 170), 112 × 112 → ocupa de (84, 114)
+    a (196, 226). Debajo, macOS escribe su nombre (hasta y ≈ 250).
+  - Carpeta Aplicaciones: centrada en (400, 170), igual tamaño → de (344, 114)
+    a (456, 226), con su nombre debajo.
+  - Libre para una flecha o línea: entre x 210 y 330, a la altura y 170.
+  - Libre para un texto («Arrastra Sweetflow a Aplicaciones»): centrado en
+    x 270, entre y 280 y 340.
+  - Los iconos y sus nombres los pone macOS: el fondo no los lleva.

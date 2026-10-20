@@ -12,6 +12,7 @@ import {
   IconChevronRight,
   IconClock,
   IconFolder,
+  IconFolderFilled,
   IconFolderPlus,
   IconHome,
   IconLayoutGrid,
@@ -533,7 +534,7 @@ function EntryItem(p: EntryItemProps) {
             <path className="dcard__tab-edge" d={TAB_EDGE} />
           </svg>
           <FolderOutline />
-          <div className="dcard__folder"><IconFolder size={40} stroke={1.2} /></div>
+          <div className="dcard__folder"><IconFolderFilled size={40} /></div>
         </>
       ) : (
         <div className="dcard__thumb">
