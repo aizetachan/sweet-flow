@@ -1267,12 +1267,20 @@ button.topbar__me { position: relative; padding: 0; border: 0; border-radius: 50
 /* The bar's own colour (its icon says it is on); on hover, the same as a tab. */
 .tabbar__home:hover { background: var(--bg-1); color: var(--fg-1); }
 .tabbar__home.is-on { color: var(--fg-0); }
-.tabbar__tabs { flex: 1; min-width: 0; display: flex; overflow-x: auto; scrollbar-width: none; }
+/* As wide as its tabs at full width (230 px each); narrower when the bar is full (they shrink). */
+.tabbar__tabs { flex: 0 1 calc(var(--tabs, 0) * 230px); min-width: 0; display: flex; overflow-x: auto; scrollbar-width: none; }
 .tabbar__tabs::-webkit-scrollbar { display: none; }
 .tabbar__tab { flex: 0 1 230px; min-width: 110px; display: flex; align-items: center; gap: 8px; padding: 0 8px 0 14px; border-right: 1px solid var(--line-1); color: var(--fg-2); font-size: 13px; cursor: default; outline: none; }
 .tabbar__tab:hover { background: var(--bg-1); color: var(--fg-1); }
 .tabbar__tab.is-on { background: var(--bg-2); color: var(--fg-0); }
 .tabbar__tab:focus-visible { box-shadow: inset 0 0 0 2px var(--primary); }
+.tabbar__tab.is-dragging { opacity: .45; }
+/* Where a dragged tab will land. */
+.tabbar__tab.drop-before { box-shadow: inset 2px 0 0 var(--primary); }
+.tabbar__tab.drop-after { box-shadow: inset -2px 0 0 var(--primary); }
+/* After the tabs, everything left drags the window (the bar's drag region); with the
+   bar full of tabs it never gets narrower than a square, like the Home button. */
+.tabbar__grip { flex: 1 0 46px; }
 .tabbar__icon { flex: none; opacity: .8; }
 .tabbar__name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tabbar__rename { flex: 1; min-width: 0; height: 26px; padding: 0 6px; margin-left: -6px; border: 1px solid var(--primary); border-radius: 6px; background: var(--bg-0); color: var(--fg-0); font: inherit; outline: none; }

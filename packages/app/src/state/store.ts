@@ -156,6 +156,8 @@ interface Store extends UiState {
   openTab: (id: Id) => void;
   /** Desktop tabs: close a production's tab (asking first if it is showing with windows open). */
   closeTab: (id: Id) => void;
+  /** Desktop tabs: move a tab to position `to` (dragging it along the bar). */
+  moveTab: (id: Id, to: number) => void;
   floatPanel: (nodeId: Id) => void;
   dockPanel: (key: string) => void;
   closeFloating: (key: string) => void;
@@ -383,6 +385,12 @@ export const useStore = create<Store>((set, get) => ({
     if (phase === "production" && productionId === id) return;
     if (phase === "production" && (floating.length || popped.length)) return set({ leaveAsk: { openId: id } });
     get().openProduction(id);
+  },
+  moveTab: (id, to) => {
+    const rest = get().tabs.filter((t) => t !== id);
+    if (rest.length === get().tabs.length) return;
+    rest.splice(Math.max(0, Math.min(to, rest.length)), 0, id);
+    set({ tabs: rest });
   },
   closeTab: (id) => {
     const { phase, productionId, floating, popped } = get();

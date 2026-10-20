@@ -62,8 +62,11 @@ una barra de pestañas, como en Figma o en un navegador. Ocupa 40 px arriba,
 tanto en el dashboard como en una producción.
 
 - **Botones del sistema** (cerrar, minimizar, ampliar) dentro de la barra: a la
-  izquierda en Mac, a la derecha en Windows. El espacio vacío de la barra
-  sirve para arrastrar la ventana.
+  izquierda en Mac, a la derecha en Windows.
+- **Espacio para mover la ventana:** todo lo que queda a la derecha de las
+  pestañas sirve para arrastrar la ventana. Con muchas pestañas se estrechan
+  hasta un mínimo (y la barra se desplaza), pero ese espacio nunca baja de un
+  cuadrado como el botón Inicio, así que siempre hay dónde agarrarla.
 - **Botón Inicio** (casa): vuelve al dashboard. Está marcado mientras se está
   en él (solo el icono; el fondo es el de la barra) y al pasar el ratón se
   comporta como una pestaña.
@@ -73,6 +76,7 @@ tanto en el dashboard como en una producción.
   activa) o con el botón central del ratón. Doble clic en su nombre: se cambia el
   nombre de la producción (Intro guarda, Esc cancela).
   - Al abrir una producción se añade su pestaña (si ya estaba, se va a ella).
+  - Las pestañas se reordenan arrastrándolas por la barra.
   - Ir a Inicio o a otra pestaña **no cierra la producción**: sigue cargada y
     al volver está como se dejó (lo seleccionado, la vista, los paneles y la
     posición del tablero).
