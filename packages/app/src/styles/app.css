@@ -671,11 +671,18 @@ button.tree__hint { padding: 0 14px 8px; }
 .dentry__rename { height: 26px; padding: 0 6px; width: 100%; }
 .dentry__ficon { color: var(--fg-4); flex: none; }
 /* Pin a card: top left, like «⋯» on the right; shows on hover, and stays (yellow) once pinned. */
-/* Frosted: what is behind (the cover) shows through, blurred; no edge. */
-.dentry__pin { position: absolute; top: 6px; left: 6px; z-index: 3; display: flex; padding: 2px; border-radius: var(--r-md); background: rgb(12 12 13 / .4); backdrop-filter: blur(12px) saturate(1.3); -webkit-backdrop-filter: blur(12px) saturate(1.3); opacity: 0; transition: opacity .1s; }
+/* No background of its own: the cover is cut out round it (a mask), so it sits on the card's own background. */
+.dentry__pin { position: absolute; top: 6px; left: 6px; z-index: 3; display: flex; padding: 2px; border-radius: var(--r-md); background: none; opacity: 0; transition: opacity .1s; }
 .dcard:hover .dentry__pin, .dcard:has(:focus-visible) .dentry__pin, .dentry__pin.is-on { opacity: 1; }
-/* Pinned: the same frosted background (not the generic .is-on tint). */
-.dentry__pin.is-on { background: rgb(12 12 13 / .4); }
+/* Pinned: no tint either (not the generic .is-on). */
+.dentry__pin.is-on { background: none; }
+/* The cut-out: a notch at the cover's top left, 32 × 32 (the button and a 4 px gap), its inner corner rounded. */
+.dcard:hover .dcard__cover, .dcard:has(.dentry__pin.is-on) .dcard__cover, .dcard:has(.dentry__pin :focus-visible) .dcard__cover {
+  -webkit-mask: linear-gradient(#000 0 0), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Crect width='40' height='40' rx='8'/%3E%3C/svg%3E") -8px -8px / 40px 40px no-repeat;
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Crect width='40' height='40' rx='8'/%3E%3C/svg%3E") -8px -8px / 40px 40px no-repeat;
+  mask-composite: exclude;
+}
 .dentry__pin.is-on .sf-icon-btn { color: var(--warn); }
 .dentry__acts { position: absolute; top: 6px; right: 6px; display: flex; gap: 2px; padding: 2px; border-radius: var(--r-md); background: var(--bg-3); opacity: 0; transition: opacity .1s; }
 /* Only on hover, or keyboard focus: a mouse click leaves focus on the button and must not keep them shown. */
