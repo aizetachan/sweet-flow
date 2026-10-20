@@ -245,6 +245,10 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
   derecho o «⋯»): una de las imágenes de la producción o una del ordenador (que
   se guarda en la mesa de su Biblioteca). La ve todo el equipo. «Quitar
   portada» vuelve a las iniciales. Se puede deshacer dentro de la producción.
+- **Fijar desde la tarjeta:** arriba a la izquierda (como «⋯» a la derecha)
+  hay un botón de chincheta que aparece al pasar el ratón; si está fijada se
+  queda visible y en amarillo.
+- **Menú de cada tarjeta:** «Mostrar destino», «Fijar», «Compartir al equipo».
 - **Iconos de carpeta:** del mismo color que los de las producciones (no
   amarillos), en las tarjetas, en la lista y en Fijados.
 - **Relación con Dropbox:** la organización del dashboard **es** la de la
@@ -295,7 +299,9 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
   **tu avatar**.
   - **App de escritorio:** la barra no lleva «Inicio › nombre» (ya están en
     la barra de pestañas, §0.1; el nombre se cambia con doble clic en su
-    pestaña). El botón de información (32×32) abre la barra, a la izquierda. En el
+    pestaña). A la izquierda, el buscador y, a su derecha, el botón de
+    información (32×32). A la derecha: avisos, mostrar la carpeta y
+    **Compartir** (solo texto) junto al avatar. En el
     tablero y en Biblioteca la columna de la izquierda llega hasta arriba y la
     barra ocupa solo el ancho de la derecha.
   - Entre el buscador y el avatar, **mostrar la carpeta** (icono de carpeta con

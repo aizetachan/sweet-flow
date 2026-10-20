@@ -32,7 +32,6 @@ export function StructureTree() {
       <div className={cx("tree__list", rootDrop.over && "dnd-end")} {...rootDrop.props}>
         {roots.map((n) => <TreeRow key={n.id} node={n} depth={0} />)}
       </div>
-      <div className="tree__hint sf-faint sf-small">Arrastra para reordenar o mover · ⌘ clic para seleccionar varios</div>
       <div className="tree__levels sf-faint sf-small">
         {snap.production.levels.map((l) => l.name).join(" › ")}
         <button className="link" onClick={() => set({ modal: "settings", settingsTab: "levels" })}>Editar</button>

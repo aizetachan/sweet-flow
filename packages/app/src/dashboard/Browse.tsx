@@ -460,6 +460,14 @@ function EntryItem(p: EntryItemProps) {
       }}><IconDots size={15} /></IconButton>
     </span>
   );
+  // Top left of a card: pin it (shows on hover; once pinned it stays, yellow).
+  const pinToggle = p.editable && !inTrash ? (
+    <span className={cx("dentry__pin", p.pinned && "is-on")} onClick={(e) => e.stopPropagation()}>
+      <IconButton size="sm" label={p.pinned ? "Quitar de Fijados" : "Fijar"} onClick={() => library.setPinned({ entryId: p.entry.id }, !p.pinned)}>
+        {p.pinned ? <IconPinFilled size={14} /> : <IconPin size={14} />}
+      </IconButton>
+    </span>
+  ) : null;
   const canShare = useStore((s) => !!s.lib?.team?.canInvite);
   const menuEl = menu && p.editable ? (
     <ContextMenu at={menu} onClose={() => setMenu(null)}>
@@ -471,15 +479,15 @@ function EntryItem(p: EntryItemProps) {
       ) : (
         <>
           <button className="menu__item" onClick={p.onOpen}><IconFolderOpen size={14} /> <span className="menu__label">Abrir</span></button>
-          <button className="menu__item" onClick={() => void revealEntry(p.entry.id)}><IconFolderShare size={14} /> <span className="menu__label">Mostrar en la carpeta</span></button>
+          <button className="menu__item" onClick={() => void revealEntry(p.entry.id)}><IconFolderShare size={14} /> <span className="menu__label">Mostrar destino</span></button>
           <button className="menu__item" onClick={() => copyEntryLink(p.entry.id, p.entry.name)}><IconLink size={14} /> <span className="menu__label">Copiar enlace</span></button>
           <button className="menu__item" onClick={() => library.setPinned({ entryId: p.entry.id }, !p.pinned)}>
-            {p.pinned ? <IconPinFilled size={14} /> : <IconPin size={14} />} <span className="menu__label">{p.pinned ? "Quitar de Fijados" : "Fijar en el menú lateral"}</span>
+            {p.pinned ? <IconPinFilled size={14} /> : <IconPin size={14} />} <span className="menu__label">{p.pinned ? "Quitar de Fijados" : "Fijar"}</span>
           </button>
           <button className="menu__item" onClick={p.onStartRename}><IconPencil size={14} /> <span className="menu__label">Renombrar</span></button>
           {!isFolder ? <button className="menu__item" onClick={p.onCover}><IconPhoto size={14} /> <span className="menu__label">Cambiar portada…</span></button> : null}
           {canShare ? (
-            <button className="menu__item" onClick={() => useStore.getState().set({ inviteTo: { access: [p.entry.id] } })}><IconUserPlus size={14} /> <span className="menu__label">Compartir con alguien del equipo…</span></button>
+            <button className="menu__item" onClick={() => useStore.getState().set({ inviteTo: { access: [p.entry.id] } })}><IconUserPlus size={14} /> <span className="menu__label">Compartir al equipo</span></button>
           ) : null}
           <div className="menu__sep" />
           <button className="menu__item menu__item--danger" onClick={() => library.trash(p.dragIds)}><IconTrash size={14} /> <span className="menu__label">Mover a la papelera</span></button>
@@ -555,7 +563,7 @@ function EntryItem(p: EntryItemProps) {
         </div>
       )}
       <div className="dcard__body">
-        <span className="dcard__titlerow">{name}{star}</span>
+        <span className="dcard__titlerow">{name}</span>
         {p.place ? <span className="sf-faint sf-small">{p.place}</span> : null}
         {isFolder ? <span className="sf-faint sf-small">{meta}</span> : (
           <>
@@ -569,6 +577,7 @@ function EntryItem(p: EntryItemProps) {
           </>
         )}
       </div>
+      {pinToggle}
       {actions}
       {menuEl}
     </div>

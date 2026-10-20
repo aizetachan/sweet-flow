@@ -13,7 +13,7 @@ import {
   IconSettings,
   IconTrash,
   IconUsers,
-  IconUsersGroup, IconShare } from "@tabler/icons-react";
+  IconUsersGroup } from "@tabler/icons-react";
 import { splitTrash } from "@sweetflow/domain";
 import { Avatar, AvatarStack, cx, IconButton, Spinner, Button } from "@sweetflow/ui";
 import { TABS, useSnap, useStore, type View } from "../state/store";
@@ -89,12 +89,12 @@ export function Topbar() {
         {infoButton}
         {format}
       </nav>}
-      {/* Desktop app: the information opens the bar, on the left. */}
-      {TABS ? <>{infoButton}{format}</> : null}
+      {/* Desktop app: the search opens the bar, on the left, with the information to its right. */}
+      {TABS ? <>{view === "board" ? <BoardFilters /> : null}{infoButton}{format}</> : null}
 
       <div className="topbar__spacer" />
 
-      {view === "board" ? <BoardFilters /> : null}
+      {!TABS && view === "board" ? <BoardFilters /> : null}
 
       {online.length ? (
         <div className="topbar__presence" title={`Ahora en la producción: ${online.join(", ")}`}>
@@ -103,13 +103,14 @@ export function Topbar() {
         </div>
       ) : null}
 
-      <Button variant="primary" className="topbar__share" onClick={() => useStore.getState().set({ modal: "share" })}>
-        <IconShare size={14} /> Compartir
-      </Button>
       <Notifications />
       <IconButton label="Mostrar la carpeta de la producción en el ordenador" onClick={() => void revealEntry(productionId)}>
         <IconFolderShare size={17} stroke={1.6} />
       </IconButton>
+      {/* Right before the avatar. */}
+      <Button variant="primary" className="topbar__share" onClick={() => useStore.getState().set({ modal: "share" })}>
+        Compartir
+      </Button>
       <AccountMenu />
     </header>
   );
