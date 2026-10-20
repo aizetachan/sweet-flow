@@ -161,13 +161,14 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
   carpeta**; por lo demás es igual que antes (al pasar el ratón o
   seleccionarla, la pestaña se ilumina con el mismo neón).
   - **Niveles:** de debajo de esa pestaña, que nunca cambia, sale una
-    pestaña pequeña y discreta, con la misma forma, por cada **nivel** de carpetas que hay dentro
+    pestaña discreta, con la misma forma y altura, por cada **nivel** de carpetas que hay dentro
     (no por cada carpeta): con una o cinco carpetas dentro, una; si alguna de
     ellas tiene carpetas, dos; y así. Nunca llegan al ancho de la tarjeta:
     cuantos más niveles, más estrechas (como mucho se dibujan 12).
     Al pasar el ratón o seleccionarla, se ilumina solo el contorno exterior
-    de la carpeta con sus pestañas; las líneas de dentro, donde se solapan,
-    no se iluminan.
+    de la carpeta con sus pestañas, con el mismo brillo que el resto de la
+    tarjeta; las líneas de dentro, donde se solapan, no se iluminan, y el
+    brillo solo se ve por fuera (nunca a través de las pestañas).
 - **Acciones:** crear carpeta, crear producción, renombrar, marcar como
   favorito, mover arrastrando (también varias a la vez) y mover a la papelera.
 - **Relación con Dropbox:** la organización del dashboard **es** la de la
