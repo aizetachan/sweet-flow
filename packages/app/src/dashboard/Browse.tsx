@@ -261,8 +261,8 @@ interface EntryItemProps {
   onStartRename: () => void;
 }
 
-/** The folder tab's outline (what lights up). */
-const TAB_LIT = "M.5 15V12.5Q.5 .5 12 .5H78C86 .5 89 2.5 93 7S100 13.5 108 13.5";
+/** The folder tab's outline (what lights up). It ends just before the card's top edge, where the card's ring carries on, so the two never overlap. */
+const TAB_LIT = "M.5 15V12.5Q.5 .5 12 .5H78C86 .5 89 2.5 93 7C95.8 10.15 98.11 12.08 101.99 12.95";
 /** A level tab's slope: the folder tab's, at the same height. */
 const LEVEL_SLOPE = "M0 .5C8 .5 11 2.5 15 7C19 11.5 22 13.5 30 13.5";
 
@@ -417,8 +417,8 @@ function EntryItem(p: EntryItemProps) {
             </defs>
             {/* Hides the card's lit top edge where the tab joins it. */}
             <rect x="2" y="14" width="100" height="6" fill="url(#dcard-tab-seam)" />
-            {/* It stops short of the slope's end, so the card's ring joins it whole. */}
-            <path className="dcard__tab-fill" d="M0 14V12.5Q0 .5 12 .5H78C86 .5 89 2.5 93 7S100 13.5 108 13.5L98 14Z" />
+            {/* It ends with its outline, so the card's ring joins it whole. */}
+            <path className="dcard__tab-fill" d="M0 14V12.5Q0 .5 12 .5H78C86 .5 89 2.5 93 7C95.8 10.15 98.11 12.08 101.99 12.95V14Z" />
             <path className="dcard__tab-edge" d={TAB_LIT} />
           </svg>
           <div className="dcard__folder"><IconFolder size={40} stroke={1.2} /></div>

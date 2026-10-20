@@ -167,7 +167,9 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
     cuantos más niveles, más estrechas (como mucho se dibujan 12).
     Quedan detrás de la carpeta: al pasar el ratón o seleccionarla se
     ilumina solo la tarjeta con su pestaña, como sin niveles; las pestañas
-    de nivel no se iluminan. El brillo solo se ve por fuera de la pestaña.
+    de nivel no se iluminan y quedan por detrás del brillo. Todo el borde
+    (pestaña y tarjeta) tiene el mismo brillo, sin cortes, y solo se ve por
+    fuera.
 - **Acciones:** crear carpeta, crear producción, renombrar, marcar como
   favorito, mover arrastrando (también varias a la vez) y mover a la papelera.
 - **Relación con Dropbox:** la organización del dashboard **es** la de la
