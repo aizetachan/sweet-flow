@@ -247,8 +247,8 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
   portada» vuelve a las iniciales. Se puede deshacer dentro de la producción.
 - **Fijar desde la tarjeta:** arriba a la izquierda (como «⋯» a la derecha)
   hay un botón de chincheta que aparece al pasar el ratón; si está fijada se
-  queda visible y en amarillo. No tiene fondo propio: la portada (o el bloque
-  de las iniciales) se recorta a su alrededor y se ve el fondo de la tarjeta.
+  queda visible, en amarillo sobre un fondo algo más oscuro. Es igual que
+  «⋯»: cada uno con su esquina justo en la esquina de la portada.
 - **Menú de cada tarjeta:** «Mostrar destino», «Fijar», «Compartir al equipo».
 - **Iconos de carpeta:** del mismo color que los de las producciones (no
   amarillos), en las tarjetas, en la lista y en Fijados.
