@@ -165,6 +165,9 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
     (no por cada carpeta): con una o cinco carpetas dentro, una; si alguna de
     ellas tiene carpetas, dos; y así. Nunca llegan al ancho de la tarjeta:
     cuantos más niveles, más estrechas (como mucho se dibujan 12).
+    Al pasar el ratón o seleccionarla, se ilumina solo el contorno exterior
+    de la carpeta con sus pestañas; las líneas de dentro, donde se solapan,
+    no se iluminan.
 - **Acciones:** crear carpeta, crear producción, renombrar, marcar como
   favorito, mover arrastrando (también varias a la vez) y mover a la papelera.
 - **Relación con Dropbox:** la organización del dashboard **es** la de la

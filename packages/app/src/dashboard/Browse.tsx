@@ -385,7 +385,15 @@ function EntryItem(p: EntryItemProps) {
             <rect x="2" y="14" width="100" height="6" fill="url(#dcard-tab-seam)" />
             <path className="dcard__tab-fill" d="M0 14V12.5Q0 .5 12 .5H78C86 .5 89 2.5 93 7S100 13.5 108 13.5H120V14Z" />
             {/* With level tabs coming out from under it, its edge stops where its slope ends. */}
-            <path className="dcard__tab-edge" d={`M.5 14V12.5Q.5 .5 12 .5H78C86 .5 89 2.5 93 7S100 13.5 108 13.5${p.depth ? "" : "H120"}`} />
+            {p.depth ? (
+              <>
+                {/* The slope's lower part lies over the level tabs: inside the outline, so it never lights up. */}
+                <path className="dcard__tab-edge" d="M.5 14V12.5Q.5 .5 12 .5H78C85.04 .5 88.21 2.05 91.59 5.48" />
+                <path className="dcard__tab-inner" d="M91.59 5.48C92.05 5.95 92.52 6.46 93 7C97 11.5 100 13.5 108 13.5" />
+              </>
+            ) : (
+              <path className="dcard__tab-edge" d="M.5 14V12.5Q.5 .5 12 .5H78C86 .5 89 2.5 93 7S100 13.5 108 13.5H120" />
+            )}
           </svg>
           {p.depth ? (
             <span className="dcard__levels" aria-hidden="true">
@@ -393,8 +401,18 @@ function EntryItem(p: EntryItemProps) {
                 <span key={i} className="dcard__level" style={{ zIndex: MAX_LEVEL_TABS - i }}>
                   {/* The same slope as the folder's tab, smaller; it lies over the next level's tab. */}
                   <svg className="dcard__level-slope" width="18" height="9" viewBox="0 0 18 9">
-                    <path className="dcard__level-fill" d="M0 .5C5 .5 6.8 1.7 9.2 4.5S13.2 8.5 18 8.5V9H0Z" />
-                    <path className="dcard__level-edge" d="M0 .5C5 .5 6.8 1.7 9.2 4.5S13.2 8.5 18 8.5" />
+                    {i === Math.min(p.depth, MAX_LEVEL_TABS) - 1 ? (
+                      <>
+                        <path className="dcard__level-fill" d="M0 .5C5 .5 6.8 1.7 9.2 4.5S13.2 8.5 18 8.5V9H0Z" />
+                        <path className="dcard__level-edge" d="M0 .5C5 .5 6.8 1.7 9.2 4.5S13.2 8.5 18 8.5" />
+                      </>
+                    ) : (
+                      <>
+                        {/* Lying over the next tab: it leaves that tab's top edge (the outline) uncovered and is never lit. */}
+                        <path className="dcard__level-fill" d="M0 1H3.5C6 1.4 7.2 2.2 9.2 4.5S13.2 8.5 18 8.5V9H0Z" />
+                        <path className="dcard__tab-inner" d="M3.5 1.1C6 1.4 7.2 2.2 9.2 4.5S13.2 8.5 18 8.5" />
+                      </>
+                    )}
                   </svg>
                 </span>
               ))}
