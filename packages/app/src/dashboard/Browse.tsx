@@ -7,6 +7,8 @@
 import { useEffect, useId, useMemo, useRef, useState, type DragEvent, type ReactNode } from "react";
 import {
   IconArrowBackUp,
+  IconArrowsSort,
+  IconCheck,
   IconChevronRight,
   IconClock,
   IconFolder,
@@ -27,6 +29,7 @@ import {
   IconTrash,
   IconTrashX, IconUserPlus, IconBooks } from "@tabler/icons-react";
 import { ContextMenu, type MenuAt } from "../components/ContextMenu";
+import { Popover } from "../components/Popover";
 import { FirstRun, isGuest } from "./Welcome";
 import { revealEntry } from "../data/reveal";
 import { copyEntryLink } from "../data/share";
@@ -36,6 +39,62 @@ import { folderDepth, isInTrash, type LibraryEntry, type LibraryState, type Prod
 import { useStore, type DashLayout, type DashSection } from "../state/store";
 
 export const DRAG_TYPE = "application/x-sweetflow-entries";
+
+/** How Inicio is ordered (docs/INTERFAZ.md §1): newest first unless the person picks another. */
+type DashOrder = "created" | "edited" | "az" | "za";
+const ORDERS: { id: DashOrder; label: string }[] = [
+  { id: "created", label: "Creados recientemente" },
+  { id: "edited", label: "Editados recientemente" },
+  { id: "az", label: "Nombre (A → Z)" },
+  { id: "za", label: "Nombre (Z → A)" },
+];
+const ORDER_KEY = "sweetflow:dash-order";
+function readOrder(): DashOrder {
+  try {
+    const v = localStorage.getItem(ORDER_KEY);
+    return ORDERS.some((o) => o.id === v) ? (v as DashOrder) : "created";
+  } catch {
+    return "created";
+  }
+}
+function saveOrder(o: DashOrder): void {
+  try {
+    localStorage.setItem(ORDER_KEY, o);
+  } catch {
+    // Only a convenience.
+  }
+}
+/** Folders and productions together, in the chosen order; the last one made comes first by default. */
+function sortEntries(list: LibraryEntry[], order: DashOrder, lib: LibraryState): LibraryEntry[] {
+  // A production's last work is in its log (its summary); a folder's, its own entry.
+  const edited = (e: LibraryEntry) => lib.summaries[e.id]?.updatedAt ?? e.updatedAt;
+  const byName = (a: LibraryEntry, b: LibraryEntry) => a.name.localeCompare(b.name, "es", { numeric: true, sensitivity: "base" });
+  const cmp: Record<DashOrder, (a: LibraryEntry, b: LibraryEntry) => number> = {
+    created: (a, b) => b.createdAt - a.createdAt,
+    edited: (a, b) => edited(b) - edited(a),
+    az: byName,
+    za: (a, b) => byName(b, a),
+  };
+  return [...list].sort(cmp[order]);
+}
+
+function SortMenu({ order, onChange }: { order: DashOrder; onChange: (o: DashOrder) => void }) {
+  return (
+    <Popover align="right" button={({ open, toggle }) => (
+      <IconButton label={`Ordenar: ${ORDERS.find((o) => o.id === order)!.label.toLowerCase()}`} className={open ? "is-on" : undefined} onClick={toggle}>
+        <IconArrowsSort size={17} stroke={1.6} />
+      </IconButton>
+    )}>
+      <div className="menu__title">Ordenar por</div>
+      {ORDERS.map((o) => (
+        <button key={o.id} className="menu__item" onClick={() => onChange(o.id)}>
+          <span className="menu__label">{o.label}</span>
+          {o.id === order ? <IconCheck size={14} /> : null}
+        </button>
+      ))}
+    </Popover>
+  );
+}
 
 const TITLES: Record<Exclude<DashSection, "settings" | "home" | "team">, { title: string; empty: string; icon: typeof IconClock }> = {
   recent: { title: "Recientes", empty: "Aquí aparecerán las producciones y carpetas que abras.", icon: IconClock },
@@ -58,12 +117,13 @@ export function Browse({ lib, section }: { lib: LibraryState; section: Exclude<D
   }, [folderId, byId, set]);
 
   const q = query.trim().toLowerCase();
-  const byName = (a: LibraryEntry, b: LibraryEntry) => (a.kind === b.kind ? a.name.localeCompare(b.name, "es") : a.kind === "folder" ? -1 : 1);
+  const [order, setOrder] = useState<DashOrder>(readOrder);
+  const sorted = (list: LibraryEntry[]) => sortEntries(list, order, lib);
   let visible: LibraryEntry[];
   if (section === "trash") {
     visible = lib.entries.filter((e) => e.trashedAt).sort((a, b) => b.trashedAt! - a.trashedAt!);
   } else if (q) {
-    visible = lib.entries.filter((e) => alive(e) && e.name.toLowerCase().includes(q)).sort(byName);
+    visible = sorted(lib.entries.filter((e) => alive(e) && e.name.toLowerCase().includes(q)));
   } else if (section === "recent") {
     visible = Object.entries(lib.prefs.opened)
       .sort((a, b) => b[1] - a[1])
@@ -71,7 +131,7 @@ export function Browse({ lib, section }: { lib: LibraryState; section: Exclude<D
       .filter((e): e is LibraryEntry => !!e && alive(e))
       .slice(0, 30);
   } else {
-    visible = lib.entries.filter((e) => e.parentId === folderId && !e.trashedAt).sort(byName);
+    visible = sorted(lib.entries.filter((e) => e.parentId === folderId && !e.trashedAt));
   }
 
   const open = (e: LibraryEntry) => {
@@ -120,6 +180,7 @@ export function Browse({ lib, section }: { lib: LibraryState; section: Exclude<D
               <IconSearch size={14} />
               <input placeholder="Buscar en todas las carpetas…" value={query} onChange={(e) => setQuery(e.target.value)} />
             </label>
+            {section === "home" ? <SortMenu order={order} onChange={(o) => { setOrder(o); saveOrder(o); }} /> : null}
             <Segmented<DashLayout>
               value={dashLayout}
               onChange={(v) => set({ dashLayout: v })}
@@ -169,6 +230,8 @@ export function Browse({ lib, section }: { lib: LibraryState; section: Exclude<D
               onRename={(name) => {
                 library.rename(e.id, name);
                 setRenaming(null);
+                // Named (just created, or renamed): it stays selected.
+                setPicked([e.id]);
               }}
               onStartRename={() => setRenaming(e.id)}
             />

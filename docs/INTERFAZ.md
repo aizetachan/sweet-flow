@@ -115,7 +115,9 @@ aplicación completa con **menú lateral**:
   comparte), se reordena arrastrando y se quita con la chincheta tachada al
   pasar el ratón. Una carpeta fijada sigue aceptando lo que se suelta encima.
   Si lo fijado se ha borrado, desaparece de la lista y se avisa.
-- **Ajustes** y, abajo, **tu avatar** con tu nombre (abre tu perfil).
+- Abajo, en una misma fila, **tu avatar** con tu nombre (abre tu perfil) y, a
+  la derecha, **Ajustes** (solo el icono). Al pasar el ratón, el perfil se
+  marca con las cuatro esquinas redondeadas y separado de la línea de encima.
 
 - **Menú de cada carpeta y producción:** un único botón **«⋯»** (al pasar el
   ratón) y el **clic derecho** abren el mismo menú: abrir, **mostrar en la
@@ -219,6 +221,16 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
   favorito, mover arrastrando (también varias a la vez) y mover a la papelera.
   - Una producción nueva empieza con uno de cada nivel (una secuencia con una
     escena con un plano), para tener ya algo con lo que trabajar al entrar.
+  - Al crear una carpeta o una producción se escribe su nombre al momento; al
+    terminar, queda seleccionada.
+- **Orden de Inicio:** por defecto, lo último creado va primero (carpetas y
+  producciones juntas), aunque luego se le cambie el nombre. El botón de
+  ordenar de la cabecera (entre el buscador y el tipo de vista) permite
+  cambiarlo: creados recientemente, editados recientemente (lo último en que se
+  ha trabajado), nombre A → Z o Z → A. Se recuerda en este ordenador y también
+  ordena los resultados del buscador.
+- **Iconos de carpeta:** del mismo color que los de las producciones (no
+  amarillos), en las tarjetas, en la lista y en Fijados.
 - **Relación con Dropbox:** la organización del dashboard **es** la de la
   carpeta de Dropbox.
   - Lo que se crea, renombra o mueve en la app se aplica en Dropbox.

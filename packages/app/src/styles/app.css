@@ -611,7 +611,8 @@ button.tree__hint { padding: 0 14px 8px; }
 .dcard__thumb img { width: 100%; height: 100%; object-fit: cover; }
 .dcard__initials { font-size: 30px; font-weight: 700; letter-spacing: -.03em; color: var(--fg-1); opacity: .85; }
 .dcard__format { position: absolute; left: 8px; bottom: 8px; padding: 2px 7px; border-radius: 99px; font-size: 11px; background: #000a; color: var(--fg-1); }
-.dcard__folder { background: var(--bg-3); color: var(--warn); }
+/* Folder icons: the same colour as the productions' (sf-faint), not yellow. */
+.dcard__folder { background: var(--bg-3); color: var(--fg-4); }
 /* Folder card: a tab rises from its top edge, as on a folder. It takes the
    space above the card, so the card itself keeps its size. */
 .dcard--folder { margin-top: 13px; border-top-left-radius: 0; }
@@ -657,7 +658,7 @@ button.tree__hint { padding: 0 14px 8px; }
 .dcard__foot { display: flex; align-items: center; gap: 6px; }
 .dentry__name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .dentry__rename { height: 26px; padding: 0 6px; width: 100%; }
-.dentry__ficon { color: var(--warn); flex: none; }
+.dentry__ficon { color: var(--fg-4); flex: none; }
 .dentry__acts { position: absolute; top: 6px; right: 6px; display: flex; gap: 2px; padding: 2px; border-radius: var(--r-md); background: var(--bg-3); opacity: 0; transition: opacity .1s; }
 /* Only on hover, or keyboard focus: a mouse click leaves focus on the button and must not keep them shown. */
 .dcard:hover .dentry__acts, .dcard:has(:focus-visible) .dentry__acts, .drow:hover .dentry__acts, .drow:has(:focus-visible) .dentry__acts { opacity: 1; }
@@ -749,10 +750,13 @@ button.tree__hint { padding: 0 14px 8px; }
 .dside__item.is-drop { background: var(--primary-soft); box-shadow: inset 0 0 0 1px var(--primary); }
 .dside__label { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .dside__count { font-size: 11px; color: var(--fg-4); }
-.dside__ficon { color: var(--warn); }
+.dside__ficon { color: var(--fg-4); }
 .dside__title { padding: 16px 10px 6px; font-size: 11px; font-weight: 600; color: var(--fg-4); text-transform: uppercase; letter-spacing: .06em; }
 .dside__spacer { flex: 1; min-height: 16px; }
-.dside__me { display: flex; align-items: center; gap: 10px; margin-top: 8px; padding: 8px; border: 0; border-top: 1px solid var(--line-0); border-radius: 0 0 var(--r-md) var(--r-md); background: none; text-align: left; }
+/* Bottom row: your profile and, on the right, Ajustes (icon only). Its hover keeps the
+   same gap from the divider as the sidebar's bottom padding. */
+.dside__foot { display: flex; align-items: center; gap: 4px; margin-top: 8px; padding-top: 12px; border-top: 1px solid var(--line-0); }
+.dside__me { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; padding: 8px; border: 0; border-radius: var(--r-md); background: none; text-align: left; }
 .dside__me:hover { background: var(--ghost); }
 .dside__who { display: flex; flex-direction: column; min-width: 0; }
 .dside__who-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -793,6 +797,7 @@ button.tree__hint { padding: 0 14px 8px; }
   .dside__name, .dside__label, .dside__count, .dside__title, .dside__who, .dpin__text, .dpins__empty, .dpin__off { display: none !important; }
   .dside__item, .dside__me { justify-content: center; padding: 0; }
   .dside__me { padding: 8px 0; }
+  .dside__foot { flex-direction: column; }
   .settings__layout { grid-template-columns: 1fr; }
   .settings__nav { flex-direction: row; flex-wrap: wrap; }
 }

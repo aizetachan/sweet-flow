@@ -7,7 +7,7 @@
 import { useMemo, useState, type DragEvent, type ReactNode } from "react";
 import { IconClock, IconUsersGroup, IconFolder, IconHome, IconMovie, IconPin, IconPinnedOff, IconSettings, IconTrash } from "@tabler/icons-react";
 import type { Id } from "@sweetflow/domain";
-import { Avatar, Button, cx } from "@sweetflow/ui";
+import { Avatar, Button, cx, IconButton } from "@sweetflow/ui";
 import { openTeamFolder, storageStatus } from "../data";
 import { reconnectLocalFolder } from "../data/folder/browserFs";
 import { isInTrash, pinKey, type LibraryEntry, type LibraryState, type Pin } from "../data/library";
@@ -92,18 +92,20 @@ function Sidebar({ lib }: { lib: LibraryState }) {
 
       <div className="dside__spacer" />
 
-      <nav className="dside__nav">
-        <SideItem icon={<IconSettings size={17} stroke={1.6} />} label="Ajustes" on={dashSection === "settings"} onClick={() => set({ dashSection: "settings" })} />
-      </nav>
-      {isGuest(lib.me, lib.mode) ? <SignInButton className="dside__me" /> : (
-        <button className="dside__me" title="Tu perfil" onClick={() => set({ dashSection: "settings", settingsTab: "profile" })}>
-          <Avatar name={lib.me.displayName} size={30} />
-          <span className="dside__who">
-            <span className="dside__who-name">{lib.me.displayName}</span>
-            <span className="dside__who-where">{lib.label}</span>
-          </span>
-        </button>
-      )}
+      <div className="dside__foot">
+        {isGuest(lib.me, lib.mode) ? <SignInButton className="dside__me" /> : (
+          <button className="dside__me" title="Tu perfil" onClick={() => set({ dashSection: "settings", settingsTab: "profile" })}>
+            <Avatar name={lib.me.displayName} size={30} />
+            <span className="dside__who">
+              <span className="dside__who-name">{lib.me.displayName}</span>
+              <span className="dside__who-where">{lib.label}</span>
+            </span>
+          </button>
+        )}
+        <IconButton label="Ajustes" on={dashSection === "settings"} onClick={() => set({ dashSection: "settings" })}>
+          <IconSettings size={18} stroke={1.6} />
+        </IconButton>
+      </div>
     </aside>
   );
 }
