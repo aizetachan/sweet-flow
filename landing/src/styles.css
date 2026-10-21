@@ -105,16 +105,32 @@ i, em { font-style: normal; }
 }
 .chip--glass { font-size: 12px; background: rgb(255 255 255 / .06); backdrop-filter: blur(12px); }
 
+/* Cards: the card tint over a still frame of the fluid (--fluid-tex, set by
+   fluid.ts; without WebGL the plain gradient stays). Each card frames the
+   texture differently so no two look alike. The glow only appears under the
+   cursor, and the texture drifts slightly towards it. */
 .card {
   position: relative; overflow: hidden; border-radius: 24px;
-  background: linear-gradient(180deg, var(--bg-3), var(--bg-2)); border: 1px solid rgb(255 255 255 / .16);
+  --card-a: rgb(31 31 35 / .82); --card-b: rgb(23 23 26 / .82);
+  background: linear-gradient(180deg, var(--card-a), var(--card-b)), var(--fluid-tex, linear-gradient(180deg, var(--bg-3), var(--bg-2)));
+  background-size: auto, 220% auto; background-repeat: no-repeat;
+  background-position: 0 0, calc(var(--tex-x, 50%) + var(--tx, 0px)) calc(var(--tex-y, 50%) + var(--ty, 0px));
+  border: 1px solid rgb(255 255 255 / .16);
+  transition: background-position .6s cubic-bezier(.2, .7, .2, 1);
 }
-.card--dark { background: linear-gradient(180deg, var(--bg), var(--bg-2)); }
-.card--glow::before, .card--glow-r::before {
-  content: ""; position: absolute; width: 240px; height: 240px; left: -81px; top: -91px; pointer-events: none;
-  background: radial-gradient(circle, rgb(var(--accent-rgb) / .35), rgb(var(--accent-rgb) / 0) 70%);
+.card--dark { --card-a: rgb(14 14 16 / .8); --card-b: rgb(23 23 26 / .8); }
+.card:nth-child(3n + 1) { --tex-x: 18%; --tex-y: 30%; }
+.card:nth-child(3n + 2) { --tex-x: 72%; --tex-y: 65%; }
+.card:nth-child(3n + 3) { --tex-x: 45%; --tex-y: 90%; }
+.card:nth-child(4), .card:nth-child(5) { --tex-x: 85%; --tex-y: 12%; }
+.card::before {
+  content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0; transition: opacity .4s;
+  background: radial-gradient(260px circle at var(--mx, 50%) var(--my, 50%), rgb(var(--accent-rgb) / .16), rgb(var(--accent-rgb) / 0) 70%);
 }
-.card--glow-r::before { width: 260px; height: 260px; left: auto; right: -100px; top: -121px; }
+.card:hover::before { opacity: 1; }
+/* Everything inside a card (mockups, thumbnails, screenshots, text) sits above
+   the texture and the glow, never tinted by them. */
+.card > * { position: relative; z-index: 1; }
 
 .logo { display: inline-flex; align-items: center; gap: 9px; }
 .logo__mark {
@@ -442,7 +458,8 @@ kbd {
   box-shadow: 0 24px 70px rgb(var(--accent-rgb) / .3);
 }
 .plan--featured::before {
-  content: ""; position: absolute; left: -101px; top: -141px; width: 320px; height: 320px; pointer-events: none;
+  /* The featured plan keeps its always-on glow from the design. */
+  content: ""; position: absolute; left: -101px; top: -141px; width: 320px; height: 320px; pointer-events: none; opacity: 1; inset: auto;
   background: radial-gradient(circle, rgb(var(--accent-rgb) / .4), rgb(var(--accent-rgb) / 0) 70%);
 }
 .plan__head { display: flex; align-items: center; justify-content: space-between; font-size: 18px; font-weight: 600; }

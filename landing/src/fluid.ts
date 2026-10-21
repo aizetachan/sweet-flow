@@ -18,6 +18,7 @@ uniform vec2 u_res;
 uniform float u_time;
 uniform vec2 u_mouse;     // 0..1, origin bottom-left
 uniform float u_mouseAmt; // 0 = no cursor, 1 = full
+uniform float u_accent;   // accent strength (1 = page background, more for the card texture)
 
 vec2 hash2(vec2 p) {
   p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));
@@ -61,7 +62,7 @@ void main() {
   // The blue only lives on the crests of the field: a thin, sparse accent.
   float crest = smoothstep(0.60, 0.86, h);
   float veins = smoothstep(0.45, 0.95, n2 * 0.5 + 0.5);
-  col += mix(deep, blue, veins) * crest * 0.10;
+  col += mix(deep, blue, veins) * crest * 0.10 * u_accent;
   col += blue * exp(-dm * dm * 7.0) * 0.06 * u_mouseAmt;
   // Keep it dark at the very top so the sticky nav blends in.
   col = mix(bg, col, smoothstep(0.0, 0.08, 1.0 - uv.y) * 0.9 + 0.1);
@@ -107,6 +108,26 @@ export function initFluidBackground(): void {
   const uTime = gl.getUniformLocation(prog, "u_time");
   const uMouse = gl.getUniformLocation(prog, "u_mouse");
   const uMouseAmt = gl.getUniformLocation(prog, "u_mouseAmt");
+  const uAccent = gl.getUniformLocation(prog, "u_accent");
+
+  // One still frame of the same field, as a texture for the cards (CSS var
+  // --fluid-tex). Read back synchronously, right after drawing, so no
+  // preserveDrawingBuffer is needed.
+  canvas.width = 640;
+  canvas.height = 400;
+  gl.viewport(0, 0, 640, 400);
+  gl.uniform2f(uRes, 640, 400);
+  gl.uniform1f(uTime, 41.0);
+  gl.uniform2f(uMouse, 0.5, 0.5);
+  gl.uniform1f(uMouseAmt, 0);
+  gl.uniform1f(uAccent, 2.4);
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+  try {
+    document.documentElement.style.setProperty("--fluid-tex", `url(${canvas.toDataURL("image/jpeg", 0.75)})`);
+  } catch {
+    /* tainted or unsupported: cards keep their plain gradient */
+  }
+  gl.uniform1f(uAccent, 1);
 
   // Quarter resolution (half of a 1x DPR), it is a blur anyway.
   const SCALE = 0.5;
@@ -118,6 +139,10 @@ export function initFluidBackground(): void {
   resize();
   window.addEventListener("resize", resize);
 
+  // The cursor only stirs the fluid when it is over the bare background.
+  // Over a card, an image, text or a control the field keeps flowing on its own.
+  const OVER_CONTENT =
+    ".card, .hero__window, .feature__shot, .strip__bar, .win, .toast, .btn, .pill, .chip, .lang, .toggle, .nav, .footer, dialog, img, video, p, h1, h2, h3, li, kbd, a, button";
   const hasPointer = window.matchMedia("(pointer: fine)").matches;
   const target = { x: 0.5, y: 0.5 };
   const mouse = { x: 0.5, y: 0.5 };
@@ -125,6 +150,11 @@ export function initFluidBackground(): void {
   let amtTarget = 0;
   if (hasPointer) {
     window.addEventListener("pointermove", (e) => {
+      const overContent = e.target instanceof Element && e.target.closest(OVER_CONTENT) !== null;
+      if (overContent) {
+        amtTarget = 0;
+        return;
+      }
       target.x = e.clientX / window.innerWidth;
       target.y = 1 - e.clientY / window.innerHeight;
       amtTarget = 1;
@@ -143,6 +173,7 @@ export function initFluidBackground(): void {
     mouse.x += (target.x - mouse.x) * 0.08;
     mouse.y += (target.y - mouse.y) * 0.08;
     amt += (amtTarget - amt) * 0.05;
+    gl.uniform1f(uAccent, 1);
     gl.uniform2f(uRes, canvas.width, canvas.height);
     gl.uniform1f(uTime, t);
     gl.uniform2f(uMouse, mouse.x, mouse.y);
