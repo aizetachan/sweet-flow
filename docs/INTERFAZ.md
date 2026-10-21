@@ -113,6 +113,11 @@ aplicación completa con **menú lateral**:
   esa carpeta ya no está) o **eliminar definitivamente** (doble clic de
   confirmación). No se vacía sola.
 - **Fijados:** acceso rápido a lo que más usas, sin entrar en las carpetas.
+  En las tarjetas de producción, los avatares son **quien está dentro ahora**
+  (además de ti), con su foto si la tiene; si no hay nadie, no sale ninguno.
+  Se sabe de las producciones abiertas en este ordenador (en la app de
+  escritorio, las de las pestañas) y mientras haya presencia en vivo (aún no
+  en modo local).
   Se puede fijar una carpeta, una producción (con la chincheta de su tarjeta o
   arrastrándola a la sección) o una escena o un plano (con la chincheta junto
   al título en su panel). Un clic abre la carpeta, la producción, o la
@@ -294,16 +299,16 @@ iluminados, oscuro para los brillos), movidos igual que los del azul
   - **Restaurar valores por defecto** vuelve al azul o, con tema del equipo,
     al del equipo («Usar el tema del equipo»). Al lado, el icono de la app
     con el color que se ve.
-- **Permisos del tema** (solo el propietario):
-  - **Quién puede cambiar el tema del equipo:** **Solo yo** (por defecto) o
-    **Todo el equipo**.
+- **Permisos del tema** (el propietario y los administradores):
+  - **Quién puede cambiar el tema del equipo:** **Administradores** (el
+    propietario y los administradores; por defecto) o **Todo el equipo**.
   - **Quién puede usar su propio tema:** **Todo el equipo** (por defecto;
     quien no elige ninguno ve el del equipo) o **Nadie** (todos ven el del
     equipo; el propietario sigue pudiendo tener el suyo).
   - Se guardan en el registro del equipo (`team.theme`, `team.themeEditors`,
     `team.themeFreedom`; reglas en `packages/domain/src/team.ts`).
-  - El equipo no tiene administradores (solo propietario y miembros,
-    docs/USUARIOS.md §2): el nivel «administradores» se añadirá cuando existan.
+  - Los administradores (docs/USUARIOS.md §2) pueden lo mismo que el
+    propietario, también aquí, y siempre pueden usar su propio tema.
 - **Icono de la app (escritorio):** solo el **marco** toma el color; el «Sf.»
   sigue blanco.
   - Con la app abierta: Dock y ⌘Tab en Mac, barra de tareas en Windows.

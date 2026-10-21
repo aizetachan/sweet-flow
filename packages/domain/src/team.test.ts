@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { accessOf, canInvite, canPersonalizeTheme, canRemove, canSetTeamTheme, canSee, foldTeam, shareRoots, themeFor, type TeamEvent, type TeamEventBody, type Within } from "./team";
+import { accessOf, canInvite, canPersonalizeTheme, canRemove, canSetTeamTheme, isTeamManager, canSee, foldTeam, shareRoots, themeFor, type TeamEvent, type TeamEventBody, type Within } from "./team";
 
 // Dashboard: F1 › F2 › P1, and P2 at the top.
 const parent: Record<string, string | null> = { F1: null, F2: "F1", P1: "F2", P2: null };
@@ -141,11 +141,62 @@ describe("team", () => {
       ev("bea@x.com", { type: "team.theme", theme: { accent: "#ef3732" } }),
       // Outsiders and members changing the rules: ignored.
       ev("eve@x.com", { type: "team.theme", theme: { accent: "#00ff00" } }),
-      ev("bea@x.com", { type: "team.themeEditors", editors: "owner" }),
+      ev("bea@x.com", { type: "team.themeEditors", editors: "admins" }),
     ], within);
     expect(open.theme).toEqual({ accent: "#ef3732" });
     expect(open.themeEditors).toBe("everyone");
     expect(canSetTeamTheme(open, "bea@x.com")).toBe(true);
     expect(canSetTeamTheme(open, "eve@x.com")).toBe(false);
+  });
+
+  it("admins run the team like the owner, but only the owner names or removes admins", () => {
+    const t = foldTeam([
+      ev("ana@x.com", { type: "team.claimed", name: "Ana" }),
+      ev("ana@x.com", { type: "member.invited", email: "bea@x.com", access: ["F2"] }),
+      ev("ana@x.com", { type: "member.invited", email: "cris@x.com", access: ["P2"] }),
+      ev("ana@x.com", { type: "member.invited", email: "dani@x.com", access: ["P2"] }),
+      // Bea is not an admin yet: she can't name one.
+      ev("bea@x.com", { type: "member.role", email: "cris@x.com", role: "admin" }),
+      ev("ana@x.com", { type: "member.role", email: "bea@x.com", role: "admin" }),
+      ev("ana@x.com", { type: "team.settings", membersCanInvite: false }),
+      // As admin: she invites to anything, changes access and settings, removes members.
+      ev("bea@x.com", { type: "member.invited", email: "eva@x.com", access: ["F1"] }),
+      ev("bea@x.com", { type: "member.access", email: "cris@x.com", access: ["F1"] }),
+      ev("bea@x.com", { type: "member.removed", email: "dani@x.com" }),
+      ev("bea@x.com", { type: "team.theme", theme: { accent: "#ef3732" } }),
+      // But she can't name admins.
+      ev("bea@x.com", { type: "member.role", email: "cris@x.com", role: "admin" }),
+    ], within);
+    const bea = t.members.find((m) => m.email === "bea@x.com")!;
+    expect(bea).toMatchObject({ role: "admin", access: "all" });
+    expect(isTeamManager(t, "bea@x.com")).toBe(true);
+    expect(canInvite(t, "bea@x.com")).toBe(true);
+    expect(canInvite(t, "cris@x.com")).toBe(false);
+    expect(t.members.map((m) => m.email)).toEqual(["bea@x.com", "cris@x.com", "eva@x.com"]);
+    expect(t.members.find((m) => m.email === "cris@x.com")).toMatchObject({ access: ["F1"] });
+    expect(t.members.find((m) => m.email === "cris@x.com")?.role).toBeUndefined();
+    expect(t.theme).toEqual({ accent: "#ef3732" });
+    expect(canRemove(t, "bea@x.com", "cris@x.com")).toBe(true);
+    expect(canRemove(t, "ana@x.com", "bea@x.com")).toBe(true);
+  });
+
+  it("an admin can't remove or change another admin; the owner can make them members again", () => {
+    const t = foldTeam([
+      ev("ana@x.com", { type: "team.claimed", name: "Ana" }),
+      ev("ana@x.com", { type: "member.invited", email: "bea@x.com", access: ["F2"] }),
+      ev("ana@x.com", { type: "member.invited", email: "cris@x.com", access: ["P2"] }),
+      ev("ana@x.com", { type: "member.role", email: "bea@x.com", role: "admin" }),
+      ev("ana@x.com", { type: "member.role", email: "cris@x.com", role: "admin" }),
+      ev("bea@x.com", { type: "member.removed", email: "cris@x.com" }),
+      ev("bea@x.com", { type: "member.access", email: "cris@x.com", access: ["P2"] }),
+      ev("ana@x.com", { type: "member.role", email: "bea@x.com", role: "member" }),
+    ], within);
+    expect(t.members.find((m) => m.email === "cris@x.com")).toMatchObject({ role: "admin", access: "all" });
+    expect(canRemove(t, "cris@x.com", "bea@x.com")).toBe(true);
+    expect(canRemove(t, "bea@x.com", "cris@x.com")).toBe(false);
+    const bea = t.members.find((m) => m.email === "bea@x.com")!;
+    expect(bea.role).toBeUndefined();
+    // She keeps everything until it is changed.
+    expect(bea.access).toBe("all");
   });
 });

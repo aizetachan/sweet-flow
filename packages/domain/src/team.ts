@@ -16,9 +16,18 @@ import type { Stamp } from "./clock";
 /** Everything, or these dashboard folders and productions (with what is inside). */
 export type Access = "all" | Id[];
 
+/**
+ * A member's role in the team. An admin may do what the owner does (invite,
+ * change access, remove, settings, theme) except naming or removing admins;
+ * they have everything.
+ */
+export type TeamRole = "admin" | "member";
+
 export interface TeamMember {
   /** Magnific email, lower case: who they are. */
   email: string;
+  /** Absent: a member. */
+  role?: "admin";
   name: string;
   /** The Dropbox or Drive account the folders are shared with, when it is another email. */
   storageEmail?: string;
@@ -36,8 +45,8 @@ export interface Theme {
 /** Who, besides the owner, may use a theme of their own instead of the team's. */
 export type ThemeFreedom = "everyone" | "nobody";
 
-/** Who, besides the owner, may change the team's theme. */
-export type ThemeEditors = "owner" | "everyone";
+/** Who may change the team's theme: the owner and the admins, or everyone in the team. */
+export type ThemeEditors = "admins" | "everyone";
 
 export interface Team {
   owner: { email: string; name: string } | null;
@@ -48,7 +57,7 @@ export interface Team {
   theme: Theme | null;
   /** Whether members may set their own theme. Everyone by default. */
   themeFreedom: ThemeFreedom;
-  /** Who may change the team's theme. Only the owner by default. */
+  /** Who may change the team's theme. The owner and the admins by default. */
   themeEditors: ThemeEditors;
 }
 
@@ -58,13 +67,15 @@ export type TeamEventBody =
   | { type: "team.settings"; membersCanInvite: boolean }
   /** The team's theme (null: back to the corporate blue): the owner's, or anyone's in the team when the owner allows it. */
   | { type: "team.theme"; theme: Theme | null }
-  /** Only the owner's count. */
+  /** Only the owner's and the admins' count. */
   | { type: "team.themeFreedom"; freedom: ThemeFreedom }
   | { type: "team.themeEditors"; editors: ThemeEditors }
   /** Invite, or give more to someone already in (their access grows). */
   | { type: "member.invited"; email: string; name?: string; storageEmail?: string; access: Access }
   /** Replace what someone has. */
   | { type: "member.access"; email: string; access: Access }
+  /** Make a member an admin (they get everything) or a member again. Only the owner's count. */
+  | { type: "member.role"; email: string; role: TeamRole }
   | { type: "member.removed"; email: string };
 
 export type TeamEvent = TeamEventBody & {
@@ -99,29 +110,34 @@ function union(a: Access, b: Access, within: Within): Access {
 /** The team from its events, from any number of devices, in any order. Deterministic. */
 export function foldTeam(events: Iterable<TeamEvent>, within: Within): Team {
   const sorted = [...events].sort((a, b) => (a.at < b.at ? -1 : a.at > b.at ? 1 : 0));
-  const team: Team = { owner: null, membersCanInvite: true, members: [], theme: null, themeFreedom: "everyone", themeEditors: "owner" };
+  const team: Team = { owner: null, membersCanInvite: true, members: [], theme: null, themeFreedom: "everyone", themeEditors: "admins" };
   const byEmail = new Map<string, TeamMember>();
   const isOwner = (email: string) => team.owner?.email === email;
   for (const e of sorted) {
     const by = normEmail(e.by);
     const actor = byEmail.get(by);
+    // The owner, or an admin: they run the team.
+    const manager = isOwner(by) || actor?.role === "admin";
     // Who may invite or change someone's access, with what.
-    const mayGrant = (access: Access) => isOwner(by) || (!!actor && team.membersCanInvite && covers(actor.access, access, within));
+    const mayGrant = (access: Access) => manager || (!!actor && team.membersCanInvite && covers(actor.access, access, within));
+    // Admins are touched only by the owner.
+    const mayTouch = (m: TeamMember) => (m.role === "admin" ? isOwner(by) : manager || m.invitedBy === by);
     switch (e.type) {
       case "team.claimed":
         if (!team.owner) team.owner = { email: by, name: e.name || by };
         break;
       case "team.settings":
-        if (isOwner(by)) team.membersCanInvite = e.membersCanInvite;
+        if (manager) team.membersCanInvite = e.membersCanInvite;
         break;
       case "team.theme":
-        if (isOwner(by) || (team.themeEditors === "everyone" && !!actor)) team.theme = e.theme && isHex(e.theme.accent) ? { accent: e.theme.accent.toLowerCase() } : null;
+        if (manager || (team.themeEditors === "everyone" && !!actor)) team.theme = e.theme && isHex(e.theme.accent) ? { accent: e.theme.accent.toLowerCase() } : null;
         break;
       case "team.themeFreedom":
-        if (isOwner(by) && (e.freedom === "everyone" || e.freedom === "nobody")) team.themeFreedom = e.freedom;
+        if (manager && (e.freedom === "everyone" || e.freedom === "nobody")) team.themeFreedom = e.freedom;
         break;
       case "team.themeEditors":
-        if (isOwner(by) && (e.editors === "owner" || e.editors === "everyone")) team.themeEditors = e.editors;
+        // "owner": written before there were admins; it meant the same.
+        if (manager && ((e.editors as string) === "owner" || e.editors === "admins" || e.editors === "everyone")) team.themeEditors = e.editors === "everyone" ? "everyone" : "admins";
         break;
       case "member.invited": {
         const email = normEmail(e.email);
@@ -135,14 +151,26 @@ export function foldTeam(events: Iterable<TeamEvent>, within: Within): Team {
       case "member.access": {
         const email = normEmail(e.email);
         const cur = byEmail.get(email);
-        if (!cur || !(isOwner(by) || (cur.invitedBy === by && mayGrant(e.access)))) break;
+        if (!cur || cur.role === "admin" || !(manager || (cur.invitedBy === by && mayGrant(e.access)))) break;
         byEmail.set(email, { ...cur, access: e.access });
+        break;
+      }
+      case "member.role": {
+        const email = normEmail(e.email);
+        const cur = byEmail.get(email);
+        if (!cur || !isOwner(by)) break;
+        // An admin has everything; made a member again, they keep it until it is changed.
+        if (e.role === "admin") byEmail.set(email, { ...cur, role: "admin", access: "all" });
+        else if (e.role === "member") {
+          const { role: _r, ...rest } = cur;
+          byEmail.set(email, rest);
+        }
         break;
       }
       case "member.removed": {
         const email = normEmail(e.email);
         const cur = byEmail.get(email);
-        if (cur && (isOwner(by) || cur.invitedBy === by)) byEmail.delete(email);
+        if (cur && mayTouch(cur)) byEmail.delete(email);
         break;
       }
     }
@@ -165,32 +193,41 @@ export function canSee(team: Team, email: string, entryId: Id, within: Within): 
   return a === "all" || (!!a && a.some((outer) => within(entryId, outer)));
 }
 
-/** Whether someone can invite: the owner, or members when the owner allows it. */
+/** Whether someone runs the team: the owner or an admin. */
+export function isTeamManager(team: Team, email: string | null): boolean {
+  if (!team.owner || !email) return false;
+  const e = normEmail(email);
+  return team.owner.email === e || team.members.some((m) => m.email === e && m.role === "admin");
+}
+
+/** Whether someone can invite: the owner and admins, or members when allowed. */
 export function canInvite(team: Team, email: string): boolean {
   const a = accessOf(team, email);
   if (!a) return false;
-  return !team.owner || team.owner.email === normEmail(email) || team.membersCanInvite;
+  return !team.owner || isTeamManager(team, email) || team.membersCanInvite;
 }
 
-/** Whether `by` can remove `email` from the team (the owner, or who invited them). */
+/** Whether `by` can remove (or change) `email`: the owner; admins and whoever invited them, except admins (only the owner). */
 export function canRemove(team: Team, by: string, email: string): boolean {
   const m = team.members.find((x) => x.email === normEmail(email));
-  return !!m && (team.owner?.email === normEmail(by) || m.invitedBy === normEmail(by));
+  if (!m) return false;
+  if (team.owner?.email === normEmail(by)) return true;
+  return m.role !== "admin" && (isTeamManager(team, by) || m.invitedBy === normEmail(by));
 }
 
 const isHex = (v: unknown): v is string => typeof v === "string" && /^#[0-9a-f]{6}$/i.test(v);
 
-/** Whether someone may change the team's theme: the owner, or members when the owner allows it. Nobody while nobody owns the team. */
+/** Whether someone may change the team's theme: the owner and admins, or every member when allowed. Nobody while nobody owns the team. */
 export function canSetTeamTheme(team: Team, email: string | null): boolean {
   if (!team.owner || !email) return false;
   const e = normEmail(email);
-  return team.owner.email === e || (team.themeEditors === "everyone" && team.members.some((m) => m.email === e));
+  return isTeamManager(team, e) || (team.themeEditors === "everyone" && team.members.some((m) => m.email === e));
 }
 
 /** Whether someone may use a theme of their own: the owner always; members if the owner lets them. A team nobody owns yet is open. */
 export function canPersonalizeTheme(team: Team, email: string | null): boolean {
   if (!team.owner) return true;
-  if (email && team.owner.email === normEmail(email)) return true;
+  if (isTeamManager(team, email)) return true;
   return team.themeFreedom === "everyone";
 }
 

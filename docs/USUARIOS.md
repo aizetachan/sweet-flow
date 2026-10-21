@@ -72,6 +72,12 @@
     miembros pueden invitar («Los miembros pueden invitar», activado por
     defecto). Elige también el tema del equipo y si los miembros pueden usar
     el suyo (docs/INTERFAZ.md §1.4).
+  - **Administrador:** lo nombra el propietario (Equipo › «Hacer
+    administrador»). Tiene **todo** y puede hacer lo mismo que el propietario
+    (invitar a cualquier cosa, cambiar accesos, quitar gente, los ajustes del
+    equipo y del tema) salvo **nombrar o quitar administradores**, y a otro
+    administrador no lo puede quitar ni cambiar. Si vuelve a ser miembro,
+    conserva lo que tiene hasta que se le cambie.
   - **Miembro:** trabaja en las carpetas o producciones que le dan.
   - **Invitado:** el cliente (§4); no está en la carpeta.
 - Dónde se gestiona: «Compartir» en una carpeta o producción del dashboard, y

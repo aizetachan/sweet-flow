@@ -19,6 +19,7 @@ import {
   type Team,
   type TeamEvent,
   type TeamEventBody,
+  type TeamRole,
   type Theme,
   type ThemeEditors,
   type ThemeFreedom,
@@ -42,7 +43,7 @@ export interface Person {
 
 export class TeamLog {
   private log: FolderLog<TeamEvent>;
-  private team: Team = { owner: null, membersCanInvite: true, members: [], theme: null, themeFreedom: "everyone", themeEditors: "owner" };
+  private team: Team = { owner: null, membersCanInvite: true, members: [], theme: null, themeFreedom: "everyone", themeEditors: "admins" };
   private clock: Hlc = ZERO_HLC;
   private writing: Promise<void> = Promise.resolve();
   private listeners = new Set<() => void>();
@@ -88,6 +89,10 @@ export class TeamLog {
 
   remove(email: string): void {
     this.write({ type: "member.removed", email: normEmail(email) });
+  }
+
+  setRole(email: string, role: TeamRole): void {
+    this.write({ type: "member.role", email: normEmail(email), role });
   }
 
   setMembersCanInvite(on: boolean): void {

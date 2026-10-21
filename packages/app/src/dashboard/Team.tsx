@@ -5,7 +5,7 @@
  */
 
 import { useMemo, useState } from "react";
-import { IconCrown, IconFolder, IconMovie, IconUserPlus, IconUsersGroup } from "@tabler/icons-react";
+import { IconCrown, IconFolder, IconShieldCheck, IconMovie, IconUserPlus, IconUsersGroup } from "@tabler/icons-react";
 import { normEmail, type Access, type Id, type TeamMember } from "@sweetflow/domain";
 import { Avatar, Button, cx, Modal } from "@sweetflow/ui";
 import { entryWithin } from "../data/folder/folderEntries";
@@ -47,10 +47,13 @@ export function TeamPage({ lib }: { lib: LibraryState }) {
       </div>
     );
   }
-  const isOwner = team.owner?.email === me;
   const remove = async (m: TeamMember) => {
     const r = await library.team!.remove(m.email);
     notify(shareMessage(r, lib, m.storageEmail ?? m.email, "quitado"));
+  };
+  const setRole = async (m: TeamMember, role: "admin" | "member") => {
+    const r = await library.team!.setRole(m.email, role);
+    notify(role === "admin" ? `${m.name} es administrador: tiene todo y puede hacer lo mismo que tú, salvo nombrar o quitar administradores. ${r.ok || r.manual ? "" : shareMessage(r, lib, m.storageEmail ?? m.email)}`.trim() : `${m.name} vuelve a ser miembro (conserva lo que tiene hasta que lo cambies).`);
   };
   return (
     <div className="dash">
@@ -78,7 +81,8 @@ export function TeamPage({ lib }: { lib: LibraryState }) {
           <p className="sf-faint sf-small">Nadie es propietario todavía: lo será el primero que abra la carpeta con Magnific conectada.</p>
         )}
         {team.members.map((m) => {
-          const mine = isOwner || m.invitedBy === me;
+          const mine = team.manageable.includes(m.email);
+          const admin = m.role === "admin";
           return (
             <div key={m.email} className="team__row">
               <Avatar name={m.name} src={m.email === me ? lib.me.photoUrl : undefined} size={32} />
@@ -86,11 +90,16 @@ export function TeamPage({ lib }: { lib: LibraryState }) {
                 <b>{m.name}{m.email === me ? " (tú)" : ""}</b>
                 <span className="sf-faint sf-small">{m.email}{m.storageEmail ? ` · ${storageName(lib) ?? "almacenamiento"}: ${m.storageEmail}` : ""}</span>
               </div>
-              <span className="team__access" title={accessLabel(lib, m.access)}>{m.access === "all" ? <IconUsersGroup size={14} /> : <IconFolder size={14} />} {accessLabel(lib, m.access)}</span>
+              <span className="team__access" title={admin ? "Administrador: tiene todo y gestiona el equipo" : accessLabel(lib, m.access)}>
+                {admin ? <><IconShieldCheck size={14} /> Administrador · todo</> : <>{m.access === "all" ? <IconUsersGroup size={14} /> : <IconFolder size={14} />} {accessLabel(lib, m.access)}</>}
+              </span>
               <span className="team__acts">
+                {team.isOwner ? (
+                  <Button size="sm" variant="ghost" onClick={() => void setRole(m, admin ? "member" : "admin")}>{admin ? "Quitar de administrador" : "Hacer administrador"}</Button>
+                ) : null}
                 {mine ? (
                   <>
-                    <Button size="sm" onClick={() => set({ inviteTo: { member: m.email } })}>Cambiar acceso</Button>
+                    {admin ? null : <Button size="sm" onClick={() => set({ inviteTo: { member: m.email } })}>Cambiar acceso</Button>}
                     <Button size="sm" variant="ghost" onClick={() => void remove(m)}>Quitar</Button>
                   </>
                 ) : null}
@@ -100,10 +109,10 @@ export function TeamPage({ lib }: { lib: LibraryState }) {
         })}
       </div>
 
-      {isOwner ? (
+      {team.isManager ? (
         <label className="setting team__setting">
           <input type="checkbox" checked={team.membersCanInvite} onChange={(e) => library.team!.setMembersCanInvite(e.target.checked)} />
-          <span><b>Los miembros pueden invitar</b><span className="sf-faint sf-small"> · a lo que tienen ellos. Si lo quitas, solo invitas tú.</span></span>
+          <span><b>Los miembros pueden invitar</b><span className="sf-faint sf-small"> · a lo que tienen ellos. Si lo quitas, solo invitan el propietario y los administradores.</span></span>
         </label>
       ) : null}
     </div>

@@ -1,8 +1,8 @@
 /**
  * Ajustes › Apariencia (docs/INTERFAZ.md §1.4): one colour, applied only to
  * me (on this computer) or to the whole team when I may change the team's;
- * and, for the owner, who may change the team's theme and who may use their
- * own.
+ * and, for the owner and the admins, who may change the team's theme and who
+ * may use their own.
  */
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -98,12 +98,12 @@ export function Appearance({ lib }: { lib: LibraryState }) {
         ) : null}
       </Section>
 
-      {team?.isOwner ? (
-        <Section title="Permisos del tema" hint="Como propietario, decides quién más puede cambiar el tema del equipo y quién puede usar uno propio.">
+      {team?.isManager ? (
+        <Section title="Permisos del tema" hint="Quién puede cambiar el tema del equipo y quién puede usar uno propio. Lo deciden el propietario y los administradores.">
           <div className="theme__line">
             <span className="sf-small">Quién puede cambiar el tema del equipo</span>
             <Segmented<ThemeEditors> value={team.themeEditors} onChange={(v) => library.team?.setThemeEditors(v)} items={[
-              { id: "owner", label: "Solo yo" },
+              { id: "admins", label: "Administradores", title: "El propietario y los administradores" },
               { id: "everyone", label: "Todo el equipo" },
             ]} />
           </div>

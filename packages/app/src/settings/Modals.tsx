@@ -134,6 +134,7 @@ function TeamModal({ onClose }: { onClose: () => void }) {
   const people = team && productionId ? [
     ...(team.owner ? [{ email: team.owner.email, name: team.owner.name, how: "Propietario" }] : []),
     ...team.members.flatMap((m) => {
+      if (m.role === "admin") return [{ email: m.email, name: m.name, how: "Administrador" }];
       if (m.access === "all") return [{ email: m.email, name: m.name, how: "Todo el equipo" }];
       const via = m.access.find((a) => entryWithin(entries, productionId, a));
       if (!via) return [];

@@ -12,7 +12,7 @@
  *   production is a folder with `.sweetflow/` inside.
  */
 
-import { accessOf, canPersonalizeTheme, canSetTeamTheme, normEmail, shareRoots, type Access, type LibraryShare, type TeamMember, type Theme, type ThemeEditors, type ThemeFreedom } from "@sweetflow/domain";
+import { accessOf, canPersonalizeTheme, canRemove, canSetTeamTheme, isTeamManager, normEmail, shareRoots, type Access, type LibraryShare, type TeamMember, type TeamRole, type Theme, type ThemeEditors, type ThemeFreedom } from "@sweetflow/domain";
 import { IDENTITY_EVENT, IDENTITY_KEY, readIdentity, uidForEmail } from "../integrations/magnific/identity";
 import {
   defaultLevels,
@@ -58,8 +58,8 @@ export interface ProductionSummary {
   /** Units per status, in status order, for the progress bar. */
   byStatus: Array<{ color: string; name: string; count: number }>;
   members: string[];
-  /** Photos of the members who have one, by name. */
-  photos?: Record<string, string>;
+  /** Who else is inside it right now (live presence; only known for the productions open here). */
+  present?: Array<{ name: string; src?: string }>;
   updatedAt?: Millis;
   thumbUrl?: string;
   /** Its library, when shared with other productions (docs/INTERFAZ.md §2.8.1), and how many groups it has. */
@@ -112,8 +112,12 @@ export interface TeamView {
   theme: Theme | null;
   themeFreedom: ThemeFreedom;
   themeEditors: ThemeEditors;
-  /** Whether I am the team's owner (I decide who may do what with the theme). */
+  /** Whether I am the team's owner (I name the admins). */
   isOwner: boolean;
+  /** Whether I run the team: the owner or an admin (invite, access, remove, settings, theme rules). */
+  isManager: boolean;
+  /** Emails of the members whose access I may change and whom I may remove. */
+  manageable: string[];
   /** Whether I may change the team's theme. */
   canSetTheme: boolean;
   /** Whether I may use a theme of my own. */
@@ -138,6 +142,8 @@ export interface TeamApi {
   setTheme(theme: Theme | null): void;
   setThemeFreedom(freedom: ThemeFreedom): void;
   setThemeEditors(editors: ThemeEditors): void;
+  /** Make someone an admin (they get everything, shared at the service) or a member again. Owner only. */
+  setRole(email: string, role: TeamRole): Promise<ShareResult>;
 }
 
 export interface LibraryState {
@@ -444,12 +450,29 @@ class EntryLibrary implements Library {
     this.opened.set(id, src);
     const dispose = src.dispose.bind(src);
     src.dispose = () => {
-      if (this.opened.get(id) === src) this.opened.delete(id);
+      if (this.opened.get(id) === src) {
+        this.opened.delete(id);
+        // Closed here: who is inside it is no longer known.
+        const cur = this.summaries[id];
+        if (cur?.present?.length) {
+          this.summaries[id] = { ...cur, present: [] };
+          this.emit();
+        }
+      }
       dispose();
     };
     // What its library shares changes the other productions' libraries: keep the summary in step.
     const offShare = src.subscribe((snap) => {
-      const cur = this.summaries[id];
+      let cur = this.summaries[id];
+      // Who else is inside it now: the card shows them.
+      const present = snap.presence.filter((p) => p.uid !== snap.me.uid).map((p) => {
+        const m = snap.members.find((x) => x.uid === p.uid);
+        return { name: m?.displayName ?? "—", ...(m?.photoUrl ? { src: m.photoUrl } : {}) };
+      });
+      if (cur && JSON.stringify(cur.present ?? []) !== JSON.stringify(present)) {
+        cur = this.summaries[id] = { ...cur, present };
+        this.emit();
+      }
       // Its card image, as soon as it changes here.
       const thumb = snap.production.cover?.thumb;
       if (cur && cur.thumbUrl !== thumb) {
@@ -559,7 +582,6 @@ export function summarize(s: Pick<LogState, "production" | "nodes" | "members">)
     done: units.filter((u) => statuses.find((x) => x.id === u.statusId)?.category === "done").length,
     byStatus: statuses.map((st) => ({ color: st.color, name: st.name, count: units.filter((u) => u.statusId === st.id).length })).filter((x) => x.count),
     members: s.members.map((m) => m.displayName),
-    photos: Object.fromEntries(s.members.filter((m) => m.photoUrl).map((m) => [m.displayName, m.photoUrl!])),
     updatedAt: Math.max(p.updatedAt, ...s.nodes.map((n) => n.updatedAt)),
     ...(p.libraryShare ? { libraryShare: p.libraryShare } : {}),
     libraryGroups: s.nodes.filter((n) => n.lib?.kind === "card" && !n.trashedAt).length,
@@ -779,6 +801,8 @@ function teamView(t: TeamLog, me: { email: string } | null, mounted: { entryId: 
     themeFreedom: s.themeFreedom,
     themeEditors: s.themeEditors,
     isOwner: !!s.owner && !!me?.email && normEmail(me.email) === s.owner.email,
+    isManager: isTeamManager(s, me?.email ?? null),
+    manageable: me?.email ? s.members.filter((m) => canRemove(s, me.email, m.email)).map((m) => m.email) : [],
     canSetTheme: canSetTeamTheme(s, me?.email ?? null),
     canPersonalizeTheme: canPersonalizeTheme(s, me?.email ?? null),
   };
@@ -834,5 +858,14 @@ function teamApi(t: TeamLog, fs: FolderFs, entries: { pathOf(id: Id): string | n
     setTheme: (theme) => t.setTheme(theme),
     setThemeFreedom: (freedom) => t.setThemeFreedom(freedom),
     setThemeEditors: (editors) => t.setThemeEditors(editors),
+    async setRole(email, role) {
+      const before = member(email);
+      t.setRole(email, role);
+      const to = before?.storageEmail || email;
+      // An admin has everything: the whole team folder is shared with them.
+      return run(async () => {
+        if (role === "admin" && before && before.access !== "all") for (const path of paths("all")) await fs.share!(path, to);
+      });
+    },
   };
 }
