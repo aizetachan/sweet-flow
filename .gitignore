@@ -8,3 +8,6 @@ release/
 !.env.example
 .DS_Store
 coverage/
+
+# Worktrees that other Claude Code sessions open inside the repo (each is a git repository of its own).
+.claude/worktrees/
