@@ -769,6 +769,13 @@ button.tree__hint { padding: 0 14px 8px; }
 .dside__logo { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; font-weight: 800; letter-spacing: -.04em; color: #fff; background: linear-gradient(135deg, var(--brand-300), var(--brand-700)); }
 .dside__name { font-weight: 700; font-size: 15px; letter-spacing: -.01em; }
 .dside__nav { display: flex; flex-direction: column; gap: 1px; }
+/* Liquid hover (components/LiquidHover.tsx): one highlight that flows between the items, under them. */
+.liquid { position: relative; }
+.liquid__layer { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; z-index: 0; }
+.liquid__blob { fill: var(--fg-0); opacity: 0; transition: opacity .16s; }
+.liquid__blob.is-on { opacity: .06; }
+.liquid .dside__item { position: relative; z-index: 1; }
+.liquid .dside__item:hover:not(.dside__item--on) { background: none; }
 .dside__item { display: flex; align-items: center; gap: 10px; height: 34px; padding: 0 10px; border: 0; border-radius: var(--r-md); background: none; color: var(--fg-2); text-align: left; }
 .dside__item:hover { background: var(--ghost); color: var(--fg-0); }
 .dside__item--on { background: var(--bg-4); color: var(--fg-0); }

@@ -4,6 +4,7 @@
  * on the right.
  */
 
+import { LiquidHover } from "../components/LiquidHover";
 import { useMemo, useState, type DragEvent, type ReactNode } from "react";
 import { IconBrandDropbox, IconBrandGoogleDrive, IconClock, IconDeviceDesktop, IconUsersGroup, IconFolder, IconHome, IconMovie, IconPin, IconPinnedOff, IconSettings, IconTrash } from "@tabler/icons-react";
 import type { Id } from "@sweetflow/domain";
@@ -74,6 +75,8 @@ function Sidebar({ lib }: { lib: LibraryState }) {
         <span className="dside__name">Sweetflow</span>
       </div>
 
+      {/* The hover flows like liquid from one item to the next. */}
+      <LiquidHover>
       <nav className="dside__nav">
         {NAV.map((n) => (
           <SideItem
@@ -87,6 +90,7 @@ function Sidebar({ lib }: { lib: LibraryState }) {
           />
         ))}
       </nav>
+      </LiquidHover>
 
       <Pins lib={lib} byId={byId} />
 
@@ -162,6 +166,7 @@ function Pins({ lib, byId }: { lib: LibraryState; byId: Map<Id, LibraryEntry> })
     <div className={cx("dpins", over !== null && "dpins--over")} onDragOver={(e) => dragOver(e, pins.length)} onDragLeave={() => setOver(null)} onDrop={(e) => drop(e, pins.length)}>
       <div className="dside__title">Fijados</div>
       {pins.length ? (
+        <LiquidHover>
         <nav className="dside__nav dside__nav--pins">
           {pins.map((p, i) => {
             const entry = byId.get(p.entryId)!;
@@ -181,6 +186,7 @@ function Pins({ lib, byId }: { lib: LibraryState; byId: Map<Id, LibraryEntry> })
             );
           })}
         </nav>
+        </LiquidHover>
       ) : (
         <p className="dpins__empty">Fija carpetas, producciones, escenas o planos con <IconPin size={12} /> para tenerlos siempre a mano. También puedes arrastrarlos aquí.</p>
       )}

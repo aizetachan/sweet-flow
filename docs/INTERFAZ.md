@@ -119,6 +119,9 @@ aplicación completa con **menú lateral**:
   comparte), se reordena arrastrando y se quita con la chincheta tachada al
   pasar el ratón. Una carpeta fijada sigue aceptando lo que se suelta encima.
   Si lo fijado se ha borrado, desaparece de la lista y se avisa.
+- **Hover líquido** en el menú lateral (secciones y Fijados): al pasar el ratón
+  de un elemento a otro, el resaltado no salta: se estira como una gota desde
+  el anterior y fluye hasta el nuevo, unido por un cuello que se adelgaza.
 - Abajo, en una misma fila, **tu avatar** con tu nombre (abre tu perfil) y, a
   la derecha, **Ajustes** (solo el icono). El perfil ocupa una sola línea, del
   alto de Ajustes: el nombre (cortado con «…» si no cabe) y, a su derecha, el
