@@ -125,7 +125,9 @@ opcional.
 Para probar la app de escritorio sin tocar la instalada (sus sesiones, su
 carpeta del equipo y su bloqueo de una sola instancia), `SWEETFLOW_USER_DATA`
 le da otra carpeta de datos en desarrollo:
-`SWEETFLOW_USER_DATA=/tmp/sf-prueba pnpm dev:desktop`.
+`SWEETFLOW_USER_DATA=/tmp/sf-prueba pnpm dev:desktop`. Con `SWEETFLOW_DEV_INACTIVE=1`
+sus ventanas se abren sin ponerse delante (pruebas automatizadas mientras se
+sigue trabajando en otra cosa).
 
 ### Asistente (terminal y conector)
 

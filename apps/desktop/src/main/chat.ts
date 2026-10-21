@@ -96,8 +96,9 @@ function argsFor(req: ChatSend): string[] {
       "--output-format", "stream-json",
       "--verbose",
       "--include-partial-messages",
+      // Added to the user's own servers, plugins and settings (never instead of them: the
+      // chat is their terminal with another face, so Figma, Magnific… work here too).
       "--mcp-config", mcpFile(req.conv),
-      "--strict-mcp-config",
       "--permission-prompt-tool", "mcp__sweetflow__approve",
       "--allowedTools", READ_ONLY.map((t) => `mcp__sweetflow__${t}`).join(","),
       ...(req.permission === "auto" ? ["--permission-mode", "auto"] : []),

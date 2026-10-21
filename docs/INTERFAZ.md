@@ -97,7 +97,10 @@ tanto en el dashboard como en una producción.
 
 Un chat dentro de la app para que una IA (Claude Code o Codex) entienda
 Sweetflow y la controle. Por delante, un chat; por detrás, la propia línea de
-comandos de esa IA, instalada en el ordenador de cada uno y con su cuenta.
+comandos de esa IA, instalada en el ordenador de cada uno y con su cuenta, y
+con todo lo que esa persona tenga configurado en ella (sus conectores MCP,
+como Figma o Magnific, sus plugins y skills): el conector de Sweetflow se
+suma, no sustituye nada. Es la misma IA que en la terminal, con otra cara.
 
 - **Dónde:** botón de terminal al principio de la cabecera de la producción
   (en Biblioteca, Producción y Editor). Abre el asistente **en una ventana

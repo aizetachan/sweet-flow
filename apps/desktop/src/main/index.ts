@@ -28,6 +28,9 @@ function webPreferences(): Electron.WebPreferences {
   };
 }
 
+/** Shows a window; in development, SWEETFLOW_DEV_INACTIVE keeps it from taking the focus (automated tests). */
+const showWindow = (win: BrowserWindow) => (DEV_URL && process.env.SWEETFLOW_DEV_INACTIVE ? win.showInactive() : win.show());
+
 function createWindow(): BrowserWindow {
   const win = new BrowserWindow({
     width: 1440,
@@ -47,7 +50,7 @@ function createWindow(): BrowserWindow {
   });
 
   iconForWindow(win);
-  win.once("ready-to-show", () => win.show());
+  win.once("ready-to-show", () => showWindow(win));
   lockNavigation(win);
 
   void win.loadURL(pageUrl(""));
@@ -91,7 +94,7 @@ function openAssistant(from: BrowserWindow | null): void {
   });
   assistant = win;
   iconForWindow(win);
-  win.once("ready-to-show", () => win.show());
+  win.once("ready-to-show", () => showWindow(win));
   win.on("closed", () => {
     if (assistant === win) assistant = null;
   });
