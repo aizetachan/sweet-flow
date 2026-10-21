@@ -4,8 +4,10 @@ import { initFluidBackground } from "./fluid.ts";
 import { initForms } from "./forms.ts";
 import { initLangSwitch } from "./i18n.ts";
 import { initModals } from "./modals.ts";
+import { initNav } from "./nav.ts";
 import { initPricing } from "./pricing.ts";
 
+initNav();
 initModals();
 initForms();
 initPricing();
