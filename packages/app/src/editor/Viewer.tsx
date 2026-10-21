@@ -9,7 +9,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import { IconPlayerPauseFilled, IconPlayerPlayFilled, IconPlayerSkipBackFilled, IconPlayerSkipForwardFilled, IconPlayerTrackNextFilled, IconPlayerTrackPrevFilled } from "@tabler/icons-react";
 import { editDuration, flattenEdit, pictureAt, timecode, type Edit, type PlayPart } from "@sweetflow/domain";
-import { IconButton } from "@sweetflow/ui";
+import { cx, IconButton } from "@sweetflow/ui";
 import type { Snapshot } from "../data/source";
 import { useStore } from "../state/store";
 import { editLookup, shotPlay } from "./model";
@@ -25,8 +25,11 @@ function partAt(snap: Snapshot, p: PlayPart, t: number) {
 
 export function Viewer({ edit, onStep }: { edit: Edit; onStep: (dir: -1 | 1, big: boolean) => void }) {
   const snap = useStore((s) => s.snap)!;
-  const time = useStore((s) => s.editTime);
-  const rate = useTransport((s) => s.rate);
+  const playhead = useStore((s) => s.editTime);
+  const peek = useTransport((s) => s.peek);
+  // With the razor over a clip, the frame under the pointer; else the playhead's.
+  const time = peek ?? playhead;
+  const rate = useTransport((s) => (s.peek === null ? s.rate : 0));
   const setRate = useTransport((s) => s.set);
   const parts = useMemo(() => flattenEdit(edit, editLookup(snap)), [edit, snap]);
   const total = editDuration(edit);
@@ -56,11 +59,11 @@ export function Viewer({ edit, onStep }: { edit: Edit; onStep: (dir: -1 | 1, big
         </div>
       </div>
       <div className="viewer__bar">
-        <span className="viewer__tc" title="Cabezal">{timecode(time, f.fps)}</span>
+        <span className={cx("viewer__tc", peek !== null && "viewer__tc--peek")} title={peek !== null ? "Bajo la cuchilla" : "Cabezal"}>{timecode(time, f.fps)}</span>
         <span className="grow" />
         <IconButton label="Al principio (Inicio)" onClick={() => useStore.getState().set({ editTime: 0 })}><IconPlayerSkipBackFilled size={15} /></IconButton>
         <IconButton label="Fotograma anterior (←)" onClick={() => onStep(-1, false)}><IconPlayerTrackPrevFilled size={15} /></IconButton>
-        <IconButton label={rate ? "Pausa (K)" : "Reproducir (espacio)"} onClick={() => setRate(rate ? 0 : 1)} className="viewer__play">
+        <IconButton label={rate ? "Pausa (K)" : "Reproducir (espacio)"} onClick={() => setRate(useTransport.getState().rate ? 0 : 1)} className="viewer__play">
           {rate ? <IconPlayerPauseFilled size={17} /> : <IconPlayerPlayFilled size={17} />}
         </IconButton>
         <IconButton label="Fotograma siguiente (→)" onClick={() => onStep(1, false)}><IconPlayerTrackNextFilled size={15} /></IconButton>

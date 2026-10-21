@@ -1422,17 +1422,22 @@ button.topbar__me { position: relative; padding: 0; border: 0; border-radius: 50
 /* Room at the bottom: the sections' bar floats over it. */
 .etl__inner { position: relative; min-height: 100%; padding-bottom: 84px; user-select: none; }
 .etl__rulerrow { position: sticky; top: 0; z-index: 6; display: flex; height: 26px; background: var(--bg-1); border-bottom: 1px solid var(--line-0); }
-.etl__corner { position: sticky; left: 0; z-index: 7; flex: none; width: 64px; display: grid; place-items: center; background: var(--bg-1); border-right: 1px solid var(--line-0); font-family: var(--mono); font-size: 9.5px; color: var(--fg-4); }
+.etl__corner { position: sticky; left: 0; z-index: 7; flex: none; width: 92px; display: grid; place-items: center; background: var(--bg-1); border-right: 1px solid var(--line-0); font-family: var(--mono); font-size: 9.5px; color: var(--fg-4); }
 .etl__ruler { position: relative; flex: none; cursor: text; }
 .etl__tick { position: absolute; top: 0; bottom: 0; width: 1px; background: linear-gradient(to top, var(--line-2) 5px, transparent 5px); }
 .etl__tick--major { background: linear-gradient(to top, var(--fg-4) 9px, transparent 9px); }
 .etl__label { position: absolute; left: 4px; top: 4px; line-height: 1; font-family: var(--mono); font-size: 10px; color: var(--fg-3); white-space: nowrap; }
 .etl__row { display: flex; border-bottom: 1px solid var(--line-0); }
 .etl__divider { height: 6px; background: var(--bg-0); border-bottom: 1px solid var(--line-0); }
-.etl__head { position: sticky; left: 0; z-index: 5; flex: none; width: 64px; display: flex; align-items: center; justify-content: space-between; gap: 2px; padding: 0 6px 0 10px; background: var(--bg-2); border-right: 1px solid var(--line-0); font-size: 11.5px; font-weight: 600; color: var(--fg-2); }
+.etl__head { position: sticky; left: 0; z-index: 5; flex: none; width: 92px; display: flex; align-items: center; gap: 2px; padding: 0 4px 0 10px; background: var(--bg-2); border-right: 1px solid var(--line-0); font-size: 11.5px; font-weight: 600; color: var(--fg-2); }
 .etl__drop { width: 20px; height: 20px; display: grid; place-items: center; border: 0; border-radius: var(--r-sm); background: none; color: var(--fg-4); opacity: 0; }
 .etl__head:hover .etl__drop { opacity: 1; }
 .etl__drop:hover { background: var(--ghost-2); color: var(--fg-0); }
+/* Silence an audio track: on the right of its name. */
+.etl__mute { width: 28px; height: 28px; display: grid; place-items: center; border: 0; border-radius: var(--r-sm); background: none; color: var(--fg-3); }
+.etl__mute:hover { background: var(--ghost-2); color: var(--fg-0); }
+.etl__mute.is-on { background: color-mix(in srgb, var(--warn) 18%, transparent); color: var(--warn); }
+.etl__lane--muted .etlc { opacity: .4; }
 .etl__lane { position: relative; flex: none; }
 .etl__row--video .etl__lane { background: color-mix(in srgb, var(--bg-1) 70%, var(--bg-0)); }
 .etl__ghost { position: absolute; top: 4px; bottom: 4px; border-radius: 4px; border: 1.5px dashed var(--primary); background: var(--primary-soft); pointer-events: none; }
@@ -1461,9 +1466,8 @@ button.topbar__me { position: relative; padding: 0; border: 0; border-radius: 50
 .etlc__label { position: absolute; left: 6px; right: 6px; top: 3px; display: flex; align-items: center; gap: 4px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 11px; color: var(--fg-0); text-shadow: 0 1px 3px #000c; pointer-events: none; }
 .etlc__label b { font-weight: 600; }
 .etlc--video .etlc__label { padding: 1px 4px; left: 4px; right: auto; max-width: calc(100% - 8px); border-radius: 3px; background: #0009; text-shadow: none; }
-.etlc__wave { position: absolute; left: 0; right: 0; top: 18px; bottom: 4px; opacity: .55; pointer-events: none;
-  background: repeating-linear-gradient(90deg, color-mix(in srgb, var(--ok) 80%, #fff) 0 1px, transparent 1px 3px);
-  -webkit-mask: linear-gradient(transparent 0, #000 30%, #000 70%, transparent 100%); mask: linear-gradient(transparent 0, #000 30%, #000 70%, transparent 100%); }
+.etlc__wave { position: absolute; top: 17px; bottom: 3px; height: auto; pointer-events: none; color: color-mix(in srgb, var(--ok) 70%, #fff); }
+.etlc__flat { position: absolute; left: 0; right: 0; top: 50%; margin-top: 7px; height: 1px; background: color-mix(in srgb, var(--ok) 50%, transparent); pointer-events: none; }
 
 /* The editor's panel: shots as a tree or a gallery, and the clip. */
 .ebin { flex: 1; min-height: 0; display: flex; flex-direction: column; }
@@ -1520,3 +1524,5 @@ button.topbar__me { position: relative; padding: 0; border: 0; border-radius: 50
 .eclip__row { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 8px; align-items: center; font-size: 12px; font-variant-numeric: tabular-nums; }
 .eclip__row > span:last-child { display: inline-flex; align-items: center; gap: 5px; flex-wrap: wrap; }
 .eclip__acts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+/* The viewer showing the frame under the razor, not the playhead's. */
+.viewer__tc--peek { color: var(--bad); }

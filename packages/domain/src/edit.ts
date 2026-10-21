@@ -27,6 +27,8 @@ export type TrackKind = "video" | "audio";
 export interface EditTrack {
   id: Id;
   kind: TrackKind;
+  /** Silenced: its sound does not play (audio tracks). */
+  muted?: boolean;
 }
 
 /** What a clip plays: a shot (its chosen take, followed), or a nested montage. */
@@ -329,6 +331,11 @@ export function addTrack(e: Edit, kind: TrackKind, newId: (p: string) => Id): Ed
   return { ...e, tracks };
 }
 
+/** A track silenced, or heard again. */
+export function setTrackMuted(e: Edit, trackId: Id, muted: boolean): Edit {
+  return { ...e, tracks: e.tracks.map((t) => (t.id !== trackId ? t : muted ? { ...t, muted: true } : { id: t.id, kind: t.kind })) };
+}
+
 /** A track out, with what is on it; at least one of each kind stays. */
 export function removeTrack(e: Edit, trackId: Id): Edit {
   const t = e.tracks.find((x) => x.id === trackId);
@@ -458,7 +465,8 @@ export function flattenEdit(e: Edit, editById: (id: Id) => Edit | undefined): { 
     const list = tracksOf(edit, kind);
     for (const c of edit.clips) {
       const ti = list.findIndex((t) => t.id === c.trackId);
-      if (ti < 0) continue;
+      // A silenced track plays nothing (inside a block too).
+      if (ti < 0 || (kind === "audio" && list[ti]!.muted)) continue;
       // The part of this clip inside the window seen through the outer block.
       const s = Math.max(c.start, from), en = Math.min(clipEnd(c), to);
       if (en - s < 1e-9) continue;

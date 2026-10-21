@@ -11,6 +11,7 @@ import {
   pictureAt,
   placeSources,
   removeClips,
+  setTrackMuted,
   rowOrder,
   slipClip,
   splitAt,
@@ -116,6 +117,15 @@ describe("montage", () => {
     edit = removeClips(edit, [placed[1]!]);
     expect(on(edit, a(edit))).toEqual([]);
     expect(on(edit, v(edit))).toEqual([["a", 0, 0, 4]]);
+  });
+
+  it("a silenced audio track plays nothing; heard again, it does", () => {
+    const e0 = base();
+    const { edit } = placeSources(e0, [{ source: shot("a"), length: 4 }], { trackId: v(e0), start: 0 }, newId, a(e0));
+    const muted = setTrackMuted(edit, a(edit), true);
+    expect(flattenEdit(muted, () => undefined).audio).toHaveLength(0);
+    expect(flattenEdit(muted, () => undefined).video).toHaveLength(1);
+    expect(flattenEdit(setTrackMuted(muted, a(edit), false), () => undefined).audio).toHaveLength(1);
   });
 
   it("frames and timecode", () => {

@@ -18,6 +18,8 @@ import {
   IconPointer,
   IconStack2,
   IconTrash,
+  IconVolume,
+  IconVolumeOff,
   IconX,
   IconZoomIn,
   IconZoomOut,
@@ -32,6 +34,7 @@ import {
   moveClips,
   nearest,
   placeSources,
+  setTrackMuted,
   slipClip,
   snapPoints,
   splitAt,
@@ -55,8 +58,10 @@ import { clipFrameAt, edgeOnFrames, onClipFrame, onTimelineFrame } from "./frame
 import { cutAtPlayhead, deleteSelection, dropTrack, groupSelection, newTrack, toggleLink, ungroupSelection, usePrefs, ZOOM_MAX, ZOOM_MIN } from "./actions";
 import { dragged, EDIT_DRAG } from "./dnd";
 import { stop, useTransport } from "./transport";
+import { PEAKS_PER_SEC, usePeaks } from "./waveform";
+import { useFramePoster } from "./posters";
 
-const HEAD_W = 64;
+const HEAD_W = 92;
 const PAD = 12;
 const ROW_H = { video: 58, audio: 42 } as const;
 
@@ -256,14 +261,26 @@ export function Timeline({ edit, openBlock, openShot }: { edit: Edit; openBlock:
     });
   };
 
+  const setPeek = useTransport((s) => s.setPeek);
   const onHover = (e: ReactPointerEvent<HTMLDivElement>) => {
     if (drag.current?.kind === "move") return setHover(null);
     const t = timeAt(e.clientX);
-    const clip = clipAt(e.clientX, e.clientY);
-    if (!clip) return setHover({ t: e.altKey ? t6(t) : onTimelineFrame(edit, t) });
+    const clip = (e.target as HTMLElement).closest(".etl__head, .etl__rulerrow") ? undefined : clipAt(e.clientX, e.clientY);
+    if (!clip) {
+      // Off the clips the viewer goes back to the playhead's frame.
+      setPeek(null);
+      return setHover({ t: e.altKey ? t6(t) : onTimelineFrame(edit, t) });
+    }
     const at = onClipFrame(snap, edit, clip, t);
     setHover({ t: at, clip, frame: clipFrameAt(snap, edit, clip, at) });
+    // With the razor, the viewer shows the frame it would cut at.
+    setPeek(tool === "razor" ? at : null);
   };
+  // Leaving the razor (or the editor), the viewer follows the playhead again.
+  useEffect(() => {
+    if (tool !== "razor") setPeek(null);
+    return () => setPeek(null);
+  }, [tool, setPeek]);
 
   // ---------- dropping from the panel ----------
 
@@ -350,7 +367,10 @@ export function Timeline({ edit, openBlock, openShot }: { edit: Edit; openBlock:
 
       <div className="etl__scroll" ref={scroller}>
         <div className="etl__inner" style={{ width: HEAD_W + width } as CSSProperties}
-          onPointerDown={onPointerDown} onPointerMove={onHover} onPointerLeave={() => setHover(null)}
+          onPointerDown={onPointerDown} onPointerMove={onHover} onPointerLeave={() => {
+            setHover(null);
+            setPeek(null);
+          }}
           onDragOver={onDragOver} onDragLeave={(e) => !e.currentTarget.contains(e.relatedTarget as Node) && setGhost(null)} onDrop={onDrop}>
           <div className="etl__rulerrow">
             <div className="etl__corner" />
@@ -368,13 +388,22 @@ export function Timeline({ edit, openBlock, openShot }: { edit: Edit; openBlock:
               <div className={cx("etl__row", `etl__row--${row.track.kind}`)} style={{ height: ROW_H[row.track.kind] }} ref={(el) => (el ? rowRefs.current.set(row.track.id, el) : rowRefs.current.delete(row.track.id))}>
                 <div className="etl__head">
                   <span>{row.name}</span>
+                  <span className="grow" />
                   {tracksOf(shown, row.track.kind).length > 1 ? (
                     <button className="etl__drop" title={`Quitar la pista ${row.name} (con lo que tenga)`} onClick={() => dropTrack(edit, row.track.id)}><IconX size={12} /></button>
                   ) : null}
+                  {row.track.kind === "audio" ? (
+                    <button className={cx("etl__mute", row.track.muted && "is-on")} aria-pressed={!!row.track.muted}
+                      title={row.track.muted ? `${row.name} silenciada: clic para oírla` : `Silenciar ${row.name}`}
+                      onClick={() => saveEdits([setTrackMuted(edit, row.track.id, !row.track.muted)])}>
+                      {row.track.muted ? <IconVolumeOff size={15} stroke={1.7} /> : <IconVolume size={15} stroke={1.7} />}
+                    </button>
+                  ) : null}
                 </div>
-                <div className="etl__lane" style={{ width }}>
+                <div className={cx("etl__lane", row.track.muted && "etl__lane--muted")} style={{ width }}>
                   {shown.clips.filter((c) => c.trackId === row.track.id).map((c) => (
-                    <Clip key={c.id} snap={snap} clip={c} kind={row.track.kind} pps={pps} on={shownSel.has(c.id)}
+                    <Clip key={c.id} snap={snap} edit={shown} clip={c} kind={row.track.kind} pps={pps} on={shownSel.has(c.id)}
+                      visible={[view.left - HEAD_W - 200, view.left + view.width - HEAD_W + 200]}
                       onDouble={() => (c.source.kind === "edit" ? openBlock(c.source.editId) : openShot(c.source.nodeId))}
                       onMenu={(at) => {
                         if (!sel.includes(c.id)) set({ editSel: [c.id] });
@@ -460,12 +489,15 @@ export function dropInto(snap: Snapshot, edit: Edit, ids: Id[], at: { trackId: I
   }
 }
 
-function Clip({ snap, clip, kind, pps, on, onDouble, onMenu }: { snap: Snapshot; clip: EditClip; kind: "video" | "audio"; pps: number; on: boolean; onDouble: () => void; onMenu: (at: MenuAt) => void }) {
+function Clip({ snap, edit, clip, kind, pps, on, visible, onDouble, onMenu }: { snap: Snapshot; edit: Edit; clip: EditClip; kind: "video" | "audio"; pps: number; on: boolean; visible: [number, number]; onDouble: () => void; onMenu: (at: MenuAt) => void }) {
   const label = clipLabel(snap, clip);
   const block = clip.source.kind === "edit";
   const node = clip.source.kind === "shot" ? snap.nodes.find((n) => n.id === (clip.source as { nodeId: Id }).nodeId) : undefined;
   const status = node ? snap.production.statuses.find((s) => s.id === node.statusId) : undefined;
-  const poster = kind === "video" ? posterOf(snap, clip) : undefined;
+  const still = kind === "video" ? posterOf(snap, clip) : undefined;
+  // A real video without a poster: its frame at the clip's start, taken from the file.
+  const grabbed = useFramePoster(still?.video ? still.url : undefined, still?.at ?? 0);
+  const poster = still?.video ? grabbed ?? undefined : still?.url;
   const w = Math.max(2, clipLength(clip) * pps);
   return (
     <div data-clip={clip.id}
@@ -483,18 +515,28 @@ function Clip({ snap, clip, kind, pps, on, onDouble, onMenu }: { snap: Snapshot;
           {label.code ? <b>{label.code}</b> : null} {label.title}
         </span>
       ) : null}
-      {kind === "audio" ? <span className="etlc__wave" /> : null}
+      {kind === "audio" ? <Wave snap={snap} edit={edit} clip={clip} pps={pps} visible={visible} /> : null}
     </div>
   );
 }
 
-/** A clip's picture on the timeline: its shot's poster, or the first one inside its block. */
-function posterOf(s: Snapshot, c: EditClip, depth = 0): string | undefined {
-  if (c.source.kind === "shot") return shotPlay(s, c.source.nodeId)?.poster;
+/**
+ * A clip's picture on the timeline: its shot's poster, or the first one
+ * inside its block; `at`, where in the file (for videos without a poster).
+ */
+function posterOf(s: Snapshot, c: EditClip, depth = 0): { url: string; at: number; video: boolean } | undefined {
+  // The video file itself (no poster of its own): a frame is taken from it.
+  const of = (play: ReturnType<typeof shotPlay>, at: number) =>
+    play?.poster ? { url: play.poster, at, video: play.poster === play.media?.url && play.media?.kind === "video" && !play.poster.startsWith("data:image") } : undefined;
+  if (c.source.kind === "shot") {
+    const play = shotPlay(s, c.source.nodeId);
+    return of(play, (play?.fileIn ?? 0) + c.inSec);
+  }
   const inner = editLookup(s)(c.source.editId);
   if (!inner || depth > 4) return undefined;
   const first = flattenEdit(inner, editLookup(s)).video[0];
-  return first ? shotPlay(s, first.nodeId)?.poster : undefined;
+  const play = first ? shotPlay(s, first.nodeId) : null;
+  return first ? of(play, (play?.fileIn ?? 0) + first.srcIn) : undefined;
 }
 
 function ClipMenu({ edit, clip, onDone, openBlock, openShot }: { edit: Edit; clip: EditClip; onDone: () => void; openBlock: (id: Id) => void; openShot: (id: Id) => void }) {
@@ -537,4 +579,61 @@ function Playhead({ pps, scroller }: { pps: number; scroller: React.RefObject<HT
     else if (x < el.scrollLeft + HEAD_W) el.scrollLeft = Math.max(0, x - el.clientWidth + 80);
   }, [x, rate, scroller]);
   return <div className="etl__playhead" style={{ left: x }}><span className="etl__playknob" /></div>;
+}
+
+/**
+ * The real wave of a clip's sound: the stretch of each file it plays (a
+ * block's, from the clips inside it), drawn only where the timeline shows it.
+ */
+function Wave({ snap, edit, clip, pps, visible }: { snap: Snapshot; edit: Edit; clip: EditClip; pps: number; visible: [number, number] }) {
+  const parts = useMemo(() => {
+    // The clip alone, from 0: what it plays and where.
+    const alone: Edit = { ...edit, clips: [{ ...clip, start: 0 }] };
+    return flattenEdit(alone, editLookup(snap)).audio.flatMap((p) => {
+      const play = shotPlay(snap, p.nodeId);
+      const url = play?.media?.url;
+      return url && !url.startsWith("data:image") ? [{ url, fileStart: (play?.fileIn ?? 0) + p.srcIn, offset: p.start, dur: p.end - p.start }] : [];
+    });
+  }, [snap, edit, clip]);
+  if (!parts.length) return <span className="etlc__flat" title="Sin sonido que mostrar" />;
+  const clipX = PAD + clip.start * pps;
+  return (
+    <>
+      {parts.map((p, i) => (
+        <WavePart key={i} url={p.url} fileStart={p.fileStart} dur={p.dur} pps={pps}
+          // Where it is in the clip, and the part of it on screen (lane pixels → clip pixels).
+          left={p.offset * pps} from={Math.max(0, visible[0] - clipX - p.offset * pps)} to={Math.min(p.dur * pps, visible[1] - clipX - p.offset * pps)} />
+      ))}
+    </>
+  );
+}
+
+function WavePart({ url, fileStart, dur, pps, left, from, to }: { url: string; fileStart: number; dur: number; pps: number; left: number; from: number; to: number }) {
+  const peaks = usePeaks(url);
+  const ref = useRef<HTMLCanvasElement>(null);
+  const w = Math.max(0, Math.floor(to - from));
+  useLayoutEffect(() => {
+    const cv = ref.current;
+    if (!cv || !(peaks instanceof Float32Array) || !w) return;
+    const dpr = window.devicePixelRatio || 1;
+    const h = cv.clientHeight || 20;
+    cv.width = Math.ceil(w * dpr);
+    cv.height = Math.ceil(h * dpr);
+    const g = cv.getContext("2d")!;
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.clearRect(0, 0, w, h);
+    g.fillStyle = getComputedStyle(cv).color;
+    const mid = h / 2;
+    for (let x = 0; x < w; x++) {
+      // The loudest moment under this pixel.
+      const t0 = fileStart + (from + x) / pps, t1 = fileStart + (from + x + 1) / pps;
+      const b0 = Math.floor(t0 * PEAKS_PER_SEC), b1 = Math.max(b0 + 1, Math.ceil(t1 * PEAKS_PER_SEC));
+      let v = 0;
+      for (let b = b0; b < b1 && b < peaks.length; b++) if (peaks[b]! > v) v = peaks[b]!;
+      const bar = Math.max(0.5, v * (h - 2) / 2);
+      g.fillRect(x, mid - bar, 1, bar * 2);
+    }
+  }, [peaks, fileStart, pps, from, w]);
+  if (peaks === "none") return <span className="etlc__flat" style={{ left, width: dur * pps }} title="Este vídeo no tiene sonido" />;
+  return <canvas ref={ref} className="etlc__wave" style={{ left: left + from, width: w }} />;
 }

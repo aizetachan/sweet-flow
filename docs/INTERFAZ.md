@@ -1129,6 +1129,14 @@ Dos pestañas: **Planos** y **Clip**.
 - **Pistas:** vídeo arriba (V2 sobre V1: se ve la de más arriba) y sonido
   debajo (A1, A2…), como en Premiere. **+ Vídeo / + Audio** añaden pistas; la
   × de su cabecera quita una (con lo que tenga; siempre queda una de cada).
+  - **Silenciar:** cada pista de audio tiene a la derecha de su nombre (A1,
+    A2…) un altavoz para silenciarla; silenciada, sus clips se ven apagados y
+    no suenan (tampoco dentro de un bloque). Se guarda con el montaje.
+- **Lo que se ve en cada clip:** los de vídeo, su imagen a lo largo del clip
+  (la miniatura del plano o, si el vídeo no la tiene, su fotograma de entrada
+  sacado del archivo); los de audio, **la onda real de su sonido** en el tramo
+  que usan (se lee del archivo una vez en este ordenador). Sin sonido, una
+  línea plana.
 - **Soltar:** los planos entran uno detrás de otro donde se sueltan; en una
   pista de vídeo, su sonido va en la pista de audio de su mismo número,
   enlazado; en una de audio, solo el sonido. Una línea discontinua marca
@@ -1151,7 +1159,10 @@ Dos pestañas: **Planos** y **Clip**.
   al ratón con el **tiempo exacto** y, sobre un clip, el **número de su
   fotograma**. Con el zoom al máximo se ven los fotogramas uno a uno.
 - **Cuchilla** (`C`): clic en un clip lo corta en el fotograma bajo el ratón
-  (con su sonido enlazado). **⌘K** corta en el cabezal lo seleccionado (o
+  (con su sonido enlazado). **Mientras el ratón pasa por encima de un clip, el
+  visor muestra ese fotograma** (su código de tiempo en rojo), para ver
+  exactamente dónde se va a cortar; al pasar a otro clip, el suyo. Fuera de
+  los clips, el visor vuelve al fotograma del cabezal. **⌘K** corta en el cabezal lo seleccionado (o
   todo lo que hay en él). `V` vuelve a la selección.
 - **Vídeo y sonido enlazados:** se mueven, recortan y cortan juntos.
   **Desenlazar** (⌘L, menú o pestaña Clip) los separa; el vídeo queda mudo y
