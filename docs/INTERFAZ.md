@@ -106,9 +106,8 @@ comandos de esa IA, instalada en el ordenador de cada uno y con su cuenta.
   de la pantalla si no cabe. Solo hay una: pulsar el botón otra vez la trae
   delante. La IA trabaja sobre lo que está abierto en la ventana principal.
 - **Cabecera:** «Asistente» y la producción abierta; los logos de **Claude**
-  y de **OpenAI** eligen la IA. Los dos van en blanco; el elegido se pinta:
-  Claude con fondo naranja y el logo blanco, OpenAI con fondo blanco y el logo
-  negro. Al abrir no hay ninguna elegida (salvo la de la conversación que
+  y de **OpenAI** eligen la IA. Los dos van en blanco; el elegido solo lleva
+  un fondo gris suave, para que no llame la atención. Al abrir no hay ninguna elegida (salvo la de la conversación que
   esté abierta): se elige a mano; el **historial** y la **terminal**.
   Elegir otra IA con una conversación ya empezada abre una nueva con ella.
 - **Conversaciones por producción**, en pestañas bajo la cabecera (logo de

@@ -31,13 +31,25 @@ let askSeq = 0;
 
 // ---------- finding the AI as the user's terminal does ----------
 
-/** The user's PATH (an app opened from the Finder has a short one): read once from their login shell. */
+/**
+ * The user's PATH (an app opened from the Finder has a short one): read once
+ * from their shell as their terminal opens it (interactive and login: many
+ * add their tools in ~/.zshrc, which only an interactive shell reads), plus
+ * the places these tools usually install to.
+ */
 let userPath: Promise<string> | null = null;
 function loginPath(): Promise<string> {
   if (process.platform === "win32") return Promise.resolve(process.env.PATH ?? "");
   userPath ??= new Promise((resolve) => {
     const shell = process.env.SHELL || "/bin/zsh";
-    execFile(shell, ["-lc", 'printf "%s" "$PATH"'], { timeout: 8000 }, (err, out) => resolve(err ? (process.env.PATH ?? "") : String(out).trim() || (process.env.PATH ?? "")));
+    const home = app.getPath("home");
+    const usual = [".local/bin", ".claude/local", ".npm-global/bin", ".bun/bin", ".volta/bin", ".cargo/bin"].map((d) => path.join(home, d)).concat(["/opt/homebrew/bin", "/usr/local/bin"]);
+    const done = (found: string) => resolve([...new Set([...found.split(":"), ...(process.env.PATH ?? "").split(":"), ...usual].filter(Boolean))].join(":"));
+    // Between marks: an interactive shell may print its own things (a greeting, conda…).
+    execFile(shell, ["-ilc", 'printf "__SF__%s__SF__" "$PATH"'], { timeout: 10000, env: { ...process.env, TERM: "dumb" } }, (err, out) => {
+      const m = /__SF__(.*?)__SF__/s.exec(String(out ?? ""));
+      done(!err || m ? (m?.[1] ?? "") : "");
+    });
   });
   return userPath;
 }
