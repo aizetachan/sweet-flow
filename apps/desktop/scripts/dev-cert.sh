@@ -28,7 +28,9 @@ openssl req -x509 -newkey rsa:2048 -nodes -days 3650 \
   -addext "basicConstraints=critical,CA:false" 2>/dev/null
 
 PASS="$(openssl rand -hex 12)"
-openssl pkcs12 -export -inkey "$TMP/key.pem" -in "$TMP/cert.pem" -out "$TMP/cert.p12" -passout "pass:$PASS" -name "$NAME"
+# With the classic algorithms: the keychain cannot read what OpenSSL 3 writes by default.
+openssl pkcs12 -export -inkey "$TMP/key.pem" -in "$TMP/cert.pem" -out "$TMP/cert.p12" -passout "pass:$PASS" -name "$NAME" \
+  -keypbe PBE-SHA1-3DES -certpbe PBE-SHA1-3DES -macalg sha1
 
 # Into the login keychain; codesign may use the key.
 security import "$TMP/cert.p12" -k "$KEYCHAIN" -P "$PASS" -T /usr/bin/codesign -T /usr/bin/security >/dev/null
