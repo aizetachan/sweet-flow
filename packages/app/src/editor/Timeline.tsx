@@ -9,7 +9,7 @@
 
 import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type DragEvent as ReactDragEvent, type PointerEvent as ReactPointerEvent } from "react";
 import {
-  IconArrowsHorizontal,
+  IconBrandAdobePremiere,
   IconCut,
   IconEye,
   IconLink,
@@ -38,7 +38,6 @@ import {
   setTrackMuted,
   slipClip,
   snapPoints,
-  splitAt,
   t6,
   timecode,
   trackName,
@@ -165,18 +164,19 @@ export function Timeline({ edit, openBlock, openShot }: { edit: Edit; openBlock:
     const target = e.target as HTMLElement;
     if (target.closest(".etl__head")) return;
     const onRuler = !!target.closest(".etl__ruler");
-    const clip = onRuler ? undefined : clipAt(e.clientX, e.clientY);
-    if (!clip) {
+    const onPlayhead = !!target.closest(".etl__playgrip");
+    const clip = onRuler || onPlayhead ? undefined : clipAt(e.clientX, e.clientY);
+    if (onPlayhead) {
+      // Grabbing the playhead: it follows the pointer, and the selection stays.
+      stop();
+      drag.current = { kind: "scrub" };
+      document.documentElement.classList.add("etl-grabbing");
+    } else if (!clip) {
       // Empty space or the ruler: the playhead goes there (and follows while dragging).
       if (!onRuler && !e.shiftKey && !e.metaKey) set({ editSel: [] });
       stop();
       drag.current = { kind: "scrub" };
       set({ editTime: e.altKey ? t6(timeAt(e.clientX)) : onTimelineFrame(edit, timeAt(e.clientX)) });
-    } else if (tool === "razor") {
-      const at = onClipFrame(snap, edit, clip, timeAt(e.clientX));
-      const next = splitAt(edit, at, newId, [clip.id], linked);
-      if (next !== edit) saveEdits([next]);
-      return;
     } else {
       const el = target.closest<HTMLElement>("[data-clip]");
       const r = el?.getBoundingClientRect();
@@ -193,6 +193,7 @@ export function Timeline({ edit, openBlock, openShot }: { edit: Edit; openBlock:
     }
     const move = (ev: PointerEvent) => onDragMove(ev);
     const up = () => {
+      document.documentElement.classList.remove("etl-grabbing");
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", up);
       onDragEnd();
@@ -266,7 +267,7 @@ export function Timeline({ edit, openBlock, openShot }: { edit: Edit; openBlock:
   const onHover = (e: ReactPointerEvent<HTMLDivElement>) => {
     if (drag.current?.kind === "move") return setHover(null);
     const t = timeAt(e.clientX);
-    const clip = (e.target as HTMLElement).closest(".etl__head, .etl__rulerrow") ? undefined : clipAt(e.clientX, e.clientY);
+    const clip = (e.target as HTMLElement).closest(".etl__head, .etl__rulerrow, .etl__playgrip") ? undefined : clipAt(e.clientX, e.clientY);
     if (!clip) {
       // Off the clips the viewer goes back to the playhead's frame.
       setPeek(null);
@@ -274,14 +275,14 @@ export function Timeline({ edit, openBlock, openShot }: { edit: Edit; openBlock:
     }
     const at = onClipFrame(snap, edit, clip, t);
     setHover({ t: at, clip, frame: clipFrameAt(snap, edit, clip, at) });
-    // With the razor, or «Visualización real» on, the viewer shows the frame under the pointer.
-    setPeek(tool === "razor" || live ? at : null);
+    // With «Visualización real» on, the viewer shows the frame under the pointer.
+    setPeek(live ? at : null);
   };
-  // Neither on (or leaving the editor): the viewer follows the playhead again.
+  // Off (or leaving the editor): the viewer follows the playhead again.
   useEffect(() => {
-    if (tool !== "razor" && !live) setPeek(null);
+    if (!live) setPeek(null);
     return () => setPeek(null);
-  }, [tool, live, setPeek]);
+  }, [live, setPeek]);
 
   // ---------- dropping from the panel ----------
 
@@ -343,15 +344,14 @@ export function Timeline({ edit, openBlock, openShot }: { edit: Edit; openBlock:
   }
 
   return (
-    <div className={cx("etl", tool === "razor" && "etl--razor")}>
+    <div className="etl">
       <div className="etl__bar">
         <IconButton label="Selección (V)" on={tool === "select"} onClick={() => setPrefs({ tool: "select" })}><IconPointer size={16} stroke={1.6} /></IconButton>
-        <IconButton label="Cuchilla (C): clic en un clip para cortarlo en ese fotograma" on={tool === "razor"} onClick={() => setPrefs({ tool: "razor" })}><IconCut size={16} stroke={1.6} /></IconButton>
+        <IconButton label="Cortar en el cabezal (C o ⌘K): los clips seleccionados, o todos los que pasan por él" onClick={() => cutAtPlayhead(edit)}><IconCut size={16} stroke={1.6} /></IconButton>
         <span className="etl__sep" />
         <IconButton label={magnet ? "Imán activado (S): los bordes se pegan a los cortes y al cabezal" : "Imán desactivado (S): movimiento libre"} on={magnet} onClick={() => setPrefs({ snap: !magnet })}><IconMagnet size={16} stroke={1.6} /></IconButton>
         <IconButton label={linked ? "Selección enlazada: vídeo y sonido juntos" : "Selección enlazada desactivada: vídeo y sonido por separado"} on={linked} onClick={() => setPrefs({ linked: !linked })}>{linked ? <IconLink size={16} stroke={1.6} /> : <IconLinkOff size={16} stroke={1.6} />}</IconButton>
         <span className="etl__sep" />
-        <IconButton label="Cortar en el cabezal (⌘K)" onClick={() => cutAtPlayhead(edit)}><IconArrowsHorizontal size={16} stroke={1.6} /></IconButton>
         <IconButton label="Agrupar (⌘G)" disabled={!sel.length} onClick={() => groupSelection(edit)}><IconStack2 size={16} stroke={1.6} /></IconButton>
         <IconButton label={live ? "Visualización real activada: el visor muestra lo que hay bajo el ratón al pasar por los clips" : "Visualización real: ver en el visor lo que hay bajo el ratón al pasar por los clips, sin cortar"}
           on={live} onClick={() => setPrefs({ preview: !live })}><IconEye size={16} stroke={1.6} /></IconButton>
@@ -359,6 +359,9 @@ export function Timeline({ edit, openBlock, openShot }: { edit: Edit; openBlock:
         <span className="grow" />
         <button className="etl__add" onClick={() => newTrack(edit, "video")} title="Añadir una pista de vídeo"><IconPlus size={13} /> Vídeo</button>
         <button className="etl__add" onClick={() => newTrack(edit, "audio")} title="Añadir una pista de audio"><IconPlus size={13} /> Audio</button>
+        <span className="etl__sep" />
+        {/* Placeholder: it will send the whole timeline to Premiere (docs/INTERFAZ.md §4.5). */}
+        <IconButton label="Exportar a Premiere (próximamente)" className="etl__export" onClick={() => undefined}><IconBrandAdobePremiere size={17} stroke={1.6} /></IconButton>
         <span className="etl__sep" />
         <IconButton label="Alejar (−)" onClick={() => setPrefs({ zoom: Math.max(ZOOM_MIN, pps / 1.5) })}><IconZoomOut size={16} stroke={1.6} /></IconButton>
         <input className="etl__zoom" type="range" min={0} max={1000} aria-label="Zoom"
@@ -422,7 +425,7 @@ export function Timeline({ edit, openBlock, openShot }: { edit: Edit; openBlock:
           ))}
           <Playhead pps={pps} scroller={scroller} />
           {hover && !drag.current ? (
-            <div className={cx("etl__hover", tool === "razor" && hover.clip && "etl__hover--razor", tool !== "razor" && live && hover.clip && "etl__hover--live")} style={{ left: HEAD_W + PAD + hover.t * pps }}>
+            <div className={cx("etl__hover", live && hover.clip && "etl__hover--live")} style={{ left: HEAD_W + PAD + hover.t * pps }}>
               <span className="etl__hovertag">
                 {timecode(hover.t, edit.format.fps)}
                 {hover.clip && hover.frame !== undefined ? <span className="sf-faint"> · fot. {hover.frame}</span> : null}
@@ -556,7 +559,7 @@ function ClipMenu({ edit, clip, onDone, openBlock, openShot }: { edit: Edit; cli
       ) : (
         <button className="menu__item" onClick={run(() => openShot((clip.source as { nodeId: Id }).nodeId))}><IconFolderOpen size={14} /> <span className="menu__label">Abrir el plano en Producción</span></button>
       )}
-      <button className="menu__item" onClick={run(() => cutAtPlayhead(edit))}><IconArrowsHorizontal size={14} /> <span className="menu__label">Cortar en el cabezal</span><span className="menu__hint">⌘K</span></button>
+      <button className="menu__item" onClick={run(() => cutAtPlayhead(edit))}><IconCut size={14} /> <span className="menu__label">Cortar en el cabezal</span><span className="menu__hint">C · ⌘K</span></button>
       <button className="menu__item" onClick={run(() => toggleLink(edit))}>
         {clip.linkId ? <IconLinkOff size={14} /> : <IconLink size={14} />} <span className="menu__label">{clip.linkId ? "Desenlazar vídeo y sonido" : "Enlazar"}</span><span className="menu__hint">⌘L</span>
       </button>
@@ -581,7 +584,13 @@ function Playhead({ pps, scroller }: { pps: number; scroller: React.RefObject<HT
     if (x > el.scrollLeft + el.clientWidth - 40) el.scrollLeft = x - HEAD_W - 40;
     else if (x < el.scrollLeft + HEAD_W) el.scrollLeft = Math.max(0, x - el.clientWidth + 80);
   }, [x, rate, scroller]);
-  return <div className="etl__playhead" style={{ left: x }}><span className="etl__playknob" /></div>;
+  // The line and its knob are the playhead's grip: drag it to move it (and mark where to cut).
+  return (
+    <div className="etl__playhead" style={{ left: x }}>
+      <span className="etl__playgrip" title="Cabezal: arrástralo, o muévelo con las flechas; las tijeras cortan aquí" />
+      <span className="etl__playknob" />
+    </div>
+  );
 }
 
 /**

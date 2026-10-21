@@ -1159,16 +1159,19 @@ Dos pestañas: **Planos** y **Clip**.
   cada vídeo se leen de su archivo la primera vez que se usa. Una línea sigue
   al ratón con el **tiempo exacto** y, sobre un clip, el **número de su
   fotograma**. Con el zoom al máximo se ven los fotogramas uno a uno.
-- **Cuchilla** (`C`): clic en un clip lo corta en el fotograma bajo el ratón
-  (con su sonido enlazado). **Mientras el ratón pasa por encima de un clip, el
-  visor muestra ese fotograma** (su código de tiempo en rojo), para ver
-  exactamente dónde se va a cortar; al pasar a otro clip, el suyo. Fuera de
-  los clips, el visor vuelve al fotograma del cabezal.
-- **Visualización real** (botón del ojo, a la izquierda de Eliminar): lo mismo
-  que hace la cuchilla con el visor, pero sin cortar. Con el botón activado,
-  al pasar el ratón por un clip el visor muestra ese fotograma y la línea que
-  sigue al ratón es discontinua. **⌘K** corta en el cabezal lo seleccionado (o
-  todo lo que hay en él). `V` vuelve a la selección.
+- **Cortar: el cabezal marca dónde.** Se coloca el cabezal azul (arrastrándolo,
+  con clic en la regla o con ← → fotograma a fotograma) y las **tijeras** de
+  la barra (o `C`, o ⌘K) cortan ahí lo seleccionado, o todo lo que pasa por
+  él, con su sonido enlazado. El punto se ajusta a los fotogramas del propio
+  vídeo del clip. Al pasar el ratón por el cabezal aparece la mano para
+  arrastrarlo.
+- **Visualización real** (botón del ojo, a la izquierda de Eliminar): con el
+  botón activado, al pasar el ratón por un clip el visor muestra ese
+  fotograma (su código de tiempo en rojo) sin cortar nada, y la línea que
+  sigue al ratón es discontinua; al pasar a otro clip, el suyo. Fuera de los
+  clips, el visor vuelve al fotograma del cabezal.
+- **Exportar a Premiere** (botón con su logo, tras «+ Audio»): de momento sin
+  función; ahí irá la salida de toda la línea de tiempo a Premiere.
 - **Vídeo y sonido enlazados:** se mueven, recortan y cortan juntos.
   **Desenlazar** (⌘L, menú o pestaña Clip) los separa; el vídeo queda mudo y
   su sonido es un clip aparte. El botón de **selección enlazada** de la barra
@@ -1176,7 +1179,7 @@ Dos pestañas: **Planos** y **Clip**.
 - **Clic derecho en un clip:** Abrir, Cortar en el cabezal, Desenlazar o
   Enlazar, Agrupar, Desagrupar y Eliminar. **Doble clic:** un bloque se abre;
   un plano se abre en Producción.
-- **Cabezal:** clic o arrastre en la regla o en un hueco; va a fotogramas del
+- **Cabezal:** arrastrarlo (con la mano), o clic o arrastre en la regla o en un hueco; va a fotogramas del
   montaje (con ⌥, libre). **Zoom:** ⌘ + rueda (o pellizco) alrededor del ratón,
   `+` / `−`, la barra o **Ajustar** (todo el montaje a la vista).
 - **Atajos (como en Premiere):** espacio reproduce o para; `J K L` (atrás,

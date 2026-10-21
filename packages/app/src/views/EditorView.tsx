@@ -299,7 +299,7 @@ function useEditorKeys(edit: Edit | null) {
         case "v":
           return prefs.set({ tool: "select" });
         case "c":
-          return prefs.set({ tool: "razor" });
+          return cutAtPlayhead(ed);
         case "s":
           return prefs.set({ snap: !prefs.snap });
         case "i":

@@ -29,7 +29,7 @@ import { onTimelineFrame } from "./frames";
 
 // ---------- preferences of this computer ----------
 
-export type Tool = "select" | "razor";
+export type Tool = "select";
 
 interface Prefs {
   tool: Tool;
@@ -52,7 +52,8 @@ const DEFAULTS = { tool: "select" as Tool, snap: true, linked: true, preview: fa
 
 function readPrefs(): Omit<Prefs, "set"> {
   try {
-    return { ...DEFAULTS, ...(JSON.parse(localStorage.getItem(PREFS_KEY) ?? "{}") as Partial<Prefs>) };
+    // The razor tool is gone (the scissors cut at the playhead): an old saved one is the pointer.
+    return { ...DEFAULTS, ...(JSON.parse(localStorage.getItem(PREFS_KEY) ?? "{}") as Partial<Prefs>), tool: "select" };
   } catch {
     return DEFAULTS;
   }
@@ -88,7 +89,7 @@ export function selected(e: Edit): Set<Id> {
   return usePrefs.getState().linked ? withLinked(e, sel) : new Set(sel);
 }
 
-/** ⌘K: cuts at the playhead the selected clips, or every clip there. */
+/** The scissors, C or ⌘K: cuts at the playhead the selected clips, or every clip there. */
 export function cutAtPlayhead(e: Edit): void {
   const t = st().editTime;
   const sel = selected(e);

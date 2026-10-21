@@ -11,7 +11,7 @@ interface Transport {
   rate: number;
   set: (rate: number) => void;
   /**
-   * With the razor over a clip: the time under the pointer, which the viewer
+   * With «Visualización real» over a clip: the time under the pointer, which the viewer
    * shows instead of the playhead's (null: the playhead's).
    */
   peek: number | null;

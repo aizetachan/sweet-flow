@@ -27,7 +27,7 @@ export function Viewer({ edit, onStep }: { edit: Edit; onStep: (dir: -1 | 1, big
   const snap = useStore((s) => s.snap)!;
   const playhead = useStore((s) => s.editTime);
   const peek = useTransport((s) => s.peek);
-  // With the razor over a clip, the frame under the pointer; else the playhead's.
+  // With «Visualización real» over a clip, the frame under the pointer; else the playhead's.
   const time = peek ?? playhead;
   const rate = useTransport((s) => (s.peek === null ? s.rate : 0));
   const setRate = useTransport((s) => s.set);
@@ -59,7 +59,7 @@ export function Viewer({ edit, onStep }: { edit: Edit; onStep: (dir: -1 | 1, big
         </div>
       </div>
       <div className="viewer__bar">
-        <span className={cx("viewer__tc", peek !== null && "viewer__tc--peek")} title={peek !== null ? "Bajo la cuchilla" : "Cabezal"}>{timecode(time, f.fps)}</span>
+        <span className={cx("viewer__tc", peek !== null && "viewer__tc--peek")} title={peek !== null ? "Bajo el ratón (visualización real)" : "Cabezal"}>{timecode(time, f.fps)}</span>
         <span className="grow" />
         <IconButton label="Al principio (Inicio)" onClick={() => useStore.getState().set({ editTime: 0 })}><IconPlayerSkipBackFilled size={15} /></IconButton>
         <IconButton label="Fotograma anterior (←)" onClick={() => onStep(-1, false)}><IconPlayerTrackPrevFilled size={15} /></IconButton>
