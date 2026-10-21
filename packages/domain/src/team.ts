@@ -36,6 +36,9 @@ export interface Theme {
 /** Who, besides the owner, may use a theme of their own instead of the team's. */
 export type ThemeFreedom = "everyone" | "nobody";
 
+/** Who, besides the owner, may change the team's theme. */
+export type ThemeEditors = "owner" | "everyone";
+
 export interface Team {
   owner: { email: string; name: string } | null;
   /** Whether members may invite more people (to what they have themselves). On by default. */
@@ -45,15 +48,19 @@ export interface Team {
   theme: Theme | null;
   /** Whether members may set their own theme. Everyone by default. */
   themeFreedom: ThemeFreedom;
+  /** Who may change the team's theme. Only the owner by default. */
+  themeEditors: ThemeEditors;
 }
 
 export type TeamEventBody =
   /** The first one to claim the folder owns it; later claims are ignored. */
   | { type: "team.claimed"; name: string }
   | { type: "team.settings"; membersCanInvite: boolean }
-  /** The team's theme (null: back to the corporate blue). Only the owner's count. */
+  /** The team's theme (null: back to the corporate blue): the owner's, or anyone's in the team when the owner allows it. */
   | { type: "team.theme"; theme: Theme | null }
+  /** Only the owner's count. */
   | { type: "team.themeFreedom"; freedom: ThemeFreedom }
+  | { type: "team.themeEditors"; editors: ThemeEditors }
   /** Invite, or give more to someone already in (their access grows). */
   | { type: "member.invited"; email: string; name?: string; storageEmail?: string; access: Access }
   /** Replace what someone has. */
@@ -92,7 +99,7 @@ function union(a: Access, b: Access, within: Within): Access {
 /** The team from its events, from any number of devices, in any order. Deterministic. */
 export function foldTeam(events: Iterable<TeamEvent>, within: Within): Team {
   const sorted = [...events].sort((a, b) => (a.at < b.at ? -1 : a.at > b.at ? 1 : 0));
-  const team: Team = { owner: null, membersCanInvite: true, members: [], theme: null, themeFreedom: "everyone" };
+  const team: Team = { owner: null, membersCanInvite: true, members: [], theme: null, themeFreedom: "everyone", themeEditors: "owner" };
   const byEmail = new Map<string, TeamMember>();
   const isOwner = (email: string) => team.owner?.email === email;
   for (const e of sorted) {
@@ -108,10 +115,13 @@ export function foldTeam(events: Iterable<TeamEvent>, within: Within): Team {
         if (isOwner(by)) team.membersCanInvite = e.membersCanInvite;
         break;
       case "team.theme":
-        if (isOwner(by)) team.theme = e.theme && isHex(e.theme.accent) ? { accent: e.theme.accent.toLowerCase() } : null;
+        if (isOwner(by) || (team.themeEditors === "everyone" && !!actor)) team.theme = e.theme && isHex(e.theme.accent) ? { accent: e.theme.accent.toLowerCase() } : null;
         break;
       case "team.themeFreedom":
         if (isOwner(by) && (e.freedom === "everyone" || e.freedom === "nobody")) team.themeFreedom = e.freedom;
+        break;
+      case "team.themeEditors":
+        if (isOwner(by) && (e.editors === "owner" || e.editors === "everyone")) team.themeEditors = e.editors;
         break;
       case "member.invited": {
         const email = normEmail(e.email);
@@ -169,6 +179,13 @@ export function canRemove(team: Team, by: string, email: string): boolean {
 }
 
 const isHex = (v: unknown): v is string => typeof v === "string" && /^#[0-9a-f]{6}$/i.test(v);
+
+/** Whether someone may change the team's theme: the owner, or members when the owner allows it. Nobody while nobody owns the team. */
+export function canSetTeamTheme(team: Team, email: string | null): boolean {
+  if (!team.owner || !email) return false;
+  const e = normEmail(email);
+  return team.owner.email === e || (team.themeEditors === "everyone" && team.members.some((m) => m.email === e));
+}
 
 /** Whether someone may use a theme of their own: the owner always; members if the owner lets them. A team nobody owns yet is open. */
 export function canPersonalizeTheme(team: Team, email: string | null): boolean {

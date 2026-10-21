@@ -338,7 +338,7 @@ export function Composer({ node, mediaId, parentId, isVideo, playhead = 0, mark,
           <div className="menu mentions">
             {matches.map((m, i) => (
               <button key={m.uid} className={cx("menu__item", i === pick && "is-active")} onMouseDown={(e) => { e.preventDefault(); mention(m); }}>
-                <Avatar name={m.displayName} size={18} /> <span className="menu__label">{m.displayName}<span className="menu__hint">{m.email}</span></span>
+                <Avatar name={m.displayName} src={m.photoUrl} size={18} /> <span className="menu__label">{m.displayName}<span className="menu__hint">{m.email}</span></span>
               </button>
             ))}
           </div>

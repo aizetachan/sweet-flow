@@ -276,26 +276,45 @@ la pantalla de carga. De ese color salen todos sus tonos (claro para bordes
 iluminados, oscuro para los brillos), movidos igual que los del azul
 (`packages/ui/src/color.ts`).
 
-- **Tu tema:** siete colores y uno propio (el selector del sistema). Es de
-  cada persona y se guarda **en su ordenador**. **Restaurar valores por
-  defecto** vuelve al azul o, si el equipo tiene tema, a ese («Usar el tema del
-  equipo»). Al lado, el icono de la app con el color que se ve.
-- **Tema del equipo** (con carpeta del equipo): lo elige **solo el
-  propietario** y lo ve todo el equipo. El propietario decide también **quién
-  puede usar su propio tema**: **Todo el equipo** (por defecto; quien no elige
-  ninguno ve el del equipo) o **Nadie** (todos ven el del equipo; el
-  propietario sigue pudiendo tener el suyo). Los demás ven qué color es y si
-  está fijado. **Restaurar valores por defecto** vuelve al azul y a «Todo el
-  equipo». Se guarda en el registro del equipo (`team.theme`,
-  `team.themeFreedom`; reglas en `packages/domain/src/team.ts`).
+- **Tema:** un solo selector de color.
+  - **Aplicar a:** **Solo a mí** (en este ordenador) o **A todo el equipo**
+    (lo ve todo el equipo). La segunda opción solo sale a quien puede
+    cambiar el tema del equipo; quien no puede usar uno propio solo ve la del
+    equipo. Al aplicarlo al equipo se quita el tuyo, para que veas lo mismo
+    que los demás.
+  - **Muestras:** Azul Sweetflow, **Contanimated** (`#EF3732`), Violeta,
+    Rosa, Ámbar, Verde y Turquesa. Todas menos Contanimated tienen un
+    contraste con el blanco de al menos 4,5:1, porque casi todo lo que lleva
+    el color tiene texto o iconos blancos encima.
+  - **«+»:** un color propio, en un menú como los demás de la app (no el
+    selector del sistema): un cuadro de saturación y brillo, una barra de
+    tono, el **hexadecimal** para escribirlo o pegarlo y, donde el sistema lo
+    permite, el cuentagotas para coger un color de la pantalla. Si el color
+    deja poco contraste con el blanco (menos de 3:1), lo avisa.
+  - **Restaurar valores por defecto** vuelve al azul o, con tema del equipo,
+    al del equipo («Usar el tema del equipo»). Al lado, el icono de la app
+    con el color que se ve.
+- **Permisos del tema** (solo el propietario):
+  - **Quién puede cambiar el tema del equipo:** **Solo yo** (por defecto) o
+    **Todo el equipo**.
+  - **Quién puede usar su propio tema:** **Todo el equipo** (por defecto;
+    quien no elige ninguno ve el del equipo) o **Nadie** (todos ven el del
+    equipo; el propietario sigue pudiendo tener el suyo).
+  - Se guardan en el registro del equipo (`team.theme`, `team.themeEditors`,
+    `team.themeFreedom`; reglas en `packages/domain/src/team.ts`).
   - El equipo no tiene administradores (solo propietario y miembros,
     docs/USUARIOS.md §2): el nivel «administradores» se añadirá cuando existan.
 - **Icono de la app (escritorio):** solo el **marco** toma el color; el «Sf.»
-  sigue blanco. Cambia **mientras la app está abierta** (Dock y ⌘Tab en Mac,
-  barra de tareas en Windows), y se recuerda para que al abrirla salga ya con
-  ese color. Con la app cerrada, Finder, Launchpad y el Dock muestran el icono
-  original: cambiarlo en la app instalada rompería su firma y macOS volvería a
-  pedir permiso para la carpeta del equipo (docs/DEVELOPMENT.md).
+  sigue blanco.
+  - Con la app abierta: Dock y ⌘Tab en Mac, barra de tareas en Windows.
+  - **En Mac, también con la app cerrada:** la app instalada recibe el icono
+    como icono personalizado (el de «Obtener información»), que muestran
+    Finder, Launchpad y el Dock. Eso no toca el código firmado (la firma
+    sigue siendo la misma), así que macOS no vuelve a pedir permiso para la
+    carpeta del equipo. Con el azul se le quita. Tras una actualización se
+    vuelve a poner al abrirla. Si la app está en un sitio de solo lectura
+    (abierta desde el `.dmg`), cerrada se ve el icono original.
+  - En Windows, con la app cerrada se ve el icono del acceso directo.
 - La app arranca con el último tema que se vio, para que la pantalla de carga
   ya lo tenga antes de leer la carpeta del equipo.
 

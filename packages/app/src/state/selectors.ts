@@ -33,6 +33,13 @@ export function colorSlot(s: Snapshot, nodeId: Id): number {
 
 export const memberName = (s: Snapshot, uid: Id) => s.members.find((m) => m.uid === uid)?.displayName ?? "—";
 
+/** Someone's avatar photo, when they have one (mine from my profile, the latest). */
+export const memberPhoto = (s: Snapshot, uid: Id): string | undefined =>
+  uid === s.me.uid ? (s.me.photoUrl ?? s.members.find((m) => m.uid === uid)?.photoUrl) : s.members.find((m) => m.uid === uid)?.photoUrl;
+
+/** Name and photo, for an avatar. */
+export const memberPerson = (s: Snapshot, uid: Id) => ({ name: memberName(s, uid), src: memberPhoto(s, uid) });
+
 /** Cover for a card: the selected take's media (at its in-point), else the latest ready own media. */
 export function coverOf(s: Snapshot, n: ProdNode): { media?: Media; take?: Take; pending?: Media } {
   const take = n.selectedTakeId ? s.takes.find((t) => t.id === n.selectedTakeId) : undefined;
@@ -93,3 +100,7 @@ export const filtersActive = (f: Filters) => !!(f.query || f.statusIds.length ||
 
 export const presenceAt = (s: Snapshot, nodeId: Id) =>
   s.presence.filter((p) => p.nodeId === nodeId && p.uid !== s.me.uid).map((p) => memberName(s, p.uid));
+
+/** Who else is on a node, with their photos (for avatars). */
+export const presentPeople = (s: Snapshot, nodeId: Id) =>
+  s.presence.filter((p) => p.nodeId === nodeId && p.uid !== s.me.uid).map((p) => memberPerson(s, p.uid));

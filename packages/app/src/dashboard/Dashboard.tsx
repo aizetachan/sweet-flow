@@ -100,7 +100,7 @@ function Sidebar({ lib }: { lib: LibraryState }) {
         {isGuest(lib.me, lib.mode) ? <SignInButton className="dside__me" /> : (
           // One line, as tall as Ajustes beside it: your name and, on the right, where the team folder is kept.
           <button className="dside__me dside__me--user" title={`Tu perfil${storageWhere(lib) ? ` · ${storageWhere(lib)}` : ""}`} onClick={() => set({ dashSection: "settings", settingsTab: "profile" })}>
-            <Avatar name={lib.me.displayName} size={24} />
+            <Avatar name={lib.me.displayName} src={lib.me.photoUrl} size={24} />
             <span className="dside__who-name">{lib.me.displayName}</span>
             <StorageIcon lib={lib} />
           </button>

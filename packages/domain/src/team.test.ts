@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { accessOf, canInvite, canPersonalizeTheme, canRemove, canSee, foldTeam, shareRoots, themeFor, type TeamEvent, type TeamEventBody, type Within } from "./team";
+import { accessOf, canInvite, canPersonalizeTheme, canRemove, canSetTeamTheme, canSee, foldTeam, shareRoots, themeFor, type TeamEvent, type TeamEventBody, type Within } from "./team";
 
 // Dashboard: F1 › F2 › P1, and P2 at the top.
 const parent: Record<string, string | null> = { F1: null, F2: "F1", P1: "F2", P2: null };
@@ -124,5 +124,28 @@ describe("team", () => {
     expect(themeFor(t, "bea@x.com", { accent: "#2fb38a" })).toBeNull();
     expect(themeFor(t, "ANA@x.com", { accent: "#2fb38a" })).toEqual({ accent: "#2fb38a" });
     expect(themeFor(null, null, { accent: "#2fb38a" })).toEqual({ accent: "#2fb38a" });
+  });
+
+  it("members change the team's theme only when the owner lets them", () => {
+    const base = [
+      ev("ana@x.com", { type: "team.claimed", name: "Ana" }),
+      ev("ana@x.com", { type: "member.invited", email: "bea@x.com", access: ["F1"] }),
+    ];
+    const locked = foldTeam([...base, ev("bea@x.com", { type: "team.theme", theme: { accent: "#ef3732" } })], within);
+    expect(locked.theme).toBeNull();
+    expect(canSetTeamTheme(locked, "bea@x.com")).toBe(false);
+    expect(canSetTeamTheme(locked, "ana@x.com")).toBe(true);
+    const open = foldTeam([
+      ...base,
+      ev("ana@x.com", { type: "team.themeEditors", editors: "everyone" }),
+      ev("bea@x.com", { type: "team.theme", theme: { accent: "#ef3732" } }),
+      // Outsiders and members changing the rules: ignored.
+      ev("eve@x.com", { type: "team.theme", theme: { accent: "#00ff00" } }),
+      ev("bea@x.com", { type: "team.themeEditors", editors: "owner" }),
+    ], within);
+    expect(open.theme).toEqual({ accent: "#ef3732" });
+    expect(open.themeEditors).toBe("everyone");
+    expect(canSetTeamTheme(open, "bea@x.com")).toBe(true);
+    expect(canSetTeamTheme(open, "eve@x.com")).toBe(false);
   });
 });

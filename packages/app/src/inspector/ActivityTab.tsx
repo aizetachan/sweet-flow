@@ -10,7 +10,7 @@ import { IconArrowsExchange, IconCut, IconHierarchy, IconMessageCircle, IconUser
 import { descendantsOf, type Activity, type ActivityKind, type ProdNode } from "@sweetflow/domain";
 import { Avatar, cx } from "@sweetflow/ui";
 import { useSnap } from "../state/store";
-import { memberName, statusOf } from "../state/selectors";
+import { memberName, memberPerson, statusOf } from "../state/selectors";
 
 const ICON: Record<ActivityKind, typeof IconWand> = {
   status: IconArrowsExchange,
@@ -165,7 +165,7 @@ export function ActivityTab({ node }: { node: ProdNode }) {
               const n = snap.nodes.find((x) => x.id === l.nodeId);
               return (
                 <div key={l.key} className="feed__item">
-                  <Avatar name={memberName(snap, l.actorId)} size={22} />
+                  <Avatar {...memberPerson(snap, l.actorId)} size={22} />
                   <div>
                     <div><b>{memberName(snap, l.actorId)}</b> {l.text}{n && n.id !== node.id ? <span className="sf-muted"> en {n.title || "otro plano"}</span> : null}</div>
                     <div className="sf-faint sf-small"><I size={11} /> {time(l.at)}</div>

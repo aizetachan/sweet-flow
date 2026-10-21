@@ -679,8 +679,9 @@ button.tree__hint { padding: 0 14px 8px; }
 /* One surface: the button's own hover fill would draw a lighter square inside it (a frame);
    the whole button lights up instead. */
 .dentry__pin .sf-icon-btn, .dentry__pin .sf-icon-btn:hover { background: none; }
-.dentry__pin:hover { background: var(--bg-4); }
-.dentry__pin.is-on:hover { background: color-mix(in srgb, var(--bg-4) 88%, #000); }
+/* The same fill as «⋯» beside it, hovered too (only the icon brightens); darker only when pinned. */
+.dentry__pin:hover .sf-icon-btn { color: var(--fg-0); }
+.dentry__pin.is-on:hover .sf-icon-btn { color: var(--warn); }
 /* Folders: the card starts 13 px lower (its tab rises above it): the pin goes up onto the tab,
    level with the productions' pins in the same row; «⋯» stays where it is. */
 .dcard--folder .dentry__pin { top: -7px; }
@@ -825,7 +826,26 @@ button.tree__hint { padding: 0 14px 8px; }
 .theme__swatch:hover { transform: scale(1.08); }
 .theme__swatch.is-on { box-shadow: 0 0 0 2px var(--bg-1), 0 0 0 4px var(--fg-1); }
 .theme__swatch--custom { background: conic-gradient(#ec6a6a, #e6b85c, #3cd39f, #2aa9c9, #6f8bf7, #e0559b, #ec6a6a); font-size: 16px; font-weight: 600; text-shadow: 0 1px 2px #0008; }
-.theme__swatch--custom input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; border: 0; padding: 0; }
+.theme__swatch--custom.has-colour { text-shadow: none; }
+.theme__line { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 0 0 14px; }
+.theme__line > .sf-small:first-child { min-width: 220px; color: var(--fg-1); }
+.theme__warn { display: flex; align-items: center; gap: 6px; color: var(--warn); }
+.theme__note { margin: 10px 0 0; }
+/* The colour picker: in a menu, like the app's others. */
+.cpick__menu { min-width: 0; padding: 10px; }
+.cpick { width: 232px; display: flex; flex-direction: column; gap: 10px; }
+.cpick__square { position: relative; height: 150px; border-radius: var(--r-md); cursor: crosshair; touch-action: none;
+  background: linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, var(--hue)); box-shadow: inset 0 0 0 1px var(--line-1); }
+.cpick__knob { position: absolute; width: 16px; height: 16px; border-radius: 50%; transform: translate(-50%, -50%); box-shadow: 0 0 0 2px #fff, 0 1px 4px #000a; pointer-events: none; }
+.cpick__row { display: flex; align-items: center; gap: 8px; }
+.cpick__drop { flex: none; width: 32px; height: 32px; display: grid; place-items: center; border: 0; border-radius: var(--r-md); background: var(--ghost); color: var(--fg-1); }
+.cpick__drop:hover { background: var(--ghost-2); color: var(--fg-0); }
+.cpick__swatch { flex: none; width: 32px; height: 32px; border-radius: 50%; box-shadow: inset 0 0 0 1px #ffffff26; }
+.cpick__hue { position: relative; flex: 1; height: 12px; border-radius: 999px; cursor: pointer; touch-action: none;
+  background: linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00); }
+.cpick__knob--hue { top: 50%; }
+.cpick__hex { display: flex; align-items: center; gap: 8px; }
+.cpick__hex .sf-input { flex: 1; font-family: var(--mono); text-transform: uppercase; }
 .theme__icon { flex: none; width: 64px; height: 64px; border-radius: 15px; display: grid; place-items: center; color: #fff; background: linear-gradient(150deg, var(--brand-300) 0%, var(--brand-500) 48%, var(--brand-700) 100%); box-shadow: 0 6px 18px #0007; }
 .theme__icon svg { width: 34px; height: 34px; }
 .theme__freedom { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 14px 0 12px; }

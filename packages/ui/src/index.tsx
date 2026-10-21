@@ -79,11 +79,14 @@ export function Avatar({ name, src, size = 22, ring }: { name: string; src?: str
   );
 }
 
-export function AvatarStack({ names, size = 22, max = 4 }: { names: string[]; size?: number; max?: number }) {
-  const shown = names.slice(0, max);
+/** A person shown by an avatar: their name, and their photo when they have one. */
+export type AvatarPerson = string | { name: string; src?: string };
+
+export function AvatarStack({ names, size = 22, max = 4 }: { names: AvatarPerson[]; size?: number; max?: number }) {
+  const shown = names.slice(0, max).map((p) => (typeof p === "string" ? { name: p } : p));
   return (
     <span className="sf-avatars">
-      {shown.map((n) => <Avatar key={n} name={n} size={size} />)}
+      {shown.map((p, i) => <Avatar key={`${p.name}-${i}`} name={p.name} src={p.src} size={size} />)}
       {names.length > max ? (
         <span className="sf-avatar" style={{ width: size, height: size, fontSize: size * 0.4, background: "var(--bg-5)" }}>
           +{names.length - max}

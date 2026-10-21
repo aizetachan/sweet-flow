@@ -219,6 +219,13 @@ que la app la abre, y no en cada archivo. Sin esa firma lo pedía en cada lectur
 tras instalar una versión nueva lo vuelve a pedir una vez. Una carpeta fuera de
 Escritorio, Documentos y Descargas (p. ej. `~/Sweetflow`) no lo pide nunca.
 
+El icono con el color del tema (docs/INTERFAZ.md §1.4) se pone en la app
+instalada como icono personalizado: añade `Icon\r` y una marca de Finder al
+paquete, pero no cambia el código firmado (mismo *CDHash*), así que macOS la
+sigue reconociendo. `codesign --verify --strict` lo da por «detritus» en la raíz
+del paquete; no afecta a la app instalada (la firma y la notarización se hacen
+sobre el instalador, antes).
+
 Mientras la app no tenga firma de desarrollador de Apple, macOS no permite actualizarla sola. La app
 avisa cuando hay una versión nueva y abre la página de descarga.
 

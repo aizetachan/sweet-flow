@@ -514,7 +514,7 @@ function EntryItem(p: EntryItemProps) {
           {p.place && !inTrash ? <span className="sf-faint sf-small">· {p.place}</span> : null}
         </span>
         <span>{inTrash ? <span className="sf-faint sf-small">{p.place}</span> : isFolder ? <span className="sf-faint sf-small">{meta}</span> : <Progress s={s} compact />}</span>
-        <span>{!inTrash && s?.members.length ? <AvatarStack names={s.members} size={18} max={3} /> : null}</span>
+        <span>{!inTrash && s?.members.length ? <AvatarStack names={s.members.map((n) => ({ name: n, src: s.photos?.[n] }))} size={18} max={3} /> : null}</span>
         <span className="sf-faint sf-small">{ago(p.when)}</span>
         {actions}
         {menuEl}
@@ -571,7 +571,7 @@ function EntryItem(p: EntryItemProps) {
             <div className="dcard__foot sf-small">
               <span className="sf-muted">{meta}</span>
               <span className="dash__spacer" />
-              {s?.members.length ? <AvatarStack names={s.members} size={18} max={3} /> : null}
+              {s?.members.length ? <AvatarStack names={s.members.map((n) => ({ name: n, src: s.photos?.[n] }))} size={18} max={3} /> : null}
             </div>
             <span className="sf-faint sf-small">{p.section === "recent" ? "Abierto" : "Modificado"} {ago(p.when)}</span>
           </>

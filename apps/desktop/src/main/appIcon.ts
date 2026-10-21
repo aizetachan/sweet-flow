@@ -1,14 +1,20 @@
 /**
  * The app's icon follows the theme (docs/INTERFAZ.md §1.4): only its blue
- * frame takes the accent, the «Sf.» stays white. It is changed while the app
- * runs (the Dock and ⌘Tab on the Mac, the taskbar on Windows), never in the
- * installed app: touching the bundle would break its signature and macOS
- * would ask again for the team folder. Closed, the app shows its own icon.
+ * frame takes the accent, the «Sf.» stays white. While the app runs: the Dock
+ * and ⌘Tab on the Mac, the taskbar on Windows.
+ *
+ * On the Mac it also stays with the app closed: the installed app gets it as
+ * its custom icon (Finder's «Get Info» one), which Finder, Launchpad and the
+ * Dock show. That adds an `Icon\r` file and a Finder flag to the bundle but
+ * leaves the signed code as it is (same code hash), so macOS still knows the
+ * app and keeps the access given to the team folder. An update replaces the
+ * bundle: the icon is given again at the next launch.
  *
  * The accent is remembered here, so the next launch shows it from the start.
  */
 
 import { app, BrowserWindow, nativeImage, type NativeImage } from "electron";
+import { execFile } from "node:child_process";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { accentShift, DEFAULT_ACCENT, normHex } from "@sweetflow/ui/color";
@@ -76,16 +82,57 @@ function show(win?: BrowserWindow): void {
   for (const w of win ? [win] : BrowserWindow.getAllWindows()) w.setIcon(target);
 }
 
+/** The installed app (…/Sweetflow.app); null in development. */
+const bundle = (): string | null => (process.platform === "darwin" && app.isPackaged ? path.resolve(app.getPath("exe"), "../../..") : null);
+
+/** Sets the bundle's custom icon (null: back to its own) with AppKit, through osascript (paths as arguments). */
+const SET_ICON = `ObjC.import("AppKit");
+function run(argv) {
+  const img = argv[1] ? $.NSImage.alloc.initWithContentsOfFile(argv[1]) : $();
+  return $.NSWorkspace.sharedWorkspace.setIconForFileOptions(img, argv[0], 0) ? "ok" : "no";
+}`;
+
+/** What the bundle has now (remembered: the bundle's own flag can't be read cheaply). */
+let bundleIcon: string | null = null;
+
+function keepWhenClosed(hex: string | null, img: NativeImage | null): void {
+  const app_ = bundle();
+  if (!app_) return;
+  const hasCustom = existsSync(path.join(app_, "Icon\r"));
+  if (hex === bundleIcon && hasCustom === !!hex) return;
+  let png = "";
+  if (hex && img) {
+    png = path.join(app.getPath("userData"), "app-icon.png");
+    writeFileSync(png, img.toPNG());
+  } else if (!hasCustom) {
+    bundleIcon = null;
+    save();
+    return;
+  }
+  execFile("/usr/bin/osascript", ["-l", "JavaScript", "-e", SET_ICON, app_, png], (err, out) => {
+    // A read-only place (run from the .dmg) or no permission: it shows its own icon when closed.
+    if (err || !String(out).includes("ok")) return console.warn("[icono] no se pudo dejar en la app:", err?.message ?? out);
+    bundleIcon = hex;
+    save();
+  });
+}
+
+const save = () => writeFileSync(settingsFile(), JSON.stringify({ ...(accent ? { accent } : {}), ...(bundleIcon ? { bundleIcon } : {}) }));
+
 /** At launch, before the first window: the accent of the last session. */
 export function startAppIcon(): void {
   try {
-    accent = normHex((JSON.parse(readFileSync(settingsFile(), "utf8")) as { accent?: string }).accent ?? "");
+    const saved = JSON.parse(readFileSync(settingsFile(), "utf8")) as { accent?: string; bundleIcon?: string };
+    accent = normHex(saved.accent ?? "");
+    bundleIcon = normHex(saved.bundleIcon ?? "");
   } catch {
     accent = null;
   }
   if (accent === DEFAULT_ACCENT) accent = null;
   current = accent ? recolour(accent) : null;
   if (current) show();
+  // After an update the new bundle has no custom icon yet.
+  keepWhenClosed(accent, current);
 }
 
 /** A new window (Windows: each one has its own icon in the taskbar). */
@@ -101,7 +148,8 @@ export function setAccent(value: unknown): void {
   if (hex === DEFAULT_ACCENT) hex = null;
   if (hex === accent) return;
   accent = hex;
-  writeFileSync(settingsFile(), JSON.stringify(hex ? { accent: hex } : {}));
+  save();
   current = hex ? recolour(hex) : null;
   show();
+  keepWhenClosed(hex, current);
 }

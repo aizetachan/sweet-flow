@@ -69,7 +69,7 @@ export function TeamPage({ lib }: { lib: LibraryState }) {
       <div className="team__list">
         {team.owner ? (
           <div className="team__row">
-            <Avatar name={team.owner.name} size={32} />
+            <Avatar name={team.owner.name} src={team.owner.email === me ? lib.me.photoUrl : undefined} size={32} />
             <div className="team__who"><b>{team.owner.name}{team.owner.email === me && team.owner.name !== "Tú" ? " (tú)" : ""}</b><span className="sf-faint sf-small">{team.owner.email}</span></div>
             <span className="team__access"><IconCrown size={14} /> Propietario · todo</span>
             <span className="team__acts" />
@@ -81,7 +81,7 @@ export function TeamPage({ lib }: { lib: LibraryState }) {
           const mine = isOwner || m.invitedBy === me;
           return (
             <div key={m.email} className="team__row">
-              <Avatar name={m.name} size={32} />
+              <Avatar name={m.name} src={m.email === me ? lib.me.photoUrl : undefined} size={32} />
               <div className="team__who">
                 <b>{m.name}{m.email === me ? " (tú)" : ""}</b>
                 <span className="sf-faint sf-small">{m.email}{m.storageEmail ? ` · ${storageName(lib) ?? "almacenamiento"}: ${m.storageEmail}` : ""}</span>

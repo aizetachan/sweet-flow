@@ -26,7 +26,7 @@ export type LogEventBody =
     }
   | { type: "production.updated"; patch: Partial<Pick<Production, "name" | "format" | "cover">> }
   /** Who is working on the production; written by each user on first open, and on profile changes. */
-  | { type: "member.joined"; member: Pick<Member, "uid" | "displayName" | "email" | "role"> }
+  | { type: "member.joined"; member: Pick<Member, "uid" | "displayName" | "email" | "role" | "photoUrl"> }
   | { type: "levels.set"; levels: LevelDef[] }
   /** Sharing with the client (docs/USUARIOS.md §4): how they get in; who is invited. */
   | { type: "client.entry"; entry: ClientEntry }

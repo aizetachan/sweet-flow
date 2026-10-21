@@ -16,7 +16,7 @@ import {
 } from "@sweetflow/domain";
 import { AvatarStack, Button, cx, IconButton, Pill, Segmented } from "@sweetflow/ui";
 import { useKeptScroll, useSnap, useStore, type CardSize } from "../state/store";
-import { approvedDurationOf, countsOf, coverOf, durationOf, filtersActive, matches, memberName, presenceAt, statusOf } from "../state/selectors";
+import { approvedDurationOf, countsOf, coverOf, durationOf, filtersActive, matches, memberPerson, presenceAt, presentPeople, statusOf } from "../state/selectors";
 import { Thumb, useDuration } from "../components/media";
 import { Popover } from "../components/Popover";
 import { ContextMenu, type MenuAt } from "../components/ContextMenu";
@@ -268,7 +268,7 @@ function Lane({ row }: { row: ProdNode }) {
             onEdit={() => useStore.getState().set({ modal: "settings", settingsTab: "statuses" })} />
         </span>
         <HeadInfo node={row} />
-        {viewers.length ? <AvatarStack names={viewers} size={18} /> : null}
+        {viewers.length ? <AvatarStack names={presentPeople(snap, row.id)} size={18} /> : null}
         {/* Trash right after the info, shown on hover; the row's own buttons stay on the right. */}
         <IconButton size="sm" className="head__del" label={`Mover ${nameOf(p, row)} y sus ${unitLevel.name.toLowerCase()}s a la papelera`} onClick={() => trashNodes([row.id])}><IconTrash size={14} /></IconButton>
         <div className="lane__spacer" />
@@ -471,14 +471,14 @@ function UnitCard({ node, inRow, hint }: { node: ProdNode; inRow?: boolean; hint
       {/* Second line: code and who is on it on the left; notes and length on the right. No third line. */}
       <div className="card__row">
         {showCodes ? <span className="card__title card__codeline">{codeOf(p, node)}</span> : null}
-        {node.assigneeIds.length ? <AvatarStack names={node.assigneeIds.map((u) => memberName(snap, u))} size={16} max={2} /> : null}
+        {node.assigneeIds.length ? <AvatarStack names={node.assigneeIds.map((u) => memberPerson(snap, u))} size={16} max={2} /> : null}
         {c.comments ? <span className="card__comments"><IconMessageCircle size={12} /> {c.comments}</span> : null}
         {apart ? (
           <button className="apart" title="Abierto en una ventana aparte: ir a la ventana" onClick={(e) => { e.stopPropagation(); focusPopped(node.id); }}>
             <IconExternalLink size={12} />
           </button>
         ) : null}
-        {viewers.length ? <span className="card__live" title={`${viewers.join(", ")} está aquí`}><AvatarStack names={viewers} size={16} /></span> : null}
+        {viewers.length ? <span className="card__live" title={`${viewers.join(", ")} está aquí`}><AvatarStack names={presentPeople(snap, node.id)} size={16} /></span> : null}
         <span className="card__spacer" />
         {/* It has notes: the icon says so, and opens them without the panel. */}
         {node.notes.trim() ? (

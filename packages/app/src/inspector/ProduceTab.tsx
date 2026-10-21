@@ -22,7 +22,7 @@ import { Avatar, Button, cx, Spinner } from "@sweetflow/ui";
 import { useSnap, useStore } from "../state/store";
 import { usePanel } from "./panel";
 import { OnStage } from "./stage";
-import { memberName } from "../state/selectors";
+import { memberName, memberPerson } from "../state/selectors";
 import { modelsFor, nearest, REF_LABEL, specOf, useModelsVersion, type GenKind, type RefType } from "../data/models";
 import { refreshCatalog } from "../integrations/magnific/catalog";
 import { mentionsIn, PromptTags, type Mentions } from "./PromptTags";
@@ -196,7 +196,7 @@ export function ProduceTab({ node }: { node: ProdNode }) {
                 <span className="version__tag">
                   {m.kind === "video" ? <IconVideo size={11} /> : m.kind === "audio" ? <IconMusic size={11} /> : <IconPhoto size={11} />}
                   <span className="version__label" title={i.foreign ? `Tramo de ${from ? nameOf(snap.production, from) : "—"}` : undefined}>{i.foreign ? `Tramo de ${from ? nameOf(snap.production, from) : "—"}` : versionTag(m.version)}</span>
-                  {isChosen ? <span className="version__chosen"><IconCheck size={10} stroke={3} /> Elegida</span> : <Avatar name={memberName(snap, m.createdBy)} size={14} />}
+                  {isChosen ? <span className="version__chosen"><IconCheck size={10} stroke={3} /> Elegida</span> : <Avatar {...memberPerson(snap, m.createdBy)} size={14} />}
                 </span>
                 {ready && !m.archived ? (
                   // All three on the right: out to the row, choose (green while it is the chosen one), remove.

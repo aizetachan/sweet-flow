@@ -20,6 +20,7 @@ import {
   type TeamEvent,
   type TeamEventBody,
   type Theme,
+  type ThemeEditors,
   type ThemeFreedom,
 } from "@sweetflow/domain";
 import type { FolderFs } from "./fs";
@@ -41,7 +42,7 @@ export interface Person {
 
 export class TeamLog {
   private log: FolderLog<TeamEvent>;
-  private team: Team = { owner: null, membersCanInvite: true, members: [], theme: null, themeFreedom: "everyone" };
+  private team: Team = { owner: null, membersCanInvite: true, members: [], theme: null, themeFreedom: "everyone", themeEditors: "owner" };
   private clock: Hlc = ZERO_HLC;
   private writing: Promise<void> = Promise.resolve();
   private listeners = new Set<() => void>();
@@ -99,6 +100,10 @@ export class TeamLog {
 
   setThemeFreedom(freedom: ThemeFreedom): void {
     this.write({ type: "team.themeFreedom", freedom });
+  }
+
+  setThemeEditors(editors: ThemeEditors): void {
+    this.write({ type: "team.themeEditors", editors });
   }
 
   canInvite(): boolean {

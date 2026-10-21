@@ -377,7 +377,7 @@ function Assignees({ node }: { node: ProdNode }) {
           <button key={m.uid} className={cx("assignee", on && "assignee--on")} title={`${on ? "Quitar" : "Asignar"} ${m.displayName}`} onClick={() =>
             source.updateNode(node.id, { assigneeIds: on ? node.assigneeIds.filter((x) => x !== m.uid) : [...node.assigneeIds, m.uid] })
           }>
-            <Avatar name={m.displayName} size={20} />
+            <Avatar name={m.displayName} src={m.photoUrl} size={20} />
           </button>
         );
       })}

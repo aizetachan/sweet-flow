@@ -17,7 +17,7 @@ import {
 import { splitTrash } from "@sweetflow/domain";
 import { Avatar, AvatarStack, cx, IconButton, Spinner, Button } from "@sweetflow/ui";
 import { TABS, useSnap, useStore, type View } from "../state/store";
-import { memberName } from "../state/selectors";
+import { memberPerson } from "../state/selectors";
 import { useLibraryTrail } from "../dashboard/Dashboard";
 import { BoardFilters, ProductionInfo } from "../board/Board";
 import { useState } from "react";
@@ -64,7 +64,8 @@ export function Topbar() {
   const view = useStore((s) => s.view);
   const scopeId = useStore((s) => s.scopeId);
   const trail = useLibraryTrail(productionId);
-  const online = snap.presence.filter((p) => p.uid !== snap.me.uid).map((p) => memberName(snap, p.uid));
+  const present = snap.presence.filter((p) => p.uid !== snap.me.uid).map((p) => memberPerson(snap, p.uid));
+  const online = present.map((p) => p.name);
 
   const infoButton = (
     <Popover button={({ open, toggle }) => (
@@ -99,7 +100,7 @@ export function Topbar() {
       {online.length ? (
         <div className="topbar__presence" title={`Ahora en la producción: ${online.join(", ")}`}>
           <span className="live-dot" />
-          <AvatarStack names={online} size={22} />
+          <AvatarStack names={present} size={22} />
         </div>
       ) : null}
 
@@ -166,12 +167,12 @@ function AccountMenu() {
     !demo && !snap.me.email ? <SignInButton className="topbar__signin" /> :
     <Popover align="right" className="amenu" button={({ open, toggle }) => (
       <button className={cx("topbar__me", open && "topbar__me--on")} title={snap.me.displayName} aria-label="Tu cuenta" onClick={toggle}>
-        <Avatar name={snap.me.displayName} size={28} />
+        <Avatar name={snap.me.displayName} src={snap.me.photoUrl ?? lib?.me.photoUrl} size={28} />
         {mag.connected ? <span className="topbar__me-dot" title="Magnific conectada" /> : null}
       </button>
     )}>
       <div className="amenu__who">
-        <Avatar name={snap.me.displayName} size={32} />
+        <Avatar name={snap.me.displayName} src={snap.me.photoUrl ?? lib?.me.photoUrl} size={32} />
         <span className="amenu__name">
           <strong>{snap.me.displayName}</strong>
           <span className="sf-faint sf-small">{snap.me.email || lib?.label}</span>

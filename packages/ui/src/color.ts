@@ -101,3 +101,32 @@ export function accentVars(accent: string | null): Record<string, string> {
   out["--primary-soft"] = `rgb(${main} / .15)`;
   return out;
 }
+
+/** Hue 0–360, saturation and value 0–1 (the colour picker's square and slider). */
+export type Hsv = [number, number, number];
+
+export function rgbToHsv([r, g, b]: Rgb): Hsv {
+  const R = r / 255, G = g / 255, B = b / 255;
+  const max = Math.max(R, G, B), d = max - Math.min(R, G, B);
+  let h = 0;
+  if (d) h = max === R ? ((G - B) / d) % 6 : max === G ? (B - R) / d + 2 : (R - G) / d + 4;
+  return [(h * 60 + 360) % 360, max ? d / max : 0, max];
+}
+
+export function hsvToRgb([h, s, v]: Hsv): Rgb {
+  const f = (n: number) => {
+    const k = (n + h / 60) % 6;
+    return 255 * (v - v * s * Math.max(0, Math.min(k, 4 - k, 1)));
+  };
+  return [f(5), f(3), f(1)];
+}
+
+/** Contrast of white on this colour (WCAG: 4.5 reads well as text, 3 as big text and icons). */
+export function contrastWithWhite(hex: string): number {
+  const lin = (c: number) => {
+    const v = c / 255;
+    return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+  };
+  const [r, g, b] = hexToRgb(hex);
+  return 1.05 / (0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b) + 0.05);
+}

@@ -144,7 +144,7 @@ function TeamModal({ onClose }: { onClose: () => void }) {
     <Modal title="Equipo" onClose={onClose} width={680}>
       <p className="sf-muted modal-lead">Todos ven la misma producción. Cada uno genera con su propia cuenta de Magnific y sus créditos.</p>
       <div className="mycard">
-        <Avatar name={snap.me.displayName} size={36} />
+        <Avatar name={snap.me.displayName} src={snap.me.photoUrl} size={36} />
         <div className="grow">
           <b>Tu cuenta de Magnific</b>
           <div className="sf-muted sf-small">{mag.connected ? "Conectada · tus generaciones gastan tus créditos" : "Sin conectar · puedes ver, cortar y aprobar, pero no generar"}</div>
@@ -180,7 +180,7 @@ function TeamModal({ onClose }: { onClose: () => void }) {
           <tbody>
             {snap.members.map((m) => (
               <tr key={m.uid}>
-                <td><div className="team__who"><Avatar name={m.displayName} size={26} /><div><b>{m.displayName}</b><div className="sf-faint sf-small">{m.email}</div></div></div></td>
+                <td><div className="team__who"><Avatar name={m.displayName} src={m.uid === snap.me.uid ? (snap.me.photoUrl ?? m.photoUrl) : m.photoUrl} size={26} /><div><b>{m.displayName}</b><div className="sf-faint sf-small">{m.email}</div></div></div></td>
                 <td className="sf-muted">{snap.nodes.filter((n) => n.assigneeIds.includes(m.uid)).length}</td>
                 <td>{online.has(m.uid) && m.uid !== snap.me.uid ? <span className="sf-small online"><span className="live-dot" /> En línea</span> : null}</td>
               </tr>

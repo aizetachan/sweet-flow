@@ -10,7 +10,7 @@ import { IconBell } from "@tabler/icons-react";
 import { formatTc, type Comment, type Id } from "@sweetflow/domain";
 import { Avatar, cx, IconButton } from "@sweetflow/ui";
 import { useSnap, useStore } from "../state/store";
-import { memberName } from "../state/selectors";
+import { memberName, memberPerson } from "../state/selectors";
 import { Popover } from "../components/Popover";
 import { nameOf } from "../state/names";
 
@@ -79,7 +79,7 @@ export function Notifications() {
             const isReply = !!c.parentId && !c.mentions?.includes(snap.me.uid);
             return (
               <button key={c.id} className={cx("menu__item notif__item", !read.has(c.id) && "notif__item--new")} onClick={() => open(c)}>
-                <Avatar name={memberName(snap, c.authorId)} size={22} />
+                <Avatar {...memberPerson(snap, c.authorId)} size={22} />
                 <span className="notif__body">
                   <span className="sf-small">
                     <b>{memberName(snap, c.authorId)}</b> {isReply ? "respondió a tu comentario" : "te mencionó"}

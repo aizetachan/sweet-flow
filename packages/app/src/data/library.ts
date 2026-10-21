@@ -12,7 +12,7 @@
  *   production is a folder with `.sweetflow/` inside.
  */
 
-import { accessOf, canPersonalizeTheme, normEmail, shareRoots, type Access, type LibraryShare, type TeamMember, type Theme, type ThemeFreedom } from "@sweetflow/domain";
+import { accessOf, canPersonalizeTheme, canSetTeamTheme, normEmail, shareRoots, type Access, type LibraryShare, type TeamMember, type Theme, type ThemeEditors, type ThemeFreedom } from "@sweetflow/domain";
 import { IDENTITY_EVENT, IDENTITY_KEY, readIdentity, uidForEmail } from "../integrations/magnific/identity";
 import {
   defaultLevels,
@@ -58,6 +58,8 @@ export interface ProductionSummary {
   /** Units per status, in status order, for the progress bar. */
   byStatus: Array<{ color: string; name: string; count: number }>;
   members: string[];
+  /** Photos of the members who have one, by name. */
+  photos?: Record<string, string>;
   updatedAt?: Millis;
   thumbUrl?: string;
   /** Its library, when shared with other productions (docs/INTERFAZ.md §2.8.1), and how many groups it has. */
@@ -109,7 +111,10 @@ export interface TeamView {
   /** The team's look, set by the owner (null: the corporate blue). */
   theme: Theme | null;
   themeFreedom: ThemeFreedom;
-  /** Whether I set the team's theme: the owner only. */
+  themeEditors: ThemeEditors;
+  /** Whether I am the team's owner (I decide who may do what with the theme). */
+  isOwner: boolean;
+  /** Whether I may change the team's theme. */
   canSetTheme: boolean;
   /** Whether I may use a theme of my own. */
   canPersonalizeTheme: boolean;
@@ -132,6 +137,7 @@ export interface TeamApi {
   /** The team's theme (owner only; null: back to the corporate blue). */
   setTheme(theme: Theme | null): void;
   setThemeFreedom(freedom: ThemeFreedom): void;
+  setThemeEditors(editors: ThemeEditors): void;
 }
 
 export interface LibraryState {
@@ -553,6 +559,7 @@ export function summarize(s: Pick<LogState, "production" | "nodes" | "members">)
     done: units.filter((u) => statuses.find((x) => x.id === u.statusId)?.category === "done").length,
     byStatus: statuses.map((st) => ({ color: st.color, name: st.name, count: units.filter((u) => u.statusId === st.id).length })).filter((x) => x.count),
     members: s.members.map((m) => m.displayName),
+    photos: Object.fromEntries(s.members.filter((m) => m.photoUrl).map((m) => [m.displayName, m.photoUrl!])),
     updatedAt: Math.max(p.updatedAt, ...s.nodes.map((n) => n.updatedAt)),
     ...(p.libraryShare ? { libraryShare: p.libraryShare } : {}),
     libraryGroups: s.nodes.filter((n) => n.lib?.kind === "card" && !n.trashedAt).length,
@@ -770,7 +777,9 @@ function teamView(t: TeamLog, me: { email: string } | null, mounted: { entryId: 
     sharesInStorage,
     theme: s.theme,
     themeFreedom: s.themeFreedom,
-    canSetTheme: !!s.owner && !!me?.email && normEmail(me.email) === s.owner.email,
+    themeEditors: s.themeEditors,
+    isOwner: !!s.owner && !!me?.email && normEmail(me.email) === s.owner.email,
+    canSetTheme: canSetTeamTheme(s, me?.email ?? null),
     canPersonalizeTheme: canPersonalizeTheme(s, me?.email ?? null),
   };
 }
@@ -824,5 +833,6 @@ function teamApi(t: TeamLog, fs: FolderFs, entries: { pathOf(id: Id): string | n
     setMembersCanInvite: (on) => t.setMembersCanInvite(on),
     setTheme: (theme) => t.setTheme(theme),
     setThemeFreedom: (freedom) => t.setThemeFreedom(freedom),
+    setThemeEditors: (editors) => t.setThemeEditors(editors),
   };
 }

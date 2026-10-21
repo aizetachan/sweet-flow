@@ -99,7 +99,7 @@ export function Profile({ lib }: { lib: LibraryState }) {
   return (
     <Section title="Perfil" hint="Tu nombre aparece en las producciones en las que trabajas. Al conectar Magnific (Integraciones), tu cuenta de Magnific pasa a ser tu identidad en Sweetflow.">
       <div className="sprofile">
-        <Avatar name={name || lib.me.displayName} size={64} />
+        <Avatar name={name || lib.me.displayName} src={lib.me.photoUrl} size={64} />
         <div className="sform">
           <label className="sfield">
             <span>Nombre</span>

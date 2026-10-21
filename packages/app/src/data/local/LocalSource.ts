@@ -201,9 +201,10 @@ export class LocalSource implements DataSource {
       this.write([{ type: "production.created", production: { workspaceId: "local", ...create } }]);
     }
     const known = this.state?.members.find((m) => m.uid === this.me.uid);
-    const { uid, displayName, email, role } = this.me;
-    if (!known || known.displayName !== displayName || known.email !== email || known.role !== role) {
-      this.write([{ type: "member.joined", member: { uid, displayName, email, role } }]);
+    const { uid, displayName, email, role, photoUrl } = this.me;
+    // Again when something changed (the photo too: the team sees it on my avatar).
+    if (!known || known.displayName !== displayName || known.email !== email || known.role !== role || known.photoUrl !== photoUrl) {
+      this.write([{ type: "member.joined", member: { uid, displayName, email, role, ...(photoUrl ? { photoUrl } : {}) } }]);
     }
   }
 
