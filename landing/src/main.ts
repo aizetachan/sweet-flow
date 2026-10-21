@@ -1,3 +1,4 @@
+import { initBackgroundVideos } from "./bgvideo.ts";
 import { initForms } from "./forms.ts";
 import { initLangSwitch } from "./i18n.ts";
 import { initModals } from "./modals.ts";
@@ -7,6 +8,7 @@ initModals();
 initForms();
 initPricing();
 initLangSwitch();
+initBackgroundVideos();
 
 for (const el of document.querySelectorAll("[data-year]")) el.textContent = String(new Date().getFullYear());
 

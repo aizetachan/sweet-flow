@@ -355,6 +355,16 @@
 
       <!-- Para equipos -->
       <section class="section teams" id="equipos">
+        <!-- Background: six generated shots from the demo production at 10 % opacity.
+             Videos load only when the section is near the viewport (src/bgvideo.ts). -->
+        <div class="teams__bg" aria-hidden="true" data-bg-videos>
+          <video muted loop playsinline preload="none" poster="/video/bg-aparicion.jpg" data-src="/video/bg-aparicion.mp4"></video>
+          <video muted loop playsinline preload="none" poster="/video/bg-encender.jpg" data-src="/video/bg-encender.mp4"></video>
+          <video muted loop playsinline preload="none" poster="/video/bg-andar.jpg" data-src="/video/bg-andar.mp4"></video>
+          <video muted loop playsinline preload="none" poster="/video/bg-calle.jpg" data-src="/video/bg-calle.mp4"></video>
+          <video muted loop playsinline preload="none" poster="/video/bg-mechero.jpg" data-src="/video/bg-mechero.mp4"></video>
+          <video muted loop playsinline preload="none" poster="/video/bg-cafeteria.jpg" data-src="/video/bg-cafeteria.mp4"></video>
+        </div>
         <div class="container">
           <header class="section__head">
             <span class="pill pill--accent pill--caps"><i class="dot dot--accent"></i>{{teams.kicker}}</span>
