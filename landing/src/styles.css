@@ -119,8 +119,9 @@ main, .footer { position: relative; z-index: 1; }
      softly and tints the card. */
   background: linear-gradient(180deg, rgb(31 31 35 / .5), rgb(23 23 26 / .5));
   backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
-  /* White at 20 %: a very subtle edge on every card. */
-  border: 1px solid rgb(255 255 255 / .2);
+  /* A barely-there edge: with the backdrop blur a border reads brighter than
+     its value, so 8 % white is what looks like a faint line. */
+  border: 1px solid rgb(255 255 255 / .08);
 }
 .card--dark { --card-a: rgb(14 14 16 / .62); --card-b: rgb(23 23 26 / .62); background: linear-gradient(180deg, rgb(14 14 16 / .45), rgb(23 23 26 / .45)); }
 .card::before, .card::after {
