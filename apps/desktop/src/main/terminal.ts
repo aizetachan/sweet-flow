@@ -69,15 +69,38 @@ export function openTerminal(owner: WebContents, cols: number, rows: number): { 
   sessions.set(id, { pty, owner });
   // The window that opened it is the one the AI controls.
   setAgentHost(owner);
-  pty.onData((data) => {
-    if (!owner.isDestroyed()) owner.send(IPC.termData, id, data);
-  });
+  pty.onData((data) => send(owner, IPC.termData, id, data));
   pty.onExit(({ exitCode }) => {
     sessions.delete(id);
-    if (!owner.isDestroyed()) owner.send(IPC.termExit, id, exitCode);
+    send(owner, IPC.termExit, id, exitCode);
   });
-  owner.once("destroyed", () => closeTerminal(id));
+  watchOwner(owner);
   return { id, cwd };
+}
+
+/** To the window, if it is still there (a page reloading or gone can't take it). */
+function send(owner: WebContents, channel: string, ...args: unknown[]): void {
+  if (owner.isDestroyed()) return;
+  try {
+    owner.send(channel, ...args);
+  } catch {
+    // Its page is going away: closeOwned ends the session.
+  }
+}
+
+/** A window's sessions end with its page: closed, reloaded or crashed (a new page opens its own). */
+const watched = new WeakSet<WebContents>();
+function watchOwner(owner: WebContents): void {
+  if (watched.has(owner)) return;
+  watched.add(owner);
+  const closeOwned = () => {
+    for (const [id, s] of sessions) if (s.owner === owner) closeTerminal(id);
+  };
+  owner.once("destroyed", closeOwned);
+  owner.on("render-process-gone", closeOwned);
+  owner.on("did-start-navigation", (details) => {
+    if (details.isMainFrame && !details.isSameDocument) closeOwned();
+  });
 }
 
 export function writeTerminal(owner: WebContents, id: string, data: string): void {
