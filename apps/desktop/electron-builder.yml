@@ -30,6 +30,9 @@ mac:
   target:
     - target: dmg
       arch: universal
+  # The terminal's binaries already come one per architecture (prebuilds/darwin-arm64 and
+  # darwin-x64), the same in both halves of the universal app: kept as they are.
+  x64ArchFiles: "**/node_modules/node-pty/prebuilds/**"
   # Ad-hoc signature ("-"): free, no certificate. It gives the app a stable identity
   # (com.sweetflow.app) so macOS remembers the access the user allows to the team folder
   # (Escritorio, Documentos, Dropbox…) and asks once instead of on every file it reads.
