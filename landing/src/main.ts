@@ -1,5 +1,4 @@
 import { initBackgroundVideos } from "./bgvideo.ts";
-import { initCards } from "./cards.ts";
 import { initFluidBackground } from "./fluid.ts";
 import { initForms } from "./forms.ts";
 import { initLangSwitch } from "./i18n.ts";
@@ -14,7 +13,6 @@ initPricing();
 initLangSwitch();
 initBackgroundVideos();
 initFluidBackground();
-initCards();
 
 for (const el of document.querySelectorAll("[data-year]")) el.textContent = String(new Date().getFullYear());
 

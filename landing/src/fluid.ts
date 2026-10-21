@@ -41,12 +41,12 @@ void main() {
   vec2 uv = gl_FragCoord.xy / u_res;
   vec2 p = vec2(uv.x * ar, uv.y) * 1.1;
   vec2 m = vec2(u_mouse.x * ar, u_mouse.y);
-  float t = u_time * 0.045;
+  float t = u_time * 0.07;
 
   // Cursor: a radial push on the sampling point and a soft glow.
   vec2 toM = p - m * 1.1;
   float dm = length(toM);
-  vec2 push = toM / (dm + 0.08) * exp(-dm * dm * 2.2) * 0.5 * u_mouseAmt;
+  vec2 push = toM / (dm + 0.08) * exp(-dm * dm * 2.2) * 0.3 * u_mouseAmt;
 
   vec2 q = vec2(fbm(p + t), fbm(p - t * 0.8 + vec2(3.1, 1.7)));
   vec2 w = vec2(fbm(p + 2.0 * q + vec2(1.3, 9.2) + t * 0.5), fbm(p + 2.0 * q + vec2(8.3, 2.8) - t * 0.4));
@@ -60,10 +60,12 @@ void main() {
   // A sea of near-black: a faint relief (±1 % luminance) so the dark has volume.
   vec3 col = bg + vec3(0.012) * (h - 0.5) * 2.0;
   // The blue only lives on the crests of the field: a thin, sparse accent.
-  float crest = smoothstep(0.60, 0.86, h);
+  // The blue only lives on the crests of the field: a sparse accent that is
+  // always there, drifting on its own; the cursor adds only a faint touch.
+  float crest = smoothstep(0.54, 0.86, h);
   float veins = smoothstep(0.45, 0.95, n2 * 0.5 + 0.5);
-  col += mix(deep, blue, veins) * crest * 0.10 * u_accent;
-  col += blue * exp(-dm * dm * 7.0) * 0.06 * u_mouseAmt;
+  col += mix(deep, blue, veins) * crest * 0.15 * u_accent;
+  col += blue * exp(-dm * dm * 7.0) * 0.04 * u_mouseAmt;
   // Keep it dark at the very top so the sticky nav blends in.
   col = mix(bg, col, smoothstep(0.0, 0.08, 1.0 - uv.y) * 0.9 + 0.1);
   gl_FragColor = vec4(col, 1.0);
@@ -120,7 +122,7 @@ export function initFluidBackground(): void {
   gl.uniform2f(uRes, 640, 400);
   gl.uniform2f(uMouse, 0.5, 0.5);
   gl.uniform1f(uMouseAmt, 0);
-  gl.uniform1f(uAccent, 3.0);
+  gl.uniform1f(uAccent, 2.6);
   try {
     for (const [name, t] of [["--fluid-tex", 41.0], ["--fluid-tex-2", 47.5]] as const) {
       gl.uniform1f(uTime, t);

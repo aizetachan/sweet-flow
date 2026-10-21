@@ -113,24 +113,22 @@ main, .footer { position: relative; z-index: 1; }
    layers are just the tint: the plain gradient of the design. */
 .card {
   position: relative; overflow: hidden; isolation: isolate; border-radius: 24px;
-  --card-a: rgb(31 31 35 / .72); --card-b: rgb(23 23 26 / .72);
+  --card-a: rgb(31 31 35 / .62); --card-b: rgb(23 23 26 / .62);
   background: linear-gradient(180deg, var(--bg-3), var(--bg-2));
-  border: 1px solid rgb(255 255 255 / .16);
+  /* White at 20 %: a very subtle edge on every card. */
+  border: 1px solid rgb(255 255 255 / .2);
 }
-.card--dark { --card-a: rgb(14 14 16 / .72); --card-b: rgb(23 23 26 / .72); background: linear-gradient(180deg, var(--bg), var(--bg-2)); }
+.card--dark { --card-a: rgb(14 14 16 / .62); --card-b: rgb(23 23 26 / .62); background: linear-gradient(180deg, var(--bg), var(--bg-2)); }
 .card::before, .card::after {
   content: ""; position: absolute; inset: -18%; z-index: 0; pointer-events: none;
   background: linear-gradient(180deg, var(--card-a), var(--card-b)), var(--fluid-tex, none);
   background-size: auto, cover; background-position: 0 0, var(--tex-x, 50%) var(--tex-y, 50%);
-  transform: translate(var(--tx, 0px), var(--ty, 0px));
-  transition: transform 1.6s cubic-bezier(.2, .7, .2, 1), filter .8s;
   animation: card-drift-a 46s ease-in-out infinite alternate;
 }
 .card::after {
   background-image: linear-gradient(180deg, var(--card-a), var(--card-b)), var(--fluid-tex-2, none);
   animation: card-drift-b 37s ease-in-out infinite alternate, card-breathe 23s ease-in-out infinite;
 }
-.card:hover::before, .card:hover::after { filter: brightness(1.12); }
 @keyframes card-drift-a { from { translate: 0 0; } to { translate: 2.5% 1.5%; } }
 @keyframes card-drift-b { from { translate: 1.5% -1.5%; } to { translate: -2% 2%; } }
 @keyframes card-breathe { 0%, 100% { opacity: .2; } 50% { opacity: .8; } }
@@ -160,34 +158,28 @@ main, .footer { position: relative; z-index: 1; }
 .logo--sm .logo__word { font-size: 16px; letter-spacing: -.24px; }
 
 /* --- nav --- */
-/* Header: at the top, a low bar whose background fades out downwards (no
-   line). Past the first scroll it morphs into a floating pill, like the
-   Library · Production · Editor bar in the app (src/nav.ts adds .is-floating). */
+/* Header tied to the scroll. --p (set by src/nav.ts) goes from 0 at the top
+   of the page to 1 after the first ~140 px, and every dimension is
+   interpolated from it: full-width bar with a fading background at 0, floating
+   pill with blur at 1 (like the Library · Production · Editor bar in the app).
+   Scrolling back up widens it again. No line, no toggle. */
 .nav {
+  --p: 0;
   position: sticky; top: 0; z-index: 20; display: flex; justify-content: center;
-  padding: 0 var(--gutter); height: 64px;
-  background: linear-gradient(180deg, rgb(14 14 16 / .96) 0%, rgb(14 14 16 / .7) 55%, rgb(14 14 16 / 0) 100%);
-  --ease: cubic-bezier(.22, 1, .36, 1);
-  transition: padding .9s var(--ease), background .9s var(--ease);
+  padding: calc(10px * var(--p)) var(--gutter) 0; height: 64px;
+  background: linear-gradient(180deg, rgb(14 14 16 / calc(.96 * (1 - var(--p)))) 0%, rgb(14 14 16 / calc(.7 * (1 - var(--p)))) 55%, rgb(14 14 16 / 0) 100%);
 }
 .nav__inner {
-  display: flex; align-items: center; justify-content: space-between; gap: 24px;
-  width: 100%; max-width: var(--container); height: 56px; margin: 0; padding: 0 0 0 0; border-radius: 999px;
-  border: 1px solid transparent; background: transparent;
-  transition: max-width 1s var(--ease), height .9s var(--ease), padding .9s var(--ease), gap .9s var(--ease),
-    background .9s var(--ease), border-color .9s var(--ease), box-shadow .9s var(--ease);
+  display: flex; align-items: center; justify-content: space-between;
+  gap: calc(24px - 4px * var(--p));
+  width: 100%; max-width: calc(var(--container) - (var(--container) - 720px) * var(--p));
+  height: calc(56px - 8px * var(--p)); margin: 0;
+  padding: 0 calc(8px * var(--p)) 0 calc(10px * var(--p)); border-radius: 999px;
+  border: 1px solid rgb(255 255 255 / calc(.12 * var(--p)));
+  background: rgb(24 24 27 / calc(.8 * var(--p)));
+  box-shadow: 0 10px 30px rgb(0 0 0 / calc(.45 * var(--p)));
+  backdrop-filter: blur(calc(16px * var(--p))); -webkit-backdrop-filter: blur(calc(16px * var(--p)));
 }
-.nav.is-floating { padding-top: 10px; background: transparent; }
-.nav.is-floating .nav__inner {
-  max-width: 720px; height: 48px; padding: 0 8px 0 10px; gap: 20px;
-  background: rgb(24 24 27 / .8); border-color: rgb(255 255 255 / .12);
-  box-shadow: 0 10px 30px rgb(0 0 0 / .45); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-}
-/* In the pill only the mark stays: the wordmark folds away. */
-.nav .logo { transition: gap .9s var(--ease); }
-.nav .logo__word { max-width: 140px; overflow: hidden; white-space: nowrap; transition: max-width .9s var(--ease), opacity .5s var(--ease); }
-.nav.is-floating .logo { gap: 0; }
-.nav.is-floating .logo__word { max-width: 0; opacity: 0; }
 .nav__links { display: flex; gap: 28px; font-size: 14px; font-weight: 500; color: var(--fg-2); }
 .nav__links a:hover { color: var(--fg); }
 .nav__actions { display: flex; align-items: center; gap: 8px; }
@@ -199,6 +191,21 @@ main, .footer { position: relative; z-index: 1; }
 .lang:hover { color: var(--fg); background: rgb(255 255 255 / .08); }
 .lang--text { width: auto; height: auto; padding: 0; border: 0; background: none; font-size: 14px; font-weight: 400; letter-spacing: 0; color: var(--fg-3); }
 .lang--text:hover { background: none; color: var(--fg); }
+/* In the pill only the mark stays: the wordmark folds away with the scroll. */
+.nav .logo { gap: calc(9px * (1 - var(--p))); }
+.nav .logo__word {
+  max-width: calc(140px * (1 - var(--p))); overflow: hidden; white-space: nowrap;
+  opacity: clamp(0, 1 - var(--p) * 1.6, 1);
+}
+.nav__links { display: flex; gap: 28px; font-size: 14px; font-weight: 500; color: var(--fg-2); }
+.nav__links a:hover { color: var(--fg); }
+.nav__actions { display: flex; align-items: center; gap: 8px; }
+.lang {
+  display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0;
+  border-radius: 10px; border: 1px solid rgb(255 255 255 / .12); background: rgb(255 255 255 / .04);
+  font-size: 12px; font-weight: 600; letter-spacing: .04em; color: var(--fg-2);
+}
+
 
 /* --- hero --- */
 .hero { padding-top: 88px; }
@@ -494,7 +501,7 @@ kbd {
 .toggle__opt { padding: 8px 16px; border-radius: 999px; font-size: 13px; font-weight: 600; color: var(--fg-2); }
 .toggle__opt.is-on { background: var(--accent); color: #fff; }
 .plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; align-items: end; }
-.plan { padding: 32px; display: flex; flex-direction: column; gap: 24px; border-color: rgb(255 255 255 / .14); }
+.plan { padding: 32px; display: flex; flex-direction: column; gap: 24px; }
 .plan--featured {
   padding: 36px 32px; background: linear-gradient(180deg, #152037, var(--bg-2)); border-color: rgb(var(--accent-rgb) / .9);
   box-shadow: 0 24px 70px rgb(var(--accent-rgb) / .3);
@@ -604,10 +611,8 @@ kbd {
 }
 @media (max-width: 720px) {
   :root { --gutter: 16px; }
-  .nav { height: 56px; }
-  .nav__inner { height: 48px; }
-  .nav.is-floating { padding-top: 8px; }
-  .nav.is-floating .nav__inner { height: 44px; }
+  .nav { height: 56px; padding-top: calc(8px * var(--p)); }
+  .nav__inner { height: calc(48px - 4px * var(--p)); }
   .hero { padding-top: 40px; }
   .hero__title { margin-top: 18px; font-size: 36px; line-height: 40px; letter-spacing: -.8px; }
   /* Smaller lead so the product window shows up within the first screen. */
