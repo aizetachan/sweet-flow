@@ -64,22 +64,3 @@ export async function sendContact(fields: Record<string, string>): Promise<Conta
     throw new ApiRequestError(codeOf(err));
   }
 }
-
-/** Spanish message for an error code. */
-export function errorMessage(code: string): string {
-  switch (code) {
-    case "invalid_name":
-      return "Escribe tu nombre.";
-    case "invalid_email":
-      return "Revisa el correo: no parece válido.";
-    case "invalid_message":
-      return "El mensaje debe tener entre 10 y 4000 caracteres.";
-    case "network":
-    case "unavailable":
-      return "No hay conexión. Inténtalo de nuevo.";
-    case "not_configured":
-      return "El formulario aún no está conectado. Vuelve a intentarlo más tarde.";
-    default:
-      return "No se ha podido enviar. Inténtalo de nuevo en un momento.";
-  }
-}

@@ -2,6 +2,7 @@
   "hosting": {
     "public": "dist",
     "cleanUrls": true,
+    "i18n": { "root": "/localized" },
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [{ "source": "**", "destination": "/index.html" }],
     "headers": [

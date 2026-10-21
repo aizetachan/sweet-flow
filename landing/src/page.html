@@ -1,0 +1,557 @@
+<!doctype html>
+<html lang="{{lang}}">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{meta.title}}</title>
+    <meta name="description" content="{{meta.description}}" />
+    <meta name="theme-color" content="#0e0e10" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="canonical" href="{{meta.url}}" />
+    <link rel="alternate" hreflang="en" href="https://sweetflow-landing.web.app/" />
+    <link rel="alternate" hreflang="es" href="https://sweetflow-landing.web.app/localized/es/" />
+    <link rel="alternate" hreflang="x-default" href="https://sweetflow-landing.web.app/" />
+    <!-- Open Graph / Twitter: absolute URLs, the scrapers do not resolve relative ones. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Sweetflow" />
+    <meta property="og:locale" content="{{meta.locale}}" />
+    <meta property="og:url" content="{{meta.url}}" />
+    <meta property="og:title" content="{{meta.title}}" />
+    <meta property="og:description" content="{{meta.ogDescription}}" />
+    <meta property="og:image" content="https://sweetflow-landing.web.app/og.jpg" />
+    <meta property="og:image:secure_url" content="https://sweetflow-landing.web.app/og.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="{{meta.imageAlt}}" />
+    <meta property="og:image" content="https://sweetflow-landing.web.app/og-square.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="600" />
+    <meta property="og:image:height" content="600" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="{{meta.title}}" />
+    <meta name="twitter:description" content="{{meta.ogDescription}}" />
+    <meta name="twitter:image" content="https://sweetflow-landing.web.app/og.jpg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Geist:wght@600&family=Geist+Mono&display=swap"
+    />
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <!-- Nav -->
+    <header class="nav">
+      <div class="container nav__inner">
+        <a class="logo" href="#" aria-label="Sweetflow">
+          <span class="logo__mark logo__mark--30"><img src="/img/logo-glyph-18.svg" width="18" height="18" alt="" /></span>
+          <span class="logo__word">Sweetflow</span>
+        </a>
+        <nav class="nav__links" aria-label="{{nav.aria}}">
+          <a href="#producto">{{nav.product}}</a>
+          <a href="#como-funciona">{{nav.how}}</a>
+          <a href="#equipos">{{nav.teams}}</a>
+          <a href="#precios">{{nav.pricing}}</a>
+        </nav>
+        <div class="nav__actions">
+          <button class="lang" type="button" data-lang-switch="{{lang.other}}" aria-label="{{lang.switchLabel}}">{{lang.otherShort}}</button>
+          <button class="btn btn--primary" type="button" data-open="waitlist">{{cta.waitlist}}</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <!-- Hero -->
+      <section class="hero">
+        <div class="container hero__inner">
+          <span class="pill pill--accent"><i class="dot dot--accent"></i>{{hero.pill}}</span>
+          <h1 class="hero__title">{{hero.title}}</h1>
+          <p class="hero__lead">{{hero.lead}}</p>
+          <div class="hero__actions">
+            <button class="btn btn--primary" type="button" data-open="waitlist">{{cta.waitlist}}</button>
+            <a class="btn btn--secondary" href="#como-funciona">{{hero.demo}}</a>
+          </div>
+          <div class="hero__window">
+            <img src="/img/shot-produccion.jpg" width="1200" height="750" alt="{{hero.shotAlt}}" />
+          </div>
+        </div>
+      </section>
+
+      <!-- Strip -->
+      <section class="strip">
+        <div class="container">
+          <div class="strip__bar">
+            <div class="stat"><strong>{{strip.views}}</strong><span>{{strip.viewsSub}}</span></div>
+            <i class="strip__divider"></i>
+            <div class="stat"><strong>{{strip.tree}}</strong><span>{{strip.treeSub}}</span></div>
+            <i class="strip__divider"></i>
+            <div class="stat"><strong>{{strip.versions}}</strong><span>{{strip.versionsSub}}</span></div>
+            <i class="strip__divider"></i>
+            <div class="stat"><strong>⌘Z</strong><span>{{strip.undoSub}}</span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Cómo funciona -->
+      <section class="section" id="como-funciona">
+        <div class="container">
+          <header class="section__head">
+            <span class="pill pill--accent pill--caps"><i class="dot dot--accent"></i>{{how.kicker}}</span>
+            <h2 class="section__title">{{how.title}}</h2>
+            <p class="section__lead" style="max-width: 640px">{{how.lead}}</p>
+          </header>
+
+          <div class="steps">
+            <article class="step card card--glow">
+              <div class="step__mock">
+                <div class="lib">
+                  <div class="lib__head">
+                    <strong>Woman main</strong>
+                    <span class="pill pill--sm pill--purple"><i class="dot dot--purple"></i>{{mock.character}}</span>
+                    <span class="lib__count">10</span>
+                  </div>
+                  <div class="lib__grid">
+                    <img src="/img/lib-1.jpg" alt="" /><img src="/img/lib-2.jpg" alt="" /><img src="/img/lib-3.jpg" alt="" />
+                    <img src="/img/lib-4.jpg" alt="" /><img src="/img/lib-5.jpg" alt="" /><span class="lib__more">{{mock.more}}</span>
+                  </div>
+                </div>
+              </div>
+              <h3 class="step__title">
+                <span class="step__num">01</span>
+                <img src="/img/icon-biblioteca.svg" width="18" height="18" alt="" />{{how.step1}}
+              </h3>
+              <p class="step__text">{{how.step1Text}}</p>
+            </article>
+
+            <i class="steps__link"></i>
+
+            <article class="step card card--glow">
+              <div class="step__mock">
+                <div class="tree">
+                  <div class="tree__row">
+                    <i class="dot dot--gray"></i><b>SQ040</b><strong>{{mock.sq040}}</strong><span class="tree__count">0/10</span>
+                  </div>
+                  <div class="tree__row tree__row--l1">
+                    <i class="dot dot--gray"></i><b>SC010</b><span>{{mock.sc010}}</span><span class="tree__count">0/10</span>
+                  </div>
+                  <div class="tree__row tree__row--l2 tree__row--on">
+                    <i class="dot dot--accent"></i><b class="tree__code">SH0010</b><span>{{mock.sh0010}}</span>
+                    <span class="pill pill--xs pill--accent"><i class="dot dot--accent"></i>{{status.review}}</span>
+                  </div>
+                  <div class="tree__row tree__row--l2">
+                    <i class="dot dot--green"></i><b class="tree__code">SH0020</b><span>{{mock.sh0020}}</span>
+                    <span class="pill pill--xs pill--green"><i class="dot dot--green"></i>{{status.approved}}</span>
+                  </div>
+                  <div class="tree__row tree__row--l2">
+                    <i class="dot dot--yellow"></i><b class="tree__code">SH0030</b><span>{{mock.sh0030}}</span>
+                    <span class="pill pill--xs pill--yellow"><i class="dot dot--yellow"></i>{{status.progress}}</span>
+                  </div>
+                </div>
+              </div>
+              <h3 class="step__title">
+                <span class="step__num">02</span>
+                <img src="/img/icon-produccion.svg" width="18" height="18" alt="" />{{how.step2}}
+              </h3>
+              <p class="step__text">{{how.step2Text}}</p>
+            </article>
+
+            <i class="steps__link"></i>
+
+            <article class="step card card--glow">
+              <div class="step__mock">
+                <div class="ed">
+                  <div class="ed__bar">
+                    <span class="ed__chip">{{mock.montage}} ⌄</span>
+                    <strong>SQ040 · {{mock.sq040}}</strong>
+                    <span class="ed__time">00:00:55:23</span>
+                    <span class="ed__chip ed__chip--strong">{{mock.assemble}}</span>
+                  </div>
+                  <div class="ed__preview"><img src="/img/editor-preview.jpg" alt="" /></div>
+                  <div class="ed__ruler" data-ruler></div>
+                  <div class="ed__track"><span>V2</span><div class="ed__lane ed__lane--empty"></div></div>
+                  <div class="ed__track">
+                    <span>V1</span>
+                    <div class="ed__lane ed__lane--video">
+                      <img src="/img/clip-1.jpg" alt="" /><img src="/img/clip-2.jpg" alt="" /><img src="/img/clip-3.jpg" alt="" />
+                      <img src="/img/clip-1.jpg" alt="" /><img src="/img/clip-2.jpg" alt="" /><img src="/img/clip-3.jpg" alt="" />
+                      <img src="/img/clip-1.jpg" alt="" /><img src="/img/clip-2.jpg" alt="" /><img src="/img/clip-3.jpg" alt="" />
+                      <em>SC010 {{mock.sc010}}</em>
+                    </div>
+                  </div>
+                  <div class="ed__track">
+                    <span>A1</span>
+                    <div class="ed__lane ed__lane--audio"><div class="ed__wave" data-wave></div><em>SC010 {{mock.sc010}}</em></div>
+                  </div>
+                  <i class="ed__playhead"></i>
+                </div>
+              </div>
+              <h3 class="step__title">
+                <span class="step__num">03</span>
+                <img src="/img/icon-editor.svg" width="18" height="18" alt="" />{{how.step3}}
+              </h3>
+              <p class="step__text">{{how.step3Text}}</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- Feature: Biblioteca -->
+      <section class="feature" id="producto">
+        <div class="container feature__inner">
+          <div class="feature__copy">
+            <span class="feature__kicker">{{library.kicker}}</span>
+            <h2 class="feature__title">{{library.title}}</h2>
+            <p class="feature__text">{{library.text}}</p>
+            <ul class="checks">
+              <li><img src="/img/icon-check.svg" width="18" height="18" alt="" />{{library.check1}}</li>
+              <li><img src="/img/icon-check.svg" width="18" height="18" alt="" />{{library.check2}}</li>
+              <li><img src="/img/icon-check.svg" width="18" height="18" alt="" />{{library.check3}}</li>
+            </ul>
+          </div>
+          <div class="feature__shot">
+            <img src="/img/shot-biblioteca.jpg" width="680" height="425" alt="{{library.shotAlt}}" loading="lazy" />
+          </div>
+        </div>
+      </section>
+
+      <!-- Feature: Editor -->
+      <section class="feature feature--flip">
+        <div class="container feature__inner">
+          <div class="feature__shot">
+            <img src="/img/shot-editor.jpg" width="680" height="425" alt="{{editor.shotAlt}}" loading="lazy" />
+          </div>
+          <div class="feature__copy">
+            <span class="feature__kicker">{{editor.kicker}}</span>
+            <h2 class="feature__title">{{editor.title}}</h2>
+            <p class="feature__text">{{editor.text}}</p>
+            <ul class="checks">
+              <li><img src="/img/icon-check.svg" width="18" height="18" alt="" />{{editor.check1}}</li>
+              <li><img src="/img/icon-check.svg" width="18" height="18" alt="" />{{editor.check2}}</li>
+              <li><img src="/img/icon-check.svg" width="18" height="18" alt="" />{{editor.check3}}</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- Asistente -->
+      <section class="section asis" id="asistente">
+        <div class="container asis__inner">
+          <div class="asis__copy">
+            <span class="pill pill--accent pill--caps"><i class="dot dot--accent"></i>{{assistant.kicker}}</span>
+            <h2 class="section__title section__title--left">{{assistant.title}}</h2>
+            <p class="section__lead section__lead--left">{{assistant.lead}}</p>
+            <ul class="asis__features">
+              <li>
+                <span class="asis__icon"><img src="/img/icon-asis-1.svg" width="18" height="18" alt="" /></span>
+                <div><strong>{{assistant.f1}}</strong><p>{{assistant.f1Text}}</p></div>
+              </li>
+              <li>
+                <span class="asis__icon"><img src="/img/icon-asis-2.svg" width="18" height="18" alt="" /></span>
+                <div><strong>{{assistant.f2}}</strong><p>{{assistant.f2Text}}</p></div>
+              </li>
+              <li>
+                <span class="asis__icon"><img src="/img/icon-asis-3.svg" width="18" height="18" alt="" /></span>
+                <div><strong>{{assistant.f3}}</strong><p>{{assistant.f3Text}}</p></div>
+              </li>
+              <li>
+                <span class="asis__icon"><img src="/img/icon-asis-4.svg" width="18" height="18" alt="" /></span>
+                <div><strong>{{assistant.f4}}</strong><p>{{assistant.f4Text}}</p></div>
+              </li>
+            </ul>
+            <div class="asis__try">
+              <span class="asis__try-label">{{assistant.tryLabel}}</span>
+              <div class="asis__chips">
+                <span class="chip">{{assistant.try1}}</span>
+                <span class="chip">{{assistant.try2}}</span>
+                <span class="chip">{{assistant.try3}}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="asis__stage">
+            <div class="win">
+              <div class="win__bar">
+                <img src="/img/win-lights.svg" width="50" height="12" alt="" />
+                <img src="/img/win-asis.svg" width="16" height="16" alt="" />
+                <strong>{{assistant.winTitle}}</strong>
+                <span class="win__spacer"></span>
+                <span class="win__btn"><img src="/img/win-btn-1.svg" width="14" height="14" alt="" /></span>
+                <span class="win__btn"><img src="/img/win-btn-2.svg" width="14" height="14" alt="" /></span>
+                <img src="/img/win-icon-3.svg" width="16" height="16" alt="" />
+              </div>
+              <div class="win__body">
+                <div class="win__line win__line--user"><span>❯</span><p>{{assistant.chat1}}</p></div>
+                <div class="win__line win__line--dim"><span>●</span><p>{{assistant.chat2}}</p></div>
+                <div class="win__line win__line--dim"><span>●</span><p>{{assistant.chat3}}</p></div>
+                <div class="win__line"><span class="win__star">✻</span><p>{{assistant.chat4}}</p></div>
+                <div class="win__line win__line--user"><span>❯</span><p>{{assistant.chat5}}</p></div>
+                <div class="win__line win__line--dim"><span>●</span><p>{{assistant.chat6}}</p></div>
+                <div class="win__line"><span class="win__star">✻</span><p>{{assistant.chat7}}</p></div>
+                <div class="win__prompt"><span>❯</span><i class="win__caret"></i><span>{{assistant.chat8}}</span></div>
+              </div>
+              <div class="win__foot"><span class="win__auto">▶▶ auto mode on</span><span>(shift+tab to cycle) · esc to interrupt</span></div>
+            </div>
+            <div class="toast toast--a">
+              <span class="toast__icon toast__icon--accent"><img src="/img/toast-review.svg" width="16" height="16" alt="" /></span>
+              <div><strong>{{assistant.toast1}}</strong><span>{{assistant.toast1Sub}}</span></div>
+            </div>
+            <div class="toast toast--b">
+              <span class="toast__icon toast__icon--green"><img src="/img/toast-montage.svg" width="16" height="16" alt="" /></span>
+              <div><strong>{{assistant.toast2}}</strong><span>{{assistant.toast2Sub}}</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Para equipos -->
+      <section class="section teams" id="equipos">
+        <div class="container">
+          <header class="section__head">
+            <span class="pill pill--accent pill--caps"><i class="dot dot--accent"></i>{{teams.kicker}}</span>
+            <h2 class="section__title">{{teams.title}}</h2>
+            <p class="section__lead" style="max-width: 640px">{{teams.lead}}</p>
+          </header>
+
+          <div class="teams__grid">
+            <article class="card card--dark card--glow-r tcard tcard--wide">
+              <div class="tcard__mock states">
+                <div class="states__pills">
+                  <span class="pill pill--xs pill--gray"><i class="dot dot--gray"></i>{{status.pending}}</span>
+                  <span class="pill pill--xs pill--yellow"><i class="dot dot--yellow"></i>{{status.progress}}</span>
+                  <span class="pill pill--xs pill--accent"><i class="dot dot--accent"></i>{{status.review}}</span>
+                  <span class="pill pill--xs pill--red"><i class="dot dot--red"></i>{{status.retake}}</span>
+                  <span class="pill pill--xs pill--green"><i class="dot dot--green"></i>{{status.approved}}</span>
+                </div>
+                <div class="states__bar">
+                  <i style="flex: 238; background: rgb(60 211 159 / .9)"></i>
+                  <i style="flex: 140; background: rgb(85 147 249 / .9)"></i>
+                  <i style="flex: 112; background: rgb(230 184 92 / .9)"></i>
+                  <i style="flex: 42; background: rgb(236 106 106 / .9)"></i>
+                  <i style="flex: 168; background: rgb(113 113 122 / .4)"></i>
+                </div>
+                <div class="states__sum"><strong>{{teams.shots}}</strong><span>{{teams.shotsSub}}</span></div>
+                <hr class="states__hr" />
+                <div class="states__log">
+                  <div><b>SH0020</b><span class="states__from"><i class="dot dot--red"></i>{{status.retake}}</span><em>→</em><span class="states__to states__to--accent"><i class="dot dot--accent"></i>{{status.review}}</span><small>Santy · {{time.min2}}</small></div>
+                  <div><b>SH0011</b><span class="states__from"><i class="dot dot--yellow"></i>{{status.progress}}</span><em>→</em><span class="states__to states__to--green"><i class="dot dot--green"></i>{{status.approved}}</span><small>Zchan · {{time.min14}}</small></div>
+                  <div><b>SH0055</b><span class="states__from"><i class="dot dot--gray"></i>{{status.pending}}</span><em>→</em><span class="states__to states__to--yellow"><i class="dot dot--yellow"></i>{{status.progress}}</span><small>Santy · {{time.h1}}</small></div>
+                </div>
+              </div>
+              <h3 class="tcard__title">{{teams.c1}}</h3>
+              <p class="tcard__text">{{teams.c1Text}}</p>
+            </article>
+
+            <article class="card card--dark card--glow-r tcard">
+              <div class="tcard__mock versions">
+                <div class="version version--dim"><img src="/img/ver-1.jpg" alt="" /><div><strong>v020</strong><span>Zchan · {{time.oct18}}</span></div></div>
+                <div class="version version--mid"><img src="/img/ver-2.jpg" alt="" /><div><strong>v021</strong><span>Santy · {{time.oct19}}</span></div></div>
+                <div class="version version--on"><img src="/img/ver-3.jpg" alt="" /><div><strong>v022</strong><span>Zchan · {{time.oct19}}</span></div><span class="pill pill--xs pill--accent pill--accent-strong"><i class="dot dot--accent"></i>{{status.chosen}}</span></div>
+              </div>
+              <h3 class="tcard__title">{{teams.c2}}</h3>
+              <p class="tcard__text">{{teams.c2Text}}</p>
+            </article>
+
+            <article class="card card--dark card--glow-r tcard">
+              <div class="tcard__mock comments">
+                <div class="comment"><span class="avatar avatar--s">S</span><p>{{teams.comment1}}</p></div>
+                <div class="comment comment--mine"><p>{{teams.comment2}}</p><span class="avatar avatar--z">Z</span></div>
+              </div>
+              <h3 class="tcard__title">{{teams.c3}}</h3>
+              <p class="tcard__text">{{teams.c3Text}}</p>
+            </article>
+
+            <article class="card card--dark card--glow-r tcard">
+              <div class="tcard__mock collab">
+                <div class="avatars">
+                  <span class="avatar avatar--lg avatar--z">Z</span>
+                  <span class="avatar avatar--lg avatar--s">S</span>
+                  <span class="avatar avatar--lg avatar--m">M</span>
+                  <span class="avatar avatar--lg avatar--more">+2</span>
+                </div>
+                <div class="collab__live"><i class="dot dot--live"></i>{{teams.live}}</div>
+                <ul class="collab__log">
+                  <li><i></i>{{teams.log1}}</li>
+                  <li><i></i>{{teams.log2}}</li>
+                </ul>
+              </div>
+              <h3 class="tcard__title">{{teams.c4}}</h3>
+              <p class="tcard__text">{{teams.c4Text}}</p>
+            </article>
+
+            <article class="card card--dark card--glow-r tcard">
+              <div class="tcard__mock undo">
+                <div class="keys"><kbd>⌘</kbd><kbd>Z</kbd></div>
+                <div class="undo__toast"><img src="/img/icon-undo.svg" width="16" height="16" alt="" />{{teams.undone}}</div>
+              </div>
+              <h3 class="tcard__title">{{teams.c5}}</h3>
+              <p class="tcard__text">{{teams.c5Text}}</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- Precios -->
+      <section class="section pricing" id="precios">
+        <div class="container">
+          <header class="section__head">
+            <span class="pill pill--accent pill--caps"><i class="dot dot--accent"></i>{{pricing.kicker}}</span>
+            <h2 class="section__title">{{pricing.title}}</h2>
+            <p class="section__lead" style="max-width: 620px">{{pricing.lead}}</p>
+            <div class="toggle" role="group" aria-label="{{pricing.periodLabel}}" data-period-toggle>
+              <button type="button" class="toggle__opt is-on" data-period="monthly" aria-pressed="true">{{pricing.monthly}}</button>
+              <button type="button" class="toggle__opt" data-period="yearly" aria-pressed="false">{{pricing.yearly}}</button>
+            </div>
+          </header>
+
+          <div class="plans">
+            <article class="plan card">
+              <div class="plan__head"><strong>{{pricing.p1}}</strong></div>
+              <div class="plan__price">
+                <b data-price data-monthly="{{pricing.p1Monthly}}" data-yearly="{{pricing.p1Yearly}}">{{pricing.p1Monthly}}</b>
+                <span data-price-sub data-monthly="{{pricing.p1Sub}}" data-yearly="{{pricing.p1SubYearly}}">{{pricing.p1Sub}}</span>
+              </div>
+              <p class="plan__text">{{pricing.p1Text}}</p>
+              <button class="btn btn--ghost btn--block" type="button" data-open="waitlist">{{pricing.p1Cta}}</button>
+              <hr class="plan__hr" />
+              <ul class="plan__list">
+                <li><img src="/img/icon-check-plan.svg" width="18" height="18" alt="" />{{pricing.p1f1}}</li>
+                <li><img src="/img/icon-check-plan.svg" width="18" height="18" alt="" />{{pricing.p1f2}}</li>
+                <li><img src="/img/icon-check-plan.svg" width="18" height="18" alt="" />{{pricing.p1f3}}</li>
+                <li><img src="/img/icon-check-plan.svg" width="18" height="18" alt="" />{{pricing.p1f4}}</li>
+                <li><img src="/img/icon-check-plan.svg" width="18" height="18" alt="" />{{pricing.p1f5}}</li>
+              </ul>
+            </article>
+
+            <article class="plan plan--featured card">
+              <div class="plan__head"><strong>{{pricing.p2}}</strong><span class="badge">{{pricing.popular}}</span></div>
+              <div class="plan__price">
+                <b data-price data-monthly="{{pricing.p2Monthly}}" data-yearly="{{pricing.p2Yearly}}">{{pricing.p2Monthly}}</b>
+                <span data-price-sub data-monthly="{{pricing.p2Sub}}" data-yearly="{{pricing.p2SubYearly}}">{{pricing.p2Sub}}</span>
+              </div>
+              <p class="plan__text">{{pricing.p2Text}}</p>
+              <button class="btn btn--primary btn--glow btn--block" type="button" data-open="waitlist">{{pricing.p2Cta}}</button>
+              <hr class="plan__hr" />
+              <ul class="plan__list">
+                <li><img src="/img/icon-check-plan-blue.svg" width="18" height="18" alt="" />{{pricing.p2f1}}</li>
+                <li><img src="/img/icon-check-plan-blue.svg" width="18" height="18" alt="" />{{pricing.p2f2}}</li>
+                <li><img src="/img/icon-check-plan-blue.svg" width="18" height="18" alt="" />{{pricing.p2f3}}</li>
+                <li><img src="/img/icon-check-plan-blue.svg" width="18" height="18" alt="" />{{pricing.p2f4}}</li>
+                <li><img src="/img/icon-check-plan-blue.svg" width="18" height="18" alt="" />{{pricing.p2f5}}</li>
+                <li><img src="/img/icon-check-plan-blue.svg" width="18" height="18" alt="" />{{pricing.p2f6}}</li>
+                <li><img src="/img/icon-check-plan-blue.svg" width="18" height="18" alt="" />{{pricing.p2f7}}</li>
+              </ul>
+            </article>
+
+            <article class="plan card">
+              <div class="plan__head"><strong>{{pricing.p3}}</strong></div>
+              <div class="plan__price"><b class="plan__price--sm">{{pricing.p3Price}}</b><span>{{pricing.p3Sub}}</span></div>
+              <p class="plan__text">{{pricing.p3Text}}</p>
+              <button class="btn btn--ghost btn--block" type="button" data-open="contact">{{cta.contact}}</button>
+              <hr class="plan__hr" />
+              <ul class="plan__list">
+                <li><img src="/img/icon-check-plan.svg" width="18" height="18" alt="" />{{pricing.p3f1}}</li>
+                <li><img src="/img/icon-check-plan.svg" width="18" height="18" alt="" />{{pricing.p3f2}}</li>
+                <li><img src="/img/icon-check-plan.svg" width="18" height="18" alt="" />{{pricing.p3f3}}</li>
+                <li><img src="/img/icon-check-plan.svg" width="18" height="18" alt="" />{{pricing.p3f4}}</li>
+                <li><img src="/img/icon-check-plan.svg" width="18" height="18" alt="" />{{pricing.p3f5}}</li>
+                <li><img src="/img/icon-check-plan.svg" width="18" height="18" alt="" />{{pricing.p3f6}}</li>
+              </ul>
+            </article>
+          </div>
+          <p class="pricing__note">{{pricing.note}}</p>
+        </div>
+      </section>
+
+      <!-- CTA -->
+      <section class="cta">
+        <div class="container">
+          <div class="cta__card">
+            <div class="cta__collage" data-collage aria-hidden="true"></div>
+            <span class="logo__mark logo__mark--64"><img src="/img/logo-glyph-38.svg" width="38" height="38" alt="" /></span>
+            <h2 class="cta__title">{{cta.title}}</h2>
+            <p class="cta__text">{{cta.text}}</p>
+            <div class="cta__actions">
+              <button class="btn btn--primary btn--glow" type="button" data-open="waitlist">{{cta.waitlist}}</button>
+              <button class="btn btn--glass" type="button" data-open="contact">{{cta.contact}}</button>
+            </div>
+            <div class="cta__chips">
+              <span class="chip chip--glass"><img src="/img/cta-biblioteca.svg" width="14" height="14" alt="" />{{how.step1}}</span>
+              <span class="chip chip--glass"><img src="/img/cta-produccion.svg" width="14" height="14" alt="" />{{how.step2}}</span>
+              <span class="chip chip--glass"><img src="/img/cta-editor.svg" width="14" height="14" alt="" />{{how.step3}}</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="container footer__inner">
+        <a class="logo logo--sm" href="#" aria-label="Sweetflow">
+          <span class="logo__mark logo__mark--26"><img src="/img/logo-glyph-16.svg" width="16" height="16" alt="" /></span>
+          <span class="logo__word">Sweetflow</span>
+        </a>
+        <nav class="footer__links" aria-label="{{footer.aria}}">
+          <a href="#producto">{{nav.product}}</a>
+          <a href="#precios">{{nav.pricing}}</a>
+          <a href="#como-funciona">{{footer.docs}}</a>
+          <a href="#">{{footer.privacy}}</a>
+          <a href="#" data-open="contact">{{footer.contact}}</a>
+          <button class="lang lang--text" type="button" data-lang-switch="{{lang.other}}">{{lang.otherName}}</button>
+        </nav>
+        <span class="footer__copy">© <span data-year>2026</span> Sweetflow</span>
+      </div>
+    </footer>
+
+    <!-- Waitlist -->
+    <dialog class="modal" id="modal-waitlist" aria-labelledby="waitlist-title">
+      <div class="modal__card">
+        <button class="modal__close" type="button" data-close aria-label="{{modal.close}}">×</button>
+        <div data-state="idle">
+          <h2 class="modal__title" id="waitlist-title">{{modal.wlTitle}}</h2>
+          <p class="modal__text">{{modal.wlText}}</p>
+          <form data-form="waitlist" novalidate>
+            <label class="field"><span>{{modal.name}}</span><input name="name" type="text" autocomplete="name" required maxlength="120" /></label>
+            <label class="field"><span>{{modal.email}}</span><input name="email" type="email" autocomplete="email" required maxlength="254" /></label>
+            <!-- Honeypot: hidden to people, filled by bots. -->
+            <label class="hp" aria-hidden="true"><span>Website</span><input name="website" type="text" tabindex="-1" autocomplete="off" /></label>
+            <p class="form__error" data-error role="alert"></p>
+            <button class="btn btn--primary btn--glow btn--block" type="submit">{{modal.wlSubmit}}</button>
+          </form>
+        </div>
+        <div data-state="success" hidden>
+          <h2 class="modal__title">{{modal.wlDoneTitle}}</h2>
+          <p class="modal__text" data-success-text>{{modal.wlDoneText}}</p>
+          <button class="btn btn--ghost btn--block" type="button" data-close>{{modal.close}}</button>
+        </div>
+      </div>
+    </dialog>
+
+    <!-- Contact -->
+    <dialog class="modal" id="modal-contact" aria-labelledby="contact-title">
+      <div class="modal__card">
+        <button class="modal__close" type="button" data-close aria-label="{{modal.close}}">×</button>
+        <div data-state="idle">
+          <h2 class="modal__title" id="contact-title">{{modal.ctTitle}}</h2>
+          <p class="modal__text">{{modal.ctText}}</p>
+          <form data-form="contact" novalidate>
+            <label class="field"><span>{{modal.name}}</span><input name="name" type="text" autocomplete="name" required maxlength="120" /></label>
+            <label class="field"><span>{{modal.email}}</span><input name="email" type="email" autocomplete="email" required maxlength="254" /></label>
+            <label class="field"><span>{{modal.message}}</span><textarea name="message" rows="5" required minlength="10" maxlength="4000"></textarea></label>
+            <label class="hp" aria-hidden="true"><span>Website</span><input name="website" type="text" tabindex="-1" autocomplete="off" /></label>
+            <p class="form__error" data-error role="alert"></p>
+            <button class="btn btn--primary btn--glow btn--block" type="submit">{{modal.ctSubmit}}</button>
+          </form>
+        </div>
+        <div data-state="success" hidden>
+          <h2 class="modal__title">{{modal.ctDoneTitle}}</h2>
+          <p class="modal__text">{{modal.ctDoneText}}</p>
+          <button class="btn btn--ghost btn--block" type="button" data-close>{{modal.close}}</button>
+        </div>
+      </div>
+    </dialog>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

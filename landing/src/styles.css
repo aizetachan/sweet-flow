@@ -127,6 +127,15 @@ i, em { font-style: normal; }
 .nav__inner { display: flex; align-items: center; justify-content: space-between; height: 88px; gap: 24px; }
 .nav__links { display: flex; gap: 32px; font-size: 15px; font-weight: 500; color: var(--fg-2); }
 .nav__links a:hover { color: var(--fg); }
+.nav__actions { display: flex; align-items: center; gap: 10px; }
+.lang {
+  display: inline-flex; align-items: center; justify-content: center; height: 36px; padding: 0 12px;
+  border-radius: 10px; border: 1px solid rgb(255 255 255 / .12); background: rgb(255 255 255 / .04);
+  font-size: 13px; font-weight: 600; letter-spacing: .04em; color: var(--fg-2);
+}
+.lang:hover { color: var(--fg); background: rgb(255 255 255 / .08); }
+.lang--text { height: auto; padding: 0; border: 0; background: none; font-size: 14px; font-weight: 400; letter-spacing: 0; color: var(--fg-3); }
+.lang--text:hover { background: none; color: var(--fg); }
 
 /* --- hero --- */
 .hero { padding-top: 88px; }
@@ -136,7 +145,6 @@ i, em { font-style: normal; }
 }
 .hero__lead { margin-top: 24px; max-width: 760px; font-size: 19px; line-height: 30px; color: var(--fg-2); }
 .hero__actions { display: flex; gap: 12px; margin-top: 24px; }
-.hero__note { margin-top: 24px; font-size: 13px; color: var(--fg-3); }
 .hero__window {
   margin-top: 56px; width: 100%; border-radius: 16px; background: var(--bg-2); overflow: hidden;
   box-shadow: 0 0 120px rgb(var(--accent-rgb) / .18), 0 30px 80px rgb(0 0 0 / .55);
@@ -196,13 +204,13 @@ i, em { font-style: normal; }
 .lib { display: flex; flex-direction: column; gap: 10px; width: 100%; }
 .lib__head { display: flex; align-items: center; gap: 8px; font-size: 13px; }
 .lib__count { font-size: 12px; color: var(--fg-3); }
-.lib__grid { display: grid; grid-template-columns: repeat(3, 90px); gap: 10px 8px; }
-.lib__grid img, .lib__more { width: 90px; height: 56px; border-radius: 8px; object-fit: cover; border: 1px solid rgb(255 255 255 / .08); }
+.lib__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 90px)); gap: 10px 8px; }
+.lib__grid img, .lib__more { width: 100%; aspect-ratio: 90 / 56; height: auto; border-radius: 8px; object-fit: cover; border: 1px solid rgb(255 255 255 / .08); }
 .lib__more { display: grid; place-items: center; border: 1px dashed rgb(255 255 255 / .18); font-size: 11px; color: var(--fg-3); }
 
 .tree { display: flex; flex-direction: column; gap: 6px; width: 100%; font-size: 12px; }
 .tree__row { display: flex; align-items: center; gap: 8px; padding: 4px 8px 4px 0; border-radius: 6px; color: var(--fg-2); white-space: nowrap; }
-.tree__row > span:not(.pill) { overflow: hidden; text-overflow: ellipsis; }
+.tree__row > span:not(.pill):not(.tree__count) { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .tree__row b { font-size: 11px; font-weight: 600; color: var(--fg); }
 .tree__row strong { font-weight: 600; color: var(--fg); }
 .tree__row--l1 { padding-left: 16px; }
@@ -221,7 +229,7 @@ i, em { font-style: normal; }
 .ed__preview { display: flex; justify-content: center; }
 .ed__preview img { width: 96px; height: 54px; border-radius: 4px; object-fit: cover; border: 1px solid rgb(255 255 255 / .1); }
 .ed__ruler { display: flex; padding-left: 22px; height: 12px; }
-.ed__tick { position: relative; width: 27px; flex: none; }
+.ed__tick { position: relative; flex: 1 1 0; min-width: 0; }
 .ed__tick::before { content: ""; position: absolute; left: 0; top: 0; width: 1px; height: 3px; background: rgb(255 255 255 / .2); }
 .ed__tick--major::before { height: 6px; background: rgb(255 255 255 / .5); }
 .ed__tick--major::after { content: attr(data-label); position: absolute; left: 0; top: 6px; font-size: 7px; line-height: 1; color: var(--fg-3); }
@@ -318,7 +326,7 @@ i, em { font-style: normal; }
 .states__pills { display: flex; flex-wrap: wrap; gap: 8px; }
 .states__bar { display: flex; gap: 3px; height: 8px; border-radius: 999px; overflow: hidden; }
 .states__sum { display: flex; gap: 16px; font-size: 12px; }
-.states__sum strong { font-weight: 600; }
+.states__sum strong { font-weight: 600; white-space: nowrap; }
 .states__sum span { color: var(--fg-3); }
 .states__hr { margin: 0; border: 0; height: 1px; background: rgb(255 255 255 / .08); }
 .states__log { display: flex; flex-direction: column; gap: 6px; padding-top: 4px; font-size: 12px; }
@@ -463,15 +471,17 @@ kbd {
   .section__title { font-size: 38px; line-height: 44px; }
   .strip__bar { flex-wrap: wrap; justify-content: center; gap: 24px 40px; }
   .strip__divider { display: none; }
+  /* Column layouts: no flex-basis tricks, each block takes its content height. */
   .steps { flex-direction: column; gap: 20px; }
   .steps__link { width: 2px; height: 36px; align-self: center; background: linear-gradient(180deg, rgb(var(--accent-rgb) / .1), rgb(var(--accent-rgb) / .9)); }
+  .step { flex: none; }
   .step__mock { justify-content: center; }
   .feature__inner, .feature--flip .feature__inner { flex-direction: column; align-items: stretch; gap: 40px; }
-  .feature__copy { flex-basis: auto; }
+  .feature__copy, .feature__shot { flex: none; }
   .feature--flip .feature__shot { order: 1; }
   .asis__inner { flex-direction: column; align-items: stretch; }
-  .asis__copy { flex-basis: auto; }
-  .asis__stage { height: auto; min-height: 650px; max-width: 576px; width: 100%; margin: 0 auto; }
+  .asis__copy { flex: none; }
+  .asis__stage { flex: none; height: auto; min-height: 650px; max-width: 576px; width: 100%; margin: 0 auto; }
   .teams__grid { grid-template-columns: 1fr 1fr; }
   .tcard--wide { grid-column: span 2; }
   .plans { grid-template-columns: 1fr; align-items: stretch; max-width: 480px; margin: 0 auto; }
@@ -484,15 +494,26 @@ kbd {
 @media (max-width: 720px) {
   :root { --gutter: 16px; }
   .nav__inner { height: 68px; }
-  .hero { padding-top: 56px; }
-  .hero__title { font-size: 38px; line-height: 42px; letter-spacing: -.8px; }
-  .hero__lead { font-size: 17px; line-height: 26px; }
+  .hero { padding-top: 40px; }
+  .hero__title { margin-top: 18px; font-size: 36px; line-height: 40px; letter-spacing: -.8px; }
+  /* Smaller lead so the product window shows up within the first screen. */
+  .hero__lead { margin-top: 14px; font-size: 15px; line-height: 23px; }
+  .hero__actions { margin-top: 18px; }
   .hero__actions, .cta__actions { flex-direction: column; width: 100%; }
   .hero__actions .btn, .cta__actions .btn { width: 100%; }
-  .strip { padding-top: 56px; }
+  .hero__window { margin-top: 28px; }
+  /* Stats bar: two columns instead of one tall stack, keeping the bar look. */
+  .strip { padding-top: 48px; }
+  .strip__bar { display: grid; grid-template-columns: 1fr 1fr; gap: 22px 12px; padding: 22px 16px; }
+  .stat strong { font-size: 22px; line-height: 26px; }
+  .stat span { font-size: 12px; }
   .section { padding: 64px 0; }
+  .section__head { margin-bottom: 36px; }
   .section__title { font-size: 30px; line-height: 36px; letter-spacing: -.5px; }
   .feature__title { font-size: 28px; line-height: 34px; }
+  .step { padding: 18px; }
+  .step__mock { height: auto; min-height: 180px; padding: 14px; }
+  .asis__inner { gap: 40px; }
   .asis__stage { min-height: 0; height: auto; }
   .win { position: relative; left: auto; top: auto; width: 100%; height: auto; }
   .win__body { font-size: 11px; line-height: 17px; }

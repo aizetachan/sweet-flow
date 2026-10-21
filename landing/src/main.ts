@@ -1,14 +1,18 @@
 import { initForms } from "./forms.ts";
+import { initLangSwitch } from "./i18n.ts";
 import { initModals } from "./modals.ts";
+import { initPricing } from "./pricing.ts";
 
 initModals();
 initForms();
+initPricing();
+initLangSwitch();
 
 for (const el of document.querySelectorAll("[data-year]")) el.textContent = String(new Date().getFullYear());
 
 // --- Decorative mockups that are easier to generate than to hand-write ---
 
-// Editor mini (Cómo funciona › 03): ruler ticks and the audio waveform.
+// Editor mini (How it works › 03): ruler ticks and the audio waveform.
 for (const ruler of document.querySelectorAll<HTMLElement>("[data-ruler]")) {
   const labels = ["0s", "", "", "", "", "10s", "", "", "", "", "20s"];
   ruler.replaceChildren(
@@ -31,7 +35,7 @@ for (const wave of document.querySelectorAll<HTMLElement>("[data-wave]")) {
   );
 }
 
-// CTA collage: four rows of tiles at 10 % opacity, as laid out in the design.
+// CTA collage: four rows of tiles at low opacity, as laid out in the design.
 const TILE_ROWS: string[][] = [
   ["00", "01", "02", "03", "04", "05"],
   ["06", "07", "08", "09", "10", "11", "12"],

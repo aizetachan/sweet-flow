@@ -6,14 +6,26 @@ carpeta entra en el `typecheck`, los tests ni el build de la app.
 
 ```
 landing/
-  index.html, src/        la página (Vite + TypeScript, sin framework)
+  src/page.html           la página, una plantilla con {{claves}} (Vite + TypeScript, sin framework)
+  src/i18n/es.json, en.json  los textos en cada idioma
+  scripts/build-pages.mjs genera index.html (inglés) y localized/es/index.html (español)
   src/styles.css          estilos a partir del diseño de Figma
   public/img/             capturas, miniaturas e iconos exportados de Figma
-  firebase.json           Hosting + reglas de Firestore
+  firebase.json           Hosting (con i18n) + reglas de Firestore
   firestore.rules         solo se puede CREAR en waitlist y contacts; nada más
 ```
 
 Diseño: [Figma › Sweetflow — Landing](https://www.figma.com/design/McLLpbko3e3GbTQpLAex10/Untitled?node-id=3-2).
+
+## Idiomas
+
+La página existe en inglés (por defecto) y español. `pnpm pages` genera las dos
+a partir de `src/page.html` y `src/i18n/*.json` (`index.html` y
+`localized/es/index.html`, ambos ignorados por git). Firebase Hosting sirve
+la española a los navegadores en español (cabecera `Accept-Language`) y la
+inglesa al resto; el botón ES/EN de la cabecera fija la elección con la cookie
+`firebase-language-override`. Para cambiar un texto, edita los dos JSON; si
+falta una clave en alguno, `pnpm pages` falla y lo dice.
 
 ## Qué hace
 

@@ -1,4 +1,5 @@
-import { ApiRequestError, errorMessage, joinWaitlist, sendContact } from "./api.ts";
+import { ApiRequestError, joinWaitlist, sendContact } from "./api.ts";
+import { t } from "./i18n.ts";
 import { setState } from "./modals.ts";
 
 type Submit = (fields: Record<string, string>) => Promise<string | null>;
@@ -9,7 +10,7 @@ type Submit = (fields: Record<string, string>) => Promise<string | null>;
 const SUBMITS: Record<string, Submit> = {
   waitlist: async (f) => {
     const r = await joinWaitlist(f);
-    return r.already ? "Ya estabas apuntado. Te escribiremos en cuanto esté disponible." : null;
+    return r.already ? t("already") : null;
   },
   contact: async (f) => {
     await sendContact(f);
@@ -48,7 +49,7 @@ export function initForms(root: ParentNode = document): void {
         form.reset();
       } catch (err) {
         const code = err instanceof ApiRequestError ? err.code : "unknown";
-        if (errorEl) errorEl.textContent = errorMessage(code);
+        if (errorEl) errorEl.textContent = t(code);
       } finally {
         form.classList.remove("is-sending");
         if (button) button.disabled = false;
