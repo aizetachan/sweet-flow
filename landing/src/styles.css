@@ -114,16 +114,21 @@ main, .footer { position: relative; z-index: 1; }
 .card {
   position: relative; overflow: hidden; isolation: isolate; border-radius: 24px;
   --card-a: rgb(31 31 35 / .62); --card-b: rgb(23 23 26 / .62);
-  background: linear-gradient(180deg, var(--bg-3), var(--bg-2));
+  /* Semi-transparent with a backdrop blur, like the compact header: the
+     background (the fluid, or the video in «Para equipos») shows through
+     softly and tints the card. */
+  background: linear-gradient(180deg, rgb(31 31 35 / .5), rgb(23 23 26 / .5));
+  backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
   /* White at 20 %: a very subtle edge on every card. */
   border: 1px solid rgb(255 255 255 / .2);
 }
-.card--dark { --card-a: rgb(14 14 16 / .62); --card-b: rgb(23 23 26 / .62); background: linear-gradient(180deg, var(--bg), var(--bg-2)); }
+.card--dark { --card-a: rgb(14 14 16 / .62); --card-b: rgb(23 23 26 / .62); background: linear-gradient(180deg, rgb(14 14 16 / .45), rgb(23 23 26 / .45)); }
 .card::before, .card::after {
   content: ""; position: absolute; inset: -18%; z-index: 0; pointer-events: none;
   background: linear-gradient(180deg, var(--card-a), var(--card-b)), var(--fluid-tex, none);
   background-size: auto, cover; background-position: 0 0, var(--tex-x, 50%) var(--tex-y, 50%);
   animation: card-drift-a 46s ease-in-out infinite alternate;
+  opacity: .6; /* leaves room for the backdrop to show */
 }
 .card::after {
   background-image: linear-gradient(180deg, var(--card-a), var(--card-b)), var(--fluid-tex-2, none);
@@ -131,7 +136,7 @@ main, .footer { position: relative; z-index: 1; }
 }
 @keyframes card-drift-a { from { translate: 0 0; } to { translate: 2.5% 1.5%; } }
 @keyframes card-drift-b { from { translate: 1.5% -1.5%; } to { translate: -2% 2%; } }
-@keyframes card-breathe { 0%, 100% { opacity: .2; } 50% { opacity: .8; } }
+@keyframes card-breathe { 0%, 100% { opacity: .12; } 50% { opacity: .5; } }
 .card:nth-child(3n + 1) { --tex-x: 18%; --tex-y: 30%; }
 .card:nth-child(3n + 2) { --tex-x: 72%; --tex-y: 65%; }
 .card:nth-child(3n + 3) { --tex-x: 45%; --tex-y: 90%; }
@@ -503,7 +508,7 @@ kbd {
 .plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; align-items: end; }
 .plan { padding: 32px; display: flex; flex-direction: column; gap: 24px; }
 .plan--featured {
-  padding: 36px 32px; background: linear-gradient(180deg, #152037, var(--bg-2)); border-color: rgb(var(--accent-rgb) / .9);
+  padding: 36px 32px; background: linear-gradient(180deg, rgb(21 32 55 / .85), rgb(23 23 26 / .85)); border-color: rgb(var(--accent-rgb) / .9);
   box-shadow: 0 24px 70px rgb(var(--accent-rgb) / .3);
 }
 .plan--featured::before {
