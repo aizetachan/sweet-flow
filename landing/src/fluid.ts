@@ -55,11 +55,14 @@ void main() {
   vec3 bg = vec3(0.055, 0.055, 0.063);          // #0e0e10
   vec3 blue = vec3(0.184, 0.490, 1.000);         // #2f7dff
   vec3 deep = vec3(0.086, 0.282, 0.847);         // #1648d8
-  float body = smoothstep(0.08, 0.75, n * 0.5 + 0.5);
+  float h = n * 0.5 + 0.5;
+  // A sea of near-black: a faint relief (±1 % luminance) so the dark has volume.
+  vec3 col = bg + vec3(0.012) * (h - 0.5) * 2.0;
+  // The blue only lives on the crests of the field: a thin, sparse accent.
+  float crest = smoothstep(0.60, 0.86, h);
   float veins = smoothstep(0.45, 0.95, n2 * 0.5 + 0.5);
-  vec3 col = bg;
-  col += mix(deep, blue, veins) * body * 0.17;
-  col += blue * exp(-dm * dm * 6.0) * 0.11 * u_mouseAmt;
+  col += mix(deep, blue, veins) * crest * 0.10;
+  col += blue * exp(-dm * dm * 7.0) * 0.06 * u_mouseAmt;
   // Keep it dark at the very top so the sticky nav blends in.
   col = mix(bg, col, smoothstep(0.0, 0.08, 1.0 - uv.y) * 0.9 + 0.1);
   gl_FragColor = vec4(col, 1.0);
