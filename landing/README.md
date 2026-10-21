@@ -1,4 +1,4 @@
-# Sweet Flow — landing page
+# Sweetflow — landing page
 
 Proyecto independiente dentro del repositorio: tiene su propio workspace de
 pnpm, su propio `firebase.json` y su propio proyecto de Firebase. Nada de esta
@@ -7,74 +7,77 @@ carpeta entra en el `typecheck`, los tests ni el build de la app.
 ```
 landing/
   index.html, src/        la página (Vite + TypeScript, sin framework)
-  public/                 estáticos (favicon)
-  functions/              Cloud Function `api`: lista de espera y contacto
-  firebase.json           Hosting (+ rewrite /api/** → función) · Firestore · Functions
-  firestore.rules         todo cerrado: solo escribe la función (Admin SDK)
+  src/styles.css          estilos a partir del diseño de Figma
+  public/img/             capturas, miniaturas e iconos exportados de Figma
+  firebase.json           Hosting + reglas de Firestore
+  firestore.rules         solo se puede CREAR en waitlist y contacts; nada más
 ```
+
+Diseño: [Figma › Sweetflow — Landing](https://www.figma.com/design/McLLpbko3e3GbTQpLAex10/Untitled?node-id=3-2).
 
 ## Qué hace
 
-- **Lista de espera** (`POST /api/waitlist`, `{ name, email }`): guarda
-  `waitlist/{correo}` en Firestore. Si el correo ya estaba, actualiza el nombre
-  y responde `already: true`.
-- **Habla con nosotros** (`POST /api/contact`, `{ name, email, message }`):
-  guarda `contacts/{id}` y envía el mensaje por correo (SMTP) a `CONTACT_TO`,
-  con *Reply-To* al remitente. Si el correo falla, el mensaje queda en Firestore
-  con `delivered: false` y el error en los logs.
-- Las dos modales son `<dialog>` nativos (`src/modals.ts`); los formularios
-  validan en el navegador, envían a `/api` y muestran el estado de éxito
-  (`src/forms.ts`). Un campo oculto `website` hace de *honeypot* contra bots.
+Plan **Spark** (gratis): no hay Cloud Functions ni correo. Los formularios
+escriben directamente en Firestore y las entradas se leen en la consola de
+Firebase (Firestore Database › Datos).
+
+- **Lista de espera** (botones «Waitlist», «Probar»): guarda
+  `waitlist/{correo}` con `name`, `email`, `createdAt`, `source`. Si el correo
+  ya estaba, las reglas deniegan la escritura y la modal responde «ya estabas
+  apuntado».
+- **Habla con nosotros** (plan Productora, CTA, pie «Contacto»): guarda
+  `contacts/{id}` con `name`, `email`, `message`, `createdAt`, `source`.
+- Las reglas de Firestore (`firestore.rules`) son la seguridad: solo permiten
+  crear documentos con exactamente esos campos y tamaños, y nadie puede leer,
+  modificar ni borrar desde fuera. Un campo oculto `website` hace de
+  *honeypot* contra bots.
+- Las modales son `<dialog>` nativos (`src/modals.ts`); la validación es la
+  misma en el navegador (`src/validate.ts`, con tests) y en las reglas.
 
 ## Desarrollo
 
 ```bash
 cd landing
 pnpm install
-pnpm dev          # http://localhost:5174 — /api va al emulador de Functions
-pnpm emulators    # en otra terminal: Functions + Firestore (necesita Java)
+cp .env.example .env   # datos de la app web de Firebase (ver abajo)
+pnpm dev               # http://localhost:5174
 pnpm typecheck
-pnpm test         # validación de los formularios (node:test)
-pnpm build        # dist/
+pnpm test              # validación de los formularios (node:test, Node ≥ 22.18)
+pnpm build             # dist/
 ```
 
-Para que el emulador tenga los parámetros, copia `functions/.env.example` a
-`functions/.env` y rellénalo; la contraseña SMTP en local va en
-`functions/.secret.local` (`SMTP_PASS=...`). Los dos ficheros están ignorados
-por git.
+Sin `.env` la página funciona igual; al enviar un formulario avisa de que
+«aún no está conectado».
 
 ## Firebase: primera puesta en marcha
 
 Es un proyecto de Firebase distinto al de la app. El id por defecto está en
 `.firebaserc` (`sweetflow-landing`); si Google no lo deja libre, cámbialo ahí
-y en `vite.config.ts` (URL del emulador).
+y en `.env`.
 
 ```bash
 firebase login --reauth
-firebase projects:create sweetflow-landing --display-name "Sweet Flow Landing"
+firebase projects:create sweetflow-landing --display-name "Sweetflow Landing"
 firebase use sweetflow-landing
-# Firestore en Europa (una sola vez)
 firebase firestore:databases:create "(default)" --location europe-west1
+firebase apps:create web landing          # imprime apiKey, appId…
+firebase apps:sdkconfig web               # los mismos datos, para copiarlos a .env
 ```
 
-En la consola de Firebase hay que pasar el proyecto al plan **Blaze** (las
-Functions lo exigen; el uso de esta landing cabe en la franja gratuita).
-
-Parámetros y secreto de la función (correo de destino y SMTP):
+Rellena `.env` con `apiKey`, `authDomain`, `projectId` y `appId` (son
+identificadores públicos, no secretos). Después:
 
 ```bash
-cp functions/.env.example functions/.env   # editar CONTACT_TO, CONTACT_FROM, SMTP_*
-firebase functions:secrets:set SMTP_PASS   # contraseña (con Gmail: una "contraseña de aplicación")
-```
-
-Despliegue:
-
-```bash
-pnpm deploy            # build + Hosting + Functions + reglas de Firestore
+pnpm deploy            # build + Hosting + reglas de Firestore
 pnpm deploy:hosting    # solo la página
+pnpm deploy:rules      # solo las reglas
 ```
-
-## Dominio
 
 Hosting sirve en `sweetflow-landing.web.app`. Un dominio propio se añade en la
 consola (Hosting › Añadir dominio personalizado) y solo pide dos registros DNS.
+
+## Leer las entradas
+
+Consola de Firebase › Firestore Database › colecciones `waitlist` y
+`contacts`. Para exportarlas: `firebase firestore:export` o, más simple,
+copiar desde la consola.

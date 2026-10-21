@@ -3,23 +3,26 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "description": "Sweet Flow — landing page (Firebase Hosting + Functions). Independent of the monorepo.",
+  "description": "Sweet Flow — landing page (Firebase Hosting + Firestore). Independent of the monorepo.",
   "packageManager": "pnpm@10.28.0",
   "engines": {
-    "node": ">=22"
+    "node": ">=22.18"
   },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit && pnpm --filter sweetflow-landing-functions typecheck",
-    "test": "pnpm --filter sweetflow-landing-functions test",
-    "build:functions": "pnpm --filter sweetflow-landing-functions build",
-    "emulators": "pnpm build:functions && firebase emulators:start --only functions,firestore",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test src/*.test.ts",
     "deploy": "pnpm build && firebase deploy",
-    "deploy:hosting": "pnpm build && firebase deploy --only hosting"
+    "deploy:hosting": "pnpm build && firebase deploy --only hosting",
+    "deploy:rules": "firebase deploy --only firestore:rules"
+  },
+  "dependencies": {
+    "firebase": "^12.6.0"
   },
   "devDependencies": {
+    "@types/node": "^22.20.5",
     "typescript": "^5.6.3",
     "vite": "^6.3.5"
   }

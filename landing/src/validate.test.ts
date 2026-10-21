@@ -7,7 +7,7 @@ import {
   normalizeEmail,
   parseContact,
   parseWaitlist,
-} from "./validate.js";
+} from "./validate.ts";
 
 test("waitlist: trims, collapses spaces and lowercases the e-mail", () => {
   const r = parseWaitlist({ name: "  Ana   García ", email: " Ana@Example.COM " });
@@ -22,8 +22,7 @@ test("waitlist: rejects a missing name or a bad e-mail", () => {
   });
   assert.deepEqual(parseWaitlist({ name: "Ana", email: "ana" }), { ok: false, error: "invalid_email" });
   assert.deepEqual(parseWaitlist({ name: "Ana", email: "ana@example" }), { ok: false, error: "invalid_email" });
-  assert.deepEqual(parseWaitlist(null), { ok: false, error: "invalid_name" });
-  assert.deepEqual(parseWaitlist("nope"), { ok: false, error: "invalid_name" });
+  assert.deepEqual(parseWaitlist({}), { ok: false, error: "invalid_name" });
 });
 
 test("contact: needs a message of a sensible length", () => {
@@ -51,5 +50,4 @@ test("honeypot: any text in `website` marks the submission as a bot", () => {
   assert.equal(isHoneypotTripped({ website: "http://spam" }), true);
   assert.equal(isHoneypotTripped({ website: "  " }), false);
   assert.equal(isHoneypotTripped({}), false);
-  assert.equal(isHoneypotTripped(null), false);
 });

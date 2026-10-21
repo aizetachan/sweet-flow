@@ -25,9 +25,12 @@ export function closeModal(dialog: HTMLDialogElement): void {
 
 export function initModals(root: ParentNode = document): void {
   for (const btn of root.querySelectorAll<HTMLElement>("[data-open]")) {
-    btn.addEventListener("click", () => {
+    btn.addEventListener("click", (e) => {
       const dialog = document.getElementById(`modal-${btn.dataset["open"]}`);
-      if (dialog instanceof HTMLDialogElement) openModal(dialog);
+      if (dialog instanceof HTMLDialogElement) {
+        e.preventDefault();
+        openModal(dialog);
+      }
     });
   }
   for (const dialog of root.querySelectorAll<HTMLDialogElement>("dialog.modal")) {

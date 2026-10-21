@@ -1,5 +1,5 @@
-// Pure validation of the two forms. No Firebase here, so it is unit-tested
-// with node:test (see validate.test.ts).
+// Pure validation of the two forms, mirrored by firestore.rules. Tested with
+// node:test (validate.test.ts).
 
 export const NAME_MAX = 120;
 export const EMAIL_MAX = 254;
@@ -40,28 +40,25 @@ function parseMessage(v: unknown): string | null {
 }
 
 /** True when the honeypot field was filled: a bot, not a person. */
-export function isHoneypotTripped(body: unknown): boolean {
-  if (!body || typeof body !== "object") return false;
-  const v = (body as Record<string, unknown>)["website"];
+export function isHoneypotTripped(fields: Record<string, unknown>): boolean {
+  const v = fields["website"];
   return typeof v === "string" && v.trim().length > 0;
 }
 
-export function parseWaitlist(body: unknown): Parsed<WaitlistInput> {
-  const b = (body ?? {}) as Record<string, unknown>;
-  const name = parseName(b["name"]);
+export function parseWaitlist(fields: Record<string, unknown>): Parsed<WaitlistInput> {
+  const name = parseName(fields["name"]);
   if (!name) return { ok: false, error: "invalid_name" };
-  const email = normalizeEmail(b["email"]);
+  const email = normalizeEmail(fields["email"]);
   if (!email) return { ok: false, error: "invalid_email" };
   return { ok: true, value: { name, email } };
 }
 
-export function parseContact(body: unknown): Parsed<ContactInput> {
-  const b = (body ?? {}) as Record<string, unknown>;
-  const name = parseName(b["name"]);
+export function parseContact(fields: Record<string, unknown>): Parsed<ContactInput> {
+  const name = parseName(fields["name"]);
   if (!name) return { ok: false, error: "invalid_name" };
-  const email = normalizeEmail(b["email"]);
+  const email = normalizeEmail(fields["email"]);
   if (!email) return { ok: false, error: "invalid_email" };
-  const message = parseMessage(b["message"]);
+  const message = parseMessage(fields["message"]);
   if (!message) return { ok: false, error: "invalid_message" };
   return { ok: true, value: { name, email, message } };
 }

@@ -1,11 +1,10 @@
-# The landing is its own pnpm workspace: this file stops pnpm from walking up
-# to the monorepo root, so nothing here is built, typechecked or tested by the
-# app's `pnpm -r` commands.
-packages:
-  - "functions"
+# The landing is its own pnpm workspace (a single package): this file stops pnpm
+# from walking up to the monorepo root, so nothing here is built, typechecked
+# or tested by the app's `pnpm -r` commands.
+packages: []
 
 strictDepBuilds: true
 allowBuilds:
   esbuild: true # Vite's bundler binary
-  "@firebase/util": false # optional autoinit defaults; the Function is configured explicitly
-  protobufjs: false # firebase-admin dependency; its postinstall only prints a warning
+  "@firebase/util": false # optional autoinit defaults; Firebase is configured explicitly
+  protobufjs: false # firebase dependency; its postinstall only prints a warning

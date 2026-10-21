@@ -1,22 +1,18 @@
-import { ApiRequestError, errorMessage, joinWaitlist, sendContact } from "./api";
-import { setState } from "./modals";
+import { ApiRequestError, errorMessage, joinWaitlist, sendContact } from "./api.ts";
+import { setState } from "./modals.ts";
 
 type Submit = (fields: Record<string, string>) => Promise<string | null>;
 
 // Each form's submit: returns the success text to show (or null to keep the
-// default one), and throws ApiRequestError on failure.
+// default one), and throws ApiRequestError on failure. Validation happens
+// inside joinWaitlist / sendContact (src/validate.ts).
 const SUBMITS: Record<string, Submit> = {
   waitlist: async (f) => {
-    const r = await joinWaitlist({ name: f["name"] ?? "", email: f["email"] ?? "", website: f["website"] ?? "" });
+    const r = await joinWaitlist(f);
     return r.already ? "Ya estabas apuntado. Te escribiremos en cuanto esté disponible." : null;
   },
   contact: async (f) => {
-    await sendContact({
-      name: f["name"] ?? "",
-      email: f["email"] ?? "",
-      message: f["message"] ?? "",
-      website: f["website"] ?? "",
-    });
+    await sendContact(f);
     return null;
   },
 };
@@ -25,28 +21,6 @@ function fieldsOf(form: HTMLFormElement): Record<string, string> {
   const out: Record<string, string> = {};
   for (const [k, v] of new FormData(form)) if (typeof v === "string") out[k] = v;
   return out;
-}
-
-// Same rule as functions/src/validate.ts: the browser's own `type=email`
-// check accepts "ana@mal", the server would not.
-const EMAIL_RE = /^[^\s@/]+@[^\s@/]+\.[^\s@/]+$/;
-
-function isInvalid(el: HTMLInputElement | HTMLTextAreaElement): boolean {
-  if (el.name === "website") return false;
-  if (!el.checkValidity()) return true;
-  return el.name === "email" && !EMAIL_RE.test(el.value.trim());
-}
-
-/** Browser-side check before the request; mirrors the server's rules. */
-function localError(form: HTMLFormElement): string | null {
-  const first = Array.from(form.elements).find(
-    (el): el is HTMLInputElement | HTMLTextAreaElement =>
-      (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) && isInvalid(el),
-  );
-  if (!first) return null;
-  if (first.name === "email") return errorMessage("invalid_email");
-  if (first.name === "message") return errorMessage("invalid_message");
-  return errorMessage("invalid_name");
 }
 
 export function initForms(root: ParentNode = document): void {
@@ -61,11 +35,6 @@ export function initForms(root: ParentNode = document): void {
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       if (errorEl) errorEl.textContent = "";
-      const invalid = localError(form);
-      if (invalid) {
-        if (errorEl) errorEl.textContent = invalid;
-        return;
-      }
       form.classList.add("is-sending");
       if (button) button.disabled = true;
       try {

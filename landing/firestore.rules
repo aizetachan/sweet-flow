@@ -1,10 +1,50 @@
 rules_version = '2';
 
-// The landing never talks to Firestore from the browser: the Cloud Function
-// (Admin SDK) writes the waitlist and the contact messages. Everything is
-// closed to clients.
+// The landing writes straight from the browser (Spark plan, no Functions), so
+// the rules are the validation: anyone may CREATE one waitlist entry or one
+// contact message with exactly these fields; nobody can read, update or
+// delete them from outside. The team reads them in the Firebase console.
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    function isName(s) {
+      return s is string && s.size() >= 1 && s.size() <= 120;
+    }
+
+    // Same rule as src/validate.ts. Lower-case, no "/" (it is the doc id).
+    function isEmail(s) {
+      return s is string && s.size() <= 254 && s == s.lower()
+        && s.matches('^[^\\s@/]+@[^\\s@/]+\\.[^\\s@/]+$');
+    }
+
+    function isMessage(s) {
+      return s is string && s.size() >= 10 && s.size() <= 4000;
+    }
+
+    function justCreated(d) {
+      return d.createdAt == request.time && d.source == 'landing';
+    }
+
+    match /waitlist/{email} {
+      allow create: if request.resource.data.keys().hasOnly(['name', 'email', 'createdAt', 'source'])
+        && request.resource.data.keys().hasAll(['name', 'email', 'createdAt', 'source'])
+        && isName(request.resource.data.name)
+        && isEmail(request.resource.data.email)
+        && request.resource.data.email == email
+        && justCreated(request.resource.data);
+      allow read, update, delete: if false;
+    }
+
+    match /contacts/{id} {
+      allow create: if request.resource.data.keys().hasOnly(['name', 'email', 'message', 'createdAt', 'source'])
+        && request.resource.data.keys().hasAll(['name', 'email', 'message', 'createdAt', 'source'])
+        && isName(request.resource.data.name)
+        && isEmail(request.resource.data.email)
+        && isMessage(request.resource.data.message)
+        && justCreated(request.resource.data);
+      allow read, update, delete: if false;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }
