@@ -120,8 +120,10 @@ aplicación completa con **menú lateral**:
   pasar el ratón. Una carpeta fijada sigue aceptando lo que se suelta encima.
   Si lo fijado se ha borrado, desaparece de la lista y se avisa.
 - **Hover líquido** en el menú lateral (secciones y Fijados): al pasar el ratón
-  de un elemento a otro, el resaltado no salta: se estira como una gota desde
-  el anterior y fluye hasta el nuevo, unido por un cuello que se adelgaza.
+  de un elemento a otro, el resaltado se comporta como una gota: se despega del
+  anterior dejando una parte que se vacía hacia ella por un cuello fino, se
+  estira y adelgaza en el camino con la superficie ondulando, y al llegar se
+  pasa un poco, se aplasta y tiembla hasta tomar la forma del nuevo elemento.
 - Abajo, en una misma fila, **tu avatar** con tu nombre (abre tu perfil) y, a
   la derecha, **Ajustes** (solo el icono). El perfil ocupa una sola línea, del
   alto de Ajustes: el nombre (cortado con «…» si no cabe) y, a su derecha, el
