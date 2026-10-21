@@ -43,6 +43,11 @@ i, em { font-style: normal; }
 
 .container { width: min(var(--container), calc(100% - 2 * var(--gutter))); margin-inline: auto; }
 
+/* Fluid background (src/fluid.ts): a fixed canvas under everything. Sections
+   with their own opaque background (Para equipos) cover it. */
+.fluid { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+.nav, main, .footer { position: relative; z-index: 1; }
+
 /* --- primitives --- */
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
