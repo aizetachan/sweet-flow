@@ -1,0 +1,26 @@
+{
+  "name": "sweetflow-landing-functions",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Sweet Flow landing — Cloud Functions (waitlist + contact form)",
+  "main": "lib/index.js",
+  "type": "module",
+  "engines": {
+    "node": "22"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc",
+    "test": "tsc && node --test lib/*.test.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.10.0",
+    "firebase-functions": "^7.4.0",
+    "nodemailer": "^7.0.6"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "@types/nodemailer": "^7.0.1",
+    "typescript": "^5.6.3"
+  }
+}

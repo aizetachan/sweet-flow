@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sweet Flow — Producción audiovisual con IA para piezas largas</title>
+    <meta
+      name="description"
+      content="Sweet Flow es la herramienta de producción audiovisual con IA para series y películas: estructura por carpetas, generación en masa y revisión en equipo."
+    />
+    <meta property="og:title" content="Sweet Flow" />
+    <meta property="og:description" content="Producción audiovisual con IA para piezas largas y equipos amplios." />
+    <meta property="og:type" content="website" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <!--
+      Provisional page. The final layout comes from the Figma design; what is
+      kept from here are the hooks the scripts rely on:
+        - [data-open="waitlist"] / [data-open="contact"] open a modal
+        - <dialog id="modal-waitlist"> and <dialog id="modal-contact">
+        - each <form data-form="waitlist|contact"> with a `website` honeypot
+        - [data-state="idle|sending|success|error"] panels inside the modal
+    -->
+    <header class="top">
+      <a class="brand" href="/" aria-label="Sweet Flow">Sweet Flow</a>
+      <nav class="top__nav">
+        <button class="btn btn--ghost" type="button" data-open="contact">Habla con nosotros</button>
+        <button class="btn btn--primary" type="button" data-open="waitlist">Lista de espera</button>
+      </nav>
+    </header>
+
+    <main class="hero">
+      <p class="hero__kicker">Próximamente</p>
+      <h1 class="hero__title">Producción audiovisual con IA para piezas largas</h1>
+      <p class="hero__lead">
+        Series y películas, equipos amplios. La producción organizada en carpetas, generación en masa
+        y revisión del equipo sobre cada plano.
+      </p>
+      <div class="hero__actions">
+        <button class="btn btn--primary btn--lg" type="button" data-open="waitlist">
+          Únete a la lista de espera
+        </button>
+        <button class="btn btn--ghost btn--lg" type="button" data-open="contact">Habla con nosotros</button>
+      </div>
+    </main>
+
+    <footer class="foot">
+      <span>© <span data-year></span> Sweet Flow</span>
+    </footer>
+
+    <!-- Lista de espera -->
+    <dialog class="modal" id="modal-waitlist" aria-labelledby="waitlist-title">
+      <div class="modal__card">
+        <button class="modal__close" type="button" data-close aria-label="Cerrar">×</button>
+
+        <div data-state="idle">
+          <h2 class="modal__title" id="waitlist-title">Lista de espera</h2>
+          <p class="modal__text">Te avisaremos por correo cuando Sweet Flow esté disponible.</p>
+          <form data-form="waitlist" novalidate>
+            <label class="field">
+              <span class="field__label">Nombre</span>
+              <input class="field__input" name="name" type="text" autocomplete="name" required maxlength="120" />
+            </label>
+            <label class="field">
+              <span class="field__label">Correo</span>
+              <input class="field__input" name="email" type="email" autocomplete="email" required maxlength="254" />
+            </label>
+            <!-- Honeypot: hidden to people, filled by bots. -->
+            <label class="hp" aria-hidden="true">
+              <span>Sitio web</span>
+              <input name="website" type="text" tabindex="-1" autocomplete="off" />
+            </label>
+            <p class="form__error" data-error role="alert"></p>
+            <button class="btn btn--primary btn--block" type="submit">Apuntarme</button>
+          </form>
+        </div>
+
+        <div data-state="success" hidden>
+          <h2 class="modal__title">Ya estás en la lista</h2>
+          <p class="modal__text" data-success-text>Te escribiremos en cuanto esté disponible.</p>
+          <button class="btn btn--ghost btn--block" type="button" data-close>Cerrar</button>
+        </div>
+      </div>
+    </dialog>
+
+    <!-- Habla con nosotros -->
+    <dialog class="modal" id="modal-contact" aria-labelledby="contact-title">
+      <div class="modal__card">
+        <button class="modal__close" type="button" data-close aria-label="Cerrar">×</button>
+
+        <div data-state="idle">
+          <h2 class="modal__title" id="contact-title">Habla con nosotros</h2>
+          <p class="modal__text">Cuéntanos qué quieres producir y por qué te interesa Sweet Flow.</p>
+          <form data-form="contact" novalidate>
+            <label class="field">
+              <span class="field__label">Nombre</span>
+              <input class="field__input" name="name" type="text" autocomplete="name" required maxlength="120" />
+            </label>
+            <label class="field">
+              <span class="field__label">Correo</span>
+              <input class="field__input" name="email" type="email" autocomplete="email" required maxlength="254" />
+            </label>
+            <label class="field">
+              <span class="field__label">Mensaje</span>
+              <textarea
+                class="field__input field__input--area"
+                name="message"
+                rows="5"
+                required
+                minlength="10"
+                maxlength="4000"
+              ></textarea>
+            </label>
+            <label class="hp" aria-hidden="true">
+              <span>Sitio web</span>
+              <input name="website" type="text" tabindex="-1" autocomplete="off" />
+            </label>
+            <p class="form__error" data-error role="alert"></p>
+            <button class="btn btn--primary btn--block" type="submit">Enviar</button>
+          </form>
+        </div>
+
+        <div data-state="success" hidden>
+          <h2 class="modal__title">Mensaje enviado</h2>
+          <p class="modal__text">Gracias. Te respondemos lo antes posible.</p>
+          <button class="btn btn--ghost btn--block" type="button" data-close>Cerrar</button>
+        </div>
+      </div>
+    </dialog>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

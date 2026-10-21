@@ -26,6 +26,7 @@ packages/domain   modelo y reglas puras (códigos, nombres de carpeta, cortes, r
 packages/ui       design system (tokens + componentes)
 packages/app      la app React (renderer de escritorio)
 apps/desktop      shell Electron (macOS + Windows)
+landing/          landing page (Firebase Hosting); proyecto aparte, fuera del workspace
 ```
 
 La UI usa hoy `MockSource`, una implementación en memoria del contrato

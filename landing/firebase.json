@@ -1,0 +1,54 @@
+{
+  "hosting": {
+    "public": "dist",
+    "cleanUrls": true,
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "rewrites": [
+      {
+        "source": "/api/**",
+        "function": {
+          "functionId": "api",
+          "region": "europe-west1"
+        }
+      },
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ],
+    "headers": [
+      {
+        "source": "/assets/**",
+        "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+      },
+      {
+        "source": "**",
+        "headers": [
+          { "key": "X-Content-Type-Options", "value": "nosniff" },
+          { "key": "X-Frame-Options", "value": "DENY" },
+          { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+        ]
+      }
+    ]
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "landing",
+      "runtime": "nodejs22",
+      "ignore": ["node_modules", "src", "lib/*.test.js", "*.log", "tsconfig.json", ".env.example"],
+      "predeploy": ["pnpm --filter sweetflow-landing-functions build"]
+    }
+  ],
+  "emulators": {
+    "functions": { "port": 5002, "host": "127.0.0.1" },
+    "firestore": { "port": 8081, "host": "127.0.0.1" },
+    "hosting": { "port": 5003, "host": "127.0.0.1" },
+    "ui": { "enabled": true, "port": 4001, "host": "127.0.0.1" },
+    "singleProjectMode": true
+  }
+}
