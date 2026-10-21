@@ -93,6 +93,41 @@ tanto en el dashboard como en una producción.
 - En el navegador no hay barra: salir de una producción la cierra, como antes.
 - Las ventanas aparte de un nodo no tienen barra de pestañas.
 
+## 0.2 Asistente (app de escritorio)
+
+Una terminal dentro de la app para que una IA (Claude Code, Codex o cualquiera
+que funcione en terminal) entienda Sweetflow y la controle. Primera versión,
+para probar que funciona; más adelante, con aspecto de chat por delante y la
+terminal por detrás.
+
+- **Dónde:** botón de terminal al principio de la cabecera de la producción
+  (en Biblioteca, Producción y Editor). Abre un panel a la izquierda, estrecho
+  como un móvil, por encima de la pantalla. Cerrarlo lo oculta: la sesión
+  sigue viva hasta que se cierra la app o se pulsa «Nueva sesión».
+- **La terminal:** la shell del propio usuario (la de su Terminal, con el
+  mismo PATH), abierta en la carpeta del asistente de este ordenador
+  (`Sweet Flow/Asistente`, con los datos de la app). El botón **Claude Code**
+  escribe `claude` en ella. Cada persona entra con su propia cuenta de la IA,
+  en la terminal, como siempre: la app no ve ni guarda nada de eso.
+- **La carpeta del asistente** lleva `CLAUDE.md` y `AGENTS.md` (qué es
+  Sweetflow y cómo trabajar con ella) y `.mcp.json` (cómo llegar al conector).
+  La primera vez, Claude Code pregunta si se confía en la carpeta y en el
+  conector.
+- **El conector** (MCP, solo en este ordenador y con una clave que cambia en
+  cada arranque) da a la IA herramientas para ver qué hay abierto, listar y
+  abrir producciones, leer el árbol y un nodo, crear nodos, cambiar título,
+  notas, estado y personas, mandar a la papelera, comentar, moverse por las
+  vistas, «Montar» en el editor y deshacer. Todo pasa por los mismos caminos
+  que la interfaz: se ve al momento, queda en el registro como hecho por el
+  usuario y se deshace con ⌘Z. Las de solo leer no piden permiso; las que
+  cambian algo, Claude Code las pregunta antes.
+- La IA no debe tocar a mano los archivos de la carpeta del equipo (lo dice
+  su `CLAUDE.md`): solo el conector.
+- En el navegador no hay asistente (no puede abrir una terminal).
+- **Pendiente:** el aspecto de chat; Codex necesita que se le añada el
+  conector en su propia configuración; marcar en el registro lo hecho «vía
+  IA»; ajustes (qué IA, permisos) en Ajustes y en Equipo.
+
 ## 1. Dashboard
 
 Organización tipo Drive, como Frame.io: aquí están todos los proyectos. Es una

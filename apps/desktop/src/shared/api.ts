@@ -45,6 +45,43 @@ export interface SweetflowApi {
   setAccent(accent: string | null): Promise<void>;
   /** A file operation inside the team folder; paths relative to it. */
   folder(op: FolderOp, a?: string, b?: string | Uint8Array): Promise<unknown>;
+  /** The assistant's terminal (docs/INTERFAZ.md §0.2): a real shell inside the app. */
+  terminal: TerminalApi;
+  /** The other side of the app's connector: the AI's requests, answered by the renderer. */
+  agent: AgentApi;
+}
+
+/** A terminal session: the user's own shell, in the assistant's folder. */
+export interface TerminalApi {
+  open(cols: number, rows: number): Promise<{ id: string; cwd: string }>;
+  write(id: string, data: string): void;
+  resize(id: string, cols: number, rows: number): void;
+  close(id: string): void;
+  /** Output of a session; returns a function that stops listening. */
+  onData(cb: (id: string, data: string) => void): () => void;
+  onExit(cb: (id: string, code: number) => void): () => void;
+}
+
+/** A request of the connector, to run in the renderer. */
+export type AgentCall = { kind: "list" } | { kind: "call"; name: string; args: Record<string, unknown> };
+
+/** What a tool answers: text for the AI, and whether it failed. */
+export interface AgentResult {
+  text: string;
+  isError?: boolean;
+}
+
+/** A tool of the connector, as the renderer describes it. */
+export interface AgentTool {
+  name: string;
+  description: string;
+  inputSchema: Record<string, unknown>;
+}
+
+export interface AgentApi {
+  /** The renderer takes the connector's requests (one window at a time: the last to open a terminal). */
+  onCall(cb: (id: string, call: AgentCall) => void): () => void;
+  reply(id: string, result: AgentResult | AgentTool[]): void;
 }
 
 export const IPC = {
@@ -59,6 +96,14 @@ export const IPC = {
   forgetTeamFolder: "sf:forget-team-folder",
   folder: "sf:folder",
   setAccent: "sf:set-accent",
+  termOpen: "sf:term-open",
+  termWrite: "sf:term-write",
+  termResize: "sf:term-resize",
+  termClose: "sf:term-close",
+  termData: "sf:term-data",
+  termExit: "sf:term-exit",
+  agentCall: "sf:agent-call",
+  agentReply: "sf:agent-reply",
 } as const;
 
 /** Passed to the renderer through `additionalArguments` (preload is sandboxed). */

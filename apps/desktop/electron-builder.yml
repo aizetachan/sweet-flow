@@ -14,6 +14,9 @@ files:
   - "!out/**/*.map"
   - package.json
 asar: true
+# The terminal's native module and its helper must be real files on disk.
+asarUnpack:
+  - out/node_modules/node-pty/**
 artifactName: "${productName}-${version}-${os}-${arch}.${ext}"
 publish:
   provider: github

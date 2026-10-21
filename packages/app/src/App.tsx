@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { ImportDialog } from "./components/ImportDialog";
 import { InviteDialog } from "./dashboard/Team";
 import { DelayedTip } from "./components/DelayedTip";
@@ -17,12 +17,17 @@ import { EditorView } from "./views/EditorView";
 import { EditorPanel } from "./editor/EditorPanel";
 import { TrashView } from "./views/TrashView";
 import { useThemeApplied } from "./theme";
+import { useAssistant } from "./agent/agent";
+
+// The terminal is only loaded the first time the assistant opens.
+const AgentPanel = lazy(() => import("./agent/AgentPanel").then((m) => ({ default: m.AgentPanel })));
 
 /** Splash → dashboard → production (docs/INTERFAZ.md). Popped-out windows show one node. */
 export function App() {
   const phase = useStore((s) => s.phase);
   const lib = useStore((s) => s.lib);
   const [splash, setSplash] = useState(phase !== "window");
+  const assistant = useAssistant((s) => s.started);
   useThemeApplied(lib);
 
   const screen = phase === "window" ? <PoppedWindow /> : phase === "production" ? <Production /> : <Dashboard />;
@@ -38,6 +43,7 @@ export function App() {
       {/* Notices show everywhere: in the dashboard too. */}
       {phase !== "window" ? <Notice /> : null}
       {phase !== "window" ? <InviteDialog /> : null}
+      {assistant && phase !== "window" ? <Suspense fallback={null}><AgentPanel /></Suspense> : null}
       <DelayedTip />
       {splash ? <Splash ready={!!lib} onDone={() => setSplash(false)} /> : null}
     </>

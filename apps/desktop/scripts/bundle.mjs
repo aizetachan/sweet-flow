@@ -1,6 +1,7 @@
 // Shared esbuild setup for the Electron entries (main, preload, mirror).
 // Everything is bundled into out/*.cjs so the packaged app needs no
-// node_modules; only `electron` itself stays external.
+// node_modules; only `electron` stays external, and `node-pty` (native), which
+// the build copies to out/node_modules.
 import { fileURLToPath } from "node:url";
 import { readFileSync } from "node:fs";
 import path from "node:path";
@@ -40,7 +41,8 @@ export const options = {
   platform: "node",
   format: "cjs",
   target: "node22",
-  external: ["electron"],
+  // node-pty is native: it stays a real module, shipped next to the bundle (scripts/build.mjs).
+  external: ["electron", "node-pty"],
   sourcemap: true,
   logLevel: "info",
   define,

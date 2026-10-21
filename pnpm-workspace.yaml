@@ -18,3 +18,4 @@ allowBuilds:
   electron-winstaller: false # Squirrel installers; we build NSIS on Windows
   protobufjs: false # postinstall only prints a version warning
   re2: false # optional native regex for the Hosting emulator (unused)
+  node-pty: false # the in-app terminal; it ships N-API prebuilds (scripts/build.mjs copies them), nothing to compile

@@ -122,6 +122,25 @@ El renderer recibe una API mínima en `window.sweetflow`
 `revealInFolder(path)`. En el navegador no existe, así que la UI la trata como
 opcional.
 
+Para probar la app de escritorio sin tocar la instalada (sus sesiones, su
+carpeta del equipo y su bloqueo de una sola instancia), `SWEETFLOW_USER_DATA`
+le da otra carpeta de datos en desarrollo:
+`SWEETFLOW_USER_DATA=/tmp/sf-prueba pnpm dev:desktop`.
+
+### Asistente (terminal y conector)
+
+La terminal del asistente (docs/INTERFAZ.md §0.2) usa `node-pty`, nativo. Trae
+sus binarios ya compilados para macOS y Windows (N-API: no hay que recompilar
+para Electron), así que no se compila nada al instalar (`allowBuilds` lo deja
+en `false`). El bundle no lo mete dentro: `scripts/build.mjs` lo copia a
+`out/node_modules/node-pty` (con permiso de ejecución para su `spawn-helper`)
+y `electron-builder.yml` lo deja fuera del asar.
+
+El conector es un servidor MCP en `127.0.0.1` (puerto libre y clave nuevos en
+cada arranque, `apps/desktop/src/main/agent.ts`); cada llamada la resuelve la
+ventana que abrió la terminal con las herramientas de
+`packages/app/src/agent/tools.ts`.
+
 ## Firebase en local (emuladores)
 
 ```bash

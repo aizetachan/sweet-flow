@@ -21,6 +21,19 @@ export interface DesktopBridge {
   forgetTeamFolder?(): Promise<void>;
   /** The theme's accent (null: the corporate blue): the icon's frame takes it (older desktop builds lack it). */
   setAccent?(accent: string | null): Promise<void>;
+  /** The assistant's terminal and the connector's requests (older desktop builds lack them). */
+  terminal?: {
+    open(cols: number, rows: number): Promise<{ id: string; cwd: string }>;
+    write(id: string, data: string): void;
+    resize(id: string, cols: number, rows: number): void;
+    close(id: string): void;
+    onData(cb: (id: string, data: string) => void): () => void;
+    onExit(cb: (id: string, code: number) => void): () => void;
+  };
+  agent?: {
+    onCall(cb: (id: string, call: { kind: "list" } | { kind: "call"; name: string; args: Record<string, unknown> }) => void): () => void;
+    reply(id: string, result: { text: string; isError?: boolean } | Array<{ name: string; description: string; inputSchema: Record<string, unknown> }>): void;
+  };
   folder?(op: "list" | "listFiles" | "readText" | "readBytes" | "writeText" | "writeBytes" | "mkdir" | "move" | "remove", a?: string, b?: string | Uint8Array): Promise<unknown>;
 }
 

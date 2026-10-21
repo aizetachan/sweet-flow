@@ -1,6 +1,6 @@
 /** IPC handlers backing `window.sweetflow` (see shared/api.ts). */
 
-import { BrowserWindow, clipboard, dialog, ipcMain, shell, type IpcMainInvokeEvent, type OpenDialogOptions } from "electron";
+import { BrowserWindow, clipboard, dialog, ipcMain, shell, type IpcMainEvent, type IpcMainInvokeEvent, type OpenDialogOptions } from "electron";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { IPC } from "../shared/api";
@@ -8,9 +8,10 @@ import { authOpen, authRedirect, googleToken } from "./auth";
 import { isAppUrl } from "./env";
 import { setAccent } from "./appIcon";
 import { folderOp, forgetTeamFolder, pickTeamFolder, teamFolder } from "./folder";
+import { closeTerminal, openTerminal, resizeTerminal, writeTerminal } from "./terminal";
 
 /** Only our own renderer may call privileged handlers. */
-function assertTrusted(e: IpcMainInvokeEvent): void {
+function assertTrusted(e: IpcMainInvokeEvent | IpcMainEvent): void {
   const url = e.senderFrame?.url ?? "";
   if (!isAppUrl(url)) throw new Error(`IPC rejected from ${url}`);
 }
@@ -70,4 +71,19 @@ export function registerIpc(): void {
   ipcMain.handle(IPC.forgetTeamFolder, (e) => (assertTrusted(e), forgetTeamFolder()));
   ipcMain.handle(IPC.setAccent, (e, accent: unknown) => (assertTrusted(e), setAccent(accent)));
   ipcMain.handle(IPC.folder, (e, op: unknown, a: unknown, b: unknown) => (assertTrusted(e), folderOp(op, a, b)));
+
+  // The assistant's terminal (terminal.ts): each session answers only to the window that opened it.
+  ipcMain.handle(IPC.termOpen, (e, cols: unknown, rows: unknown) => (assertTrusted(e), openTerminal(e.sender, Number(cols), Number(rows))));
+  ipcMain.on(IPC.termWrite, (e, id: unknown, data: unknown) => {
+    assertTrusted(e);
+    if (typeof id === "string" && typeof data === "string") writeTerminal(e.sender, id, data);
+  });
+  ipcMain.on(IPC.termResize, (e, id: unknown, cols: unknown, rows: unknown) => {
+    assertTrusted(e);
+    if (typeof id === "string") resizeTerminal(e.sender, id, Number(cols), Number(rows));
+  });
+  ipcMain.on(IPC.termClose, (e, id: unknown) => {
+    assertTrusted(e);
+    if (typeof id === "string") closeTerminal(id);
+  });
 }

@@ -11,6 +11,7 @@ import {
   IconLibraryPhoto,
   IconMovie,
   IconSettings,
+  IconTerminal2,
   IconTrash,
   IconUsers,
   IconUsersGroup } from "@tabler/icons-react";
@@ -26,6 +27,7 @@ import { Notifications } from "./Notifications";
 import { Popover } from "../components/Popover";
 import { useMagnific } from "../integrations/magnific/useMagnific";
 import { SignInButton } from "../dashboard/Welcome";
+import { hasAssistant, useAssistant } from "../agent/agent";
 
 const NAV: Array<{ id: View; label: string; icon: typeof IconLayoutBoard }> = [
   { id: "library", label: "Biblioteca", icon: IconLibraryPhoto },
@@ -78,6 +80,7 @@ export function Topbar() {
 
   return (
     <header className={cx("topbar", TABS && "topbar--tabs")}>
+      {hasAssistant() ? <AssistantButton /> : null}
       {/* Desktop app: the tab above already says where you are and holds the name (double click renames). */}
       {TABS ? null : <nav className="crumbs crumbs--top" aria-label="Ubicación">
         {/* Only home and the production: going back lands in the folder it is in, so the folders in between are not needed. */}
@@ -114,6 +117,17 @@ export function Topbar() {
       </Button>
       <AccountMenu />
     </header>
+  );
+}
+
+/** Opens the assistant's panel: a terminal where an AI controls the app (docs/INTERFAZ.md §0.2). */
+function AssistantButton() {
+  const open = useAssistant((s) => s.open);
+  const toggle = useAssistant((s) => s.toggle);
+  return (
+    <IconButton label={open ? "Ocultar el asistente" : "Asistente: una terminal para que Claude Code u otra IA trabaje con la app"} className={open ? "is-on" : undefined} onClick={toggle}>
+      <IconTerminal2 size={18} stroke={1.6} />
+    </IconButton>
   );
 }
 

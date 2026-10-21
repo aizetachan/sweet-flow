@@ -8,6 +8,7 @@ import { app, BrowserWindow, screen, shell } from "electron";
 import path from "node:path";
 import { VERSION_ARG } from "../shared/api";
 import { iconForWindow, startAppIcon } from "./appIcon";
+import { startAgent } from "./agent";
 import { APP_ORIGIN, registerAppScheme, serveApp } from "./appProtocol";
 import { DEV_URL, isAppUrl } from "./env";
 import { registerIpc } from "./ipc";
@@ -95,7 +96,9 @@ function lockNavigation(win: BrowserWindow): void {
 
 // The data folder keeps the app's first name ("Sweet Flow"), so renaming the app
 // does not lose the sessions and the team folder already saved there.
-app.setPath("userData", path.join(app.getPath("appData"), "Sweet Flow"));
+// In development, SWEETFLOW_USER_DATA gives it a folder of its own: a test run then
+// neither shares the installed app's sessions and team folder nor its single-instance lock.
+app.setPath("userData", (DEV_URL && process.env.SWEETFLOW_USER_DATA) || path.join(app.getPath("appData"), "Sweet Flow"));
 
 registerAppScheme();
 
@@ -112,6 +115,8 @@ if (!app.requestSingleInstanceLock()) {
   void app.whenReady().then(() => {
     if (!DEV_URL) serveApp(path.join(__dirname, "renderer"));
     registerIpc();
+    // The connector for the assistant's terminal (docs/INTERFAZ.md §0.2).
+    startAgent();
     // The icon with the theme's colour, before the window shows.
     startAppIcon();
     startMirror();
