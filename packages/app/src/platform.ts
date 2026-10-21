@@ -31,6 +31,8 @@ export interface DesktopBridge {
     onExit(cb: (id: string, code: number) => void): () => void;
   };
   agent?: {
+    serve?(): void;
+    openWindow?(): Promise<void>;
     onCall(cb: (id: string, call: { kind: "list" } | { kind: "call"; name: string; args: Record<string, unknown> }) => void): () => void;
     reply(id: string, result: { text: string; isError?: boolean } | Array<{ name: string; description: string; inputSchema: Record<string, unknown> }>): void;
   };

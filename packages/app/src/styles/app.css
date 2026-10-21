@@ -1531,15 +1531,17 @@ button.topbar__me { position: relative; padding: 0; border: 0; border-radius: 50
 /* «Visualización real»: the line under the pointer, dashed (it does not cut). */
 .etl__hover--live { width: 0; background: none; border-left: 1px dashed var(--fg-1); }
 
-/* ---------- the assistant (docs/INTERFAZ.md §0.2): a terminal as narrow as a phone ---------- */
-.agent { position: fixed; z-index: 60; left: 12px; top: 96px; bottom: 76px; width: 400px; max-width: calc(100vw - 24px); display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--line-1); border-radius: 14px; background: var(--bg-1); box-shadow: 0 18px 50px #000a, 0 0 0 1px #0006; }
-.agent--hidden { display: none; }
-.agent__head { flex: none; display: flex; align-items: center; gap: 8px; height: 42px; padding: 0 6px 0 12px; border-bottom: 1px solid var(--line-0); color: var(--fg-1); }
+/* ---------- the assistant (docs/INTERFAZ.md §0.2): its own window, as narrow as a phone ---------- */
+.agent { position: fixed; inset: 0; display: flex; flex-direction: column; overflow: hidden; background: var(--bg-1); }
+/* Its bar moves the window; on the Mac the window's buttons sit at its left. */
+.agent__head { flex: none; display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 8px 0 14px; border-bottom: 1px solid var(--line-0); color: var(--fg-1); -webkit-app-region: drag; user-select: none; }
+.agent--mac .agent__head { padding-left: 80px; }
+.agent__head button { -webkit-app-region: no-drag; }
 .agent__title { font-weight: 600; font-size: 13px; }
 .agent__quick { display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 10px; border: 1px solid var(--line-1); border-radius: 99px; background: var(--ghost); color: var(--fg-1); font-size: 12px; cursor: pointer; }
 .agent__quick:hover:not(:disabled) { background: var(--bg-4); }
 .agent__quick:disabled { opacity: .45; cursor: default; }
-.agent__term { flex: 1; min-height: 0; padding: 8px 4px 6px 10px; }
+.agent__term { flex: 1; min-height: 0; padding: 8px 4px 6px 12px; }
 .agent__term .xterm { height: 100%; }
 .agent__term .xterm-viewport { background: transparent !important; }
 .agent__ended { flex: none; display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-top: 1px solid var(--line-0); color: var(--fg-3); font-size: 12px; }

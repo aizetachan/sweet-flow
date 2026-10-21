@@ -27,7 +27,7 @@ import { Notifications } from "./Notifications";
 import { Popover } from "../components/Popover";
 import { useMagnific } from "../integrations/magnific/useMagnific";
 import { SignInButton } from "../dashboard/Welcome";
-import { hasAssistant, useAssistant } from "../agent/agent";
+import { hasAssistant, openAssistant } from "../agent/agent";
 
 const NAV: Array<{ id: View; label: string; icon: typeof IconLayoutBoard }> = [
   { id: "library", label: "Biblioteca", icon: IconLibraryPhoto },
@@ -120,12 +120,10 @@ export function Topbar() {
   );
 }
 
-/** Opens the assistant's panel: a terminal where an AI controls the app (docs/INTERFAZ.md §0.2). */
+/** Opens the assistant's window: a terminal where an AI controls the app (docs/INTERFAZ.md §0.2). */
 function AssistantButton() {
-  const open = useAssistant((s) => s.open);
-  const toggle = useAssistant((s) => s.toggle);
   return (
-    <IconButton label={open ? "Ocultar el asistente" : "Asistente: una terminal para que Claude Code u otra IA trabaje con la app"} className={open ? "is-on" : undefined} onClick={toggle}>
+    <IconButton label="Asistente: abre una ventana con una terminal para que Claude Code u otra IA trabaje con la app" onClick={openAssistant}>
       <IconTerminal2 size={18} stroke={1.6} />
     </IconButton>
   );

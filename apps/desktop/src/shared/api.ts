@@ -79,7 +79,11 @@ export interface AgentTool {
 }
 
 export interface AgentApi {
-  /** The renderer takes the connector's requests (one window at a time: the last to open a terminal). */
+  /** This window runs the connector's requests (the main one: it has the production open). */
+  serve(): void;
+  /** Opens the assistant's own window, or brings it to the front. */
+  openWindow(): Promise<void>;
+  /** The requests, once this window serves them. */
   onCall(cb: (id: string, call: AgentCall) => void): () => void;
   reply(id: string, result: AgentResult | AgentTool[]): void;
 }
@@ -104,6 +108,8 @@ export const IPC = {
   termExit: "sf:term-exit",
   agentCall: "sf:agent-call",
   agentReply: "sf:agent-reply",
+  agentServe: "sf:agent-serve",
+  agentWindow: "sf:agent-window",
 } as const;
 
 /** Passed to the renderer through `additionalArguments` (preload is sandboxed). */

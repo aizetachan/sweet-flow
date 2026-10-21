@@ -2,7 +2,7 @@
  * The app's connector for AI assistants (docs/INTERFAZ.md §0.2): a Model
  * Context Protocol server on this computer only (127.0.0.1, with a key that
  * changes on every launch). Claude Code, Codex or any MCP client calls its
- * tools; each call goes to the renderer that opened the terminal, which runs
+ * tools; each call goes to the main window (it asks for them: `serve`), which runs
  * it through the same DataSource as the interface: it shows live, it is in
  * the log as the user's, and ⌘Z undoes it.
  *
@@ -17,6 +17,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import type { AddressInfo } from "node:net";
 import path from "node:path";
 import { IPC, type AgentCall, type AgentResult, type AgentTool } from "../shared/api";
+import { isAppUrl } from "./env";
 
 const KEY = randomBytes(24).toString("hex");
 let port = 0;
@@ -24,15 +25,11 @@ let host: WebContents | null = null;
 const pending = new Map<string, { resolve: (v: unknown) => void; timer: NodeJS.Timeout }>();
 let seq = 0;
 
-/** The window whose production the AI works on: the last one to open a terminal. */
-export function setAgentHost(wc: WebContents): void {
-  host = wc;
-}
 
 /** Asks the renderer (list the tools, or run one) and waits for its answer. */
 function ask(call: AgentCall): Promise<unknown> {
   const wc = host;
-  if (!wc || wc.isDestroyed()) return Promise.reject(new Error("Sweetflow no tiene ninguna ventana conectada: abre el asistente desde una producción."));
+  if (!wc || wc.isDestroyed()) return Promise.reject(new Error("La ventana principal de Sweetflow no está abierta."));
   const id = `c${++seq}`;
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
@@ -132,6 +129,10 @@ export function startAgent(): void {
   });
   server.listen(0, "127.0.0.1", () => {
     port = (server.address() as AddressInfo).port;
+  });
+  // The main window (with the production open) runs the tools; the terminal has its own window.
+  ipcMain.on(IPC.agentServe, (e) => {
+    if (isAppUrl(e.senderFrame?.url ?? "")) host = e.sender;
   });
   ipcMain.on(IPC.agentReply, (e, id: unknown, result: unknown) => {
     if (e.sender !== host || typeof id !== "string") return;

@@ -1,6 +1,6 @@
 /**
- * The assistant's panel (docs/INTERFAZ.md §0.2): a narrow column, like a
- * phone, holding a real terminal. The user starts Claude Code (or Codex, or
+ * The assistant's window (docs/INTERFAZ.md §0.2): narrow, like a phone, and
+ * movable anywhere (another screen too), holding a real terminal. The user starts Claude Code (or Codex, or
  * any AI with a terminal) there, signed in with their own account, and it
  * controls the app through its connector.
  */
@@ -9,9 +9,8 @@ import { useEffect, useRef, useState } from "react";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import "@xterm/xterm/css/xterm.css";
-import { IconRefresh, IconSparkles, IconTerminal2, IconX } from "@tabler/icons-react";
+import { IconRefresh, IconSparkles, IconTerminal2 } from "@tabler/icons-react";
 import { cx, IconButton } from "@sweetflow/ui";
-import { answerAgent, useAssistant } from "./agent";
 
 /** The terminal's colours, from the app's theme. */
 function theme(): Terminal["options"]["theme"] {
@@ -27,8 +26,6 @@ function theme(): Terminal["options"]["theme"] {
 }
 
 export function AgentPanel() {
-  const open = useAssistant((s) => s.open);
-  const close = useAssistant((s) => s.close);
   const host = useRef<HTMLDivElement>(null);
   const term = useRef<Terminal | null>(null);
   const fit = useRef<FitAddon | null>(null);
@@ -55,7 +52,6 @@ export function AgentPanel() {
   useEffect(() => {
     const api = window.sweetflow?.terminal;
     if (!host.current || !api) return;
-    answerAgent();
     const css = getComputedStyle(document.documentElement);
     const t = new Terminal({
       fontFamily: css.getPropertyValue("--mono").trim() || "Menlo, monospace",
@@ -103,14 +99,14 @@ export function AgentPanel() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Shown again: the right size, and the keys go to it.
+  // The window comes to the front: the keys go to the terminal.
   useEffect(() => {
-    if (!open) return;
-    requestAnimationFrame(() => {
-      fit.current?.fit();
-      term.current?.focus();
-    });
-  }, [open]);
+    document.title = "Asistente · Sweetflow";
+    const focus = () => term.current?.focus();
+    window.addEventListener("focus", focus);
+    requestAnimationFrame(focus);
+    return () => window.removeEventListener("focus", focus);
+  }, []);
 
   const run = (cmd: string) => {
     const api = window.sweetflow?.terminal;
@@ -120,7 +116,7 @@ export function AgentPanel() {
   };
 
   return (
-    <aside className={cx("agent", !open && "agent--hidden")} aria-label="Asistente" aria-hidden={!open}>
+    <main className={cx("agent", window.sweetflow?.platform === "darwin" && "agent--mac")} aria-label="Asistente">
       <header className="agent__head">
         <IconTerminal2 size={16} stroke={1.7} />
         <span className="agent__title">Asistente</span>
@@ -134,7 +130,6 @@ export function AgentPanel() {
           session.current = null;
           void start();
         }}><IconRefresh size={15} /></IconButton>
-        <IconButton label="Ocultar (la sesión sigue abierta)" onClick={close}><IconX size={15} /></IconButton>
       </header>
       <div className="agent__term" ref={host} onMouseDown={() => term.current?.focus()} />
       {ended || error ? (
@@ -143,6 +138,6 @@ export function AgentPanel() {
           <button className="agent__quick" onClick={() => void start()}>Abrir otra</button>
         </div>
       ) : null}
-    </aside>
+    </main>
   );
 }

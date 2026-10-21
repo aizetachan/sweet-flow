@@ -12,7 +12,7 @@ import { createRequire } from "node:module";
 import path from "node:path";
 import type { IPty } from "node-pty";
 import { IPC } from "../shared/api";
-import { prepareWorkspace, setAgentHost } from "./agent";
+import { prepareWorkspace } from "./agent";
 
 interface Session {
   pty: IPty;
@@ -67,8 +67,6 @@ export function openTerminal(owner: WebContents, cols: number, rows: number): { 
   const pty = nodePty().spawn(file, args, { name: "xterm-256color", cols: clamp(cols), rows: clamp(rows), cwd, env: shellEnv() });
   const id = `t${++seq}`;
   sessions.set(id, { pty, owner });
-  // The window that opened it is the one the AI controls.
-  setAgentHost(owner);
   pty.onData((data) => send(owner, IPC.termData, id, data));
   pty.onExit(({ exitCode }) => {
     sessions.delete(id);

@@ -101,9 +101,12 @@ para probar que funciona; más adelante, con aspecto de chat por delante y la
 terminal por detrás.
 
 - **Dónde:** botón de terminal al principio de la cabecera de la producción
-  (en Biblioteca, Producción y Editor). Abre un panel a la izquierda, estrecho
-  como un móvil, por encima de la pantalla. Cerrarlo lo oculta: la sesión
-  sigue viva hasta que se cierra la app o se pulsa «Nueva sesión».
+  (en Biblioteca, Producción y Editor). Abre el asistente **en una ventana
+  aparte**, estrecha como un móvil, que se puede llevar a cualquier sitio
+  (también a otra pantalla). Sale junto a la ventana principal, o en el borde
+  de la pantalla si no cabe. Solo hay una: pulsar el botón otra vez la trae
+  delante. Cerrarla cierra su sesión. La IA trabaja sobre lo que está abierto
+  en la ventana principal.
 - **La terminal:** la shell del propio usuario (la de su Terminal, con el
   mismo PATH), abierta en la carpeta del asistente de este ordenador
   (`Sweet Flow/Asistente`, con los datos de la app). El botón **Claude Code**

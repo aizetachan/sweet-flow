@@ -4,9 +4,9 @@
  * here or in utility processes; the renderer is sandboxed.
  */
 
-import { app, BrowserWindow, screen, shell } from "electron";
+import { app, BrowserWindow, ipcMain, screen, shell } from "electron";
 import path from "node:path";
-import { VERSION_ARG } from "../shared/api";
+import { IPC, VERSION_ARG } from "../shared/api";
 import { iconForWindow, startAppIcon } from "./appIcon";
 import { startAgent } from "./agent";
 import { APP_ORIGIN, registerAppScheme, serveApp } from "./appProtocol";
@@ -49,9 +49,53 @@ function createWindow(): BrowserWindow {
   win.once("ready-to-show", () => win.show());
   lockNavigation(win);
 
-  if (DEV_URL) void win.loadURL(DEV_URL);
-  else void win.loadURL(`${APP_ORIGIN}/index.html`);
+  void win.loadURL(pageUrl(""));
   return win;
+}
+
+/** Our page at a route of its own (the bundled app or the dev server). */
+const pageUrl = (hash: string) => `${DEV_URL ?? `${APP_ORIGIN}/index.html`}${hash}`;
+
+/**
+ * The assistant (docs/INTERFAZ.md §0.2) in a window of its own, as narrow as a
+ * phone, to put anywhere (another screen too). Only one: asked again, it comes
+ * to the front. It starts beside the window that asked, or at the screen's edge.
+ */
+let assistant: BrowserWindow | null = null;
+function openAssistant(from: BrowserWindow | null): void {
+  if (assistant && !assistant.isDestroyed()) {
+    if (assistant.isMinimized()) assistant.restore();
+    assistant.focus();
+    return;
+  }
+  const near = from?.getBounds();
+  const area = (near ? screen.getDisplayMatching(near) : screen.getPrimaryDisplay()).workArea;
+  const width = 440;
+  const height = Math.min(820, area.height - 40);
+  const right = near ? near.x + near.width + 12 : area.x + area.width;
+  const x = right + width <= area.x + area.width ? right : area.x + area.width - width - 12;
+  const y = near ? Math.max(area.y, Math.min(near.y, area.y + area.height - height)) : area.y + 20;
+  const win = new BrowserWindow({
+    width,
+    height,
+    x,
+    y,
+    minWidth: 340,
+    minHeight: 420,
+    title: "Asistente · Sweetflow",
+    backgroundColor: "#121214",
+    show: false,
+    ...(process.platform === "darwin" ? { titleBarStyle: "hiddenInset" as const, trafficLightPosition: { x: 14, y: 15 } } : {}),
+    webPreferences: webPreferences(),
+  });
+  assistant = win;
+  iconForWindow(win);
+  win.once("ready-to-show", () => win.show());
+  win.on("closed", () => {
+    if (assistant === win) assistant = null;
+  });
+  lockNavigation(win);
+  void win.loadURL(pageUrl("#/asistente"));
 }
 
 /**
@@ -106,7 +150,7 @@ if (!app.requestSingleInstanceLock()) {
   app.quit();
 } else {
   app.on("second-instance", () => {
-    const [win] = BrowserWindow.getAllWindows();
+    const [win] = BrowserWindow.getAllWindows().filter((w) => w !== assistant);
     if (!win) return;
     if (win.isMinimized()) win.restore();
     win.focus();
@@ -115,6 +159,10 @@ if (!app.requestSingleInstanceLock()) {
   void app.whenReady().then(() => {
     if (!DEV_URL) serveApp(path.join(__dirname, "renderer"));
     registerIpc();
+    ipcMain.handle(IPC.agentWindow, (e) => {
+      if (!isAppUrl(e.senderFrame?.url ?? "")) throw new Error("IPC rejected");
+      openAssistant(BrowserWindow.fromWebContents(e.sender));
+    });
     // The connector for the assistant's terminal (docs/INTERFAZ.md §0.2).
     startAgent();
     // The icon with the theme's colour, before the window shows.
@@ -124,7 +172,8 @@ if (!app.requestSingleInstanceLock()) {
     void checkForUpdates();
 
     app.on("activate", () => {
-      if (BrowserWindow.getAllWindows().length === 0) createWindow();
+      // The assistant's window alone is not the app: the main one comes back.
+      if (BrowserWindow.getAllWindows().every((w) => w === assistant)) createWindow();
     });
   });
 

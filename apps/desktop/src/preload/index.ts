@@ -31,6 +31,8 @@ const api: SweetflowApi = {
     onExit: (cb) => listen(IPC.termExit, (id: string, code: number) => cb(id, code)),
   },
   agent: {
+    serve: () => ipcRenderer.send(IPC.agentServe),
+    openWindow: () => ipcRenderer.invoke(IPC.agentWindow) as Promise<void>,
     onCall: (cb) => listen(IPC.agentCall, (id: string, call: AgentCall) => cb(id, call)),
     reply: (id, result) => ipcRenderer.send(IPC.agentReply, id, result),
   },
