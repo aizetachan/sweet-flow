@@ -109,8 +109,9 @@ terminal por detrás.
   en la ventana principal.
 - **La terminal:** la shell del propio usuario (la de su Terminal, con el
   mismo PATH), abierta en la carpeta del asistente de este ordenador
-  (`Sweet Flow/Asistente`, con los datos de la app). El botón **Claude Code**
-  escribe `claude` en ella. Cada persona entra con su propia cuenta de la IA,
+  (`Sweet Flow/Asistente`, con los datos de la app). Dos botones con solo su
+  logo arrancan una IA en ella: el de **Claude** (escribe `claude`) y el de
+  **OpenAI** (escribe `codex`). Cada persona entra con su propia cuenta de la IA,
   en la terminal, como siempre: la app no ve ni guarda nada de eso.
 - **La carpeta del asistente** lleva `CLAUDE.md` y `AGENTS.md` (qué es
   Sweetflow y cómo trabajar con ella) y `.mcp.json` (cómo llegar al conector).

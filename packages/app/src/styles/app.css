@@ -1541,6 +1541,9 @@ button.topbar__me { position: relative; padding: 0; border: 0; border-radius: 50
 .agent__quick { display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 10px; border: 1px solid var(--line-1); border-radius: 99px; background: var(--ghost); color: var(--fg-1); font-size: 12px; cursor: pointer; }
 .agent__quick:hover:not(:disabled) { background: var(--bg-4); }
 .agent__quick:disabled { opacity: .45; cursor: default; }
+.agent__ai { display: inline-grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 1px solid var(--line-1); border-radius: 50%; background: var(--ghost); color: var(--fg-1); cursor: pointer; }
+.agent__ai:hover:not(:disabled) { background: var(--bg-4); border-color: var(--line-2); }
+.agent__ai:disabled { opacity: .45; cursor: default; }
 .agent__term { flex: 1; min-height: 0; padding: 8px 4px 6px 12px; }
 .agent__term .xterm { height: 100%; }
 .agent__term .xterm-viewport { background: transparent !important; }

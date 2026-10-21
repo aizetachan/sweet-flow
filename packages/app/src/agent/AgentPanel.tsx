@@ -9,7 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import "@xterm/xterm/css/xterm.css";
-import { IconRefresh, IconSparkles, IconTerminal2 } from "@tabler/icons-react";
+import { IconBrandOpenai, IconRefresh, IconTerminal2 } from "@tabler/icons-react";
 import { cx, IconButton } from "@sweetflow/ui";
 
 /** The terminal's colours, from the app's theme. */
@@ -121,8 +121,12 @@ export function AgentPanel() {
         <IconTerminal2 size={16} stroke={1.7} />
         <span className="agent__title">Asistente</span>
         <span className="grow" />
-        <button className="agent__quick" title="Arrancar Claude Code en esta terminal" onClick={() => run("claude")} disabled={ended}>
-          <IconSparkles size={13} /> Claude Code
+        {/* One click starts that AI in this terminal. */}
+        <button className="agent__ai" title="Claude Code: arrancarlo en esta terminal" aria-label="Claude Code" onClick={() => run("claude")} disabled={ended}>
+          <ClaudeMark />
+        </button>
+        <button className="agent__ai" title="Codex (OpenAI): arrancarlo en esta terminal" aria-label="Codex" onClick={() => run("codex")} disabled={ended}>
+          <IconBrandOpenai size={17} stroke={1.6} />
         </button>
         <IconButton label="Nueva sesión (cierra la actual)" onClick={() => {
           const api = window.sweetflow?.terminal;
@@ -139,5 +143,22 @@ export function AgentPanel() {
         </div>
       ) : null}
     </main>
+  );
+}
+
+/** Claude's mark: its rays, in its orange. */
+function ClaudeMark() {
+  // Twelve rays of alternating length around the centre, like Claude's logo.
+  const rays = Array.from({ length: 12 }, (_, i) => {
+    const a = (i / 12) * Math.PI * 2 - Math.PI / 2;
+    const r = i % 2 ? 6.2 : 8;
+    return { x: 9 + Math.cos(a) * r, y: 9 + Math.sin(a) * r };
+  });
+  return (
+    <svg width="17" height="17" viewBox="0 0 18 18" aria-hidden="true">
+      <g stroke="#d97757" strokeWidth="1.9" strokeLinecap="round">
+        {rays.map((p, i) => <line key={i} x1="9" y1="9" x2={p.x.toFixed(2)} y2={p.y.toFixed(2)} />)}
+      </g>
+    </svg>
   );
 }
