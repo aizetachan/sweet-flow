@@ -207,6 +207,36 @@ origen propio y estable, y el proceso principal hace de relevo para lo mismo
 que el servidor de desarrollo: el MCP, los tokens y los archivos de Magnific, y
 los tokens de Google con el secreto.
 
+### Firma de desarrollo (los permisos sobreviven a las actualizaciones)
+
+Con la firma ad hoc, cada instalador es para macOS una app distinta: los
+permisos que el usuario dio a la versión anterior (la carpeta del equipo,
+grabación de pantalla para las capturas del asistente…) no valen para la
+nueva, y macOS los vuelve a pedir. Los datos (sesiones, carpeta del equipo,
+tema, chats) no se pierden: van en la carpeta de datos de la app, no en el
+llavero.
+
+Para que todas las versiones generadas en un Mac sean la misma app, ese Mac
+firma con un certificado propio, «Sweetflow Dev», que se crea una vez:
+
+```bash
+zsh apps/desktop/scripts/dev-cert.sh
+```
+
+Pide la contraseña de inicio de sesión (para confiar en el certificado) y, la
+primera vez que firma, permitir que `codesign` use la clave («Permitir
+siempre»). Desde entonces `pnpm dist:mac` firma con él (`scripts/sign.cjs`,
+gancho `afterSign`); sin el certificado, avisa y deja la firma ad hoc.
+
+- No es un Developer ID: al instalar se sigue abriendo con clic derecho ›
+  Abrir, y el certificado solo sirve en el Mac donde se creó (los instaladores
+  de otro Mac serían otra identidad).
+- La primera versión firmada así es, una vez más, una app nueva para macOS:
+  vuelve a pedir los permisos esa vez; a partir de ahí se conservan. Si
+  Grabación de pantalla sigue fallando, quitar la entrada antigua de
+  «Sweetflow» en Ajustes del Sistema › Privacidad y seguridad y darla de
+  nuevo, cerrando y abriendo la app después.
+
 ### Pasar el instalador a un compañero
 
 1. En el Mac con `packages/app/.env.local` relleno: `pnpm dist:mac`.

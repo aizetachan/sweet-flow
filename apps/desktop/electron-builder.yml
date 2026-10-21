@@ -14,6 +14,8 @@ files:
   - "!out/**/*.map"
   - package.json
 asar: true
+# macOS: the stable development signature, when this Mac has the certificate (see mac.identity).
+afterSign: scripts/sign.cjs
 # The terminal's native module and its helper must be real files on disk.
 asarUnpack:
   - out/node_modules/node-pty/**
@@ -33,10 +35,12 @@ mac:
   # The terminal's binaries already come one per architecture (prebuilds/darwin-arm64 and
   # darwin-x64), the same in both halves of the universal app: kept as they are.
   x64ArchFiles: "**/node_modules/node-pty/prebuilds/**"
-  # Ad-hoc signature ("-"): free, no certificate. It gives the app a stable identity
+  # Ad-hoc signature ("-"): free, no certificate. It gives the app an identity
   # (com.sweetflow.app) so macOS remembers the access the user allows to the team folder
   # (Escritorio, Documentos, Dropbox…) and asks once instead of on every file it reads.
-  # Each new build is a new identity for macOS: it asks once again after an update.
+  # But each new build is a new identity for macOS, so it asks again after every update:
+  # scripts/sign.cjs (afterSign, below) re-signs the app with the development certificate
+  # «Sweetflow Dev» when this Mac has it (scripts/dev-cert.sh), one identity for all builds.
   identity: "-"
   hardenedRuntime: false
   # The text of macOS' permission prompts.
