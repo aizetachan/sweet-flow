@@ -284,21 +284,57 @@ i, em { font-style: normal; }
   border-radius: 14px; background: #121214; border: 1px solid rgb(255 255 255 / .18); overflow: hidden;
   box-shadow: 0 0 90px rgb(var(--accent-rgb) / .25), 0 30px 70px rgb(0 0 0 / .6);
 }
-.win__bar { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: #1c1c1f; border-bottom: 1px solid rgb(255 255 255 / .06); }
-.win__bar strong { font-size: 14px; font-weight: 600; color: #e4e4e7; }
-.win__spacer { flex: 1; }
-.win__btn { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 14px; background: rgb(255 255 255 / .06); border: 1px solid rgb(255 255 255 / .12); }
-.win__body { flex: 1; display: flex; flex-direction: column; gap: 14px; padding: 16px 16px 12px; font: 12px/19px var(--mono); color: #8a8a93; overflow: hidden; }
-.win__line { display: flex; gap: 8px; }
-.win__line > span { width: 14px; flex: none; }
-.win__line p { flex: 1; color: #e4e4e7; }
-.win__line--dim p { color: #8a8a93; }
-.win__line--user { padding: 6px 8px; border-radius: 4px; background: #2a2a2e; }
-.win__star { color: var(--accent); }
-.win__prompt { display: flex; align-items: center; gap: 8px; padding-top: 6px; }
-.win__caret { width: 8px; height: 16px; background: var(--red); }
-.win__foot { display: flex; gap: 6px; padding: 9px 16px; border-top: 1px solid rgb(255 255 255 / .06); font: 11px var(--mono); color: #8a8a93; white-space: nowrap; }
-.win__auto { color: #e8955c; }
+/* The assistant chat window (Figma › Asistente/Window). Geist throughout. */
+.chat { padding: 1px; font-family: var(--geist); color: #dcdce0; }
+.chat__head {
+  position: relative; display: flex; align-items: center; gap: 6px; height: 46px; padding: 0 8px 0 80px; flex: none;
+  border-bottom: 1px solid rgb(255 255 255 / .04);
+}
+.chat__lights { position: absolute; left: 20px; top: 17px; }
+.chat__where { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; white-space: nowrap; overflow: hidden; }
+.chat__where strong { font-size: 13px; line-height: 16px; font-weight: 600; color: #f5f5f6; }
+.chat__where span { font-size: 11px; line-height: 13px; color: #8a8a93; }
+.chat__ai, .chat__btn { display: grid; place-items: center; flex: none; width: 30px; height: 30px; border-radius: 15px; border: 1px solid rgb(255 255 255 / .08); }
+.chat__ai--on { background: #26262b; border-color: rgb(255 255 255 / .14); }
+.chat__btn { border: 0; border-radius: 8px; }
+.chat__sep { width: 1px; height: 18px; flex: none; background: rgb(255 255 255 / .08); }
+.chat__tabs { display: flex; align-items: center; gap: 4px; height: 40px; padding: 0 8px; flex: none; overflow: hidden; border-bottom: 1px solid rgb(255 255 255 / .04); }
+.chat__tab {
+  display: flex; align-items: center; gap: 6px; height: 28px; max-width: 180px; min-width: 0; flex: 0 1 auto; padding: 0 4px 0 8px; border-radius: 8px;
+  font-size: 12px; line-height: 16px; color: #8a8a93; white-space: nowrap;
+}
+.chat__tab span { overflow: hidden; text-overflow: ellipsis; }
+.chat__tab--on { background: #26262b; color: #f5f5f6; }
+.chat__close { display: grid; place-items: center; width: 18px; height: 18px; border-radius: 5px; flex: none; }
+.chat__new { display: grid; place-items: center; margin-left: auto; width: 28px; height: 28px; border-radius: 8px; flex: none; }
+.chat__list { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: flex-end; gap: 10px; padding: 16px 14px 8px; overflow: hidden; font-size: 13px; line-height: 20px; }
+.chat__user { display: flex; justify-content: flex-end; }
+.chat__user p { max-width: 324px; padding: 8px 12px; border-radius: 14px 14px 4px 14px; background: #4a7ff7; color: #fff; }
+.chat__assistant { display: flex; flex-direction: column; gap: 8px; }
+.chat__assistant ul { display: flex; flex-direction: column; gap: 8px; padding-left: 8px; }
+.chat__assistant li { display: flex; align-items: center; gap: 6px; }
+.chat__assistant li::before { content: "•"; }
+.chat__assistant li span { flex: 1; min-width: 0; }
+.chat__assistant b { font-weight: 600; }
+.chat__assistant code { padding: 0 4px; border-radius: 5px; background: rgb(47 125 255 / .18); font: 600 12px/18px var(--mono); color: #6cb6ff; white-space: nowrap; }
+.chat__tool {
+  display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 10px; border-radius: 10px;
+  background: #18181b; border: 1px solid rgb(255 255 255 / .04); font-size: 12px; line-height: 16px; white-space: nowrap;
+}
+.chat__tool b { font-weight: 500; color: #dcdce0; }
+.chat__tool span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; color: #8a8a93; }
+.chat__compose { display: flex; flex-direction: column; gap: 6px; padding: 8px 12px 10px; flex: none; }
+.chat__box {
+  display: flex; align-items: center; gap: 6px; padding: 6px 6px 6px 12px; border-radius: 16px;
+  background: #18181b; border: 1px solid rgb(255 255 255 / .08); font-size: 13px; line-height: 20px; color: #63636b;
+}
+.chat__box > span { flex: 1; }
+.chat__send { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 15px; background: #dcdce0; flex: none; }
+.chat__send i { width: 12px; height: 12px; border-radius: 3px; background: #121214; }
+.chat__opts { display: flex; align-items: center; gap: 4px; padding: 0 4px; height: 26px; font-size: 11.5px; line-height: 14px; color: #b4b4bb; white-space: nowrap; }
+.chat__opt { display: inline-flex; align-items: center; gap: 2px; padding: 0 6px; }
+.chat__opt--perm { margin-left: 10px; }
+.chat__ctx { display: inline-flex; align-items: center; gap: 5px; margin-left: auto; padding: 0 4px; font-size: 11px; color: #8a8a93; }
 
 .toast {
   position: absolute; display: flex; align-items: center; gap: 10px; padding: 10px 14px 10px 12px; border-radius: 12px;
@@ -516,7 +552,8 @@ kbd {
   .asis__inner { gap: 40px; }
   .asis__stage { min-height: 0; height: auto; }
   .win { position: relative; left: auto; top: auto; width: 100%; height: auto; }
-  .win__body { font-size: 11px; line-height: 17px; }
+  .chat__list { font-size: 12px; line-height: 18px; }
+  .chat__user p { max-width: 90%; }
   .toast { display: none; }
   .teams__grid { grid-template-columns: 1fr; }
   .tcard--wide { grid-column: auto; }

@@ -36,7 +36,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Geist:wght@600&family=Geist+Mono&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;600&display=swap"
     />
     <link rel="stylesheet" href="/src/styles.css" />
   </head>
@@ -119,7 +119,7 @@
               </div>
               <h3 class="step__title">
                 <span class="step__num">01</span>
-                <img src="/img/icon-biblioteca.svg" width="18" height="18" alt="" />{{how.step1}}
+                {{how.step1}}
               </h3>
               <p class="step__text">{{how.step1Text}}</p>
             </article>
@@ -151,7 +151,7 @@
               </div>
               <h3 class="step__title">
                 <span class="step__num">02</span>
-                <img src="/img/icon-produccion.svg" width="18" height="18" alt="" />{{how.step2}}
+                {{how.step2}}
               </h3>
               <p class="step__text">{{how.step2Text}}</p>
             </article>
@@ -163,7 +163,7 @@
                 <div class="ed">
                   <div class="ed__bar">
                     <span class="ed__chip">{{mock.montage}} ⌄</span>
-                    <strong>SQ040 · {{mock.sq040}}</strong>
+                    <strong>SQ040 · {{mock.sq040Editor}}</strong>
                     <span class="ed__time">00:00:55:23</span>
                     <span class="ed__chip ed__chip--strong">{{mock.assemble}}</span>
                   </div>
@@ -188,7 +188,7 @@
               </div>
               <h3 class="step__title">
                 <span class="step__num">03</span>
-                <img src="/img/icon-editor.svg" width="18" height="18" alt="" />{{how.step3}}
+                {{how.step3}}
               </h3>
               <p class="step__text">{{how.step3Text}}</p>
             </article>
@@ -211,6 +211,25 @@
           </div>
           <div class="feature__shot">
             <img src="/img/shot-biblioteca.jpg" width="680" height="425" alt="{{library.shotAlt}}" loading="lazy" />
+          </div>
+        </div>
+      </section>
+
+      <!-- Feature: Producción -->
+      <section class="feature feature--flip">
+        <div class="container feature__inner">
+          <div class="feature__shot">
+            <img src="/img/shot-produccion-feature.jpg" width="680" height="425" alt="{{production.shotAlt}}" loading="lazy" />
+          </div>
+          <div class="feature__copy">
+            <span class="feature__kicker">{{production.kicker}}</span>
+            <h2 class="feature__title">{{production.title}}</h2>
+            <p class="feature__text">{{production.text}}</p>
+            <ul class="checks">
+              <li><img src="/img/icon-check.svg" width="18" height="18" alt="" />{{production.check1}}</li>
+              <li><img src="/img/icon-check.svg" width="18" height="18" alt="" />{{production.check2}}</li>
+              <li><img src="/img/icon-check.svg" width="18" height="18" alt="" />{{production.check3}}</li>
+            </ul>
           </div>
         </div>
       </section>
@@ -270,27 +289,55 @@
           </div>
 
           <div class="asis__stage">
-            <div class="win">
-              <div class="win__bar">
-                <img src="/img/win-lights.svg" width="50" height="12" alt="" />
-                <img src="/img/win-asis.svg" width="16" height="16" alt="" />
-                <strong>{{assistant.winTitle}}</strong>
-                <span class="win__spacer"></span>
-                <span class="win__btn"><img src="/img/win-btn-1.svg" width="14" height="14" alt="" /></span>
-                <span class="win__btn"><img src="/img/win-btn-2.svg" width="14" height="14" alt="" /></span>
-                <img src="/img/win-icon-3.svg" width="16" height="16" alt="" />
+            <div class="win chat">
+              <div class="chat__head">
+                <img class="chat__lights" src="/img/chat-lights.svg" width="52" height="12" alt="" />
+                <div class="chat__where"><strong>{{chat.title}}</strong><span>{{chat.where}}</span></div>
+                <span class="chat__ai chat__ai--on"><img src="/img/chat-claude.svg" width="18" height="18" alt="" /></span>
+                <span class="chat__ai"><img src="/img/chat-codex.svg" width="16" height="16" alt="" /></span>
+                <i class="chat__sep"></i>
+                <span class="chat__btn"><img src="/img/chat-history.svg" width="18" height="18" alt="" /></span>
+                <span class="chat__btn"><img src="/img/chat-terminal.svg" width="18" height="18" alt="" /></span>
               </div>
-              <div class="win__body">
-                <div class="win__line win__line--user"><span>❯</span><p>{{assistant.chat1}}</p></div>
-                <div class="win__line win__line--dim"><span>●</span><p>{{assistant.chat2}}</p></div>
-                <div class="win__line win__line--dim"><span>●</span><p>{{assistant.chat3}}</p></div>
-                <div class="win__line"><span class="win__star">✻</span><p>{{assistant.chat4}}</p></div>
-                <div class="win__line win__line--user"><span>❯</span><p>{{assistant.chat5}}</p></div>
-                <div class="win__line win__line--dim"><span>●</span><p>{{assistant.chat6}}</p></div>
-                <div class="win__line"><span class="win__star">✻</span><p>{{assistant.chat7}}</p></div>
-                <div class="win__prompt"><span>❯</span><i class="win__caret"></i><span>{{assistant.chat8}}</span></div>
+              <div class="chat__tabs">
+                <div class="chat__tab chat__tab--on">
+                  <img src="/img/chat-claude-13.svg" width="13" height="13" alt="" /><span>{{chat.tab1}}</span>
+                  <img src="/img/chat-busy.svg" width="6" height="6" alt="" />
+                  <i class="chat__close"><img src="/img/chat-x.svg" width="12" height="12" alt="" /></i>
+                </div>
+                <div class="chat__tab"><img src="/img/chat-claude-13.svg" width="13" height="13" alt="" /><span>{{chat.tab2}}</span></div>
+                <span class="chat__new"><img src="/img/chat-plus.svg" width="16" height="16" alt="" /></span>
               </div>
-              <div class="win__foot"><span class="win__auto">▶▶ auto mode on</span><span>(shift+tab to cycle) · esc to interrupt</span></div>
+              <div class="chat__list">
+                <div class="chat__user"><p>{{chat.u1}}</p></div>
+                <div class="chat__assistant">
+                  <p>{{chat.a1}}</p>
+                  <ul>
+                    <li><code>SH0040</code><span>{{chat.b1}}</span></li>
+                    <li><code>SH0070</code><span>{{chat.b2}}</span></li>
+                    <li><code>SH0090</code><span>{{chat.b3}}</span></li>
+                  </ul>
+                </div>
+                <div class="chat__user"><p>{{chat.u2}}</p></div>
+                <div class="chat__tool">
+                  <img src="/img/chat-check.svg" width="14" height="14" alt="" /><b>Sweetflow</b><span>{{chat.tool1}}</span>
+                  <img src="/img/chat-chevron-14.svg" width="14" height="14" alt="" />
+                </div>
+                <div class="chat__assistant"><p>{{chat.a2}}</p></div>
+                <div class="chat__user"><p>{{chat.u3}}</p></div>
+                <div class="chat__tool">
+                  <img src="/img/chat-spinner.svg" width="14" height="14" alt="" /><b>Sweetflow</b><span>{{chat.tool2}}</span>
+                </div>
+              </div>
+              <div class="chat__compose">
+                <div class="chat__box"><span>{{chat.placeholder}}</span><i class="chat__send"><i></i></i></div>
+                <div class="chat__opts">
+                  <img src="/img/chat-claude-13.svg" width="13" height="13" alt="" />
+                  <span class="chat__opt">{{chat.model}}<img src="/img/chat-chevron-12.svg" width="12" height="12" alt="" /></span>
+                  <span class="chat__opt chat__opt--perm">{{chat.perms}}<img src="/img/chat-chevron-12.svg" width="12" height="12" alt="" /></span>
+                  <span class="chat__ctx"><img src="/img/chat-ring.svg" width="16" height="16" alt="" />12%</span>
+                </div>
+              </div>
             </div>
             <div class="toast toast--a">
               <span class="toast__icon toast__icon--accent"><img src="/img/toast-review.svg" width="16" height="16" alt="" /></span>
