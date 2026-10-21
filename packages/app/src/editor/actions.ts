@@ -37,6 +37,8 @@ interface Prefs {
   snap: boolean;
   /** A video and its sound are selected, moved and trimmed together. */
   linked: boolean;
+  /** «Visualización real»: the viewer shows the frame under the pointer over a clip, without cutting. */
+  preview: boolean;
   /** The panel's shots: as a tree, or a gallery. */
   bin: "tree" | "gallery";
   thumb: "s" | "m" | "l";
@@ -46,7 +48,7 @@ interface Prefs {
 }
 
 const PREFS_KEY = "sweetflow:editor";
-const DEFAULTS = { tool: "select" as Tool, snap: true, linked: true, bin: "gallery" as const, thumb: "m" as const, zoom: 60 };
+const DEFAULTS = { tool: "select" as Tool, snap: true, linked: true, preview: false, bin: "gallery" as const, thumb: "m" as const, zoom: 60 };
 
 function readPrefs(): Omit<Prefs, "set"> {
   try {

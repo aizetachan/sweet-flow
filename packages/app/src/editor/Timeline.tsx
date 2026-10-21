@@ -11,6 +11,7 @@ import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type C
 import {
   IconArrowsHorizontal,
   IconCut,
+  IconEye,
   IconLink,
   IconLinkOff,
   IconMagnet,
@@ -63,7 +64,7 @@ import { useFramePoster } from "./posters";
 
 const HEAD_W = 92;
 const PAD = 12;
-const ROW_H = { video: 58, audio: 42 } as const;
+const ROW_H = { video: 58, audio: 52 } as const;
 
 type Row = { track: EditTrack; name: string };
 
@@ -92,7 +93,7 @@ export function Timeline({ edit, openBlock, openShot }: { edit: Edit; openBlock:
   const snap = useStore((s) => s.snap)!;
   const sel = useStore((s) => s.editSel);
   const set = useStore((s) => s.set);
-  const { tool, snap: magnet, linked, zoom: pps } = usePrefs();
+  const { tool, snap: magnet, linked, preview: live, zoom: pps } = usePrefs();
   const setPrefs = usePrefs((s) => s.set);
   const [preview, setPreview] = useState<Edit | null>(null);
   const [hover, setHover] = useState<{ t: number; clip?: EditClip; frame?: number } | null>(null);
@@ -273,14 +274,14 @@ export function Timeline({ edit, openBlock, openShot }: { edit: Edit; openBlock:
     }
     const at = onClipFrame(snap, edit, clip, t);
     setHover({ t: at, clip, frame: clipFrameAt(snap, edit, clip, at) });
-    // With the razor, the viewer shows the frame it would cut at.
-    setPeek(tool === "razor" ? at : null);
+    // With the razor, or «Visualización real» on, the viewer shows the frame under the pointer.
+    setPeek(tool === "razor" || live ? at : null);
   };
-  // Leaving the razor (or the editor), the viewer follows the playhead again.
+  // Neither on (or leaving the editor): the viewer follows the playhead again.
   useEffect(() => {
-    if (tool !== "razor") setPeek(null);
+    if (tool !== "razor" && !live) setPeek(null);
     return () => setPeek(null);
-  }, [tool, setPeek]);
+  }, [tool, live, setPeek]);
 
   // ---------- dropping from the panel ----------
 
@@ -352,6 +353,8 @@ export function Timeline({ edit, openBlock, openShot }: { edit: Edit; openBlock:
         <span className="etl__sep" />
         <IconButton label="Cortar en el cabezal (⌘K)" onClick={() => cutAtPlayhead(edit)}><IconArrowsHorizontal size={16} stroke={1.6} /></IconButton>
         <IconButton label="Agrupar (⌘G)" disabled={!sel.length} onClick={() => groupSelection(edit)}><IconStack2 size={16} stroke={1.6} /></IconButton>
+        <IconButton label={live ? "Visualización real activada: el visor muestra lo que hay bajo el ratón al pasar por los clips" : "Visualización real: ver en el visor lo que hay bajo el ratón al pasar por los clips, sin cortar"}
+          on={live} onClick={() => setPrefs({ preview: !live })}><IconEye size={16} stroke={1.6} /></IconButton>
         <IconButton label="Eliminar (Supr)" disabled={!sel.length} onClick={() => deleteSelection(edit)}><IconTrash size={16} stroke={1.6} /></IconButton>
         <span className="grow" />
         <button className="etl__add" onClick={() => newTrack(edit, "video")} title="Añadir una pista de vídeo"><IconPlus size={13} /> Vídeo</button>
@@ -419,7 +422,7 @@ export function Timeline({ edit, openBlock, openShot }: { edit: Edit; openBlock:
           ))}
           <Playhead pps={pps} scroller={scroller} />
           {hover && !drag.current ? (
-            <div className={cx("etl__hover", tool === "razor" && hover.clip && "etl__hover--razor")} style={{ left: HEAD_W + PAD + hover.t * pps }}>
+            <div className={cx("etl__hover", tool === "razor" && hover.clip && "etl__hover--razor", tool !== "razor" && live && hover.clip && "etl__hover--live")} style={{ left: HEAD_W + PAD + hover.t * pps }}>
               <span className="etl__hovertag">
                 {timecode(hover.t, edit.format.fps)}
                 {hover.clip && hover.frame !== undefined ? <span className="sf-faint"> · fot. {hover.frame}</span> : null}
@@ -616,7 +619,7 @@ function WavePart({ url, fileStart, dur, pps, left, from, to }: { url: string; f
     const cv = ref.current;
     if (!cv || !(peaks instanceof Float32Array) || !w) return;
     const dpr = window.devicePixelRatio || 1;
-    const h = cv.clientHeight || 20;
+    const h = cv.getBoundingClientRect().height || 14;
     cv.width = Math.ceil(w * dpr);
     cv.height = Math.ceil(h * dpr);
     const g = cv.getContext("2d")!;
@@ -630,7 +633,9 @@ function WavePart({ url, fileStart, dur, pps, left, from, to }: { url: string; f
       const b0 = Math.floor(t0 * PEAKS_PER_SEC), b1 = Math.max(b0 + 1, Math.ceil(t1 * PEAKS_PER_SEC));
       let v = 0;
       for (let b = b0; b < b1 && b < peaks.length; b++) if (peaks[b]! > v) v = peaks[b]!;
-      const bar = Math.max(0.5, v * (h - 2) / 2);
+      // In decibels, from −48 dB to full scale, as editors draw it: quiet passages still show.
+      const db = v > 0 ? 1 + (20 * Math.log10(v)) / 48 : 0;
+      const bar = Math.max(0.5, Math.max(0, db) * (h - 1) / 2);
       g.fillRect(x, mid - bar, 1, bar * 2);
     }
   }, [peaks, fileStart, pps, from, w]);

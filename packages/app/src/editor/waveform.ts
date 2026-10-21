@@ -34,12 +34,10 @@ async function decode(url: string): Promise<Peaks> {
         out[i] = m;
       }
     }
-    // Scaled to the loudest moment, so quiet files still show their shape.
+    // Kept as it is (full scale 1), so a quiet file looks quiet; nothing at all: no sound.
     let top = 0;
     for (const v of out) if (v > top) top = v;
-    if (top < 1e-4) return "none";
-    for (let i = 0; i < n; i++) out[i] = out[i]! / top;
-    return out;
+    return top < 1e-3 ? "none" : out;
   } catch {
     // No sound in it, or it can't be read here.
     return "none";

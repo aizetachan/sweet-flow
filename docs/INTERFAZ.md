@@ -1135,8 +1135,9 @@ Dos pestañas: **Planos** y **Clip**.
 - **Lo que se ve en cada clip:** los de vídeo, su imagen a lo largo del clip
   (la miniatura del plano o, si el vídeo no la tiene, su fotograma de entrada
   sacado del archivo); los de audio, **la onda real de su sonido** en el tramo
-  que usan (se lee del archivo una vez en este ordenador). Sin sonido, una
-  línea plana.
+  que usan (se lee del archivo una vez en este ordenador), en decibelios
+  (de −48 dB al máximo) para que los pasajes flojos también se vean. Sin
+  sonido, una línea plana.
 - **Soltar:** los planos entran uno detrás de otro donde se sueltan; en una
   pista de vídeo, su sonido va en la pista de audio de su mismo número,
   enlazado; en una de audio, solo el sonido. Una línea discontinua marca
@@ -1162,7 +1163,11 @@ Dos pestañas: **Planos** y **Clip**.
   (con su sonido enlazado). **Mientras el ratón pasa por encima de un clip, el
   visor muestra ese fotograma** (su código de tiempo en rojo), para ver
   exactamente dónde se va a cortar; al pasar a otro clip, el suyo. Fuera de
-  los clips, el visor vuelve al fotograma del cabezal. **⌘K** corta en el cabezal lo seleccionado (o
+  los clips, el visor vuelve al fotograma del cabezal.
+- **Visualización real** (botón del ojo, a la izquierda de Eliminar): lo mismo
+  que hace la cuchilla con el visor, pero sin cortar. Con el botón activado,
+  al pasar el ratón por un clip el visor muestra ese fotograma y la línea que
+  sigue al ratón es discontinua. **⌘K** corta en el cabezal lo seleccionado (o
   todo lo que hay en él). `V` vuelve a la selección.
 - **Vídeo y sonido enlazados:** se mueven, recortan y cortan juntos.
   **Desenlazar** (⌘L, menú o pestaña Clip) los separa; el vídeo queda mudo y

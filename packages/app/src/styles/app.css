@@ -1466,7 +1466,8 @@ button.topbar__me { position: relative; padding: 0; border: 0; border-radius: 50
 .etlc__label { position: absolute; left: 6px; right: 6px; top: 3px; display: flex; align-items: center; gap: 4px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 11px; color: var(--fg-0); text-shadow: 0 1px 3px #000c; pointer-events: none; }
 .etlc__label b { font-weight: 600; }
 .etlc--video .etlc__label { padding: 1px 4px; left: 4px; right: auto; max-width: calc(100% - 8px); border-radius: 3px; background: #0009; text-shadow: none; }
-.etlc__wave { position: absolute; top: 17px; bottom: 3px; height: auto; pointer-events: none; color: color-mix(in srgb, var(--ok) 70%, #fff); }
+/* A canvas: its height set, or it keeps its own and overflows the clip. */
+.etlc__wave { position: absolute; top: 17px; height: calc(100% - 20px); pointer-events: none; color: color-mix(in srgb, var(--ok) 70%, #fff); }
 .etlc__flat { position: absolute; left: 0; right: 0; top: 50%; margin-top: 7px; height: 1px; background: color-mix(in srgb, var(--ok) 50%, transparent); pointer-events: none; }
 
 /* The editor's panel: shots as a tree or a gallery, and the clip. */
@@ -1526,3 +1527,5 @@ button.topbar__me { position: relative; padding: 0; border: 0; border-radius: 50
 .eclip__acts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 /* The viewer showing the frame under the razor, not the playhead's. */
 .viewer__tc--peek { color: var(--bad); }
+/* «Visualización real»: the line under the pointer, dashed (it does not cut). */
+.etl__hover--live { width: 0; background: none; border-left: 1px dashed var(--fg-1); }
