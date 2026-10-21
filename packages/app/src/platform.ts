@@ -30,9 +30,25 @@ export interface DesktopBridge {
     onData(cb: (id: string, data: string) => void): () => void;
     onExit(cb: (id: string, code: number) => void): () => void;
   };
+  /** The assistant's chat (older desktop builds lack it): see apps/desktop/src/shared/api.ts. */
+  chat?: {
+    available(ai: "claude" | "codex"): Promise<boolean>;
+    send(req: { conv: string; ai: "claude" | "codex"; model: string; session: string | null; permission: "ask" | "auto"; text: string }): Promise<void>;
+    stop(conv: string): void;
+    onEvent(cb: (conv: string, event: unknown) => void): () => void;
+    onExit(cb: (conv: string, code: number | null, error: string) => void): () => void;
+    onApprove(cb: (conv: string, id: string, req: { tool_name: string; input: Record<string, unknown> }) => void): () => void;
+    answer(id: string, allow: boolean): void;
+    load(productionId: string): Promise<string | null>;
+    save(productionId: string, data: string): Promise<void>;
+  };
   agent?: {
     serve?(): void;
     openWindow?(): Promise<void>;
+    context?(ctx: { productionId: string; productionName: string; selection: string | null } | null): void;
+    getContext?(): Promise<{ productionId: string; productionName: string; selection: string | null } | null>;
+    onContext?(cb: (ctx: { productionId: string; productionName: string; selection: string | null } | null) => void): () => void;
+    goto?(node: string): Promise<void>;
     onCall(cb: (id: string, call: { kind: "list" } | { kind: "call"; name: string; args: Record<string, unknown> }) => void): () => void;
     reply(id: string, result: { text: string; isError?: boolean } | Array<{ name: string; description: string; inputSchema: Record<string, unknown> }>): void;
   };

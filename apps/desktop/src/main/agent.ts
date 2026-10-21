@@ -10,24 +10,25 @@
  * Flow is (CLAUDE.md / AGENTS.md) and how to reach the connector (.mcp.json).
  */
 
-import { app, ipcMain, type WebContents } from "electron";
+import { app, BrowserWindow, ipcMain, type WebContents } from "electron";
 import { randomBytes, timingSafeEqual } from "node:crypto";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
 import path from "node:path";
-import { IPC, type AgentCall, type AgentResult, type AgentTool } from "../shared/api";
+import { IPC, type AgentCall, type AgentContext, type AgentResult, type AgentTool } from "../shared/api";
 import { isAppUrl } from "./env";
 
 const KEY = randomBytes(24).toString("hex");
 let port = 0;
 let host: WebContents | null = null;
+let context: AgentContext | null = null;
 const pending = new Map<string, { resolve: (v: unknown) => void; timer: NodeJS.Timeout }>();
 let seq = 0;
 
 
-/** Asks the renderer (list the tools, or run one) and waits for its answer. */
-function ask(call: AgentCall): Promise<unknown> {
+/** Asks the main window (list the tools, or run one) and waits for its answer. */
+export function ask(call: AgentCall): Promise<unknown> {
   const wc = host;
   if (!wc || wc.isDestroyed()) return Promise.reject(new Error("La ventana principal de Sweetflow no está abierta."));
   const id = `c${++seq}`;
@@ -52,7 +53,22 @@ interface RpcRequest {
   params?: Record<string, unknown>;
 }
 
-async function handle(req: RpcRequest): Promise<unknown> {
+/**
+ * The chat's permission prompts (chat.ts): Claude Code asks this tool before
+ * anything not allowed yet, and the chat shows the question to the user.
+ */
+const APPROVE: AgentTool = {
+  name: "approve",
+  description: "Uso interno de Sweetflow: así pide permiso el chat al usuario. No la llames tú.",
+  inputSchema: { type: "object", properties: { tool_name: { type: "string" }, input: { type: "object" }, tool_use_id: { type: "string" } }, required: ["tool_name"] },
+};
+type Approver = (conv: string, req: { tool_name: string; input: Record<string, unknown> }) => Promise<boolean>;
+let approver: Approver | null = null;
+export function setApprover(fn: Approver): void {
+  approver = fn;
+}
+
+async function handle(req: RpcRequest, conv: string): Promise<unknown> {
   switch (req.method) {
     case "initialize": {
       const asked = typeof req.params?.protocolVersion === "string" ? req.params.protocolVersion : "";
@@ -66,10 +82,15 @@ async function handle(req: RpcRequest): Promise<unknown> {
     case "ping":
       return {};
     case "tools/list":
-      return { tools: (await ask({ kind: "list" })) as AgentTool[] };
+      return { tools: [...((await ask({ kind: "list" })) as AgentTool[]), APPROVE] };
     case "tools/call": {
       const name = String(req.params?.name ?? "");
       const args = (req.params?.arguments ?? {}) as Record<string, unknown>;
+      if (name === "approve") {
+        const ok = approver && conv ? await approver(conv, { tool_name: String(args.tool_name ?? ""), input: (args.input ?? {}) as Record<string, unknown> }) : false;
+        const answer = ok ? { behavior: "allow", updatedInput: args.input ?? {} } : { behavior: "deny", message: "El usuario no lo ha permitido." };
+        return { content: [{ type: "text", text: JSON.stringify(answer) }] };
+      }
       try {
         const r = (await ask({ kind: "call", name, args })) as AgentResult;
         return { content: [{ type: "text", text: r.text }], isError: !!r.isError };
@@ -82,16 +103,20 @@ async function handle(req: RpcRequest): Promise<unknown> {
   }
 }
 
-function authorized(req: IncomingMessage): boolean {
-  const got = Buffer.from((req.headers.authorization ?? "").replace(/^Bearer\s+/i, ""));
+function authorized(req: IncomingMessage, query: URLSearchParams): boolean {
+  // The key in the header, or in the address (for clients that can't send headers).
+  const got = Buffer.from((req.headers.authorization ?? "").replace(/^Bearer\s+/i, "") || query.get("k") || "");
   const want = Buffer.from(KEY);
   // Pages in a browser can't call it: no Origin is accepted (only programs on this computer).
   return !req.headers.origin && got.length === want.length && timingSafeEqual(got, want);
 }
 
 async function onRequest(req: IncomingMessage, res: ServerResponse): Promise<void> {
-  if (!authorized(req)) return void res.writeHead(401).end();
-  if (req.url?.split("?")[0] !== "/mcp") return void res.writeHead(404).end();
+  const url = new URL(req.url ?? "/", "http://127.0.0.1");
+  if (!authorized(req, url.searchParams)) return void res.writeHead(401).end();
+  if (url.pathname !== "/mcp") return void res.writeHead(404).end();
+  // Which chat conversation is calling (chat.ts), for its permission prompts.
+  const conv = url.searchParams.get("c") ?? "";
   if (req.method === "DELETE") return void res.writeHead(200).end();
   if (req.method !== "POST") return void res.writeHead(405, { Allow: "POST" }).end();
   const chunks: Buffer[] = [];
@@ -108,7 +133,7 @@ async function onRequest(req: IncomingMessage, res: ServerResponse): Promise<voi
       // Notifications (no id) get no answer.
       if (r.id === undefined || r.id === null) return null;
       try {
-        return { jsonrpc: "2.0", id: r.id, result: await handle(r) };
+        return { jsonrpc: "2.0", id: r.id, result: await handle(r, conv) };
       } catch (e) {
         const err = e as Error & { code?: number };
         return { jsonrpc: "2.0", id: r.id, error: { code: err.code ?? -32603, message: err.message } };
@@ -134,6 +159,20 @@ export function startAgent(): void {
   ipcMain.on(IPC.agentServe, (e) => {
     if (isAppUrl(e.senderFrame?.url ?? "")) host = e.sender;
   });
+  // What the main window has open, for the assistant's window (its chats are per production).
+  ipcMain.on(IPC.agentContext, (e, ctx: unknown) => {
+    if (!isAppUrl(e.senderFrame?.url ?? "") || e.sender !== host) return;
+    context = (ctx ?? null) as AgentContext | null;
+    for (const w of BrowserWindow.getAllWindows()) if (w.webContents !== e.sender) w.webContents.send(IPC.agentContextChanged, context);
+  });
+  ipcMain.handle(IPC.agentGetContext, (e) => (isAppUrl(e.senderFrame?.url ?? "") ? context : null));
+  // A code clicked in the chat: the main window goes there.
+  ipcMain.handle(IPC.agentGoto, async (e, node: unknown) => {
+    if (!isAppUrl(e.senderFrame?.url ?? "") || typeof node !== "string") return;
+    await ask({ kind: "call", name: "navigate", args: { node } }).catch(() => undefined);
+    const win = host ? BrowserWindow.fromWebContents(host) : null;
+    win?.focus();
+  });
   ipcMain.on(IPC.agentReply, (e, id: unknown, result: unknown) => {
     if (e.sender !== host || typeof id !== "string") return;
     const p = pending.get(id);
@@ -148,11 +187,18 @@ export function startAgent(): void {
 // ---------- the assistant's folder ----------
 
 /** The tools that only read: Claude Code uses them without asking. The rest ask first. */
-const READ_ONLY = ["get_context", "list_productions", "get_tree", "get_node", "navigate"];
+export const READ_ONLY = ["get_context", "list_productions", "get_tree", "get_node", "navigate"];
+
+/** The connector's address for a chat conversation (its key in it: some clients send no headers). */
+export function connectorUrl(conv: string): string {
+  return `http://127.0.0.1:${port}/mcp?c=${encodeURIComponent(conv)}&k=${KEY}`;
+}
+
+export const assistantDir = () => path.join(app.getPath("userData"), "Asistente");
 
 /** Writes the assistant's folder (again on every terminal: the key changes with each launch). */
 export function prepareWorkspace(): string {
-  const dir = path.join(app.getPath("userData"), "Asistente");
+  const dir = assistantDir();
   mkdirSync(path.join(dir, ".claude"), { recursive: true });
   const url = `http://127.0.0.1:${port}/mcp`;
   writeFileSync(path.join(dir, ".mcp.json"), JSON.stringify({ mcpServers: { sweetflow: { type: "http", url, headers: { Authorization: `Bearer ${KEY}` } } } }, null, 2));

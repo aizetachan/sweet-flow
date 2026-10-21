@@ -4,7 +4,7 @@
  */
 
 import { contextBridge, ipcRenderer } from "electron";
-import { IPC, VERSION_ARG, type AgentCall, type SweetflowApi, type TeamFolder } from "../shared/api";
+import { IPC, VERSION_ARG, type AgentCall, type AgentContext, type SweetflowApi, type TeamFolder } from "../shared/api";
 
 const versionArg = process.argv.find((a) => a.startsWith(VERSION_ARG));
 
@@ -30,8 +30,23 @@ const api: SweetflowApi = {
     onData: (cb) => listen(IPC.termData, (id: string, data: string) => cb(id, data)),
     onExit: (cb) => listen(IPC.termExit, (id: string, code: number) => cb(id, code)),
   },
+  chat: {
+    available: (ai) => ipcRenderer.invoke(IPC.chatAvailable, ai) as Promise<boolean>,
+    send: (req) => ipcRenderer.invoke(IPC.chatSend, req) as Promise<void>,
+    stop: (conv) => ipcRenderer.send(IPC.chatStop, conv),
+    onEvent: (cb) => listen(IPC.chatEvent, (conv: string, ev: unknown) => cb(conv, ev)),
+    onExit: (cb) => listen(IPC.chatExit, (conv: string, code: number | null, err: string) => cb(conv, code, err)),
+    onApprove: (cb) => listen(IPC.chatApprove, (conv: string, id: string, req: { tool_name: string; input: Record<string, unknown> }) => cb(conv, id, req)),
+    answer: (id, allow) => ipcRenderer.send(IPC.chatAnswer, id, allow),
+    load: (productionId) => ipcRenderer.invoke(IPC.chatLoad, productionId) as Promise<string | null>,
+    save: (productionId, data) => ipcRenderer.invoke(IPC.chatSave, productionId, data) as Promise<void>,
+  },
   agent: {
     serve: () => ipcRenderer.send(IPC.agentServe),
+    context: (ctx) => ipcRenderer.send(IPC.agentContext, ctx),
+    getContext: () => ipcRenderer.invoke(IPC.agentGetContext) as Promise<AgentContext | null>,
+    onContext: (cb) => listen(IPC.agentContextChanged, (ctx: AgentContext | null) => cb(ctx)),
+    goto: (node) => ipcRenderer.invoke(IPC.agentGoto, node) as Promise<void>,
     openWindow: () => ipcRenderer.invoke(IPC.agentWindow) as Promise<void>,
     onCall: (cb) => listen(IPC.agentCall, (id: string, call: AgentCall) => cb(id, call)),
     reply: (id, result) => ipcRenderer.send(IPC.agentReply, id, result),

@@ -95,42 +95,54 @@ tanto en el dashboard como en una producción.
 
 ## 0.2 Asistente (app de escritorio)
 
-Una terminal dentro de la app para que una IA (Claude Code, Codex o cualquiera
-que funcione en terminal) entienda Sweetflow y la controle. Primera versión,
-para probar que funciona; más adelante, con aspecto de chat por delante y la
-terminal por detrás.
+Un chat dentro de la app para que una IA (Claude Code o Codex) entienda
+Sweetflow y la controle. Por delante, un chat; por detrás, la propia línea de
+comandos de esa IA, instalada en el ordenador de cada uno y con su cuenta.
 
 - **Dónde:** botón de terminal al principio de la cabecera de la producción
   (en Biblioteca, Producción y Editor). Abre el asistente **en una ventana
   aparte**, estrecha como un móvil, que se puede llevar a cualquier sitio
   (también a otra pantalla). Sale junto a la ventana principal, o en el borde
   de la pantalla si no cabe. Solo hay una: pulsar el botón otra vez la trae
-  delante. Cerrarla cierra su sesión. La IA trabaja sobre lo que está abierto
-  en la ventana principal.
-- **La terminal:** la shell del propio usuario (la de su Terminal, con el
-  mismo PATH), abierta en la carpeta del asistente de este ordenador
-  (`Sweet Flow/Asistente`, con los datos de la app). Dos botones con solo su
-  logo arrancan una IA en ella: el de **Claude** (escribe `claude`) y el de
-  **OpenAI** (escribe `codex`). Cada persona entra con su propia cuenta de la IA,
-  en la terminal, como siempre: la app no ve ni guarda nada de eso.
-- **La carpeta del asistente** lleva `CLAUDE.md` y `AGENTS.md` (qué es
-  Sweetflow y cómo trabajar con ella) y `.mcp.json` (cómo llegar al conector).
-  La primera vez, Claude Code pregunta si se confía en la carpeta y en el
-  conector.
+  delante. La IA trabaja sobre lo que está abierto en la ventana principal.
+- **Cabecera:** «Asistente» y la producción abierta; los logos de **Claude**
+  y de **OpenAI** eligen la IA (el elegido, en negativo: su color de fondo y
+  el logo del color de la cabecera); el **historial** y la **terminal**.
+  Elegir otra IA con una conversación ya empezada abre una nueva con ella.
+- **Conversaciones por producción**, en pestañas bajo la cabecera (logo de
+  su IA, título sacado del primer mensaje, un punto si está trabajando y otro
+  si espera tu permiso). **+** abre una nueva; **×** la cierra, pero queda en
+  el **historial**, de donde se retoma (o se borra). Se guardan en este
+  ordenador y siguen ahí al volver a abrir la app.
+- **Mensajes:** los tuyos a la derecha; las respuestas con formato (listas,
+  tablas, código); lo que la IA hace en la app, en una línea cada cosa que se
+  despliega para ver su respuesta. Los códigos (SH0030…) se pueden pulsar: la
+  ventana principal va a ese nodo. Cada mensaje lleva, sin verse, la
+  producción y lo seleccionado, para que «este plano» funcione.
+- **Permisos:** por defecto, **«Preguntar antes de cambiar»**: antes de
+  cambiar nada sale una tarjeta «¿Le dejas…?» con lo que quiere hacer y
+  **Permitir / Rechazar**. Lo que solo lee no pregunta. Se puede pasar a
+  **«Automático»** (el modo automático de la IA).
+- **Debajo de la caja de texto:** el **modelo** de la IA elegida (Claude: por
+  defecto, Fable, Opus, Sonnet, Haiku; Codex: por defecto u otro por nombre)
+  y los permisos. Intro envía, ⇧Intro salta de línea; mientras trabaja, el
+  botón para.
+- **La terminal** (su botón en la cabecera): la shell del propio usuario en
+  la carpeta del asistente, para **entrar con tu cuenta** la primera vez o
+  escribir lo que quieras. Si la IA dice que no hay sesión, el chat ofrece
+  abrirla.
 - **El conector** (MCP, solo en este ordenador y con una clave que cambia en
   cada arranque) da a la IA herramientas para ver qué hay abierto, listar y
   abrir producciones, leer el árbol y un nodo, crear nodos, cambiar título,
   notas, estado y personas, mandar a la papelera, comentar, moverse por las
   vistas, «Montar» en el editor y deshacer. Todo pasa por los mismos caminos
   que la interfaz: se ve al momento, queda en el registro como hecho por el
-  usuario y se deshace con ⌘Z. Las de solo leer no piden permiso; las que
-  cambian algo, Claude Code las pregunta antes.
-- La IA no debe tocar a mano los archivos de la carpeta del equipo (lo dice
-  su `CLAUDE.md`): solo el conector.
-- En el navegador no hay asistente (no puede abrir una terminal).
-- **Pendiente:** el aspecto de chat; Codex necesita que se le añada el
-  conector en su propia configuración; marcar en el registro lo hecho «vía
-  IA»; ajustes (qué IA, permisos) en Ajustes y en Equipo.
+  usuario y se deshace con ⌘Z. La IA no debe tocar a mano los archivos de la
+  carpeta del equipo (lo dice su `CLAUDE.md`).
+- En el navegador no hay asistente.
+- **Pendiente:** Codex está conectado pero sin probar (no estaba instalado) y
+  aún no pregunta permisos; marcar en el registro lo hecho «vía IA»; ajustes
+  en Ajustes y en Equipo; renombrar conversaciones.
 
 ## 1. Dashboard
 

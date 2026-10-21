@@ -9,6 +9,7 @@ import path from "node:path";
 import { IPC, VERSION_ARG } from "../shared/api";
 import { iconForWindow, startAppIcon } from "./appIcon";
 import { startAgent } from "./agent";
+import { startChat } from "./chat";
 import { APP_ORIGIN, registerAppScheme, serveApp } from "./appProtocol";
 import { DEV_URL, isAppUrl } from "./env";
 import { registerIpc } from "./ipc";
@@ -165,6 +166,7 @@ if (!app.requestSingleInstanceLock()) {
     });
     // The connector for the assistant's terminal (docs/INTERFAZ.md §0.2).
     startAgent();
+    startChat();
     // The icon with the theme's colour, before the window shows.
     startAppIcon();
     startMirror();

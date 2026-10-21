@@ -4,6 +4,8 @@
  * the tools (tools.ts). Desktop app only: a browser can't open a terminal.
  */
 
+import { codeOf } from "@sweetflow/domain";
+import { useStore } from "../state/store";
 import { TOOLS, runTool } from "./tools";
 
 /** The desktop shell can open the assistant (older builds can't). */
@@ -26,4 +28,20 @@ export function answerAgent(): void {
     void runTool(call.name, call.args).then((r) => agent.reply(id, r));
   });
   agent.serve();
+  // What is open here goes to the assistant's window: its chats are per production.
+  let last = "";
+  const tell = () => {
+    const s = useStore.getState();
+    const node = s.snap?.nodes.find((n) => n.id === s.selectedId);
+    const ctx =
+      s.phase === "production" && s.snap && s.productionId
+        ? { productionId: s.productionId, productionName: s.snap.production.name, selection: node ? `${codeOf(s.snap.production, node)} «${node.title}»` : null }
+        : null;
+    const key = JSON.stringify(ctx);
+    if (key === last) return;
+    last = key;
+    agent.context?.(ctx);
+  };
+  tell();
+  useStore.subscribe(tell);
 }

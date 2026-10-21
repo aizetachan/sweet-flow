@@ -47,6 +47,8 @@ export interface SweetflowApi {
   folder(op: FolderOp, a?: string, b?: string | Uint8Array): Promise<unknown>;
   /** The assistant's terminal (docs/INTERFAZ.md §0.2): a real shell inside the app. */
   terminal: TerminalApi;
+  /** The assistant's chat: an AI's command line run without its screen, one conversation at a time each. */
+  chat: ChatApi;
   /** The other side of the app's connector: the AI's requests, answered by the renderer. */
   agent: AgentApi;
 }
@@ -60,6 +62,38 @@ export interface TerminalApi {
   /** Output of a session; returns a function that stops listening. */
   onData(cb: (id: string, data: string) => void): () => void;
   onExit(cb: (id: string, code: number) => void): () => void;
+}
+
+export type ChatAi = "claude" | "codex";
+
+/** A message of a conversation, to run. */
+export interface ChatSend {
+  conv: string;
+  ai: ChatAi;
+  /** Empty: the AI's own default. */
+  model: string;
+  /** The AI's session to go on with (none: a new one). */
+  session: string | null;
+  /** Ask before anything not allowed yet, or the AI's own automatic mode. */
+  permission: "ask" | "auto";
+  text: string;
+}
+
+export interface ChatApi {
+  /** Whether that AI is installed (found the way the user's terminal finds it). */
+  available(ai: ChatAi): Promise<boolean>;
+  send(req: ChatSend): Promise<void>;
+  stop(conv: string): void;
+  /** Each line the AI writes (its JSON events), as they come. */
+  onEvent(cb: (conv: string, event: unknown) => void): () => void;
+  /** It finished: its exit code, and the end of what it said wrong (if anything). */
+  onExit(cb: (conv: string, code: number | null, error: string) => void): () => void;
+  /** It asks permission for something (answer with `answer`). */
+  onApprove(cb: (conv: string, id: string, req: { tool_name: string; input: Record<string, unknown> }) => void): () => void;
+  answer(id: string, allow: boolean): void;
+  /** A production's conversations, kept on this computer (JSON; null: none yet). */
+  load(productionId: string): Promise<string | null>;
+  save(productionId: string, data: string): Promise<void>;
 }
 
 /** A request of the connector, to run in the renderer. */
@@ -78,9 +112,24 @@ export interface AgentTool {
   inputSchema: Record<string, unknown>;
 }
 
+/** What the main window has open: the assistant's chats belong to that production. */
+export interface AgentContext {
+  productionId: string;
+  productionName: string;
+  /** The node selected, as «SH0030 «Title»» (null: nothing). */
+  selection: string | null;
+}
+
 export interface AgentApi {
   /** This window runs the connector's requests (the main one: it has the production open). */
   serve(): void;
+  /** The main window says what it has open (null: no production). */
+  context(ctx: AgentContext | null): void;
+  /** The assistant's window: what the main one has open, now and when it changes. */
+  getContext(): Promise<AgentContext | null>;
+  onContext(cb: (ctx: AgentContext | null) => void): () => void;
+  /** A code clicked in the chat: the main window shows that node. */
+  goto(node: string): Promise<void>;
   /** Opens the assistant's own window, or brings it to the front. */
   openWindow(): Promise<void>;
   /** The requests, once this window serves them. */
@@ -109,6 +158,19 @@ export const IPC = {
   agentCall: "sf:agent-call",
   agentReply: "sf:agent-reply",
   agentServe: "sf:agent-serve",
+  agentContext: "sf:agent-context",
+  agentContextChanged: "sf:agent-context-changed",
+  agentGetContext: "sf:agent-get-context",
+  agentGoto: "sf:agent-goto",
+  chatAvailable: "sf:chat-available",
+  chatSend: "sf:chat-send",
+  chatStop: "sf:chat-stop",
+  chatEvent: "sf:chat-event",
+  chatExit: "sf:chat-exit",
+  chatApprove: "sf:chat-approve",
+  chatAnswer: "sf:chat-answer",
+  chatLoad: "sf:chat-load",
+  chatSave: "sf:chat-save",
   agentWindow: "sf:agent-window",
 } as const;
 
