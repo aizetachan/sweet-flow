@@ -29,6 +29,8 @@ export interface Conversation {
   items: Item[];
   /** Shown as a tab (closed ones stay in the history). */
   open: boolean;
+  /** How full its context is: tokens in it now, and the model's room (when the AI says). */
+  context?: { used: number; window: number | null };
   createdAt: number;
   updatedAt: number;
 }
@@ -247,6 +249,7 @@ function onEvent(convId: string, ev: Record<string, unknown>): void {
   const conv = hit.conv;
   const items = [...conv.items];
   let session = conv.session;
+  let context = conv.context;
   const update = (id: string, fn: (i: Item) => Item) => {
     const k = items.findIndex((i) => i.id === id);
     if (k >= 0) items[k] = fn(items[k]!);
@@ -270,7 +273,9 @@ function onEvent(convId: string, ev: Record<string, unknown>): void {
         if (id) update(id, (i) => (i.k === "text" ? { ...i, text: i.text + (e.delta!.text ?? "") } : i));
       }
     } else if (type === "assistant") {
-      const m = ev.message as { id: string; content: Array<{ type: string; text?: string; id?: string; name?: string; input?: Record<string, unknown> }> };
+      const m = ev.message as { id: string; usage?: Usage; content: Array<{ type: string; text?: string; id?: string; name?: string; input?: Record<string, unknown> }> };
+      // What this answer was given is what the conversation holds now.
+      if (m.usage && !ev.parent_tool_use_id) context = { used: tokensIn(m.usage), window: context?.window ?? null };
       for (const b of m.content ?? []) {
         if (b.type === "text" && b.text) {
           const queue = rt.pending.get(m.id) ?? [];
@@ -291,6 +296,9 @@ function onEvent(convId: string, ev: Record<string, unknown>): void {
       }
     } else if (type === "result") {
       if (typeof ev.session_id === "string") session = ev.session_id;
+      // The model's room for the conversation (the main model's: the largest).
+      const room = Object.values((ev.modelUsage ?? {}) as Record<string, { contextWindow?: number }>).reduce((a, u) => Math.max(a, u.contextWindow ?? 0), 0);
+      if (room && context) context = { ...context, window: room };
       if (ev.is_error || (ev.subtype && ev.subtype !== "success")) {
         const text = String(ev.result ?? ev.subtype ?? "Algo ha fallado.");
         items.push({ k: "error", id: crypto.randomUUID(), text, login: LOGIN.test(text) });
@@ -312,14 +320,25 @@ function onEvent(convId: string, ev: Record<string, unknown>): void {
         if (items.some((i) => i.id === item.id)) update(item.id, (i) => (i.k === "tool" ? { ...i, result, error, done } : i));
         else items.push({ k: "tool", id: item.id, name, input, result, error, done });
       }
+    } else if (type === "turn.completed" && ev.usage) {
+      const u = ev.usage as { input_tokens?: number; output_tokens?: number };
+      context = { used: (u.input_tokens ?? 0) + (u.output_tokens ?? 0), window: context?.window ?? null };
     } else if (type === "turn.failed" || type === "error") {
       const text = String((ev.error as { message?: string } | undefined)?.message ?? ev.message ?? "Algo ha fallado.");
       items.push({ k: "error", id: crypto.randomUUID(), text, login: LOGIN.test(text) });
     }
   }
-  useChat.setState({ books: replaceConv(st.books, hit.pid, { ...conv, items, session }) });
+  useChat.setState({ books: replaceConv(st.books, hit.pid, { ...conv, items, session, context }) });
   saveSoon(hit.pid);
 }
+
+interface Usage {
+  input_tokens?: number;
+  cache_read_input_tokens?: number;
+  cache_creation_input_tokens?: number;
+  output_tokens?: number;
+}
+const tokensIn = (u: Usage) => (u.input_tokens ?? 0) + (u.cache_read_input_tokens ?? 0) + (u.cache_creation_input_tokens ?? 0) + (u.output_tokens ?? 0);
 
 function replaceConv(books: Record<string, Book>, pid: string, conv: Conversation): Record<string, Book> {
   const b = books[pid]!;

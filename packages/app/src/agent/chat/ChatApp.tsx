@@ -102,9 +102,9 @@ export function ChatApp() {
         <nav className="chat__tabs" aria-label="Conversaciones">
           <div className="chat__tablist">
             {tabs.map((c) => (
-              <div key={c.id} className={cx("chat__tab", c.id === conv?.id && "is-on")} onClick={() => st.setActive(c.id)} title={c.title}>
+              <div key={c.id} className={cx("chat__tab", c.id === conv?.id && "is-on")} onClick={() => st.setActive(c.id)} title={`${c.title} · doble clic para cambiarle el nombre`}>
                 <span className={cx("chat__tabai", `chat__tabai--${c.ai}`)}>{c.ai === "claude" ? <ClaudeMark size={11} /> : <IconBrandOpenai size={12} stroke={1.8} />}</span>
-                <span className="chat__tabname">{c.title}</span>
+                <TabName conv={c} />
                 {running[c.id] ? <span className="chat__busy" title="Trabajando" /> : null}
                 {c.items.some((i) => i.k === "approval" && i.state === "pending") ? <span className="chat__ask" title="Espera tu permiso" /> : null}
                 <button className="chat__tabx" title="Cerrar (queda en el historial)" onClick={(e) => (e.stopPropagation(), st.closeConv(c.id))}><IconX size={11} /></button>
@@ -133,6 +133,47 @@ export function ChatApp() {
         )
       ) : null}
     </main>
+  );
+}
+
+/** A tab's name; a double click renames it (Intro keeps it, Esc leaves it as it was). */
+function TabName({ conv }: { conv: Conversation }) {
+  const [draft, setDraft] = useState<string | null>(null);
+  if (draft === null) return <span className="chat__tabname" onDoubleClick={(e) => (e.stopPropagation(), setDraft(conv.title))}>{conv.title}</span>;
+  const save = () => {
+    const t = draft.trim().replace(/\s+/g, " ");
+    if (t && t !== conv.title) useChat.getState().patch(conv.id, { title: t.slice(0, 60) });
+    setDraft(null);
+  };
+  return (
+    <input className="chat__tabedit" autoFocus value={draft} size={Math.max(8, Math.min(draft.length + 1, 24))}
+      onClick={(e) => e.stopPropagation()}
+      onFocus={(e) => e.currentTarget.select()}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={save}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") save();
+        else if (e.key === "Escape") setDraft(null);
+      }} />
+  );
+}
+
+/** How full the conversation's context is: a ring that fills, and its percentage. */
+function ContextRing({ context }: { context: Conversation["context"] }) {
+  if (!context?.window || !context.used) return null;
+  const k = Math.min(1, context.used / context.window);
+  const pct = Math.round(k * 100);
+  const r = 6.5;
+  const len = 2 * Math.PI * r;
+  const fmt = (n: number) => (n >= 1e6 ? `${+(n / 1e6).toFixed(1)} M` : n >= 1e3 ? `${Math.round(n / 1e3)} k` : String(n));
+  return (
+    <span className={cx("chat__ctx", k > 0.8 && "is-full")} title={`Contexto usado: ${fmt(context.used)} de ${fmt(context.window)} tokens`}>
+      <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+        <circle cx="8" cy="8" r={r} className="chat__ctxbg" />
+        <circle cx="8" cy="8" r={r} className="chat__ctxfill" strokeDasharray={`${len * Math.max(k, 0.02)} ${len}`} transform="rotate(-90 8 8)" />
+      </svg>
+      {pct < 1 ? "<1" : pct}%
+    </span>
   );
 }
 
@@ -328,6 +369,8 @@ function Composer({ conv, busy, missing, onSend, onStop }: { conv: Conversation;
           </select>
           <IconChevronDown size={12} />
         </label>
+        <span className="grow" />
+        <ContextRing context={conv.context} />
       </div>
     </div>
   );

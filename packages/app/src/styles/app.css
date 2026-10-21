@@ -1569,6 +1569,7 @@ button.topbar__me { position: relative; padding: 0; border: 0; border-radius: 50
 .chat__tab:hover { background: var(--ghost); color: var(--fg-1); }
 .chat__tab.is-on { background: var(--bg-4); color: var(--fg-0); }
 .chat__tabname { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chat__tabedit { width: auto; min-width: 0; height: 20px; padding: 0 4px; border: 1px solid var(--line-2); border-radius: 5px; outline: 0; background: var(--bg-2); color: var(--fg-0); font: inherit; }
 .chat__tabai { display: inline-grid; place-items: center; flex: none; }
 .chat__tabai--claude { color: #d97757; }
 .chat__tabai--codex { color: var(--fg-1); }
@@ -1654,6 +1655,10 @@ button.topbar__me { position: relative; padding: 0; border: 0; border-radius: 50
 .chat__select:hover { background: var(--ghost); color: var(--fg-0); }
 .chat__select select { appearance: none; border: 0; outline: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
 .chat__select select option { background: var(--bg-3); color: var(--fg-0); }
+.chat__ctx { display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 4px; color: var(--fg-3); font-size: 11px; font-variant-numeric: tabular-nums; cursor: default; }
+.chat__ctxbg { fill: none; stroke: var(--line-1); stroke-width: 2; }
+.chat__ctxfill { fill: none; stroke: var(--fg-2); stroke-width: 2; stroke-linecap: round; transition: stroke-dasharray .3s; }
+.chat__ctx.is-full .chat__ctxfill { stroke: var(--warn); }
 .chat__model--input { width: 150px; height: 24px; padding: 0 8px; border: 1px solid var(--line-1); border-radius: 7px; outline: 0; background: var(--bg-2); color: var(--fg-0); font-size: 11.5px; }
 
 /* The terminal, a view of the window. */

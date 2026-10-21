@@ -112,7 +112,8 @@ comandos de esa IA, instalada en el ordenador de cada uno y con su cuenta.
 - **Conversaciones por producción**, en pestañas bajo la cabecera (logo de
   su IA, título sacado del primer mensaje, un punto si está trabajando y otro
   si espera tu permiso). **+** abre una nueva; **×** la cierra, pero queda en
-  el **historial**, de donde se retoma (o se borra). Se guardan en este
+  el **historial**, de donde se retoma (o se borra). **Doble clic** en su
+  nombre lo cambia (Intro lo guarda, Esc lo deja como estaba). Se guardan en este
   ordenador y siguen ahí al volver a abrir la app.
 - **Mensajes:** los tuyos a la derecha; las respuestas con formato (listas,
   tablas, código); lo que la IA hace en la app, en una línea cada cosa que se
@@ -125,7 +126,9 @@ comandos de esa IA, instalada en el ordenador de cada uno y con su cuenta.
   **«Automático»** (el modo automático de la IA).
 - **Debajo de la caja de texto:** el **modelo** de la IA elegida (Claude: por
   defecto, Fable, Opus, Sonnet, Haiku; Codex: por defecto u otro por nombre)
-  y los permisos. Intro envía, ⇧Intro salta de línea; mientras trabaja, el
+  y los permisos; a la derecha, **cuánto contexto lleva usado** la
+  conversación: un anillo que se va llenando con su porcentaje (en ámbar
+  pasado el 80 %; al pasar el ratón, los tokens). Intro envía, ⇧Intro salta de línea; mientras trabaja, el
   botón para.
 - **La terminal** (su botón en la cabecera): la shell del propio usuario en
   la carpeta del asistente, para **entrar con tu cuenta** la primera vez o
@@ -141,8 +144,8 @@ comandos de esa IA, instalada en el ordenador de cada uno y con su cuenta.
   carpeta del equipo (lo dice su `CLAUDE.md`).
 - En el navegador no hay asistente.
 - **Pendiente:** Codex está conectado pero sin probar (no estaba instalado) y
-  aún no pregunta permisos; marcar en el registro lo hecho «vía IA»; ajustes
-  en Ajustes y en Equipo; renombrar conversaciones.
+  aún no pregunta permisos (ni muestra el contexto, que no dice su tamaño);
+  marcar en el registro lo hecho «vía IA»; ajustes en Ajustes y en Equipo.
 
 ## 1. Dashboard
 
