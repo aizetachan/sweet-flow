@@ -13,16 +13,19 @@ void main() { gl_Position = vec4(a, 0.0, 1.0); }
 `;
 
 const FRAG = `
-precision mediump float;
+precision highp float;
 uniform vec2 u_res;
 uniform float u_time;
 uniform vec2 u_mouse;     // 0..1, origin bottom-left
 uniform float u_mouseAmt; // 0 = no cursor, 1 = full
 uniform float u_accent;   // accent strength (1 = page background, more for the card texture)
 
+// Sin-free hash: trig of large arguments is unreliable on some GPUs (Metal
+// returns garbage past a range), which showed as a hard black cut.
 vec2 hash2(vec2 p) {
-  p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));
-  return -1.0 + 2.0 * fract(sin(p) * 43758.5453123);
+  vec3 p3 = fract(vec3(p.xyx) * vec3(0.1031, 0.1030, 0.0973));
+  p3 += dot(p3, p3.yzx + 33.33);
+  return -1.0 + 2.0 * fract((p3.xx + p3.yz) * p3.zy);
 }
 float noise(vec2 p) {
   vec2 i = floor(p), f = fract(p);
@@ -52,36 +55,36 @@ void main() {
   // Night sky: near-black with a faint relief so the dark has volume.
   vec3 col = bg + vec3(0.010) * (fbm(vec2(x * 0.8, y * 0.8) + t * 0.02) - 0.2);
 
-  // Aurora curtains: vertical bands whose centre line undulates along the
-  // height (sines on y with time offset plus a little noise), with soft
-  // noisy edges, a colour gradient per band (light at the top, deep at the
-  // bottom) and a fade at both ends. The cursor pushes a curtain aside when
-  // it comes near; the curtains never stop moving on their own.
+  // Aurora bands: horizontal curtains that span the whole width and undulate
+  // up and down (sines on x with a time offset plus noise), with soft noisy
+  // edges, a colour gradient from deep blue (low) to light blue (high) and a
+  // fade towards the top and bottom edges. The cursor pushes a band away when
+  // it comes near; the bands never stop moving on their own.
   for (int i = 0; i < 4; i++) {
     float fi = float(i);
-    float base = (0.14 + 0.24 * fi) * ar + 0.06 * ar * sin(t * 0.06 + fi * 1.7);
-    float cx = base
-      + 0.085 * ar * sin(y * 3.4 + t * 0.30 + fi * 2.1)
-      + 0.045 * ar * sin(y * 7.3 - t * 0.19 + fi * 0.7)
-      + 0.090 * ar * (fbm(vec2(y * 1.6 + fi * 3.0, t * 0.07)) - 0.1);
-    vec2 toM = vec2(cx, y) - m;
-    float d = length(toM);
-    cx += sign(toM.x + 0.0001) * exp(-d * d * 5.0) * 0.16 * ar * u_mouseAmt;
+    float xi = x * 1.3 + fi * 1.7;
+    float curtain = fbm(vec2(xi * 0.9, t * 0.06 + fi * 2.0)) * 0.30;
+    float center = 0.22 + 0.17 * fi
+      + sin(xi * 1.5 + t * 0.22 + fi * 1.1) * 0.10
+      + sin(xi * 3.1 - t * 0.14 + fi * 0.6) * 0.035
+      + curtain - 0.15;
+    vec2 toM = vec2(x, center) - m;
+    float dmm = length(toM);
+    center += sign(toM.y + 0.0001) * exp(-dmm * dmm * 5.0) * 0.12 * u_mouseAmt;
 
-    float width = 0.11 * ar * (0.75 + 0.5 * fbm(vec2(y * 2.2 + fi, t * 0.09)));
-    float dx = (x - cx) / width;
-    float band = exp(-dx * dx);
-    float vfade = smoothstep(0.0, 0.28, y) * (1.0 - smoothstep(0.72, 1.0, y));
-    float shimmer = 0.55 + 0.45 * fbm(vec2(x * 1.8 + fi, y * 4.0 - t * 0.22));
-    float a = band * vfade * shimmer;
+    float d = abs(y - center);
+    float thick = 0.16 + 0.08 * fbm(vec2(xi * 1.2, t * 0.08 + fi));
+    float band = smoothstep(thick, 0.0, d);
+    float shimmer = 0.6 + 0.4 * fbm(vec2(xi * 2.0 - t * 0.18, y * 3.0 + fi));
+    float a = band * shimmer * (0.75 - fi * 0.12);
 
-    vec3 top = mix(light, mid, 0.35 + 0.3 * sin(fi * 1.3));
-    vec3 bandCol = mix(deep, top, smoothstep(0.15, 0.9, y));
-    col += bandCol * a * 0.20 * u_accent;
+    vec3 top = mix(light, mid, 0.3 + 0.3 * sin(fi * 1.3));
+    vec3 bandCol = mix(deep, top, smoothstep(0.1, 0.9, y));
+    col += bandCol * a * 0.26 * u_accent;
   }
-
-  // Keep it dark at the very top so the header blends in.
-  col = mix(bg, col, smoothstep(0.0, 0.08, 1.0 - uv.y) * 0.9 + 0.1);
+  // Fade at the very bottom and keep it dark at the top so the header blends in.
+  col = mix(bg, col, smoothstep(0.0, 0.12, y));
+  col = mix(bg, col, smoothstep(0.0, 0.08, 1.0 - y) * 0.9 + 0.1);
   gl_FragColor = vec4(col, 1.0);
 }
 `;
