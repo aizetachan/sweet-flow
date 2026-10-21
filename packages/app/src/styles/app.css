@@ -676,6 +676,11 @@ button.tree__hint { padding: 0 14px 8px; }
 .dcard:hover .dentry__pin, .dcard:has(:focus-visible) .dentry__pin, .dentry__pin.is-on { opacity: 1; }
 .dentry__pin.is-on { background: color-mix(in srgb, var(--bg-3) 88%, #000); }
 .dentry__pin.is-on .sf-icon-btn { color: var(--warn); }
+/* One surface: the button's own hover fill would draw a lighter square inside it (a frame);
+   the whole button lights up instead. */
+.dentry__pin .sf-icon-btn, .dentry__pin .sf-icon-btn:hover { background: none; }
+.dentry__pin:hover { background: var(--bg-4); }
+.dentry__pin.is-on:hover { background: color-mix(in srgb, var(--bg-4) 88%, #000); }
 /* Folders: the card starts 13 px lower (its tab rises above it): the pin goes up onto the tab,
    level with the productions' pins in the same row; «⋯» stays where it is. */
 .dcard--folder .dentry__pin { top: -7px; }
