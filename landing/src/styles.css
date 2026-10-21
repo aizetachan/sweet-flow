@@ -352,11 +352,8 @@ i, em { font-style: normal; }
 /* --- para equipos --- */
 .teams { position: relative; background: var(--bg-2); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); overflow: hidden; }
 .teams > .container { position: relative; z-index: 1; }
-/* Six shots from the demo production, tiled behind the cards at 10 %. */
-.teams__bg {
-  position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: .1;
-  display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); gap: 2px;
-}
+/* One video (six shots in a row) covering the whole section at 10 %. */
+.teams__bg { position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: .1; }
 .teams__bg video { width: 100%; height: 100%; object-fit: cover; display: block; }
 .teams__bg::after {
   content: ""; position: absolute; inset: 0;
@@ -569,9 +566,6 @@ kbd {
   .toast { display: none; }
   .teams__grid { grid-template-columns: 1fr; }
   .tcard--wide { grid-column: auto; }
-  /* Phones: two columns and only the first four clips (less data on the free plan). */
-  .teams__bg { grid-template-columns: 1fr 1fr; }
-  .teams__bg video:nth-child(n + 5) { display: none; }
   .states__log small { display: none; }
   .cta { padding: 64px 0; }
   .cta__title { font-size: 30px; line-height: 36px; }
