@@ -40,32 +40,40 @@ void main() {
   float ar = u_res.x / u_res.y;
   vec2 uv = gl_FragCoord.xy / u_res;
   vec2 p = vec2(uv.x * ar, uv.y) * 1.1;
-  vec2 m = vec2(u_mouse.x * ar, u_mouse.y);
+  vec2 m = vec2(u_mouse.x * ar, u_mouse.y) * 1.1;
   float t = u_time * 0.07;
-
-  // Cursor: a radial push on the sampling point and a soft glow.
-  vec2 toM = p - m * 1.1;
-  float dm = length(toM);
-  vec2 push = toM / (dm + 0.08) * exp(-dm * dm * 2.2) * 0.3 * u_mouseAmt;
-
-  vec2 q = vec2(fbm(p + t), fbm(p - t * 0.8 + vec2(3.1, 1.7)));
-  vec2 w = vec2(fbm(p + 2.0 * q + vec2(1.3, 9.2) + t * 0.5), fbm(p + 2.0 * q + vec2(8.3, 2.8) - t * 0.4));
-  float n = fbm(p + 1.8 * w + push);
-  float n2 = fbm(p * 0.6 - 1.2 * w + vec2(5.0, 2.0));
 
   vec3 bg = vec3(0.055, 0.055, 0.063);          // #0e0e10
   vec3 blue = vec3(0.184, 0.490, 1.000);         // #2f7dff
   vec3 deep = vec3(0.086, 0.282, 0.847);         // #1648d8
+
+  // Layer A: the main field. Fully autonomous, it never sees the cursor.
+  vec2 q = vec2(fbm(p + t), fbm(p - t * 0.8 + vec2(3.1, 1.7)));
+  vec2 w = vec2(fbm(p + 2.0 * q + vec2(1.3, 9.2) + t * 0.5), fbm(p + 2.0 * q + vec2(8.3, 2.8) - t * 0.4));
+  float n = fbm(p + 1.8 * w);
+  float n2 = fbm(p * 0.6 - 1.2 * w + vec2(5.0, 2.0));
   float h = n * 0.5 + 0.5;
   // A sea of near-black: a faint relief (±1 % luminance) so the dark has volume.
   vec3 col = bg + vec3(0.012) * (h - 0.5) * 2.0;
-  // The blue only lives on the crests of the field: a thin, sparse accent.
-  // The blue only lives on the crests of the field: a sparse accent that is
-  // always there, drifting on its own; the cursor adds only a faint touch.
-  float crest = smoothstep(0.54, 0.86, h);
+  // The blue lives on the crests of the field: a sparse accent, always flowing.
+  float crest = smoothstep(0.52, 0.86, h);
   float veins = smoothstep(0.45, 0.95, n2 * 0.5 + 0.5);
-  col += mix(deep, blue, veins) * crest * 0.15 * u_accent;
-  col += blue * exp(-dm * dm * 7.0) * 0.04 * u_mouseAmt;
+  col += mix(deep, blue, veins) * crest * 0.20 * u_accent;
+
+  // Layer B: a softer, slower, larger field laid over A. This is the one the
+  // cursor gently repels: the sampling point is pushed away from the cursor,
+  // so the veins bend around it instead of following it. No glow.
+  vec2 toM = p - m;
+  float dm = length(toM);
+  vec2 repel = toM / (dm + 0.05) * exp(-dm * dm * 1.6) * 0.22 * u_mouseAmt;
+  vec2 pb = p * 0.65 + vec2(4.2, 7.9) + repel;
+  float tb = u_time * 0.04;
+  vec2 qb = vec2(fbm(pb - tb), fbm(pb + tb * 0.7 + vec2(2.2, 5.3)));
+  float nb = fbm(pb + 1.6 * qb + vec2(0.0, -tb * 0.3));
+  float hb = nb * 0.5 + 0.5;
+  float crestB = smoothstep(0.50, 0.90, hb);
+  col += deep * crestB * 0.11 * u_accent;
+
   // Keep it dark at the very top so the sticky nav blends in.
   col = mix(bg, col, smoothstep(0.0, 0.08, 1.0 - uv.y) * 0.9 + 0.1);
   gl_FragColor = vec4(col, 1.0);
@@ -144,10 +152,9 @@ export function initFluidBackground(): void {
   resize();
   window.addEventListener("resize", resize);
 
-  // The cursor only stirs the fluid when it is over the bare background.
-  // Over a card, an image, text or a control the field keeps flowing on its own.
-  const OVER_CONTENT =
-    ".card, .hero__window, .feature__shot, .strip__bar, .win, .toast, .btn, .pill, .chip, .lang, .toggle, .nav, .footer, dialog, img, video, p, h1, h2, h3, li, kbd, a, button";
+  // The cursor is tracked wherever it is (the fields are behind everything,
+  // so layer B bends around it over cards too) and only lets go when it
+  // leaves the window. Layer A never reacts.
   const hasPointer = window.matchMedia("(pointer: fine)").matches;
   const target = { x: 0.5, y: 0.5 };
   const mouse = { x: 0.5, y: 0.5 };
@@ -155,11 +162,6 @@ export function initFluidBackground(): void {
   let amtTarget = 0;
   if (hasPointer) {
     window.addEventListener("pointermove", (e) => {
-      const overContent = e.target instanceof Element && e.target.closest(OVER_CONTENT) !== null;
-      if (overContent) {
-        amtTarget = 0;
-        return;
-      }
       target.x = e.clientX / window.innerWidth;
       target.y = 1 - e.clientY / window.innerHeight;
       amtTarget = 1;
