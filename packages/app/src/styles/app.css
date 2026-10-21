@@ -1541,11 +1541,12 @@ button.topbar__me { position: relative; padding: 0; border: 0; border-radius: 50
 .agent__title { font-weight: 600; font-size: 13px; }
 .agent__prod { font-size: 11px; color: var(--fg-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .agent__sep { width: 1px; height: 18px; margin: 0 2px; background: var(--line-1); }
-/* The AIs: their logo in its colour; the one chosen, in negative (its colour behind, the header's in the logo). */
-.agent__ai { --ai: var(--fg-0); display: inline-grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 1px solid var(--line-1); border-radius: 50%; background: transparent; color: var(--ai); cursor: pointer; transition: background .15s, color .15s, border-color .15s; }
-.agent__ai--claude { --ai: #d97757; }
+/* The AIs: both logos white; the one chosen takes its colour behind (Claude: orange with the logo
+   white; OpenAI: white with the logo black). */
+.agent__ai { display: inline-grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 1px solid var(--line-1); border-radius: 50%; background: transparent; color: var(--fg-0); cursor: pointer; transition: background .15s, color .15s, border-color .15s; }
 .agent__ai:hover:not(.is-on) { background: var(--ghost); border-color: var(--line-2); }
-.agent__ai.is-on { background: var(--ai); border-color: var(--ai); color: var(--bg-1); }
+.agent__ai--claude.is-on { background: #d97757; border-color: #d97757; color: #fff; }
+.agent__ai--openai.is-on { background: #fff; border-color: #fff; color: #0c0c0d; }
 .agent__icon { display: inline-grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: var(--fg-2); cursor: pointer; }
 .agent__icon:hover:not(:disabled), .agent__icon.is-on { background: var(--ghost); color: var(--fg-0); }
 .agent__icon:disabled { opacity: .4; cursor: default; }

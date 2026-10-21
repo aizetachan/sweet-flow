@@ -26,15 +26,6 @@ import { ClaudeMark, TerminalView } from "../Terminal";
 import { Markdown } from "./Markdown";
 import { AI_NAME, MODELS, startChat, useChat, type Ai, type Conversation, type Item } from "./store";
 
-const AI_KEY = "sweetflow:assistant-ai";
-const readAi = (): Ai => {
-  try {
-    return localStorage.getItem(AI_KEY) === "codex" ? "codex" : "claude";
-  } catch {
-    return "claude";
-  }
-};
-
 export function ChatApp() {
   const ctx = useChat((s) => s.ctx);
   const book = useChat((s) => (s.ctx ? s.books[s.ctx.productionId] : undefined));
@@ -43,7 +34,8 @@ export function ChatApp() {
   const [view, setView] = useState<"chat" | "terminal">("chat");
   const [termUsed, setTermUsed] = useState(false);
   const [run, setRun] = useState<{ cmd: string; seq: number } | null>(null);
-  const [pick, setPick] = useState<Ai>(readAi);
+  // No AI is chosen until the user picks one (or opens a conversation, which has its own).
+  const [pick, setPick] = useState<Ai | null>(null);
   const [have, setHave] = useState<Record<Ai, boolean | null>>({ claude: null, codex: null });
 
   useEffect(() => {
@@ -59,11 +51,6 @@ export function ChatApp() {
 
   const choose = (next: Ai) => {
     setPick(next);
-    try {
-      localStorage.setItem(AI_KEY, next);
-    } catch {
-      // Only a convenience.
-    }
     setView("chat");
     if (!ctx || !book) return;
     // An empty conversation changes its AI; one already talking keeps it, and a new one starts.
@@ -111,7 +98,7 @@ export function ChatApp() {
               </div>
             ))}
           </div>
-          <button className="chat__new" title={`Nueva conversación con ${AI_NAME[ai]}`} disabled={!ctx || !book} onClick={() => st.newConv(ai)}><IconPlus size={14} /></button>
+          <button className="chat__new" title={ai ? `Nueva conversación con ${AI_NAME[ai]}` : "Elige arriba Claude u OpenAI"} disabled={!ctx || !book || !ai} onClick={() => ai && st.newConv(ai)}><IconPlus size={14} /></button>
         </nav>
       ) : null}
 
@@ -122,15 +109,17 @@ export function ChatApp() {
           <Empty>Abre una producción en la ventana principal de Sweetflow: cada producción tiene sus conversaciones.</Empty>
         ) : !book ? (
           <Empty>Cargando…</Empty>
-        ) : !conv ? (
+        ) : !conv && !ai ? (
+          <Empty><p>Elige arriba <strong>Claude</strong> u <strong>OpenAI</strong> para empezar una conversación sobre «{ctx.productionName}».</p></Empty>
+        ) : !conv && ai ? (
           <Empty>
             <p>Habla con {AI_NAME[ai]} sobre «{ctx.productionName}»: puede leer la producción y cambiarla por ti.</p>
             {have[ai] === false ? <p className="sf-faint">No encuentro {ai === "claude" ? "Claude Code" : "Codex"} en este ordenador.</p> : null}
             <button className="chat__cta" onClick={() => st.newConv(ai)}><IconPlus size={14} /> Nueva conversación</button>
           </Empty>
-        ) : (
+        ) : conv ? (
           <Thread conv={conv} busy={!!running[conv.id]} missing={have[conv.ai] === false} onLogin={() => showTerminal(conv.ai === "claude" ? "claude" : "codex login")} />
-        )
+        ) : null
       ) : null}
     </main>
   );
