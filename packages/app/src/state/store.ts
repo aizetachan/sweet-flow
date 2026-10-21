@@ -107,7 +107,20 @@ interface UiState {
   leaveAsk: { folderId?: Id | null; openId?: Id; closeId?: Id } | null;
   /** Desktop app: productions open in tabs (title bar), in order (docs/INTERFAZ.md §0.1). */
   tabs: Id[];
+  /**
+   * The editor (docs/INTERFAZ.md §4): the montage shown, as the way in from
+   * a level (or the production, `nodeId` null) through the blocks opened.
+   */
+  editorPath: EditorRef[];
+  /** Clips selected on the timeline. */
+  editSel: Id[];
+  /** The editor's playhead (s). */
+  editTime: number;
+  editTab: "bin" | "clip";
 }
+
+/** A montage reached in the editor: a level's (or the production's) or one opened from a block. */
+export type EditorRef = { nodeId: Id | null } | { editId: Id };
 
 const SHOW_CODES_KEY = "sweetflow:show-codes";
 function readShowCodes(): boolean {
@@ -211,7 +224,7 @@ function saveTabs(tabs: Id[]): void {
 }
 
 /** Where you were in a production: kept while its tab is in the background, back when you return. */
-const KEPT = ["selectedId", "multi", "scopeId", "activeMediaId", "playhead", "view", "sideTab", "libOpenId", "panelTab"] as const;
+const KEPT = ["selectedId", "multi", "scopeId", "activeMediaId", "playhead", "view", "sideTab", "libOpenId", "panelTab", "editorPath", "editTime", "editTab"] as const;
 type Kept = Pick<UiState, (typeof KEPT)[number]>;
 /** A production open in a background tab: still loaded and up to date, with where you were. */
 interface Parked {
@@ -225,7 +238,7 @@ const parked = new Map<Id, Parked>();
 export const keptScroll = new Map<string, { top: number; left: number }>();
 
 // Nothing selected yet: the left column shows the structure, never an empty panel.
-const PANEL_RESET = { selectedId: null, multi: [], scopeId: null, activeMediaId: null, playhead: 0, playing: false, floating: [], view: "board" as View, sideTab: "structure" as SideTab, libOpenId: null };
+const PANEL_RESET = { selectedId: null, multi: [], scopeId: null, activeMediaId: null, playhead: 0, playing: false, floating: [], view: "board" as View, sideTab: "structure" as SideTab, libOpenId: null, editorPath: [{ nodeId: null }] as EditorRef[], editSel: [] as Id[], editTime: 0, editTab: "bin" as const };
 
 const library = createLibrary();
 let unsubscribeLibrary: () => void = () => undefined;
@@ -272,6 +285,10 @@ export const useStore = create<Store>((set, get) => ({
   leaveAsk: null,
   tabs: readTabs(),
   sideTab: "structure",
+  editorPath: [{ nodeId: null }],
+  editSel: [],
+  editTime: 0,
+  editTab: "bin",
   set: (patch) => {
     if (patch.showCodes !== undefined) saveShowCodes(patch.showCodes);
     set(patch);

@@ -8,3 +8,4 @@ export * from "./log";
 export * from "./intents";
 export * from "./team";
 export * from "./undo";
+export * from "./edit";

@@ -68,6 +68,8 @@ export interface Production {
   libraryShare?: LibraryShare;
   /** The image its dashboard card shows (docs/INTERFAZ.md §1); null or absent: its initials. */
   cover?: ProductionCover | null;
+  /** Resolution and frame rate new montages of the editor start with (docs/INTERFAZ.md §4). */
+  editFormat?: { width: number; height: number; fps: number } | null;
   createdAt: Millis;
   updatedAt: Millis;
 }
@@ -198,6 +200,8 @@ export interface Media {
   durationSec?: number;
   width?: number;
   height?: number;
+  /** Frames per second of a video, read from its file (the editor cuts on its frames). */
+  fps?: number;
   archived: boolean;
   generation?: GenerationInfo;
   error?: string;

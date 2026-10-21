@@ -15,6 +15,7 @@ export const UNDOABLE = [
   "renameProduction", "updateLevels", "updateStatuses", "setArchived", "placeTakes", "selectTake", "removeTake",
   "splitIntoShots", "extractToRow", "splitTakeShot", "shotsFromEdited", "unshelveNode",
   "addComment", "setCommentResolved", "moveCommentToVersion", "moveCommentMark", "deleteComment",
+  "saveEdits", "setEditFormat",
 ] as const;
 
 /** What each step is called in the notice («Deshecho: mover a la papelera»). */
@@ -29,6 +30,7 @@ export const STEP_LABEL: Record<(typeof UNDOABLE)[number], string> = {
   splitIntoShots: "cortar en planos", extractToRow: "sacar a la fila", splitTakeShot: "cortar", shotsFromEdited: "planos del vídeo editado",
   unshelveNode: "devolver al tablero", addComment: "comentar", setCommentResolved: "resolver el comentario",
   moveCommentToVersion: "mover el comentario", moveCommentMark: "mover la marca", deleteComment: "borrar el comentario",
+  saveEdits: "editar el montaje", setEditFormat: "cambiar el formato del montaje",
 };
 
 /** Steps kept per production open. */

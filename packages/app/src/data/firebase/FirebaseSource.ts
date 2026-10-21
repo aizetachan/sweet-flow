@@ -33,6 +33,8 @@ import type {
   ClientEntry,
   AssetType,
   LibraryShare,
+  Edit,
+  EditFormat,
 } from "@sweetflow/domain";
 import {
   CALLABLES,
@@ -191,6 +193,7 @@ export class FirebaseSource implements DataSource {
       shelf: [],
       library: [],
       groups: [],
+      edits: [],
       media: l.media.map((m) => this.withUrls(m)),
       takes: l.takes,
       comments: l.comments,
@@ -306,6 +309,14 @@ export class FirebaseSource implements DataSource {
 
   updateLevels(levels: LevelDef[]): void {
     this.call<UpdateLevelsRequest>(CALLABLES.updateLevels, { productionId: this.prodId(), levels });
+  }
+
+  saveEdits(_edits: Edit[]): void {
+    throw new NotImplemented("Editor", "etapa C");
+  }
+
+  setEditFormat(_format: EditFormat | null): void {
+    throw new NotImplemented("Editor", "etapa C");
   }
 
   setCover(cover: ProductionCover | null): void {

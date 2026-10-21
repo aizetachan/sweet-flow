@@ -12,6 +12,8 @@ import type {
   Activity,
   Asset,
   Comment,
+  Edit,
+  EditFormat,
   Id,
   LevelDef,
   Media,
@@ -54,6 +56,8 @@ export interface Snapshot {
   comments: Comment[];
   assets: Asset[];
   activity: Activity[];
+  /** The editor's montages (docs/INTERFAZ.md §4): of levels, of the production and groups. */
+  edits: Edit[];
   presence: Presence[];
   /** Linked desktop folder (mirror) state. */
   mirror: MirrorState;
@@ -315,6 +319,14 @@ export interface DataSource {
   moveCommentToVersion(commentId: Id, mediaId: Id): void;
   /** Its author moves its point or area. */
   moveCommentMark(commentId: Id, mark: { point?: { x: number; y: number }; area?: { x: number; y: number; w: number; h: number } }): void;
+
+  // editor (docs/INTERFAZ.md §4)
+  /** Montages saved whole (new or changed), as one step to undo. */
+  saveEdits(edits: Edit[]): void;
+  /** The resolution and frame rate new montages start with (null: 1920×1080 at 25). */
+  setEditFormat(format: EditFormat | null): void;
+  /** A video's frame rate read from the file: the editor cuts on its frames. */
+  noteFps?(mediaId: Id, fps: number): void;
 
   // collaboration & mirror
   setPresence(nodeId: Id | undefined): void;

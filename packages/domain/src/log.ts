@@ -11,6 +11,7 @@
 
 import { parseStamp, type Stamp } from "./clock";
 import { byNumber, splitTrash } from "./tree";
+import type { Edit } from "./edit";
 import type { ClientEntry, ClientGuest, Comment, Id, LevelDef, LibKind, LibraryShare, Media, Member, Millis, ProdNode, Production, ShotGroup, StatusDef, Take } from "./types";
 
 /** Bump when an event's shape changes incompatibly. */
@@ -24,7 +25,7 @@ export type LogEventBody =
       type: "production.created";
       production: Pick<Production, "id" | "workspaceId" | "name" | "format" | "levels" | "statuses">;
     }
-  | { type: "production.updated"; patch: Partial<Pick<Production, "name" | "format" | "cover">> }
+  | { type: "production.updated"; patch: Partial<Pick<Production, "name" | "format" | "cover" | "editFormat">> }
   /** Who is working on the production; written by each user on first open, and on profile changes. */
   | { type: "member.joined"; member: Pick<Member, "uid" | "displayName" | "email" | "role" | "photoUrl"> }
   | { type: "levels.set"; levels: LevelDef[] }
@@ -70,14 +71,18 @@ export type LogEventBody =
   /** Review (docs/INTERFAZ.md §2.6): on a node, a version, a moment of a video, a point. */
   | { type: "comment.added"; comment: CommentRecord }
   | { type: "comment.updated"; id: Id; patch: Partial<Pick<Comment, "text" | "resolved" | "point" | "area" | "mediaId" | "history">> }
-  | { type: "comment.deleted"; id: Id };
+  | { type: "comment.deleted"; id: Id }
+  /** A montage of the editor (docs/INTERFAZ.md §4), whole: the last one saved wins. */
+  | { type: "edit.saved"; edit: EditRecord }
+  | { type: "edit.deleted"; id: Id };
 
 /** What the log keeps of a media: the URL to show it is resolved by each device. */
 export type MediaRecord = Omit<Media, "productionId" | "url" | "thumbUrl">;
 export type CommentRecord = Omit<Comment, "productionId">;
 export type GroupRecord = Omit<ShotGroup, "productionId">;
 export type TakeRecord = Omit<Take, "productionId" | "thumbUrl">;
-export type MediaPatch = Partial<Pick<Media, "status" | "progress" | "archived" | "error" | "file" | "remote" | "width" | "height" | "durationSec" | "chosen" | "nodeId" | "version" | "order">>;
+export type EditRecord = Omit<Edit, "productionId">;
+export type MediaPatch = Partial<Pick<Media, "status" | "progress" | "archived" | "error" | "file" | "remote" | "width" | "height" | "durationSec" | "fps" | "chosen" | "nodeId" | "version" | "order">>;
 
 export type LogEvent = LogEventBody & {
   v: number;
@@ -109,6 +114,8 @@ export interface LogState {
   groups: ShotGroup[];
   /** Comments whose node still exists. */
   comments: Comment[];
+  /** The editor's montages (of levels that still exist, the production's and groups). */
+  edits: Edit[];
   members: Member[];
   conflicts: NumberConflict[];
   /** Highest stamp folded; feed it to `hlcObserve` before writing new events. */
@@ -183,6 +190,8 @@ const TYPES = new Set<string>([
   "comment.added",
   "comment.updated",
   "comment.deleted",
+  "edit.saved",
+  "edit.deleted",
 ]);
 
 function isLogEvent(e: unknown): e is LogEvent {
@@ -232,6 +241,7 @@ export function foldLog(events: LogEvent[]): LogState {
   const takes = new Map<Id, TakeRecord>();
   const groups = new Map<Id, GroupRecord>();
   const comments = new Map<Id, CommentRecord>();
+  const edits = new Map<Id, EditRecord>();
 
   for (const e of sorted) {
     const at = wallOf(e.at);
@@ -368,6 +378,12 @@ export function foldLog(events: LogEvent[]): LogState {
       case "comment.deleted":
         comments.delete(e.id);
         break;
+      case "edit.saved":
+        edits.set(e.edit.id, { ...e.edit, updatedAt: at, updatedBy: e.userId });
+        break;
+      case "edit.deleted":
+        edits.delete(e.id);
+        break;
       case "media.added":
         if (!media.has(e.media.id)) media.set(e.media.id, e.media);
         break;
@@ -397,7 +413,9 @@ export function foldLog(events: LogEvent[]): LogState {
   const keptComments = [...comments.values()]
     .filter((c) => nodeIds.has(c.nodeId) && (!c.parentId || comments.has(c.parentId)))
     .map((c) => ({ ...c, productionId }));
-  return { production, nodes: live, media: kept, takes: keptTakes, groups: keptGroups, comments: keptComments, members: [...members.values()], conflicts, lastStamp: sorted.at(-1)?.at ?? null };
+  // A level's montage goes with its level (a group's, with the level it was made in).
+  const keptEdits = [...edits.values()].filter((x) => x.nodeId === null || nodeIds.has(x.nodeId)).map((x) => ({ ...x, productionId }));
+  return { production, nodes: live, media: kept, takes: keptTakes, groups: keptGroups, comments: keptComments, edits: keptEdits, members: [...members.values()], conflicts, lastStamp: sorted.at(-1)?.at ?? null };
 }
 
 /** Drop nodes whose parent is missing (deleted, or never synced). */

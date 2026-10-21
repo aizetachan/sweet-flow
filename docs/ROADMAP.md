@@ -249,5 +249,5 @@ la fila muestra lo que hay dentro.
 - **API de Dropbox (etapa B):** `DropboxSource`, sin necesidad del cliente de Dropbox.
 - **Tiempo real (etapa C):** Firebase Auth, Firestore, presencia y roles en el servidor. Aquí se retoma el esqueleto de Firebase.
 - **Biblioteca:** hecha dentro de cada producción (19 oct 2026, INTERFAZ §2.8): mesa de trabajo, fichas por tipo, elegidas y exploración, y su uso como referencia en los planos. Compartida entre producciones (19 oct 2026, §2.8.1): todo Sweet Flow o las producciones de una carpeta, siempre al día, sin copias.
-- **Montaje:** timeline de escena o secuencia y export.
+- **Montaje:** primera versión del editor hecha (21 oct 2026, INTERFAZ §4): montajes por nivel anidados como bloques, grupos, pistas de vídeo y audio, sobrescribir, recortar, cuchilla y precisión al fotograma del propio vídeo, imán, enlazar y desenlazar, formato por montaje, guardado en el registro con deshacer. Siguiente: fijar versión en un clip, comentarios con tiempo, versiones del montaje y exportar (XML para Premiere/DaVinci, OpenTimelineIO y mp4).
 - **Más adelante:** web de revisión, firma de apps y política de almacenamiento.

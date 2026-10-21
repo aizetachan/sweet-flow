@@ -50,6 +50,8 @@ import {
   planPlaceLibMedia,
   type Asset,
   type LibraryShare,
+  type Edit,
+  type EditFormat,
 } from "@sweetflow/domain";
 import { History, recordIntents } from "../history";
 import { ALL_FEATURES, importKind, type BrowsePage, type BrowseQuery, type DataSource, type GenerateArgs, type ImportItem, type NewComment, type Placement, type RemoteCreation, type RemoteFolder, type Snapshot, type UploadedRef } from "../source";
@@ -85,7 +87,7 @@ function seedLibrary(p: Snapshot["production"], me: Id, assets: Asset[]): { node
   return { nodes, media };
 }
 
-type Kept = Pick<Snapshot, "nodes" | "trash" | "shelf" | "library" | "groups" | "takes" | "comments" | "production"> & {
+type Kept = Pick<Snapshot, "nodes" | "trash" | "shelf" | "library" | "groups" | "takes" | "comments" | "production" | "edits"> & {
   media: Map<Id, Pick<Media, "archived" | "chosen" | "nodeId" | "version" | "order">>;
 };
 
@@ -101,8 +103,8 @@ export class MockSource implements DataSource {
 
   /** What an intent can change: the structure, and what people set on media. */
   private keep(): Kept {
-    const { nodes, trash, shelf, library, groups, takes, comments, production } = this.s;
-    return { nodes, trash, shelf, library, groups, takes, comments, production, media: new Map(this.s.media.map((m) => [m.id, { archived: m.archived, chosen: m.chosen, nodeId: m.nodeId, version: m.version, order: m.order }])) };
+    const { nodes, trash, shelf, library, groups, takes, comments, production, edits } = this.s;
+    return { nodes, trash, shelf, library, groups, takes, comments, production, edits, media: new Map(this.s.media.map((m) => [m.id, { archived: m.archived, chosen: m.chosen, nodeId: m.nodeId, version: m.version, order: m.order }])) };
   }
 
   private put(k: Kept): Kept {
@@ -129,7 +131,7 @@ export class MockSource implements DataSource {
         const b = this.before?.kept;
         this.before = null;
         const k = this.keep();
-        const changed = !!b && (["nodes", "trash", "shelf", "library", "groups", "takes", "comments", "production"] as const).some((x) => b[x] !== k[x]);
+        const changed = !!b && (["nodes", "trash", "shelf", "library", "groups", "takes", "comments", "production", "edits"] as const).some((x) => b[x] !== k[x]);
         const media = !!b && [...k.media].some(([id, v]) => JSON.stringify(v) !== JSON.stringify(b.media.get(id)));
         if (b && (changed || media)) this.history.push({ undo: b, label });
       },
@@ -144,6 +146,7 @@ export class MockSource implements DataSource {
       trash: [],
       shelf: [],
       groups: [],
+      edits: [],
       presence: [
         { uid: "u_laura", nodeId: seed.nodes.find((n) => n.title === "La linterna se enciende")?.id, at: Date.now() },
         { uid: "u_marc", nodeId: seed.nodes.find((n) => n.title === "Mar abierto")?.id, at: Date.now() },
@@ -433,6 +436,19 @@ export class MockSource implements DataSource {
 
   setCover(cover: ProductionCover | null): void {
     this.commit({ production: { ...this.s.production, cover } });
+  }
+
+  // ---------- editor ----------
+
+  saveEdits(edits: Edit[]): void {
+    const now = Date.now();
+    const byId = new Map(this.s.edits.map((e) => [e.id, e]));
+    for (const e of edits) byId.set(e.id, { ...e, productionId: this.s.production.id, updatedAt: now, updatedBy: this.s.me.uid });
+    this.commit({ edits: [...byId.values()] });
+  }
+
+  setEditFormat(format: EditFormat | null): void {
+    this.commit({ production: { ...this.s.production, editFormat: format } });
   }
 
   updateStatuses(statuses: StatusDef[]): void {

@@ -14,6 +14,7 @@ import { DockedInspector, FloatingInspectors, WindowInspector } from "./inspecto
 import { Modals } from "./settings/Modals";
 import { LibraryBoard, LibraryTree } from "./library/LibraryBoard";
 import { EditorView } from "./views/EditorView";
+import { EditorPanel } from "./editor/EditorPanel";
 import { TrashView } from "./views/TrashView";
 import { useThemeApplied } from "./theme";
 
@@ -55,7 +56,7 @@ function Production() {
     <div className="app">
       <div className="app__main">
         {/* Desktop app: the left column reaches the top and the top bar spans only the board's width. */}
-        {TABS && (view === "board" || view === "library") ? null : <Topbar />}
+        {TABS && (view === "board" || view === "library" || view === "editor") ? null : <Topbar />}
         {view === "board" ? (
           // Work panel and structure share the left column; the board gets the rest (docs/INTERFAZ.md §2).
           <Workspace>
@@ -68,7 +69,13 @@ function Production() {
             <SidePanel />
             {TABS ? <div className="workcol"><Topbar /><LibraryBoard /></div> : <LibraryBoard />}
           </Workspace>
-        ) : view === "editor" ? <EditorView /> : <TrashView />}
+        ) : view === "editor" ? (
+          // The editor too: its panel (shots to drag, the clip) on the left, the montage on the right (§4).
+          <Workspace>
+            <EditorPanel />
+            {TABS ? <div className="workcol"><Topbar /><EditorView /></div> : <EditorView />}
+          </Workspace>
+        ) : <TrashView />}
       </div>
       <Dock />
       <FloatingInspectors />

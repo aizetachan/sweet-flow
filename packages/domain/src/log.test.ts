@@ -263,7 +263,7 @@ describe("foldLog", () => {
   });
 
   it("starts empty without a production", () => {
-    expect(foldLog([])).toEqual({ production: null, nodes: [], media: [], takes: [], groups: [], comments: [], members: [], conflicts: [], lastStamp: null });
+    expect(foldLog([])).toEqual({ production: null, nodes: [], media: [], takes: [], groups: [], comments: [], edits: [], members: [], conflicts: [], lastStamp: null });
   });
 });
 

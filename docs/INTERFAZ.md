@@ -396,9 +396,9 @@ iluminados, oscuro para los brillos), movidos igual que los del azul
     Ajustes del dashboard (en la demo, la cuenta de ejemplo).
 - **Cabecera del tablero:** el título y un contador con el número de planos.
 - **Secciones:** barra **flotante centrada abajo**, para que el tablero tenga
-  todo el ancho. Producción, Biblioteca y Editor llevan icono y texto. Tras un
+  todo el ancho. Biblioteca, Producción y Editor (en ese orden) llevan icono y texto. Tras un
   separador van solo con icono la Papelera (con su número) y Ajustes.
-  - **Editor:** página por definir; de momento muestra «Próximamente».
+  - **Editor:** el montaje de la producción (§4).
 - **Clic en una tarjeta** abre siempre su panel en **Producir** (aunque antes
   se estuviera en Revisión o Actividad, y también al pulsar la misma otra vez).
 - **Clic derecho** en una tarjeta abre su menú, titulado «Menú» (sin repetir el
@@ -1060,6 +1060,138 @@ Sweet Flow, solo activar o desactivar y decir para quién.
   las cierra.
 - **Pendiente:** el panel flotante dentro de la misma ventana existe en el
   código pero está oculto; se retomará para un uso más concreto.
+
+## 4. Editor
+
+El montaje de la producción, dentro de Sweet Flow (decidido el 21 oct 2026).
+Misma estructura que Producción y Biblioteca: **el panel a la izquierda** y el
+**montaje a la derecha** (visor arriba, línea de tiempo abajo, con un divisor
+para repartir el alto). Nada se copia ni se renderiza: cada clip apunta a un
+plano y reproduce su toma elegida.
+
+### 4.1 Montajes y niveles
+
+- **Cada nivel tiene su montaje:** la producción entera, cada secuencia y
+  cada escena. **Montaje ▾** (arriba a la izquierda) elige cuál se edita; al
+  lado de cada nivel, lo que dura su montaje si ya lo tiene.
+- **Un nivel dentro de otro es un bloque:** al arrastrar una escena al
+  montaje de su secuencia (o una secuencia al de la producción) entra **como
+  un solo clip** con la duración de su propio montaje. Si aún no tenía, se
+  hace en ese momento con sus planos en orden («Montar»).
+- **Doble clic en un bloque** abre el mismo editor con su montaje, y arriba
+  sale el camino de vuelta (Producción › SQ010 · Apertura). Lo que se cambia
+  dentro se ve en el bloque de fuera.
+- **Montar:** pone lo que hay dentro del nivel en el orden del tablero (los
+  planos de un grupo de planos juntos, donde está el grupo), uno detrás de
+  otro, desde donde acaba el montaje: los planos de una escena, o los niveles
+  de una secuencia o de la producción como bloques.
+- **Grupos:** se seleccionan clips y **Agrupar** (⌘G) los convierte en un
+  bloque «Grupo N», editable por dentro igual. Su nombre se cambia en la
+  pestaña Clip. **Desagrupar** (⌘⇧G) devuelve sus clips tal y como se ven a
+  través del bloque (solo el tramo que usa).
+- Un montaje no puede acabar dentro de sí mismo: lo que lo provocaría no se
+  coloca y se avisa.
+- **Formato:** cada montaje tiene su **resolución y fps** (botón en la
+  cabecera: tamaños habituales, uno a medida y los fps de siempre). «Usar en
+  los montajes nuevos de esta producción» lo deja por defecto (si no,
+  1920×1080 a 25 fps). Cuando el primer clip que entra en un montaje vacío
+  tiene otro tamaño o fps, un aviso ofrece **Ajustar el montaje al clip**. Un
+  vídeo de otro tamaño **se encaja** en el cuadro del montaje sin deformarse
+  (con bandas si hace falta); uno de otros fps se coloca por tiempo.
+
+### 4.2 Panel
+
+Dos pestañas: **Planos** y **Clip**.
+
+- **Planos:** los planos de la producción para arrastrarlos a la línea de
+  tiempo.
+  - **Galería** (miniaturas S, M o L; por defecto) o **Árbol** (como el
+    Explorer). Se recuerda lo elegido en este ordenador.
+  - En la galería, una sección por escena con su ruta (SQ010 › SC010); la
+    cabecera de la sección se arrastra para meter la escena entera como
+    bloque. Al pasar el ratón por una miniatura se ve el vídeo (frotando).
+  - **Filtros:** buscar por código o título, uno o varios **estados**
+    (Aprobado, En revisión…) y **Con vídeo**.
+  - Los planos sin vídeo salen apagados y no se arrastran. Los que ya están
+    en el montaje llevan un punto.
+  - Clic selecciona; ⌘ o ⇧ suman. Se arrastra lo seleccionado. **Doble
+    clic** en un plano lo pone en el cabezal (V1, con su sonido en A1); en
+    una escena o secuencia, abre su montaje.
+- **Clip:** lo seleccionado en la línea de tiempo: de qué plano o bloque
+  sale, su versión, su estado, sus tiempos **en el montaje** y **en el
+  original** (a los fps de su vídeo), su duración en segundos y fotogramas, y
+  si va enlazado. **Desenlazar / Enlazar**, **Abrir el plano** (en
+  Producción) o **Abrir el bloque**, **Desagrupar** y **Eliminar**. Con
+  varios: Agrupar, Enlazar/desenlazar y Eliminar.
+
+### 4.3 Línea de tiempo
+
+- **Pistas:** vídeo arriba (V2 sobre V1: se ve la de más arriba) y sonido
+  debajo (A1, A2…), como en Premiere. **+ Vídeo / + Audio** añaden pistas; la
+  × de su cabecera quita una (con lo que tenga; siempre queda una de cada).
+- **Soltar:** los planos entran uno detrás de otro donde se sueltan; en una
+  pista de vídeo, su sonido va en la pista de audio de su mismo número,
+  enlazado; en una de audio, solo el sonido. Una línea discontinua marca
+  dónde caerán. Lo que había debajo **se sobrescribe** (se recorta, se parte o
+  se quita), como en Premiere. Sin huecos automáticos: los espacios se dejan
+  a mano.
+- **Mover:** arrastrar un clip (o lo seleccionado); arriba o abajo cambia de
+  pista de su tipo. Se mueve por fotogramas del montaje.
+- **Imán** (botón, o `S`): los bordes se pegan a los cortes y al cabezal (una
+  línea amarilla lo marca). Apagado, el movimiento es libre.
+- **Recortar:** arrastrar el borde izquierdo de un clip lo hace empezar más
+  tarde (o más pronto) dentro de su vídeo; el derecho, terminar. Nunca más
+  allá del vídeo original ni encima del clip vecino. Con ⌥, arrastrar el
+  clip desliza lo que muestra sin moverlo (*slip*).
+- **Precisión:** los tiempos se guardan exactos (no redondeados a los
+  fotogramas del montaje). Al recortar o cortar, el punto **se ajusta a los
+  fotogramas del propio vídeo del clip**, así que cualquier fotograma del
+  original se puede alcanzar aunque el montaje vaya a otros fps. Los fps de
+  cada vídeo se leen de su archivo la primera vez que se usa. Una línea sigue
+  al ratón con el **tiempo exacto** y, sobre un clip, el **número de su
+  fotograma**. Con el zoom al máximo se ven los fotogramas uno a uno.
+- **Cuchilla** (`C`): clic en un clip lo corta en el fotograma bajo el ratón
+  (con su sonido enlazado). **⌘K** corta en el cabezal lo seleccionado (o
+  todo lo que hay en él). `V` vuelve a la selección.
+- **Vídeo y sonido enlazados:** se mueven, recortan y cortan juntos.
+  **Desenlazar** (⌘L, menú o pestaña Clip) los separa; el vídeo queda mudo y
+  su sonido es un clip aparte. El botón de **selección enlazada** de la barra
+  hace lo mismo para todo mientras está apagado.
+- **Clic derecho en un clip:** Abrir, Cortar en el cabezal, Desenlazar o
+  Enlazar, Agrupar, Desagrupar y Eliminar. **Doble clic:** un bloque se abre;
+  un plano se abre en Producción.
+- **Cabezal:** clic o arrastre en la regla o en un hueco; va a fotogramas del
+  montaje (con ⌥, libre). **Zoom:** ⌘ + rueda (o pellizco) alrededor del ratón,
+  `+` / `−`, la barra o **Ajustar** (todo el montaje a la vista).
+- **Atajos (como en Premiere):** espacio reproduce o para; `J K L` (atrás,
+  parar, adelante; repetir acelera ×2 y ×4); ← → un fotograma (del vídeo bajo
+  el cabezal), con ⇧ diez; Inicio y Fin; `I` / `O` recortan el inicio o el
+  final del clip seleccionado hasta el cabezal; Supr elimina (deja el hueco);
+  Esc quita la selección; ⌘Z deshace (§2.9).
+- Los clips llevan a la izquierda el color del estado de su plano; los
+  bloques, su propio tono; un plano o bloque eliminado se ve rayado en rojo.
+
+### 4.4 Visor
+
+- Reproduce el montaje tal cual, sin renderizar: la imagen de la pista de
+  vídeo más alta en cada momento (los bloques, abiertos por dentro) y el
+  sonido de todas las pistas de audio. Va al cuadro del montaje, con bandas si
+  hace falta.
+- Debajo, el código de tiempo del cabezal y la duración, y los botones de
+  principio, fotograma anterior, reproducir, fotograma siguiente y final.
+- En la demo, las imágenes fijas hacen de vídeo.
+
+### 4.5 Guardado
+
+- Cada montaje se guarda **entero** en el registro de la producción
+  (`edit.saved`), así que llega a todo el equipo por la carpeta compartida y
+  **⌘Z lo deshace**. Si dos personas cambian el mismo montaje a la vez, queda
+  el último que se guarda. Un montaje no se guarda hasta que se le pone algo.
+- Los clips **siguen al plano**: si se elige otra versión del plano, el clip
+  pasa a la nueva.
+- Fuera de esta primera versión: fijar una versión en un clip, comentarios con
+  tiempo sobre el montaje, versiones del montaje y exportar (XML para Premiere
+  y DaVinci, OpenTimelineIO y mp4).
 
 ## Mientras estamos en modo local
 

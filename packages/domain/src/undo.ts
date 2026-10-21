@@ -118,8 +118,24 @@ function inverseOf(s: LogState, e: LogEventBody, created: Set<Id>): LogEventBody
       if (!p) return [];
       const patch: Record<string, unknown> = {};
       // A cover that was not there comes back as null (undefined would not reach the log).
-      for (const k of Object.keys(e.patch)) patch[k] = (p as unknown as Record<string, unknown>)[k] ?? (k === "cover" ? null : undefined);
+      for (const k of Object.keys(e.patch)) patch[k] = (p as unknown as Record<string, unknown>)[k] ?? (k === "cover" || k === "editFormat" ? null : undefined);
       return [{ type: "production.updated", patch }];
+    }
+    case "edit.saved": {
+      const before = s.edits.find((x) => x.id === e.edit.id);
+      if (created.has(e.edit.id)) return [];
+      if (!before) {
+        created.add(e.edit.id);
+        return [{ type: "edit.deleted", id: e.edit.id }];
+      }
+      const { productionId: _p, ...edit } = before;
+      return [{ type: "edit.saved", edit }];
+    }
+    case "edit.deleted": {
+      const before = s.edits.find((x) => x.id === e.id);
+      if (!before) return [];
+      const { productionId: _p, ...edit } = before;
+      return [{ type: "edit.saved", edit }];
     }
     case "levels.set":
       return s.production ? [{ type: "levels.set", levels: s.production.levels }] : [];

@@ -1,4 +1,4 @@
-import { defaultLevels, defaultStatuses, type Member } from "@sweetflow/domain";
+import { defaultLevels, defaultStatuses, newEdit, type Member } from "@sweetflow/domain";
 import { describe, expect, it } from "vitest";
 import type { Snapshot } from "../source";
 import { LocalSource } from "./LocalSource";
@@ -129,5 +129,30 @@ describe("LocalSource", () => {
     const again = open(store, "b");
     await again.src.ready;
     expect(again.snap().comments).toHaveLength(2);
+  });
+
+  it("keeps the editor's montages in the log: another device sees them, and ⌘Z undoes", async () => {
+    const store = new MemoryLogStore();
+    const a = open(store, "a");
+    await a.src.ready;
+    const sq = a.src.createNode(null, "Apertura");
+    const e = newEdit({ id: "ed1", productionId: "p1", nodeId: sq, newId, now: 0, by: "u_a" });
+    a.src.saveEdits([e]);
+    const v1 = e.tracks[0]!.id;
+    a.src.saveEdits([{ ...e, clips: [{ id: "c1", trackId: v1, source: { kind: "shot", nodeId: "x" }, start: 1.0417, inSec: 0.04, outSec: 2 }] }]);
+    a.src.setEditFormat({ width: 1080, height: 1920, fps: 30 });
+    await a.src.flushed();
+    const b = open(store, "b");
+    await b.src.ready;
+    expect(b.snap().edits).toHaveLength(1);
+    // Exact times, not rounded to the timeline's frames.
+    expect(b.snap().edits[0]!.clips[0]).toMatchObject({ start: 1.0417, inSec: 0.04, outSec: 2 });
+    expect(b.snap().production.editFormat).toEqual({ width: 1080, height: 1920, fps: 30 });
+    expect(a.src.undo()).toBe("cambiar el formato del montaje");
+    expect(a.snap().production.editFormat).toBeNull();
+    expect(a.src.undo()).toBe("editar el montaje");
+    expect(a.snap().edits[0]!.clips).toHaveLength(0);
+    expect(a.src.undo()).toBe("editar el montaje");
+    expect(a.snap().edits).toHaveLength(0);
   });
 });

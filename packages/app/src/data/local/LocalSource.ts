@@ -74,6 +74,8 @@ import {
   planMoveToLib,
   planPlaceLibMedia,
   type LibraryShare,
+  type Edit,
+  type EditFormat,
 } from "@sweetflow/domain";
 import { History, recordIntents } from "../history";
 import { assetsFromLibrary } from "../libraryCards";
@@ -348,6 +350,7 @@ export class LocalSource implements DataSource {
       media: s.media.map((m) => this.withUrl(m, s)),
       takes: s.takes,
       comments: s.comments,
+      edits: s.edits,
       assets: assetsFromLibrary(split.library, s.media.map((m) => this.withUrl(m, s))),
       activity: this.activity(s),
       presence: [],
@@ -527,6 +530,25 @@ export class LocalSource implements DataSource {
 
   setCover(cover: ProductionCover | null): void {
     this.write([{ type: "production.updated", patch: { cover } }]);
+  }
+
+  // ---------- editor ----------
+
+  saveEdits(edits: Edit[]): void {
+    const id = this.loaded().production.id;
+    this.write(edits.map((e) => {
+      const { productionId: _p, ...edit } = { ...e, productionId: id, updatedAt: this.now(), updatedBy: this.me.uid };
+      return { type: "edit.saved" as const, edit };
+    }));
+  }
+
+  setEditFormat(format: EditFormat | null): void {
+    this.write([{ type: "production.updated", patch: { editFormat: format } }]);
+  }
+
+  noteFps(mediaId: Id, fps: number): void {
+    const m = this.state?.media.find((x) => x.id === mediaId);
+    if (m && !m.fps && fps > 0) this.updateMedia(mediaId, { fps });
   }
 
   // ---------- configuration ----------

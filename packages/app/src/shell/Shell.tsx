@@ -28,8 +28,8 @@ import { useMagnific } from "../integrations/magnific/useMagnific";
 import { SignInButton } from "../dashboard/Welcome";
 
 const NAV: Array<{ id: View; label: string; icon: typeof IconLayoutBoard }> = [
-  { id: "board", label: "Producción", icon: IconLayoutBoard },
   { id: "library", label: "Biblioteca", icon: IconLibraryPhoto },
+  { id: "board", label: "Producción", icon: IconLayoutBoard },
   { id: "editor", label: "Editor", icon: IconMovie },
 ];
 
