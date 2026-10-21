@@ -70,7 +70,8 @@
   `{ email de Magnific, nombre, rol, carpetas o producciones }`.
   - **Propietario:** quien crea el equipo. Gestiona a todos y decide si los
     miembros pueden invitar («Los miembros pueden invitar», activado por
-    defecto).
+    defecto). Elige también el tema del equipo y si los miembros pueden usar
+    el suyo (docs/INTERFAZ.md §1.4).
   - **Miembro:** trabaja en las carpetas o producciones que le dan.
   - **Invitado:** el cliente (§4); no está en la carpeta.
 - Dónde se gestiona: «Compartir» en una carpeta o producción del dashboard, y

@@ -12,7 +12,7 @@
  *   production is a folder with `.sweetflow/` inside.
  */
 
-import { accessOf, normEmail, shareRoots, type Access, type LibraryShare, type TeamMember } from "@sweetflow/domain";
+import { accessOf, canPersonalizeTheme, normEmail, shareRoots, type Access, type LibraryShare, type TeamMember, type Theme, type ThemeFreedom } from "@sweetflow/domain";
 import { IDENTITY_EVENT, IDENTITY_KEY, readIdentity, uidForEmail } from "../integrations/magnific/identity";
 import {
   defaultLevels,
@@ -106,6 +106,13 @@ export interface TeamView {
   mounted: { entryId: Id; name: string } | null;
   /** Whether inviting also shares the folders at the service (Dropbox, Drive). */
   sharesInStorage: boolean;
+  /** The team's look, set by the owner (null: the corporate blue). */
+  theme: Theme | null;
+  themeFreedom: ThemeFreedom;
+  /** Whether I set the team's theme: the owner only. */
+  canSetTheme: boolean;
+  /** Whether I may use a theme of my own. */
+  canPersonalizeTheme: boolean;
 }
 
 /** How sharing at the service went. */
@@ -122,6 +129,9 @@ export interface TeamApi {
   setAccess(email: string, access: Access): Promise<ShareResult>;
   remove(email: string): Promise<ShareResult>;
   setMembersCanInvite(on: boolean): void;
+  /** The team's theme (owner only; null: back to the corporate blue). */
+  setTheme(theme: Theme | null): void;
+  setThemeFreedom(freedom: ThemeFreedom): void;
 }
 
 export interface LibraryState {
@@ -758,6 +768,10 @@ function teamView(t: TeamLog, me: { email: string } | null, mounted: { entryId: 
     canInvite: t.canInvite(),
     mounted: mounted ? { entryId: mounted.entryId, name: mounted.name } : null,
     sharesInStorage,
+    theme: s.theme,
+    themeFreedom: s.themeFreedom,
+    canSetTheme: !!s.owner && !!me?.email && normEmail(me.email) === s.owner.email,
+    canPersonalizeTheme: canPersonalizeTheme(s, me?.email ?? null),
   };
 }
 
@@ -808,5 +822,7 @@ function teamApi(t: TeamLog, fs: FolderFs, entries: { pathOf(id: Id): string | n
       });
     },
     setMembersCanInvite: (on) => t.setMembersCanInvite(on),
+    setTheme: (theme) => t.setTheme(theme),
+    setThemeFreedom: (freedom) => t.setThemeFreedom(freedom),
   };
 }

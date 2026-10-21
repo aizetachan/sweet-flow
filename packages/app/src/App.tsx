@@ -15,12 +15,14 @@ import { Modals } from "./settings/Modals";
 import { LibraryBoard, LibraryTree } from "./library/LibraryBoard";
 import { EditorView } from "./views/EditorView";
 import { TrashView } from "./views/TrashView";
+import { useThemeApplied } from "./theme";
 
 /** Splash → dashboard → production (docs/INTERFAZ.md). Popped-out windows show one node. */
 export function App() {
   const phase = useStore((s) => s.phase);
   const lib = useStore((s) => s.lib);
   const [splash, setSplash] = useState(phase !== "window");
+  useThemeApplied(lib);
 
   const screen = phase === "window" ? <PoppedWindow /> : phase === "production" ? <Production /> : <Dashboard />;
   return (

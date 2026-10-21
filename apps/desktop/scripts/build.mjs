@@ -18,4 +18,6 @@ try {
 await rm(outDir, { recursive: true, force: true });
 await build({ ...options, minify: true, define: { ...define, "process.env.NODE_ENV": '"production"' } });
 await cp(rendererDist, path.join(outDir, "renderer"), { recursive: true });
+// The icon the theme recolours while the app runs (src/main/appIcon.ts).
+for (const name of ["icon.png", "icon-win.png"]) await cp(path.join(root, "build", name), path.join(outDir, "icons", name));
 console.log(`Desktop bundle ready in ${path.relative(process.cwd(), outDir) || "."}`);

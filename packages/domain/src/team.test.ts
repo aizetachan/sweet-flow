@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { accessOf, canInvite, canRemove, canSee, foldTeam, shareRoots, type TeamEvent, type TeamEventBody, type Within } from "./team";
+import { accessOf, canInvite, canPersonalizeTheme, canRemove, canSee, foldTeam, shareRoots, themeFor, type TeamEvent, type TeamEventBody, type Within } from "./team";
 
 // Dashboard: F1 › F2 › P1, and P2 at the top.
 const parent: Record<string, string | null> = { F1: null, F2: "F1", P1: "F2", P2: null };
@@ -94,5 +94,35 @@ describe("team", () => {
       ev("bea@x.com", { type: "member.invited", email: "cris@x.com", access: ["P1"] }),
     ];
     expect(foldTeam([...evs].reverse(), within)).toEqual(foldTeam(evs, within));
+  });
+
+  it("only the owner sets the team's theme and whether members may have their own", () => {
+    const t = foldTeam([
+      ev("ana@x.com", { type: "team.claimed", name: "Ana" }),
+      ev("ana@x.com", { type: "member.invited", email: "bea@x.com", access: "all" }),
+      ev("ana@x.com", { type: "team.theme", theme: { accent: "#E0559B" } }),
+      // Not the owner: ignored.
+      ev("bea@x.com", { type: "team.theme", theme: { accent: "#00ff00" } }),
+      ev("bea@x.com", { type: "team.themeFreedom", freedom: "nobody" }),
+    ], within);
+    expect(t.theme).toEqual({ accent: "#e0559b" });
+    expect(t.themeFreedom).toBe("everyone");
+    expect(canPersonalizeTheme(t, "bea@x.com")).toBe(true);
+    expect(themeFor(t, "bea@x.com", { accent: "#2fb38a" })).toEqual({ accent: "#2fb38a" });
+    expect(themeFor(t, "bea@x.com", null)).toEqual({ accent: "#e0559b" });
+  });
+
+  it("with members locked, they see the team's theme; the owner keeps their own", () => {
+    const t = foldTeam([
+      ev("ana@x.com", { type: "team.claimed", name: "Ana" }),
+      ev("ana@x.com", { type: "team.theme", theme: { accent: "#e0559b" } }),
+      ev("ana@x.com", { type: "team.themeFreedom", freedom: "nobody" }),
+      ev("ana@x.com", { type: "team.theme", theme: { accent: "not a colour" } }),
+    ], within);
+    expect(t.theme).toBeNull();
+    expect(canPersonalizeTheme(t, "bea@x.com")).toBe(false);
+    expect(themeFor(t, "bea@x.com", { accent: "#2fb38a" })).toBeNull();
+    expect(themeFor(t, "ANA@x.com", { accent: "#2fb38a" })).toEqual({ accent: "#2fb38a" });
+    expect(themeFor(null, null, { accent: "#2fb38a" })).toEqual({ accent: "#2fb38a" });
   });
 });

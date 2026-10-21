@@ -262,14 +262,7 @@ export function Splash({ ready, onDone }: { ready: boolean; onDone: () => void }
     if (settled && ready && minElapsed) finish(HOLD_MS);
   }, [settled, ready, minElapsed, finish]);
 
-  // Click/tap or Escape skips.
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") finish(0);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [finish]);
+  // It can't be skipped (no click, no Escape): it is always seen whole.
 
   useLayoutEffect(() => {
     const root = rootRef.current;
@@ -436,7 +429,6 @@ export function Splash({ ready, onDone }: { ready: boolean; onDone: () => void }
       role="status"
       aria-label="Cargando Sweetflow"
       style={{ ["--word-out" as string]: `${WORD_OUT_MS}ms`, ["--bg-delay" as string]: `${BG_DELAY_MS}ms`, ["--bg-out" as string]: `${BG_OUT_MS}ms` }}
-      onPointerDown={() => finish(0)}
     >
       {/* The drops: one outline per letter, each with its light (shading, shine, shadow on the surface). */}
       <svg className="splash__drops" aria-hidden="true">

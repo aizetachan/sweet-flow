@@ -7,6 +7,7 @@
 import { app, BrowserWindow, screen, shell } from "electron";
 import path from "node:path";
 import { VERSION_ARG } from "../shared/api";
+import { iconForWindow, startAppIcon } from "./appIcon";
 import { APP_ORIGIN, registerAppScheme, serveApp } from "./appProtocol";
 import { DEV_URL, isAppUrl } from "./env";
 import { registerIpc } from "./ipc";
@@ -43,6 +44,7 @@ function createWindow(): BrowserWindow {
     webPreferences: webPreferences(),
   });
 
+  iconForWindow(win);
   win.once("ready-to-show", () => win.show());
   lockNavigation(win);
 
@@ -82,7 +84,10 @@ function lockNavigation(win: BrowserWindow): void {
     if (/^https?:\/\//.test(url)) void shell.openExternal(url);
     return { action: "deny" };
   });
-  win.webContents.on("did-create-window", (child) => lockNavigation(child));
+  win.webContents.on("did-create-window", (child) => {
+    iconForWindow(child);
+    lockNavigation(child);
+  });
   win.webContents.on("will-navigate", (e, url) => {
     if (!isAppUrl(url)) e.preventDefault();
   });
@@ -107,6 +112,8 @@ if (!app.requestSingleInstanceLock()) {
   void app.whenReady().then(() => {
     if (!DEV_URL) serveApp(path.join(__dirname, "renderer"));
     registerIpc();
+    // The icon with the theme's colour, before the window shows.
+    startAppIcon();
     startMirror();
     createWindow();
     void checkForUpdates();

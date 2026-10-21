@@ -6,6 +6,7 @@ import path from "node:path";
 import { IPC } from "../shared/api";
 import { authOpen, authRedirect, googleToken } from "./auth";
 import { isAppUrl } from "./env";
+import { setAccent } from "./appIcon";
 import { folderOp, forgetTeamFolder, pickTeamFolder, teamFolder } from "./folder";
 
 /** Only our own renderer may call privileged handlers. */
@@ -67,5 +68,6 @@ export function registerIpc(): void {
   ipcMain.handle(IPC.teamFolder, (e) => (assertTrusted(e), teamFolder()));
   ipcMain.handle(IPC.pickTeamFolder, (e) => (assertTrusted(e), pickTeamFolder(BrowserWindow.fromWebContents(e.sender))));
   ipcMain.handle(IPC.forgetTeamFolder, (e) => (assertTrusted(e), forgetTeamFolder()));
+  ipcMain.handle(IPC.setAccent, (e, accent: unknown) => (assertTrusted(e), setAccent(accent)));
   ipcMain.handle(IPC.folder, (e, op: unknown, a: unknown, b: unknown) => (assertTrusted(e), folderOp(op, a, b)));
 }

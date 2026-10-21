@@ -8,6 +8,10 @@ import { initStorage } from "./data";
 import { handleCallback } from "./integrations/magnific/auth";
 import { handleCloudCallback } from "./integrations/oauth";
 import { isDesktop } from "./platform";
+import { startTheme } from "./theme";
+
+// The theme first, so the splash already shows it.
+startTheme();
 
 // The Mac app draws its own title bar: room for the window buttons and a strip to drag the window.
 if (isDesktop() && window.sweetflow?.platform === "darwin") document.documentElement.classList.add("is-mac-app");

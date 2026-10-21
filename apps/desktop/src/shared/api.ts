@@ -41,6 +41,8 @@ export interface SweetflowApi {
   /** Native picker; remembers the folder. Null if cancelled. */
   pickTeamFolder(): Promise<TeamFolder | null>;
   forgetTeamFolder(): Promise<void>;
+  /** The theme's accent (null: the corporate blue): the icon's frame takes it while the app runs. */
+  setAccent(accent: string | null): Promise<void>;
   /** A file operation inside the team folder; paths relative to it. */
   folder(op: FolderOp, a?: string, b?: string | Uint8Array): Promise<unknown>;
 }
@@ -56,6 +58,7 @@ export const IPC = {
   pickTeamFolder: "sf:pick-team-folder",
   forgetTeamFolder: "sf:forget-team-folder",
   folder: "sf:folder",
+  setAccent: "sf:set-accent",
 } as const;
 
 /** Passed to the renderer through `additionalArguments` (preload is sandboxed). */

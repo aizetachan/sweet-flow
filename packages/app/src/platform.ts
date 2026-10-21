@@ -19,6 +19,8 @@ export interface DesktopBridge {
   teamFolder?(): Promise<{ path: string; name: string } | null>;
   pickTeamFolder?(): Promise<{ path: string; name: string } | null>;
   forgetTeamFolder?(): Promise<void>;
+  /** The theme's accent (null: the corporate blue): the icon's frame takes it (older desktop builds lack it). */
+  setAccent?(accent: string | null): Promise<void>;
   folder?(op: "list" | "listFiles" | "readText" | "readBytes" | "writeText" | "writeBytes" | "mkdir" | "move" | "remove", a?: string, b?: string | Uint8Array): Promise<unknown>;
 }
 

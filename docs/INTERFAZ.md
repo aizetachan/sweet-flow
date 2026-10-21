@@ -49,7 +49,8 @@ miniaturas y comentarios siguen siendo más pequeños para no agrandar esas fila
   suavemente debajo (sin quedarse en negro).
 - La animación espera a que esté cargada la tipografía, para que las letras
   que forman las gotas sean exactamente las del texto final (sin saltos).
-- Duración mínima de unos 2 s aunque la carga termine antes; un clic la salta.
+- Duración mínima de unos 2 s aunque la carga termine antes. **No se puede
+  saltar** (ni con un clic ni con Escape): siempre se ve entera.
 - Con "reducir movimiento" activado en el sistema, el nombre aparece con un
   fundido, sin recorrido.
 - En escritorio es lo primero que se pinta en la ventana; en el navegador,
@@ -177,6 +178,7 @@ En el dashboard están los ajustes generales:
 - **Perfil:** con Magnific conectada, la persona **es su cuenta de Magnific**
   (nombre, email y avatar, que se cambian allí; docs/USUARIOS.md §1): la misma
   en cualquier ordenador. Sin Magnific, nombre y email escritos a mano.
+- **Apariencia** (§1.4): el color de la app, el tuyo y el del equipo.
 - **Almacenamiento:** dónde se guardan las producciones: este navegador, una
   carpeta de este ordenador, o la carpeta del equipo en **Dropbox** o **Google
   Drive**. Cada servicio tiene su tarjeta: **Conectar** (cada persona con su
@@ -265,6 +267,37 @@ Lo que aún no funciona se muestra con lo que hará y la etiqueta
   - Una carpeta del dashboard es una carpeta real; una producción es una
     carpeta con `.sweetflow/` dentro (ver `ARCHITECTURE.md` §5).
 - Primera vez: elegir (o crear) la carpeta raíz, normalmente dentro de Dropbox.
+
+### 1.4 Apariencia (tema)
+
+Ajustes › **Apariencia**. El tema es **un color** que sustituye al azul
+corporativo en toda la app: botones, selección, brillos, el logo del menú y
+la pantalla de carga. De ese color salen todos sus tonos (claro para bordes
+iluminados, oscuro para los brillos), movidos igual que los del azul
+(`packages/ui/src/color.ts`).
+
+- **Tu tema:** siete colores y uno propio (el selector del sistema). Es de
+  cada persona y se guarda **en su ordenador**. **Restaurar valores por
+  defecto** vuelve al azul o, si el equipo tiene tema, a ese («Usar el tema del
+  equipo»). Al lado, el icono de la app con el color que se ve.
+- **Tema del equipo** (con carpeta del equipo): lo elige **solo el
+  propietario** y lo ve todo el equipo. El propietario decide también **quién
+  puede usar su propio tema**: **Todo el equipo** (por defecto; quien no elige
+  ninguno ve el del equipo) o **Nadie** (todos ven el del equipo; el
+  propietario sigue pudiendo tener el suyo). Los demás ven qué color es y si
+  está fijado. **Restaurar valores por defecto** vuelve al azul y a «Todo el
+  equipo». Se guarda en el registro del equipo (`team.theme`,
+  `team.themeFreedom`; reglas en `packages/domain/src/team.ts`).
+  - El equipo no tiene administradores (solo propietario y miembros,
+    docs/USUARIOS.md §2): el nivel «administradores» se añadirá cuando existan.
+- **Icono de la app (escritorio):** solo el **marco** toma el color; el «Sf.»
+  sigue blanco. Cambia **mientras la app está abierta** (Dock y ⌘Tab en Mac,
+  barra de tareas en Windows), y se recuerda para que al abrirla salga ya con
+  ese color. Con la app cerrada, Finder, Launchpad y el Dock muestran el icono
+  original: cambiarlo en la app instalada rompería su firma y macOS volvería a
+  pedir permiso para la carpeta del equipo (docs/DEVELOPMENT.md).
+- La app arranca con el último tema que se vio, para que la pantalla de carga
+  ya lo tenga antes de leer la carpeta del equipo.
 
 ## 2. Producción
 

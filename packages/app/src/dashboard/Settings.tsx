@@ -5,7 +5,7 @@
  */
 
 import { useEffect, useState, type ReactNode } from "react";
-import { IconBolt, IconBrandDropbox, IconCheck, IconCpu, IconRefresh, IconBrandGoogleDrive, IconDeviceDesktop, IconFolder, IconFolderOpen, IconFolders, IconInfoCircle, IconPlugConnected, IconUser } from "@tabler/icons-react";
+import { IconPalette, IconBolt, IconBrandDropbox, IconCheck, IconCpu, IconRefresh, IconBrandGoogleDrive, IconDeviceDesktop, IconFolder, IconFolderOpen, IconFolders, IconInfoCircle, IconPlugConnected, IconUser } from "@tabler/icons-react";
 import { Avatar, Button, cx, Modal } from "@sweetflow/ui";
 import type { LibraryState } from "../data/library";
 import { forgetCloudFolder, openCloudFolder, openTeamFolder, rememberedCloudFolder, storageStatus, switchToBrowserStorage, type CloudFolder, type StorageStatus } from "../data";
@@ -18,9 +18,11 @@ import { useStore, type SettingsTab } from "../state/store";
 import { allModelsFor, catalogReadAt, isShown, resetShown, setShown, useModelsVersion, type GenKind, type ModelSpec } from "../data/models";
 import { refreshCatalog } from "../integrations/magnific/catalog";
 import { readIdentity } from "../integrations/magnific/identity";
+import { Appearance } from "./Appearance";
 
 const TABS: Array<{ id: SettingsTab; label: string; icon: typeof IconUser }> = [
   { id: "profile", label: "Perfil", icon: IconUser },
+  { id: "appearance", label: "Apariencia", icon: IconPalette },
   { id: "storage", label: "Almacenamiento", icon: IconFolders },
   { id: "integrations", label: "Integraciones", icon: IconPlugConnected },
   { id: "models", label: "Modelos", icon: IconCpu },
@@ -44,6 +46,7 @@ export function Settings({ lib }: { lib: LibraryState }) {
         </nav>
         <div className="settings__body">
           {settingsTab === "profile" ? <Profile lib={lib} /> : null}
+          {settingsTab === "appearance" ? <Appearance lib={lib} /> : null}
           {settingsTab === "storage" ? <Storage lib={lib} /> : null}
           {settingsTab === "integrations" ? <Integrations /> : null}
           {settingsTab === "models" ? <ModelsSettings /> : null}

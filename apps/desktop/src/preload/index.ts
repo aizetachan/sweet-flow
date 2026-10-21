@@ -21,6 +21,7 @@ const api: SweetflowApi = {
   pickTeamFolder: () => ipcRenderer.invoke(IPC.pickTeamFolder) as Promise<TeamFolder | null>,
   forgetTeamFolder: () => ipcRenderer.invoke(IPC.forgetTeamFolder) as Promise<void>,
   folder: (op, a, b) => ipcRenderer.invoke(IPC.folder, op, a, b),
+  setAccent: (accent) => ipcRenderer.invoke(IPC.setAccent, accent) as Promise<void>,
 };
 
 contextBridge.exposeInMainWorld("sweetflow", api);

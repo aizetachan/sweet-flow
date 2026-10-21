@@ -24,7 +24,7 @@ export type PanelTab = "produce" | "cut" | "review" | "activity";
 export type DashLayout = "grid" | "list";
 export type DashSection = "home" | "recent" | "team" | "trash" | "settings";
 /** Ajustes tabs: the dashboard's, plus the production's own (settings/Modals.tsx). */
-export type SettingsTab = "profile" | "storage" | "integrations" | "models" | "about" | "levels" | "statuses" | "view";
+export type SettingsTab = "profile" | "appearance" | "storage" | "integrations" | "models" | "about" | "levels" | "statuses" | "view";
 /** Left column of the production screen: the work panel or the structure tree. */
 export type SideTab = "work" | "structure";
 

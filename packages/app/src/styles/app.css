@@ -359,7 +359,7 @@
 .mark--label-in .mark__n { left: 4px; top: 4px; }
 .mark--on.mark--point { background: var(--primary); }
 .mark--on.mark--point .mark__n { color: #fff; }
-.mark--on.mark--area { border-color: var(--primary); background: #6b7cff22; }
+.mark--on.mark--area { border-color: var(--primary); background: var(--primary-soft); }
 .mark--on.mark--area .mark__n { background: var(--primary); color: #fff; }
 .player__seek { flex: 1; min-width: 40px; height: 4px; appearance: none; -webkit-appearance: none; border-radius: 2px; cursor: pointer;
   background: linear-gradient(to right, var(--fg-0) var(--p, 0%), #ffffff40 var(--p, 0%)); }
@@ -816,6 +816,21 @@ button.tree__hint { padding: 0 14px 8px; }
 .sset h2 { margin: 0 0 4px; font-size: 15px; }
 .sset__hint { margin: 0 0 14px; max-width: 60ch; }
 .sset > .scard { margin-top: 10px; }
+/* Ajustes › Apariencia: swatches, a colour of your own and the icon as it looks. */
+.theme__row { display: flex; align-items: center; gap: 18px; margin-bottom: 12px; }
+.theme__pick { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.theme__pick p { margin: 0; }
+.theme__swatches { display: flex; flex-wrap: wrap; gap: 8px; }
+.theme__swatch { position: relative; width: 32px; height: 32px; border-radius: 50%; border: 0; display: grid; place-items: center; color: #fff; cursor: pointer; box-shadow: inset 0 0 0 1px #ffffff26; transition: transform .12s; }
+.theme__swatch:hover { transform: scale(1.08); }
+.theme__swatch.is-on { box-shadow: 0 0 0 2px var(--bg-1), 0 0 0 4px var(--fg-1); }
+.theme__swatch--custom { background: conic-gradient(#ec6a6a, #e6b85c, #3cd39f, #2aa9c9, #6f8bf7, #e0559b, #ec6a6a); font-size: 16px; font-weight: 600; text-shadow: 0 1px 2px #0008; }
+.theme__swatch--custom input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; border: 0; padding: 0; }
+.theme__icon { flex: none; width: 64px; height: 64px; border-radius: 15px; display: grid; place-items: center; color: #fff; background: linear-gradient(150deg, var(--brand-300) 0%, var(--brand-500) 48%, var(--brand-700) 100%); box-shadow: 0 6px 18px #0007; }
+.theme__icon svg { width: 34px; height: 34px; }
+.theme__freedom { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 14px 0 12px; }
+.theme__team { display: flex; align-items: center; gap: 10px; }
+.theme__dot { width: 16px; height: 16px; border-radius: 50%; box-shadow: inset 0 0 0 1px #ffffff26; }
 .sprofile { display: flex; gap: 22px; align-items: flex-start; margin-top: 14px; }
 .sform { display: flex; flex-direction: column; gap: 12px; flex: 1; max-width: 380px; }
 .sfield { display: flex; flex-direction: column; gap: 5px; }
