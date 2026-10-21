@@ -27,8 +27,20 @@ mac:
   target:
     - target: dmg
       arch: universal
-  identity: null
+  # Ad-hoc signature ("-"): free, no certificate. It gives the app a stable identity
+  # (com.sweetflow.app) so macOS remembers the access the user allows to the team folder
+  # (Escritorio, Documentos, Dropbox…) and asks once instead of on every file it reads.
+  # Each new build is a new identity for macOS: it asks once again after an update.
+  identity: "-"
   hardenedRuntime: false
+  # The text of macOS' permission prompts.
+  extendInfo:
+    NSDesktopFolderUsageDescription: Sweetflow guarda y lee las producciones en la carpeta del equipo.
+    NSDocumentsFolderUsageDescription: Sweetflow guarda y lee las producciones en la carpeta del equipo.
+    NSDownloadsFolderUsageDescription: Sweetflow guarda y lee las producciones en la carpeta del equipo.
+    NSRemovableVolumesUsageDescription: Sweetflow guarda y lee las producciones en la carpeta del equipo.
+    NSNetworkVolumesUsageDescription: Sweetflow guarda y lee las producciones en la carpeta del equipo.
+    NSFileProviderDomainUsageDescription: Sweetflow guarda y lee las producciones en la carpeta del equipo (Dropbox, Google Drive).
   notarize: false
 dmg:
   sign: false

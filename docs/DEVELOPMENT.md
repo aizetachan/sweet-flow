@@ -211,7 +211,15 @@ los tokens de Google con el secreto.
    xattr -dr com.apple.quarantine "/Applications/Sweetflow.app"
    ```
 
-Mientras la app no esté firmada, macOS no permite actualizarla sola. La app
+La app lleva una firma *ad hoc* (gratis, sin certificado; `identity: "-"` en
+`electron-builder.yml`). Con ella macOS la reconoce como `com.sweetflow.app` y
+recuerda el permiso a la carpeta del equipo: lo pide **una vez**, la primera vez
+que la app la abre, y no en cada archivo. Sin esa firma lo pedía en cada lectura
+(al seleccionar cada plano). Para macOS cada compilación es otra app, así que
+tras instalar una versión nueva lo vuelve a pedir una vez. Una carpeta fuera de
+Escritorio, Documentos y Descargas (p. ej. `~/Sweetflow`) no lo pide nunca.
+
+Mientras la app no tenga firma de desarrollador de Apple, macOS no permite actualizarla sola. La app
 avisa cuando hay una versión nueva y abre la página de descarga.
 
 ### Instalar en Windows
