@@ -110,20 +110,23 @@ export function initFluidBackground(): void {
   const uMouseAmt = gl.getUniformLocation(prog, "u_mouseAmt");
   const uAccent = gl.getUniformLocation(prog, "u_accent");
 
-  // One still frame of the same field, as a texture for the cards (CSS var
-  // --fluid-tex). Read back synchronously, right after drawing, so no
-  // preserveDrawingBuffer is needed.
+  // Two still frames of the same field, as textures for the cards (CSS vars
+  // --fluid-tex and --fluid-tex-2; the CSS drifts and cross-fades them so the
+  // cards deform slowly on their own). Read back synchronously, right after
+  // drawing, so no preserveDrawingBuffer is needed.
   canvas.width = 640;
   canvas.height = 400;
   gl.viewport(0, 0, 640, 400);
   gl.uniform2f(uRes, 640, 400);
-  gl.uniform1f(uTime, 41.0);
   gl.uniform2f(uMouse, 0.5, 0.5);
   gl.uniform1f(uMouseAmt, 0);
-  gl.uniform1f(uAccent, 2.4);
-  gl.drawArrays(gl.TRIANGLES, 0, 3);
+  gl.uniform1f(uAccent, 3.0);
   try {
-    document.documentElement.style.setProperty("--fluid-tex", `url(${canvas.toDataURL("image/jpeg", 0.75)})`);
+    for (const [name, t] of [["--fluid-tex", 41.0], ["--fluid-tex-2", 47.5]] as const) {
+      gl.uniform1f(uTime, t);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+      document.documentElement.style.setProperty(name, `url(${canvas.toDataURL("image/jpeg", 0.75)})`);
+    }
   } catch {
     /* tainted or unsupported: cards keep their plain gradient */
   }

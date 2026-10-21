@@ -105,31 +105,47 @@ main, .footer { position: relative; z-index: 1; }
 }
 .chip--glass { font-size: 12px; background: rgb(255 255 255 / .06); backdrop-filter: blur(12px); }
 
-/* Cards: the card tint over a still frame of the fluid (--fluid-tex, set by
-   fluid.ts; without WebGL the plain gradient stays). Each card frames the
-   texture differently so no two look alike. The glow only appears under the
-   cursor, and the texture drifts slightly towards it. */
+/* Cards: two still frames of the fluid (--fluid-tex / --fluid-tex-2, set by
+   fluid.ts) under the card tint, in two layers that drift and cross-fade very
+   slowly, so the surface deforms on its own. Each card frames the texture
+   differently and starts at a different point of the cycle. The cursor only
+   nudges the layers a few pixels (--tx/--ty from cards.ts). Without WebGL the
+   layers are just the tint: the plain gradient of the design. */
 .card {
-  position: relative; overflow: hidden; border-radius: 24px;
-  --card-a: rgb(31 31 35 / .82); --card-b: rgb(23 23 26 / .82);
-  background: linear-gradient(180deg, var(--card-a), var(--card-b)), var(--fluid-tex, linear-gradient(180deg, var(--bg-3), var(--bg-2)));
-  background-size: auto, 220% auto; background-repeat: no-repeat;
-  background-position: 0 0, calc(var(--tex-x, 50%) + var(--tx, 0px)) calc(var(--tex-y, 50%) + var(--ty, 0px));
+  position: relative; overflow: hidden; isolation: isolate; border-radius: 24px;
+  --card-a: rgb(31 31 35 / .72); --card-b: rgb(23 23 26 / .72);
+  background: linear-gradient(180deg, var(--bg-3), var(--bg-2));
   border: 1px solid rgb(255 255 255 / .16);
-  transition: background-position .6s cubic-bezier(.2, .7, .2, 1);
 }
-.card--dark { --card-a: rgb(14 14 16 / .8); --card-b: rgb(23 23 26 / .8); }
+.card--dark { --card-a: rgb(14 14 16 / .72); --card-b: rgb(23 23 26 / .72); background: linear-gradient(180deg, var(--bg), var(--bg-2)); }
+.card::before, .card::after {
+  content: ""; position: absolute; inset: -18%; z-index: 0; pointer-events: none;
+  background: linear-gradient(180deg, var(--card-a), var(--card-b)), var(--fluid-tex, none);
+  background-size: auto, cover; background-position: 0 0, var(--tex-x, 50%) var(--tex-y, 50%);
+  transform: translate(var(--tx, 0px), var(--ty, 0px));
+  transition: transform 1.6s cubic-bezier(.2, .7, .2, 1), filter .8s;
+  animation: card-drift-a 46s ease-in-out infinite alternate;
+}
+.card::after {
+  background-image: linear-gradient(180deg, var(--card-a), var(--card-b)), var(--fluid-tex-2, none);
+  animation: card-drift-b 37s ease-in-out infinite alternate, card-breathe 23s ease-in-out infinite;
+}
+.card:hover::before, .card:hover::after { filter: brightness(1.12); }
+@keyframes card-drift-a { from { translate: 0 0; } to { translate: 2.5% 1.5%; } }
+@keyframes card-drift-b { from { translate: 1.5% -1.5%; } to { translate: -2% 2%; } }
+@keyframes card-breathe { 0%, 100% { opacity: .2; } 50% { opacity: .8; } }
 .card:nth-child(3n + 1) { --tex-x: 18%; --tex-y: 30%; }
 .card:nth-child(3n + 2) { --tex-x: 72%; --tex-y: 65%; }
 .card:nth-child(3n + 3) { --tex-x: 45%; --tex-y: 90%; }
 .card:nth-child(4), .card:nth-child(5) { --tex-x: 85%; --tex-y: 12%; }
-.card::before {
-  content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0; transition: opacity .4s;
-  background: radial-gradient(260px circle at var(--mx, 50%) var(--my, 50%), rgb(var(--accent-rgb) / .16), rgb(var(--accent-rgb) / 0) 70%);
+.card:nth-child(3n + 2)::before, .card:nth-child(3n + 2)::after { animation-delay: -15s, -9s; }
+.card:nth-child(3n + 3)::before, .card:nth-child(3n + 3)::after { animation-delay: -31s, -17s; }
+@media (prefers-reduced-motion: reduce) {
+  .card::before, .card::after { animation: none; }
+  .card::after { opacity: .5; }
 }
-.card:hover::before { opacity: 1; }
 /* Everything inside a card (mockups, thumbnails, screenshots, text) sits above
-   the texture and the glow, never tinted by them. */
+   the texture, never tinted by it. */
 .card > * { position: relative; z-index: 1; }
 
 .logo { display: inline-flex; align-items: center; gap: 9px; }
@@ -151,20 +167,27 @@ main, .footer { position: relative; z-index: 1; }
   position: sticky; top: 0; z-index: 20; display: flex; justify-content: center;
   padding: 0 var(--gutter); height: 64px;
   background: linear-gradient(180deg, rgb(14 14 16 / .96) 0%, rgb(14 14 16 / .7) 55%, rgb(14 14 16 / 0) 100%);
-  transition: padding .4s cubic-bezier(.2, .7, .2, 1), background .4s;
+  --ease: cubic-bezier(.22, 1, .36, 1);
+  transition: padding .9s var(--ease), background .9s var(--ease);
 }
 .nav__inner {
   display: flex; align-items: center; justify-content: space-between; gap: 24px;
   width: 100%; max-width: var(--container); height: 56px; margin: 0; padding: 0 0 0 0; border-radius: 999px;
   border: 1px solid transparent; background: transparent;
-  transition: max-width .45s cubic-bezier(.2, .7, .2, 1), height .35s, padding .35s, background .35s, border-color .35s, box-shadow .35s, margin .35s;
+  transition: max-width 1s var(--ease), height .9s var(--ease), padding .9s var(--ease), gap .9s var(--ease),
+    background .9s var(--ease), border-color .9s var(--ease), box-shadow .9s var(--ease);
 }
 .nav.is-floating { padding-top: 10px; background: transparent; }
 .nav.is-floating .nav__inner {
-  max-width: 780px; height: 48px; padding: 0 8px 0 14px; gap: 20px;
+  max-width: 720px; height: 48px; padding: 0 8px 0 10px; gap: 20px;
   background: rgb(24 24 27 / .8); border-color: rgb(255 255 255 / .12);
   box-shadow: 0 10px 30px rgb(0 0 0 / .45); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
 }
+/* In the pill only the mark stays: the wordmark folds away. */
+.nav .logo { transition: gap .9s var(--ease); }
+.nav .logo__word { max-width: 140px; overflow: hidden; white-space: nowrap; transition: max-width .9s var(--ease), opacity .5s var(--ease); }
+.nav.is-floating .logo { gap: 0; }
+.nav.is-floating .logo__word { max-width: 0; opacity: 0; }
 .nav__links { display: flex; gap: 28px; font-size: 14px; font-weight: 500; color: var(--fg-2); }
 .nav__links a:hover { color: var(--fg); }
 .nav__actions { display: flex; align-items: center; gap: 8px; }
@@ -477,10 +500,12 @@ kbd {
   box-shadow: 0 24px 70px rgb(var(--accent-rgb) / .3);
 }
 .plan--featured::before {
-  /* The featured plan keeps its always-on glow from the design. */
-  content: ""; position: absolute; left: -101px; top: -141px; width: 320px; height: 320px; pointer-events: none; opacity: 1; inset: auto;
+  /* The featured plan keeps its always-on glow from the design instead of the texture layers. */
+  content: ""; position: absolute; inset: auto; left: -101px; top: -141px; width: 320px; height: 320px; pointer-events: none;
   background: radial-gradient(circle, rgb(var(--accent-rgb) / .4), rgb(var(--accent-rgb) / 0) 70%);
+  animation: none; transform: none; opacity: 1;
 }
+.plan--featured::after { display: none; }
 .plan__head { display: flex; align-items: center; justify-content: space-between; font-size: 18px; font-weight: 600; }
 .badge { padding: 4px 10px; border-radius: 999px; background: var(--accent); font-size: 11px; font-weight: 700; color: #fff; }
 .plan__price { display: flex; flex-direction: column; gap: 4px; }
