@@ -38,43 +38,49 @@ float fbm(vec2 p) {
 }
 void main() {
   float ar = u_res.x / u_res.y;
-  vec2 uv = gl_FragCoord.xy / u_res;
-  vec2 p = vec2(uv.x * ar, uv.y) * 1.1;
-  vec2 m = vec2(u_mouse.x * ar, u_mouse.y) * 1.1;
-  float t = u_time * 0.07;
+  vec2 uv = gl_FragCoord.xy / u_res;     // y = 0 bottom, 1 top
+  float x = uv.x * ar;
+  float y = uv.y;
+  vec2 m = vec2(u_mouse.x * ar, u_mouse.y);
+  float t = u_time;
 
-  vec3 bg = vec3(0.055, 0.055, 0.063);          // #0e0e10
-  vec3 blue = vec3(0.184, 0.490, 1.000);         // #2f7dff
-  vec3 deep = vec3(0.086, 0.282, 0.847);         // #1648d8
+  vec3 bg    = vec3(0.055, 0.055, 0.063);  // #0e0e10
+  vec3 light = vec3(0.424, 0.714, 1.000);  // #6cb6ff
+  vec3 mid   = vec3(0.184, 0.490, 1.000);  // #2f7dff
+  vec3 deep  = vec3(0.086, 0.282, 0.847);  // #1648d8
 
-  // Layer A: the main field. Fully autonomous, it never sees the cursor.
-  vec2 q = vec2(fbm(p + t), fbm(p - t * 0.8 + vec2(3.1, 1.7)));
-  vec2 w = vec2(fbm(p + 2.0 * q + vec2(1.3, 9.2) + t * 0.5), fbm(p + 2.0 * q + vec2(8.3, 2.8) - t * 0.4));
-  float n = fbm(p + 1.8 * w);
-  float n2 = fbm(p * 0.6 - 1.2 * w + vec2(5.0, 2.0));
-  float h = n * 0.5 + 0.5;
-  // A sea of near-black: a faint relief (±1 % luminance) so the dark has volume.
-  vec3 col = bg + vec3(0.012) * (h - 0.5) * 2.0;
-  // The blue lives on the crests of the field: a sparse accent, always flowing.
-  float crest = smoothstep(0.52, 0.86, h);
-  float veins = smoothstep(0.45, 0.95, n2 * 0.5 + 0.5);
-  col += mix(deep, blue, veins) * crest * 0.20 * u_accent;
+  // Night sky: near-black with a faint relief so the dark has volume.
+  vec3 col = bg + vec3(0.010) * (fbm(vec2(x * 0.8, y * 0.8) + t * 0.02) - 0.2);
 
-  // Layer B: a softer, slower, larger field laid over A. This is the one the
-  // cursor gently repels: the sampling point is pushed away from the cursor,
-  // so the veins bend around it instead of following it. No glow.
-  vec2 toM = p - m;
-  float dm = length(toM);
-  vec2 repel = toM / (dm + 0.05) * exp(-dm * dm * 1.6) * 0.22 * u_mouseAmt;
-  vec2 pb = p * 0.65 + vec2(4.2, 7.9) + repel;
-  float tb = u_time * 0.04;
-  vec2 qb = vec2(fbm(pb - tb), fbm(pb + tb * 0.7 + vec2(2.2, 5.3)));
-  float nb = fbm(pb + 1.6 * qb + vec2(0.0, -tb * 0.3));
-  float hb = nb * 0.5 + 0.5;
-  float crestB = smoothstep(0.50, 0.90, hb);
-  col += deep * crestB * 0.11 * u_accent;
+  // Aurora curtains: vertical bands whose centre line undulates along the
+  // height (sines on y with time offset plus a little noise), with soft
+  // noisy edges, a colour gradient per band (light at the top, deep at the
+  // bottom) and a fade at both ends. The cursor pushes a curtain aside when
+  // it comes near; the curtains never stop moving on their own.
+  for (int i = 0; i < 4; i++) {
+    float fi = float(i);
+    float base = (0.14 + 0.24 * fi) * ar + 0.06 * ar * sin(t * 0.06 + fi * 1.7);
+    float cx = base
+      + 0.085 * ar * sin(y * 3.4 + t * 0.30 + fi * 2.1)
+      + 0.045 * ar * sin(y * 7.3 - t * 0.19 + fi * 0.7)
+      + 0.090 * ar * (fbm(vec2(y * 1.6 + fi * 3.0, t * 0.07)) - 0.1);
+    vec2 toM = vec2(cx, y) - m;
+    float d = length(toM);
+    cx += sign(toM.x + 0.0001) * exp(-d * d * 5.0) * 0.16 * ar * u_mouseAmt;
 
-  // Keep it dark at the very top so the sticky nav blends in.
+    float width = 0.11 * ar * (0.75 + 0.5 * fbm(vec2(y * 2.2 + fi, t * 0.09)));
+    float dx = (x - cx) / width;
+    float band = exp(-dx * dx);
+    float vfade = smoothstep(0.0, 0.28, y) * (1.0 - smoothstep(0.72, 1.0, y));
+    float shimmer = 0.55 + 0.45 * fbm(vec2(x * 1.8 + fi, y * 4.0 - t * 0.22));
+    float a = band * vfade * shimmer;
+
+    vec3 top = mix(light, mid, 0.35 + 0.3 * sin(fi * 1.3));
+    vec3 bandCol = mix(deep, top, smoothstep(0.15, 0.9, y));
+    col += bandCol * a * 0.20 * u_accent;
+  }
+
+  // Keep it dark at the very top so the header blends in.
   col = mix(bg, col, smoothstep(0.0, 0.08, 1.0 - uv.y) * 0.9 + 0.1);
   gl_FragColor = vec4(col, 1.0);
 }
@@ -130,7 +136,7 @@ export function initFluidBackground(): void {
   gl.uniform2f(uRes, 640, 400);
   gl.uniform2f(uMouse, 0.5, 0.5);
   gl.uniform1f(uMouseAmt, 0);
-  gl.uniform1f(uAccent, 2.6);
+  gl.uniform1f(uAccent, 1.8);
   try {
     for (const [name, t] of [["--fluid-tex", 41.0], ["--fluid-tex-2", 47.5]] as const) {
       gl.uniform1f(uTime, t);
