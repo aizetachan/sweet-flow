@@ -199,7 +199,7 @@ function Thread({ conv, busy, missing, onLogin }: { conv: Conversation; busy: bo
         stick.current = el.scrollHeight - el.scrollTop - el.clientHeight < 40;
       }}>
         {!conv.items.length ? <div className="chat__hello">Pregunta lo que quieras sobre la producción, o pide cambios: «pon SH0030 en revisión», «crea tres planos en SC010»…</div> : null}
-        {conv.items.map((it) => <Message key={it.id} item={it} conv={conv} onCode={goto} onLogin={onLogin} />)}
+        {grouped(conv.items).map((g) => (g.kind === "steps" ? <Steps key={g.items[0]!.id} items={g.items} /> : <Message key={g.item.id} item={g.item} conv={conv} onCode={goto} onLogin={onLogin} />))}
         {thinking ? <div className="chat__thinking"><span /><span /><span /></div> : null}
       </div>
       <Composer conv={conv} busy={busy} missing={missing} onSend={(t) => void st.send(t)} onStop={st.stop} />
@@ -239,27 +239,70 @@ function describe(input: Record<string, unknown>): string {
   return s.length > 140 ? `${s.slice(0, 138)}…` : s;
 }
 
-function Message({ item, conv, onCode, onLogin }: { item: Item; conv: Conversation; onCode: (c: string) => void; onLogin: () => void }) {
+/** The technical work (tools run one after another) goes together, as one block; the rest, one by one. */
+type Group = { kind: "steps"; items: Extract<Item, { k: "tool" }>[] } | { kind: "one"; item: Item };
+function grouped(items: Item[]): Group[] {
+  const out: Group[] = [];
+  for (const it of items) {
+    const last = out.at(-1);
+    if (it.k === "tool") {
+      if (last?.kind === "steps") last.items.push(it);
+      else out.push({ kind: "steps", items: [it] });
+    } else out.push({ kind: "one", item: it });
+  }
+  return out;
+}
+
+/**
+ * A run of actions as one folded row (docs/INTERFAZ.md §0.2): while it works,
+ * the action under way; done, how many there were. Unfolded, each one, with
+ * its answer.
+ */
+function Steps({ items }: { items: Extract<Item, { k: "tool" }>[] }) {
   const [open, setOpen] = useState(false);
+  const current = items.find((i) => !i.done);
+  const failed = items.filter((i) => i.error).length;
+  const n = items.length;
+  const label = current ? toolLabel(current.name) : n === 1 ? toolLabel(items[0]!.name) : `${n} acciones`;
+  const detail = current ? describe(current.input) : n === 1 ? (items[0]!.result?.split("\n").find((l) => l.trim()) ?? "") : failed ? `${failed} con error` : `última: ${toolLabel(items[n - 1]!.name).toLowerCase()}`;
+  return (
+    <div className={cx("chat__steps", failed > 0 && !current && "is-error")}>
+      <button className="chat__toolrow" onClick={() => setOpen(!open)} title={open ? "Plegar" : "Ver cada acción"}>
+        <span className="chat__toolicon">{current ? <IconLoader2 size={13} className="chat__spin" /> : failed ? <IconAlertTriangle size={13} /> : <IconCheck size={13} />}</span>
+        <span className="chat__toolname">{label}</span>
+        <span className="chat__tooldetail">{detail}</span>
+        <IconChevronDown size={13} className={cx("chat__toolchev", open && "is-open")} />
+      </button>
+      {open ? <div className="chat__stepslist">{items.map((it) => <ToolRow key={it.id} item={it} />)}</div> : null}
+    </div>
+  );
+}
+
+/** One action: its line, unfolding to what it answered. */
+function ToolRow({ item }: { item: Extract<Item, { k: "tool" }> }) {
+  const [open, setOpen] = useState(false);
+  const detail = item.result?.split("\n").find((l) => l.trim()) ?? "";
+  return (
+    <div className={cx("chat__tool", item.error && "is-error")}>
+      <button className="chat__toolrow" onClick={() => setOpen(!open)}>
+        <span className="chat__toolicon">{!item.done ? <IconLoader2 size={13} className="chat__spin" /> : item.error ? <IconAlertTriangle size={13} /> : <IconCheck size={13} />}</span>
+        <span className="chat__toolname">{toolLabel(item.name)}</span>
+        <span className="chat__tooldetail">{item.done ? detail : describe(item.input)}</span>
+        {item.result ? <IconChevronDown size={13} className={cx("chat__toolchev", open && "is-open")} /> : null}
+      </button>
+      {open && item.result ? <pre className="chat__toolout">{item.result}</pre> : null}
+    </div>
+  );
+}
+
+function Message({ item, conv, onCode, onLogin }: { item: Item; conv: Conversation; onCode: (c: string) => void; onLogin: () => void }) {
   switch (item.k) {
     case "user":
       return <div className="chat__user">{item.text}</div>;
     case "text":
       return <div className={cx("chat__text", item.streaming && "is-streaming")}><Markdown text={item.text} onCode={onCode} /></div>;
-    case "tool": {
-      const detail = item.result?.split("\n").find((l) => l.trim()) ?? "";
-      return (
-        <div className={cx("chat__tool", item.error && "is-error")}>
-          <button className="chat__toolrow" onClick={() => setOpen(!open)}>
-            <span className="chat__toolicon">{!item.done ? <IconLoader2 size={13} className="chat__spin" /> : item.error ? <IconAlertTriangle size={13} /> : <IconCheck size={13} />}</span>
-            <span className="chat__toolname">{toolLabel(item.name)}</span>
-            <span className="chat__tooldetail">{item.done ? detail : describe(item.input)}</span>
-            {item.result ? <IconChevronDown size={13} className={cx("chat__toolchev", open && "is-open")} /> : null}
-          </button>
-          {open && item.result ? <pre className="chat__toolout">{item.result}</pre> : null}
-        </div>
-      );
-    }
+    case "tool":
+      return <ToolRow item={item} />;
     case "approval":
       return (
         <div className={cx("chat__approve", `is-${item.state}`)}>

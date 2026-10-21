@@ -1621,6 +1621,14 @@ button.topbar__me { position: relative; padding: 0; border: 0; border-radius: 50
 .chat__toolchev.is-open { transform: rotate(180deg); }
 .chat__toolout { margin: 0; max-height: 240px; overflow: auto; padding: 8px 10px 10px; border-top: 1px solid var(--line-0); color: var(--fg-2); font: 11px/1.5 var(--mono); white-space: pre-wrap; }
 .chat__spin { color: var(--fg-3); animation: sf-spin .9s linear infinite; }
+/* A run of actions folded into one row; open, each one under it. */
+.chat__steps { border: 1px solid var(--line-0); border-radius: 10px; background: var(--bg-2); font-size: 12px; }
+.chat__steps.is-error > .chat__toolrow .chat__toolicon { color: var(--bad); }
+.chat__stepslist { border-top: 1px solid var(--line-0); padding: 2px 0; }
+.chat__stepslist .chat__tool { border: 0; border-radius: 0; background: none; }
+.chat__stepslist .chat__tool + .chat__tool { border-top: 1px solid var(--line-0); }
+.chat__stepslist .chat__toolrow { min-height: 28px; padding-left: 14px; }
+.chat__stepslist .chat__toolname { font-weight: 400; color: var(--fg-2); }
 /* Asking permission. */
 .chat__approve { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border: 1px solid color-mix(in srgb, var(--warn) 45%, transparent); border-radius: 12px; background: color-mix(in srgb, var(--warn) 8%, var(--bg-2)); font-size: 12.5px; }
 .chat__approve.is-allowed, .chat__approve.is-denied { border-color: var(--line-0); background: var(--bg-2); color: var(--fg-3); }

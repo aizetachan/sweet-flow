@@ -117,8 +117,10 @@ comandos de esa IA, instalada en el ordenador de cada uno y con su cuenta.
   nombre lo cambia (Intro lo guarda, Esc lo deja como estaba). Se guardan en este
   ordenador y siguen ahí al volver a abrir la app.
 - **Mensajes:** los tuyos a la derecha; las respuestas con formato (listas,
-  tablas, código); lo que la IA hace en la app, en una línea cada cosa que se
-  despliega para ver su respuesta. Los códigos (SH0030…) se pueden pulsar: la
+  tablas, código); lo que la IA hace por detrás (leer, cambiar, comandos), que es técnico,
+  va **recogido en un solo desplegable por tanda**: cerrado muestra la acción
+  en curso y, al acabar, cuántas fueron («8 acciones»); abierto, cada una
+  con su respuesta. Los códigos (SH0030…) se pueden pulsar: la
   ventana principal va a ese nodo. Cada mensaje lleva, sin verse, la
   producción y lo seleccionado, para que «este plano» funcione.
 - **Permisos:** por defecto, **«Preguntar antes de cambiar»**: antes de
