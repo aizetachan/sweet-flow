@@ -63,10 +63,10 @@ void main() {
   for (int i = 0; i < 4; i++) {
     float fi = float(i);
     float xi = x * 1.3 + fi * 1.7;
-    float curtain = fbm(vec2(xi * 0.9, t * 0.06 + fi * 2.0)) * 0.30;
+    float curtain = fbm(vec2(xi * 0.9, t * 0.16 + fi * 2.0)) * 0.30;
     float center = 0.22 + 0.17 * fi
-      + sin(xi * 1.5 + t * 0.22 + fi * 1.1) * 0.10
-      + sin(xi * 3.1 - t * 0.14 + fi * 0.6) * 0.035
+      + sin(xi * 1.5 + t * 0.55 + fi * 1.1) * 0.10
+      + sin(xi * 3.1 - t * 0.38 + fi * 0.6) * 0.035
       + curtain - 0.15;
     vec2 toM = vec2(x, center) - m;
     float dmm = length(toM);
@@ -75,9 +75,9 @@ void main() {
     center += dir * exp(-dmm * dmm * 4.0) * 0.10 * u_mouseAmt;
 
     float d = abs(y - center);
-    float thick = 0.16 + 0.08 * fbm(vec2(xi * 1.2, t * 0.08 + fi));
+    float thick = 0.16 + 0.08 * fbm(vec2(xi * 1.2, t * 0.2 + fi));
     float band = smoothstep(thick, 0.0, d);
-    float shimmer = 0.6 + 0.4 * fbm(vec2(xi * 2.0 - t * 0.18, y * 3.0 + fi));
+    float shimmer = 0.6 + 0.4 * fbm(vec2(xi * 2.0 - t * 0.4, y * 3.0 + fi));
     float a = band * shimmer * (0.75 - fi * 0.12);
 
     vec3 top = mix(light, mid, 0.3 + 0.3 * sin(fi * 1.3));
