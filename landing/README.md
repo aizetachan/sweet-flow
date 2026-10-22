@@ -10,6 +10,9 @@ landing/
   src/i18n/es.json, en.json  los textos en cada idioma
   scripts/build-pages.mjs genera index.html (inglés) y localized/es/index.html (español)
   src/styles.css          estilos a partir del diseño de Figma
+  src/hero-app.ts         el hero: réplica interactiva del tablero (solo escritorio)
+  public/img/hero/        fotogramas reales de la producción de prueba para el hero
+  public/video/hero/      clips cortos de esos planos (5 s, 640 px, sin audio)
   public/img/             capturas, miniaturas e iconos exportados de Figma
   firebase.json           Hosting (con i18n) + reglas de Firestore
   firestore.rules         solo se puede CREAR en waitlist y contacts; nada más
@@ -121,6 +124,29 @@ etiqueta `landing-v1-checkpoint` = estado estable anterior al fondo animado.
 - «Para equipos»: un vídeo en bucle con seis planos generados de la
   producción de prueba (725 KB), al 10 %, cargado solo al acercarse.
 - Pie con degradado opaco abajo que se desvanece hacia arriba.
+- Hero: en escritorio (≥ 1100 px y ratón) la captura se sustituye por una
+  réplica del tablero en HTML (`src/hero-app.ts`), montada a 1200×750 y
+  escalada al ancho de la ventana. Imita la app con datos fijos: pestañas
+  Producción / Explorer (árbol plegable que selecciona planos) y Producir /
+  Revisión / Actividad; clic en un plano lo carga en el panel (los planos
+  con vídeo se reproducen, con su reproductor); los grupos se abren en su
+  sitio con la barra «Volver»; la × cierra el panel (estado vacío) y el
+  icono de ventana saca el panel a una ventana propia con el diseño ancho de
+  la app: la columna del panel a la izquierda y, a la derecha, el visor grande
+  con la galería de versiones; «Generar» simula una
+  pasada y añade una versión; S / M / L y «En fila» / «Ver todos» cambian
+  la rejilla; el botón ⓘ despliega la información de la producción; el
+  icono de terminal abre la ventana del Asistente (chat y terminal). Las
+  dos ventanas viven en una capa aparte: se abren fuera de la app (el panel
+  a la izquierda, el Asistente a la derecha, hasta donde deje la pantalla) y
+  se arrastran por toda la página, como ventanas de verdad; se abren enteras
+  dentro de la pantalla y, al arrastrarlas, pueden asomar fuera por los lados
+  (queda a la vista un 45 %), nunca por arriba ni por abajo. El panel no tiene
+  scroll: muestra lo que cabe, como la captura; en su ventana crece entero. Revisión y Actividad llevan contenido
+  ficticio con nombres inventados (Nora, Marta, Íñigo). Imágenes y clips
+  reales de la producción «Punk Story Pilot» (`public/img/hero/`,
+  `public/video/hero/`, 564 KB de vídeo cargados solo al elegir un plano).
+  En móvil y tablet sigue la captura estática.
 - Móvil revisado con Chrome headless a 390 px (no en dispositivo real).
 
 ### Pendiente

@@ -74,8 +74,551 @@
             <button class="btn btn--primary" type="button" data-open="waitlist">{{cta.waitlist}}</button>
             <a class="btn btn--secondary" href="#como-funciona">{{hero.demo}}</a>
           </div>
+          <div class="hero__stage">
           <div class="hero__window">
-            <img src="/img/shot-produccion.jpg" width="1200" height="750" alt="{{hero.shotAlt}}" />
+            <img class="hero__shot" src="/img/shot-produccion.jpg" width="1200" height="750" loading="lazy" alt="{{hero.shotAlt}}" />
+            <!-- Interactive replica of the board (desktop only; src/hero-app.ts). Icons: the sprite below. -->
+            <svg aria-hidden="true" style="position: absolute; width: 0; height: 0" focusable="false">
+              <defs>
+                <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v9a2 2 0 0 1-2 2h-4v-6h-6v6H5a2 2 0 0 1-2-2z" /></symbol>
+                <symbol id="i-film" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M3 9h18M8 4v16M16 4v16" /></symbol>
+                <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" /></symbol>
+                <symbol id="i-terminal" viewBox="0 0 24 24"><path d="M4 17l6-5-6-5M12 19h8" /></symbol>
+                <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></symbol>
+                <symbol id="i-filter" viewBox="0 0 24 24"><path d="M4 5h16l-6 8v6l-4-2v-4z" /></symbol>
+                <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M12 8h.01M12 11v5" /></symbol>
+                <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16v-5a6 6 0 0 1 12 0v5l2 2H4zM10 20a2 2 0 0 0 4 0" /></symbol>
+                <symbol id="i-folder-share" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v3M3 7v10a2 2 0 0 0 2 2h7M16 20l4-4-4-4M20 16h-8" /></symbol>
+                <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2" /><circle cx="9" cy="10" r="1.6" /><path d="M21 16l-5-5-8 8" /></symbol>
+                <symbol id="i-video" viewBox="0 0 24 24"><rect x="3" y="6" width="13" height="12" rx="2" /><path d="M16 10l5-3v10l-5-3z" /></symbol>
+                <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V6l10-2v12" /><circle cx="6.5" cy="18" r="2.5" /><circle cx="16.5" cy="16" r="2.5" /></symbol>
+                <symbol id="i-chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" /></symbol>
+                <symbol id="i-chevron-r" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" /></symbol>
+                <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z" /></symbol>
+                <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></symbol>
+                <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14" /></symbol>
+                <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" /></symbol>
+                <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2" /><path d="M5 15V5a2 2 0 0 1 2-2h10" /></symbol>
+                <symbol id="i-external" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5" /></symbol>
+                <symbol id="i-note" viewBox="0 0 24 24"><path d="M5 4h10l4 4v12H5zM15 4v4h4M8 13h8M8 17h5" /></symbol>
+                <symbol id="i-layers" viewBox="0 0 24 24"><path d="M12 4l8 4.5-8 4.5-8-4.5zM4 13.5l8 4.5 8-4.5" /></symbol>
+                <symbol id="i-ratio" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M7 9h4M7 9v4M17 15h-4M17 15v-4" /></symbol>
+                <symbol id="i-wand" viewBox="0 0 24 24"><path d="M3 21l12-12M14 4l1 2M20 10l-2 1M18 2l-1 2M21 6l-2 1M11 7l1 1M16 12l1 1" /></symbol>
+                <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7z" /></symbol>
+                <symbol id="i-comment" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z" /></symbol>
+                <symbol id="i-expand" viewBox="0 0 24 24"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" /></symbol>
+                <symbol id="i-list" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="7" rx="2" /><rect x="3" y="13" width="18" height="7" rx="2" /></symbol>
+                <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="2" /><rect x="13" y="3" width="8" height="8" rx="2" /><rect x="3" y="13" width="8" height="8" rx="2" /><rect x="13" y="13" width="8" height="8" rx="2" /></symbol>
+                <symbol id="i-board" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M3 10h18M9 10v10" /></symbol>
+                <symbol id="i-editor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M3 14h18M8 14v6M14 14v6" /></symbol>
+                <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9L7 7M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1" /></symbol>
+                <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></symbol>
+                <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12l5 5 9-10" /></symbol>
+                <symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6" /></symbol>
+                <symbol id="i-reply" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5M4 9h11a5 5 0 0 1 0 10h-3" /></symbol>
+                <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-6-5.3-6-10a6 6 0 0 1 12 0c0 4.7-6 10-6 10z" /><circle cx="12" cy="11" r="2" /></symbol>
+                <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></symbol>
+                <symbol id="i-send" viewBox="0 0 24 24"><path d="M21 3L10 14M21 3l-7 18-4-7-7-4z" /></symbol>
+                <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 5l12 7-12 7z" /></symbol>
+                <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14" /></symbol>
+                <symbol id="i-swap" viewBox="0 0 24 24"><path d="M4 8h14l-3-3M20 16H6l3 3" /></symbol>
+                <symbol id="i-tree" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="5" rx="1.5" /><rect x="3" y="16" width="6" height="5" rx="1.5" /><rect x="15" y="16" width="6" height="5" rx="1.5" /><path d="M12 8v4M6 16v-4h12v4" /></symbol>
+                <symbol id="i-user-plus" viewBox="0 0 24 24"><circle cx="10" cy="8" r="4" /><path d="M3 20a7 7 0 0 1 12-4M18 14v6M15 17h6" /></symbol>
+                <symbol id="i-history" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5M12 8v4l3 2" /></symbol>
+                <symbol id="i-dock-left" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M9 4v16M13 10l2 2-2 2" /></symbol>
+              </defs>
+            </svg>
+            <div
+              class="app"
+              data-hero-app
+              data-variant="character"
+              aria-label="{{app.aria}}"
+              data-home-name="Woman main"
+              data-home-type="{{app.character}}"
+              data-home-img="/img/hero/woman-v022.jpg"
+              data-home-result="/img/hero/woman-v023.jpg"
+              data-home-version="22"
+              data-home-when="{{app.v022when}}"
+              data-home-note="{{app.v022note}}"
+              data-home-variant="character"
+              data-home-gallery="/img/hero/woman-v021.jpg,/img/hero/woman-v019.jpg,/img/hero/woman-v017.jpg,/img/hero/woman-v023.jpg,/img/hero/woman-v021.jpg"
+              data-t-model="{{app.model}}"
+              data-t-prompt="{{app.promptHint}}"
+              data-t-generate="{{app.generate}}"
+              data-t-generating="{{app.generating}}"
+              data-t-generated="{{app.generated}}"
+              data-t-now="{{app.now}}"
+            >
+              <div class="app__bar">
+                <span class="app__lights"><i></i><i></i><i></i></span>
+                <span class="app__tab app__tab--home"><svg class="ic"><use href="#i-home" /></svg></span>
+                <span class="app__tab is-on"><svg class="ic"><use href="#i-film" /></svg>EPISODIO - TEST01<svg class="ic app__tab-x"><use href="#i-x" /></svg></span>
+                <span class="app__tab"><svg class="ic"><use href="#i-film" /></svg>Nueva producción test T…</span>
+              </div>
+              <div class="app__body">
+                <aside class="app__side">
+                  <div class="app__seg" role="tablist">
+                    <button type="button" class="is-on" role="tab" aria-selected="true" data-side="production">{{app.production}}</button>
+                    <button type="button" role="tab" aria-selected="false" data-side="explorer">Explorer</button>
+                  </div>
+
+                  <div class="app__pane is-on" data-side-pane="production" data-state="item">
+                    <!-- Nothing selected -->
+                    <div class="app__empty" data-when-state="empty">
+                      <h3>{{app.emptyTitle}}</h3>
+                      <p>{{app.emptyText}}</p>
+                    </div>
+                    <!-- Open in a window of its own -->
+                    <div class="app__empty app__empty--elsewhere" data-when-state="elsewhere">
+                      <svg class="ic ic--lg"><use href="#i-external" /></svg>
+                      <h3 data-elsewhere-name>Woman main</h3>
+                      <p>{{app.elsewhereText}}</p>
+                      <div class="app__empty-acts">
+                        <button type="button" class="app__btn app__btn--primary" data-goto-window><svg class="ic"><use href="#i-external" /></svg>{{app.goToWindow}}</button>
+                        <button type="button" class="app__btn" data-bring-back><svg class="ic"><use href="#i-dock-left" /></svg>{{app.bringBack}}</button>
+                      </div>
+                    </div>
+
+                    <div class="app__itemwrap" data-when-state="item">
+                    <header class="app__item">
+                      <div class="app__item-row">
+                        <strong data-sel-name>Woman main</strong>
+                        <span class="app__icons">
+                          <svg class="ic"><use href="#i-trash" /></svg><svg class="ic"><use href="#i-copy" /></svg>
+                          <button type="button" class="app__icon-btn" data-popout aria-label="{{app.popOut}}" title="{{app.popOut}}"><svg class="ic"><use href="#i-external" /></svg></button>
+                          <button type="button" class="app__icon-btn" data-sel-close aria-label="{{app.closePanel}}" title="{{app.closePanel}}"><svg class="ic"><use href="#i-x" /></svg></button>
+                        </span>
+                      </div>
+                      <div class="app__item-row app__item-row--sub">
+                        <span class="app__drop"><span data-sel-type>{{app.character}}</span><svg class="ic"><use href="#i-chevron" /></svg></span>
+                        <span class="app__link"><svg class="ic"><use href="#i-note" /></svg>{{app.description}}</span>
+                      </div>
+                    </header>
+                    <nav class="app__tabs" role="tablist">
+                      <button type="button" class="is-on" role="tab" aria-selected="true" data-tab="produce">{{app.produce}}</button>
+                      <button type="button" role="tab" aria-selected="false" data-tab="review">{{app.review}}</button>
+                      <button type="button" role="tab" aria-selected="false" data-tab="activity">{{app.activity}}</button>
+                    </nav>
+
+                    <div class="app__tabbody">
+                    <!-- Produce -->
+                    <div class="app__tabpane is-on" data-tab-pane="produce">
+                      <div class="app__gen">
+                        <div class="app__gen-head">
+                          <span class="app__kinds">
+                            <span class="is-on"><svg class="ic"><use href="#i-image" /></svg></span>
+                            <span><svg class="ic"><use href="#i-video" /></svg></span>
+                            <span><svg class="ic"><use href="#i-music" /></svg></span>
+                          </span>
+                          <span class="app__select">{{app.model}}<svg class="ic"><use href="#i-chevron" /></svg></span>
+                        </div>
+                        <div class="app__label">{{app.references}}<span>0/12</span></div>
+                        <div class="app__refs">
+                          <span class="app__ref"><svg class="ic"><use href="#i-sparkles" /></svg>{{app.style}}</span>
+                          <span class="app__ref"><svg class="ic"><use href="#i-plus" /></svg>{{app.add}}</span>
+                        </div>
+                        <div class="app__label">Prompt</div>
+                        <div class="app__prompt" data-prompt>{{app.promptHintHome}}</div>
+                        <div class="app__gen-row">
+                          <span class="app__pill"><svg class="ic"><use href="#i-minus" /></svg><b>1</b><svg class="ic"><use href="#i-plus" /></svg></span>
+                          <span class="app__pill"><svg class="ic"><use href="#i-ratio" /></svg>16:9</span>
+                        </div>
+                        <button type="button" class="app__generate" data-generate>
+                          <svg class="ic"><use href="#i-wand" /></svg><span data-generate-label>{{app.generate}}</span>
+                          <em><svg class="ic"><use href="#i-bolt" /></svg>100</em>
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Review: fictitious threads, pinned on the picture (shown while this tab is open) -->
+                    <div class="app__tabpane" data-tab-pane="review">
+                      <div class="app__reviewing">
+                        <span class="app__faint">{{app.reviewing}}</span>
+                        <span class="app__drop app__drop--sm"><code data-review-version>v022</code><svg class="ic"><use href="#i-chevron" /></svg></span>
+                        <span class="app__vtrail" data-for="character"><code>v020</code><i>→</i><code>v021</code><i>→</i><code class="is-now" data-review-now>v022</code></span>
+                        <span class="app__vtrail" data-for="shot" data-review-trail><code>v001</code><i>→</i><code class="is-now" data-review-now>v004</code></span>
+                      </div>
+                      <div class="app__threads" data-for="character">
+                        <div class="app__thread">
+                          <div class="app__comment">
+                            <i class="app__avatar app__avatar--m">M</i>
+                            <div><b>Marta Vidal</b> <small>{{app.ago2h}}</small> <span class="app__cpin app__cpin--m">1</span><p>{{app.rc1}}</p></div>
+                          </div>
+                          <div class="app__comment app__comment--reply">
+                            <i class="app__avatar app__avatar--n">N</i>
+                            <div><b>Nora Caballé</b> <small>{{app.ago1h}}</small><p>{{app.rc1r}}</p></div>
+                          </div>
+                          <div class="app__thread-acts"><span><svg class="ic"><use href="#i-reply" /></svg>{{app.reply}}</span><span><svg class="ic"><use href="#i-check" /></svg>{{app.resolve}}</span></div>
+                        </div>
+                        <div class="app__thread">
+                          <div class="app__comment">
+                            <i class="app__avatar app__avatar--i">I</i>
+                            <div><b>Íñigo Serra</b> <small>{{app.yesterday}}</small> <span class="app__cpin app__cpin--i">2</span><p>{{app.rc2}}</p></div>
+                          </div>
+                          <div class="app__thread-acts"><span><svg class="ic"><use href="#i-reply" /></svg>{{app.reply}}</span><span><svg class="ic"><use href="#i-check" /></svg>{{app.resolve}}</span></div>
+                        </div>
+                        <div class="app__thread app__thread--resolved">
+                          <div class="app__comment">
+                            <i class="app__avatar app__avatar--m">M</i>
+                            <div><b>Marta Vidal</b> <small>17 oct</small> <span class="app__vtrail"><code>v021</code><i>→</i><code>v022</code></span><p>{{app.rc3}}</p></div>
+                          </div>
+                          <div class="app__thread-acts"><span><svg class="ic"><use href="#i-check" /></svg>{{app.reopen}}</span></div>
+                        </div>
+                      </div>
+                      <div class="app__threads" data-for="shot">
+                        <div class="app__thread">
+                          <div class="app__comment">
+                            <i class="app__avatar app__avatar--m">M</i>
+                            <div><b>Marta Vidal</b> <small>{{app.ago3h}}</small> <span class="app__tc"><svg class="ic"><use href="#i-clock" /></svg>00:03.2</span><p>{{app.rs1}}</p></div>
+                          </div>
+                          <div class="app__thread-acts"><span><svg class="ic"><use href="#i-reply" /></svg>{{app.reply}}</span><span><svg class="ic"><use href="#i-check" /></svg>{{app.resolve}}</span></div>
+                        </div>
+                        <div class="app__thread">
+                          <div class="app__comment">
+                            <i class="app__avatar app__avatar--i">I</i>
+                            <div><b>Íñigo Serra</b> <small>{{app.yesterday}}</small> <span class="app__cpin app__cpin--i">1</span><p>{{app.rs2}}</p></div>
+                          </div>
+                          <div class="app__comment app__comment--reply">
+                            <i class="app__avatar app__avatar--n">N</i>
+                            <div><b>Nora Caballé</b> <small>{{app.yesterday}}</small><p>{{app.rs2r}}</p></div>
+                          </div>
+                          <div class="app__thread-acts"><span><svg class="ic"><use href="#i-reply" /></svg>{{app.reply}}</span><span><svg class="ic"><use href="#i-check" /></svg>{{app.resolve}}</span></div>
+                        </div>
+                        <div class="app__thread app__thread--resolved">
+                          <div class="app__comment">
+                            <i class="app__avatar app__avatar--m">M</i>
+                            <div><b>Marta Vidal</b> <small>16 oct</small><p>{{app.rs3}}</p></div>
+                          </div>
+                          <div class="app__thread-acts"><span><svg class="ic"><use href="#i-check" /></svg>{{app.reopen}}</span></div>
+                        </div>
+                      </div>
+                      <div class="app__composer">
+                        <div class="app__composer-field">{{app.writeNote}}</div>
+                        <div class="app__composer-row"><span class="app__faint"><svg class="ic"><use href="#i-pin" /></svg>{{app.pinHint}}</span><span class="app__composer-send"><svg class="ic"><use href="#i-send" /></svg>{{app.send}}</span></div>
+                      </div>
+                    </div>
+
+                    <!-- Activity: fictitious history, like the app's (summary, categories, days) -->
+                    <div class="app__tabpane" data-tab-pane="activity">
+                      <div class="app__asum" data-for="character"><span><b>22</b> {{app.versionsLc}}</span><span><b>5</b> {{app.commentsLc}}</span><span>{{app.inProgressSince}} 12 oct</span></div>
+                      <div class="app__asum" data-for="shot"><span><b>4</b> {{app.versionsLc}}</span><span><b>3</b> {{app.commentsLc}}</span><span>{{app.inReviewSince}} {{app.yesterday}}</span></div>
+                      <div class="app__acats">
+                        <button type="button" class="is-on" data-acat="all">{{app.catAll}}</button>
+                        <button type="button" data-acat="generate">{{app.versions}}</button>
+                        <button type="button" data-acat="comment">{{app.review}}</button>
+                        <button type="button" data-acat="status">{{app.catStatus}}</button>
+                        <button type="button" data-acat="structure">{{app.catShot}}</button>
+                      </div>
+                      <div class="app__feed" data-feed data-acat="all">
+                        <div data-for="character">
+                          <div class="app__feed-day">{{app.today}}</div>
+                          <ul data-feed-today>
+                            <li data-kind="generate"><svg class="ic"><use href="#i-wand" /></svg><span><b>Nora</b> {{app.actGen3}} <code>v020</code> → <code>v022</code> {{app.actWith}} {{app.model}}</span><small>08:42</small></li>
+                            <li data-kind="comment"><svg class="ic"><use href="#i-comment" /></svg><span><b>Marta</b> {{app.actLeft2}}</span><small>09:15</small></li>
+                          </ul>
+                          <div class="app__feed-day">{{app.yesterdayCap}}</div>
+                          <ul>
+                            <li data-kind="status"><svg class="ic"><use href="#i-swap" /></svg><span><b>Íñigo</b> {{app.actStatus}}: {{app.pending}} → {{app.inProgress}}</span><small>18:40</small></li>
+                            <li data-kind="comment"><svg class="ic"><use href="#i-comment" /></svg><span><b>Íñigo</b> {{app.commented}} <code>v021</code></span><small>18:12</small></li>
+                            <li data-kind="generate"><svg class="ic"><use href="#i-wand" /></svg><span><b>Nora</b> {{app.actGen5}} <code>v015</code> → <code>v019</code></span><small>11:30</small></li>
+                          </ul>
+                          <div class="app__feed-day">12 oct</div>
+                          <ul>
+                            <li data-kind="structure"><svg class="ic"><use href="#i-user-plus" /></svg><span><b>Íñigo</b> {{app.actAssigned}} Nora</span><small>10:05</small></li>
+                            <li data-kind="structure"><svg class="ic"><use href="#i-tree" /></svg><span><b>Nora</b> {{app.created}} Woman main {{app.inLibrary}}</span><small>09:48</small></li>
+                          </ul>
+                        </div>
+                        <div data-for="shot">
+                          <div class="app__feed-day">{{app.today}}</div>
+                          <ul data-feed-today>
+                            <li data-kind="comment"><svg class="ic"><use href="#i-comment" /></svg><span><b>Marta</b> {{app.commented}} <code>v004</code></span><small>10:02</small></li>
+                          </ul>
+                          <div class="app__feed-day">{{app.yesterdayCap}}</div>
+                          <ul>
+                            <li data-kind="status"><svg class="ic"><use href="#i-swap" /></svg><span><b>Íñigo</b> {{app.actStatus}}: {{app.inProgress}} → {{app.inReview}}</span><small>19:20</small></li>
+                            <li data-kind="generate"><svg class="ic"><use href="#i-wand" /></svg><span><b>Nora</b> {{app.actGen4}} <code>v001</code> → <code>v004</code> {{app.actWith}} {{app.model}}</span><small>17:10</small></li>
+                            <li data-kind="comment"><svg class="ic"><use href="#i-comment" /></svg><span><b>Íñigo</b> {{app.commented}} <code>v003</code></span><small>16:48</small></li>
+                          </ul>
+                          <div class="app__feed-day">16 oct</div>
+                          <ul>
+                            <li data-kind="structure"><svg class="ic"><use href="#i-tree" /></svg><span><b>Nora</b> {{app.actCreatedShot}} {{app.sceneName}}</span><small>12:35</small></li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- The viewer: under every tab -->
+                    <figure class="app__viewer">
+                      <div class="app__viewer-img">
+                        <img data-viewer-img src="/img/hero/woman-v022.jpg" width="720" height="405" alt="" />
+                        <video data-viewer-video muted loop playsinline preload="none"></video>
+                        <span class="app__pins" data-for="character"><i class="app__pin app__pin--m" style="left: 60%; top: 42%">1</i><i class="app__pin app__pin--i" style="left: 22%; top: 30%">2</i></span>
+                        <span class="app__pins" data-for="shot"><i class="app__pin app__pin--i" style="left: 48%; top: 58%">1</i></span>
+                        <span class="app__viewer-acts"><svg class="ic"><use href="#i-comment" /></svg><svg class="ic"><use href="#i-expand" /></svg></span>
+                        <span class="app__progress"><i></i></span>
+                      </div>
+                      <div class="app__player" data-player>
+                        <button type="button" data-play aria-label="{{app.play}}"><svg class="ic ic--play"><use href="#i-play" /></svg><svg class="ic ic--pause"><use href="#i-pause" /></svg></button>
+                        <span class="app__player-bar"><i data-player-bar></i></span>
+                        <code data-player-time>00:00.0 / 00:05.0</code>
+                        <svg class="ic"><use href="#i-expand" /></svg>
+                      </div>
+                      <figcaption>
+                        <code data-viewer-version>v022</code> <span data-viewer-meta>{{app.model}} · Nora · {{app.v022when}}</span>
+                        <p data-viewer-note>{{app.v022note}}</p>
+                      </figcaption>
+                    </figure>
+                    </div>
+                    </div>
+                  </div>
+
+                  <!-- Explorer: folders fold, a shot selects its card -->
+                  <div class="app__pane" data-side-pane="explorer">
+                    <ul class="app__tree">
+                      <li class="app__tree-folder is-open" data-folder><svg class="ic ic--fold"><use href="#i-chevron-r" /></svg><svg class="ic"><use href="#i-film" /></svg>Punk Story Pilot</li>
+                      <ul>
+                        <li class="app__tree-folder" data-folder><svg class="ic ic--fold"><use href="#i-chevron-r" /></svg><svg class="ic"><use href="#i-folder" /></svg>SQ020 · {{app.sq020}}</li>
+                        <ul>
+                          <li data-tree-leaf><svg class="ic"><use href="#i-folder" /></svg>SC010 · {{app.sq020sc}}<small>3</small></li>
+                        </ul>
+                        <li class="app__tree-folder" data-folder><svg class="ic ic--fold"><use href="#i-chevron-r" /></svg><svg class="ic"><use href="#i-folder" /></svg>SQ030 · {{app.sq030}}</li>
+                        <ul>
+                          <li data-tree-leaf><svg class="ic"><use href="#i-folder" /></svg>SC010 · {{app.sq030sc}}<small>4</small></li>
+                        </ul>
+                        <li class="app__tree-folder is-open" data-folder><svg class="ic ic--fold"><use href="#i-chevron-r" /></svg><svg class="ic"><use href="#i-folder" /></svg>SQ040 · Intro cigarro</li>
+                        <ul>
+                          <li class="app__tree-folder is-open" data-folder><svg class="ic ic--fold"><use href="#i-chevron-r" /></svg><svg class="ic"><use href="#i-folder" /></svg>SC010 · {{app.sceneName}}</li>
+                          <ul>
+                            <li class="app__tree-folder" data-folder data-tree-group="g1"><svg class="ic ic--fold"><use href="#i-chevron-r" /></svg><svg class="ic"><use href="#i-layers" /></svg>Aparicion personaje<small>2</small></li>
+                            <ul>
+                              <li data-tree-shot="s12"><svg class="ic"><use href="#i-video" /></svg>SH0012 · {{app.shotS12}}<small>10.0s</small></li>
+                              <li data-tree-shot="s15"><svg class="ic"><use href="#i-video" /></svg>SH0015 · {{app.shotS15}}<small>10.2s</small></li>
+                            </ul>
+                            <li data-tree-shot="s10"><svg class="ic"><use href="#i-video" /></svg>SH0010<small>5.1s</small></li>
+                            <li data-tree-shot="s60"><svg class="ic"><use href="#i-video" /></svg>SH0060<small>5.1s</small></li>
+                            <li class="app__tree-folder" data-folder data-tree-group="g2"><svg class="ic ic--fold"><use href="#i-chevron-r" /></svg><svg class="ic"><use href="#i-layers" /></svg>Encender cigarro<small>3</small></li>
+                            <ul>
+                              <li data-tree-shot="s30"><svg class="ic"><use href="#i-video" /></svg>SH0030 · {{app.shotS30}}<small>5.1s</small></li>
+                              <li data-tree-shot="s50"><svg class="ic"><use href="#i-video" /></svg>SH0050 · {{app.shotS50}}<small>5.1s</small></li>
+                              <li data-tree-shot="s55"><svg class="ic"><use href="#i-video" /></svg>SH0055 · {{app.shotS55}}<small>5.1s</small></li>
+                            </ul>
+                            <li class="app__tree-folder" data-folder data-tree-group="g3"><svg class="ic ic--fold"><use href="#i-chevron-r" /></svg><svg class="ic"><use href="#i-layers" /></svg>andar<small>2</small></li>
+                            <ul>
+                              <li data-tree-shot="s11"><svg class="ic"><use href="#i-video" /></svg>SH0011 · {{app.shotS11}}<small>5.1s</small></li>
+                              <li data-tree-shot="s13"><svg class="ic"><use href="#i-video" /></svg>SH0013 · {{app.shotS13}}<small>5.1s</small></li>
+                            </ul>
+                            <li data-tree-leaf><svg class="ic"><use href="#i-image" /></svg>SH0070 · {{app.untitled}}<small>—</small></li>
+                          </ul>
+                        </ul>
+                        <li class="app__tree-folder" data-folder><svg class="ic ic--fold"><use href="#i-chevron-r" /></svg><svg class="ic"><use href="#i-folder" /></svg>SQ050 · {{app.sq050}}</li>
+                        <ul>
+                          <li data-tree-leaf><svg class="ic"><use href="#i-folder" /></svg>SC010 · {{app.sq050sc}}<small>2</small></li>
+                        </ul>
+                        <li class="app__tree-folder" data-folder><svg class="ic ic--fold"><use href="#i-chevron-r" /></svg><svg class="ic"><use href="#i-image" /></svg>{{app.library}}<small>12</small></li>
+                        <ul>
+                          <li data-tree-home><svg class="ic"><use href="#i-image" /></svg>Woman main<small>22</small></li>
+                          <li data-tree-leaf><svg class="ic"><use href="#i-image" /></svg>Ropa p. prpal<small>5</small></li>
+                          <li data-tree-leaf><svg class="ic"><use href="#i-image" /></svg>Pulso torneo<small>2</small></li>
+                        </ul>
+                      </ul>
+                    </ul>
+                  </div>
+                </aside>
+
+                <section class="app__main">
+                  <div class="app__toolbar">
+                    <button type="button" class="app__tool" data-open-window="assistant" aria-label="{{app.assistant}}" title="{{app.assistantHint}}"><svg class="ic"><use href="#i-terminal" /></svg></button>
+                    <span class="app__search"><svg class="ic"><use href="#i-search" /></svg><span>{{app.search}}</span><svg class="ic"><use href="#i-filter" /></svg></span>
+                    <span class="app__popwrap">
+                      <button type="button" class="app__tool" data-info aria-label="{{app.infoHint}}" title="{{app.infoHint}}" aria-expanded="false"><svg class="ic"><use href="#i-info" /></svg></button>
+                      <div class="app__pop" data-info-pop>
+                        <div class="app__pop-title">{{app.theProduction}}</div>
+                        <div class="app__pop-row"><span>{{app.sequences}}</span><strong>4</strong></div>
+                        <div class="app__pop-row"><span>{{app.scenes}}</span><strong>6</strong></div>
+                        <div class="app__pop-row"><span>{{app.shotsCap}}</span><strong>23</strong></div>
+                        <div class="app__pop-row"><span>{{app.approvedPl}}</span><strong>9 {{app.of}} 23</strong></div>
+                        <span class="app__pop-bar"><i style="width: 39%"></i></span>
+                        <div class="app__pop-row"><span>{{app.assembled}}</span><strong>2:14</strong></div>
+                        <div class="app__pop-row"><span>{{app.approvedSg}}</span><strong>0:48</strong></div>
+                        <div class="app__pop-title">{{app.byStatus}}</div>
+                        <div class="app__pop-row"><span><i class="app__dot"></i>{{app.pending}}</span><strong>8</strong></div>
+                        <div class="app__pop-row"><span><i class="app__dot app__dot--yellow"></i>{{app.inReview}}</span><strong>6</strong></div>
+                        <div class="app__pop-row"><span><i class="app__dot app__dot--green"></i>{{app.approved}}</span><strong>9</strong></div>
+                      </div>
+                    </span>
+                    <span class="app__spacer"></span>
+                    <svg class="ic"><use href="#i-bell" /></svg>
+                    <svg class="ic"><use href="#i-folder-share" /></svg>
+                    <span class="app__share">{{app.share}}</span>
+                    <i class="app__avatar app__avatar--n app__avatar--me">N</i>
+                  </div>
+                  <div class="app__content">
+                    <div class="app__title-row">
+                      <h2>{{app.workspace}}</h2>
+                      <span class="app__seg app__seg--sizes" role="group" aria-label="{{app.sizes}}">
+                        <button type="button" data-size="s">S</button><button type="button" class="is-on" data-size="m">M</button><button type="button" data-size="l">L</button>
+                      </span>
+                    </div>
+                    <div class="app__seq-row">
+                      <h3>Intro cigarro</h3>
+                      <span class="app__link"><svg class="ic"><use href="#i-plus" /></svg>{{app.scene}}</span>
+                    </div>
+                    <div class="app__scene">
+                      <div class="app__scene-head">
+                        <strong>{{app.sceneName}}</strong>
+                        <span class="app__status"><i></i>{{app.pending}}</span>
+                        <button type="button" class="app__ghost" data-view-toggle title="{{app.viewHint}}">
+                          <span class="app__when-grid"><svg class="ic"><use href="#i-list" /></svg>{{app.rows}}</span>
+                          <span class="app__when-row"><svg class="ic"><use href="#i-grid" /></svg>{{app.seeAll}}</span>
+                        </button>
+                      </div>
+                      <div class="app__groupbar" data-groupbar>
+                        <button type="button" class="app__back" data-group-close><svg class="ic"><use href="#i-arrow-left" /></svg>{{app.back}}</button>
+                        <svg class="ic"><use href="#i-layers" /></svg>
+                        <strong data-group-name></strong>
+                        <span class="app__faint"><span data-group-count></span> {{app.shots}} · {{app.groupHint}}</span>
+                        <span class="app__spacer"></span>
+                        <span class="app__ghost">{{app.ungroup}}</span>
+                      </div>
+                      <div class="app__grid" data-grid data-size="m" data-view="grid">
+                        <button type="button" class="app__shot app__shot--group" data-group="g1" data-name="Aparicion personaje" data-count="2">
+                          <span class="app__thumbs app__thumbs--2"><img src="/img/hero/aparicion-1.jpg" width="480" height="270" alt="" /><img src="/img/hero/aparicion-2.jpg" width="480" height="270" alt="" /></span>
+                          <span class="app__shot-title"><svg class="ic"><use href="#i-layers" /></svg>Aparicion personaje</span>
+                          <span class="app__shot-meta"><span>2 {{app.shots}}</span><span>20.2s</span></span>
+                        </button>
+                        <button type="button" class="app__shot" data-shot="s12" data-in-group="g1" aria-pressed="false" data-name="SH0012 · {{app.shotS12}}" data-type="{{app.shot}}" data-img="/img/hero/aparicion-1-lg.jpg" data-video="/video/hero/aparicion-1.mp4" data-version="1" data-when="{{app.when1}}" data-note="{{app.noteAparicion}}">
+                          <span class="app__thumbs"><img src="/img/hero/aparicion-1.jpg" width="480" height="270" alt="" loading="lazy" /></span>
+                          <span class="app__shot-title">{{app.shotS12}}<span class="app__status app__status--yellow"><i></i>{{app.inReview}}</span></span>
+                          <span class="app__shot-meta"><span><i class="app__avatar app__avatar--n app__avatar--xs">N</i></span><span>10.0s</span></span>
+                        </button>
+                        <button type="button" class="app__shot" data-shot="s15" data-in-group="g1" aria-pressed="false" data-name="SH0015 · {{app.shotS15}}" data-type="{{app.shot}}" data-img="/img/hero/aparicion-2.jpg" data-version="3" data-when="{{app.when1}}" data-note="{{app.noteAparicion2}}">
+                          <span class="app__thumbs"><img src="/img/hero/aparicion-2.jpg" width="480" height="270" alt="" loading="lazy" /></span>
+                          <span class="app__shot-title">{{app.shotS15}}<span class="app__status app__status--green"><i></i>{{app.approved}}</span></span>
+                          <span class="app__shot-meta"><span><i class="app__avatar app__avatar--n app__avatar--xs">N</i></span><span>10.2s</span></span>
+                        </button>
+                        <button type="button" class="app__shot" data-shot="s10" aria-pressed="false" data-name="SH0010" data-type="{{app.shot}}" data-img="/img/hero/boots-lg.jpg" data-video="/video/hero/boots.mp4" data-version="4" data-when="{{app.when2}}" data-note="{{app.noteBoots}}">
+                          <span class="app__thumbs"><img src="/img/hero/boots.jpg" width="480" height="270" alt="" /></span>
+                          <span class="app__shot-title app__shot-title--faint">{{app.untitled}}<span class="app__status"><i></i>{{app.pending}}</span></span>
+                          <span class="app__shot-meta"><span></span><span>5.1s</span></span>
+                        </button>
+                        <button type="button" class="app__shot" data-shot="s60" aria-pressed="false" data-name="SH0060" data-type="{{app.shot}}" data-img="/img/hero/belt-lg.jpg" data-video="/video/hero/belt.mp4" data-version="1" data-when="{{app.when2}}" data-note="{{app.noteBelt}}">
+                          <span class="app__thumbs"><img src="/img/hero/belt.jpg" width="480" height="270" alt="" /></span>
+                          <span class="app__shot-title app__shot-title--faint">{{app.untitled}}<span class="app__status"><i></i>{{app.pending}}</span></span>
+                          <span class="app__shot-meta"><span></span><span>5.1s</span></span>
+                        </button>
+                        <button type="button" class="app__shot app__shot--group" data-group="g2" data-name="Encender cigarro" data-count="3">
+                          <span class="app__thumbs app__thumbs--2"><img src="/img/hero/cigarro-1.jpg" width="480" height="270" alt="" /><img src="/img/hero/cigarro-2.jpg" width="480" height="270" alt="" /><img src="/img/hero/cigarro-3.jpg" width="480" height="270" alt="" /></span>
+                          <span class="app__shot-title"><svg class="ic"><use href="#i-layers" /></svg>Encender cigarro</span>
+                          <span class="app__shot-meta"><span>3 {{app.shots}}</span><span>15.3s</span></span>
+                        </button>
+                        <button type="button" class="app__shot" data-shot="s30" data-in-group="g2" aria-pressed="false" data-name="SH0030 · {{app.shotS30}}" data-type="{{app.shot}}" data-img="/img/hero/cigarro-1-lg.jpg" data-video="/video/hero/cigarro-1.mp4" data-version="1" data-when="{{app.when3}}" data-note="{{app.noteCigarro}}">
+                          <span class="app__thumbs"><img src="/img/hero/cigarro-1.jpg" width="480" height="270" alt="" loading="lazy" /></span>
+                          <span class="app__shot-title">{{app.shotS30}}<span class="app__status app__status--green"><i></i>{{app.approved}}</span></span>
+                          <span class="app__shot-meta"><span><i class="app__avatar app__avatar--n app__avatar--xs">N</i></span><span>5.1s</span></span>
+                        </button>
+                        <button type="button" class="app__shot" data-shot="s50" data-in-group="g2" aria-pressed="false" data-name="SH0050 · {{app.shotS50}}" data-type="{{app.shot}}" data-img="/img/hero/cigarro-3.jpg" data-version="2" data-when="{{app.when3}}" data-note="{{app.noteCigarro2}}">
+                          <span class="app__thumbs"><img src="/img/hero/cigarro-3.jpg" width="480" height="270" alt="" loading="lazy" /></span>
+                          <span class="app__shot-title">{{app.shotS50}}<span class="app__status app__status--yellow"><i></i>{{app.inReview}}</span></span>
+                          <span class="app__shot-meta"><span><i class="app__avatar app__avatar--n app__avatar--xs">N</i></span><span>5.1s</span></span>
+                        </button>
+                        <button type="button" class="app__shot" data-shot="s55" data-in-group="g2" aria-pressed="false" data-name="SH0055 · {{app.shotS55}}" data-type="{{app.shot}}" data-img="/img/hero/cigarro-2.jpg" data-version="3" data-when="{{app.when3}}" data-note="{{app.noteCigarro3}}">
+                          <span class="app__thumbs"><img src="/img/hero/cigarro-2.jpg" width="480" height="270" alt="" loading="lazy" /></span>
+                          <span class="app__shot-title">{{app.shotS55}}<span class="app__status"><i></i>{{app.pending}}</span></span>
+                          <span class="app__shot-meta"><span></span><span>5.1s</span></span>
+                        </button>
+                        <button type="button" class="app__shot app__shot--group" data-group="g3" data-name="andar" data-count="2">
+                          <span class="app__thumbs app__thumbs--2"><img src="/img/hero/andar-1.jpg" width="480" height="270" alt="" /><img src="/img/hero/aparicion-1.jpg" width="480" height="270" alt="" /></span>
+                          <span class="app__shot-title"><svg class="ic"><use href="#i-layers" /></svg>andar</span>
+                          <span class="app__shot-meta"><span>2 {{app.shots}}</span><span>10.2s</span></span>
+                        </button>
+                        <button type="button" class="app__shot" data-shot="s11" data-in-group="g3" aria-pressed="false" data-name="SH0011 · {{app.shotS11}}" data-type="{{app.shot}}" data-img="/img/hero/andar-1-lg.jpg" data-video="/video/hero/andar-1.mp4" data-version="2" data-when="{{app.when1}}" data-note="{{app.noteAndar}}">
+                          <span class="app__thumbs"><img src="/img/hero/andar-1.jpg" width="480" height="270" alt="" loading="lazy" /></span>
+                          <span class="app__shot-title">{{app.shotS11}}<span class="app__status app__status--yellow"><i></i>{{app.inReview}}</span></span>
+                          <span class="app__shot-meta"><span><i class="app__avatar app__avatar--n app__avatar--xs">N</i></span><span>5.1s</span></span>
+                        </button>
+                        <button type="button" class="app__shot" data-shot="s13" data-in-group="g3" aria-pressed="false" data-name="SH0013 · {{app.shotS13}}" data-type="{{app.shot}}" data-img="/img/hero/aparicion-1-lg.jpg" data-video="/video/hero/aparicion-1.mp4" data-version="1" data-when="{{app.when1}}" data-note="{{app.noteAndar2}}">
+                          <span class="app__thumbs"><img src="/img/hero/aparicion-1.jpg" width="480" height="270" alt="" loading="lazy" /></span>
+                          <span class="app__shot-title">{{app.shotS13}}<span class="app__status"><i></i>{{app.pending}}</span></span>
+                          <span class="app__shot-meta"><span></span><span>5.1s</span></span>
+                        </button>
+                        <div class="app__shot app__shot--empty" data-row-only>
+                          <span class="app__thumbs app__thumbs--empty"><svg class="ic"><use href="#i-image" /></svg></span>
+                          <span class="app__shot-title app__shot-title--faint">{{app.untitled}}<span class="app__status"><i></i>{{app.pending}}</span></span>
+                          <span class="app__shot-meta"><span></span><span>—</span></span>
+                        </div>
+                        <div class="app__shot app__shot--new"><svg class="ic"><use href="#i-plus" /></svg></div>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              </div>
+
+              <div class="app__dock">
+                <span><svg class="ic"><use href="#i-image" /></svg>{{app.library}}</span>
+                <span class="is-on"><svg class="ic"><use href="#i-board" /></svg>{{app.production}}</span>
+                <span><svg class="ic"><use href="#i-editor" /></svg>{{app.editor}}</span>
+                <i class="app__dock-sep"></i>
+                <span class="app__dock-icon"><svg class="ic"><use href="#i-trash" /></svg><b>8</b></span>
+                <span class="app__dock-icon"><svg class="ic"><use href="#i-gear" /></svg></span>
+              </div>
+
+            </div>
+          </div>
+          <div class="hero__winlayer app__winlayer" data-winlayer>
+              <!-- Floating windows (the assistant, a popped item): above the page, dragged by their header anywhere on screen -->
+              <div class="app__win app__win--assistant" data-window="assistant" data-x="560" data-y="40" data-y0="40">
+                <div class="app__win-head" data-win-handle>
+                  <div class="app__win-where"><strong>{{app.assistant}}</strong><span>Punk Story Pilot</span></div>
+                  <span class="app__spacer"></span>
+                  <span class="app__win-ai is-on"><img src="/img/chat-claude.svg" width="16" height="16" alt="Claude" /></span>
+                  <span class="app__win-ai"><img src="/img/chat-codex.svg" width="15" height="15" alt="OpenAI" /></span>
+                  <i class="app__win-sep"></i>
+                  <span class="app__win-btn"><svg class="ic"><use href="#i-history" /></svg></span>
+                  <button type="button" class="app__win-btn" data-term-toggle aria-label="Terminal" title="{{app.termHint}}"><svg class="ic"><use href="#i-terminal" /></svg></button>
+                  <button type="button" class="app__win-btn" data-win-close aria-label="{{app.close}}"><svg class="ic"><use href="#i-x" /></svg></button>
+                </div>
+                <div class="app__chat" data-chat>
+                  <div class="app__chat-tabs">
+                    <span class="app__chat-tab is-on"><img src="/img/chat-claude-13.svg" width="12" height="12" alt="" />{{app.chatTab}}<i class="app__chat-busy"></i></span>
+                    <span class="app__chat-new"><svg class="ic"><use href="#i-plus" /></svg></span>
+                  </div>
+                  <div class="app__chat-list">
+                    <div class="app__chat-user"><p>{{app.chatU1}}</p></div>
+                    <div class="app__chat-assistant">
+                      <p>{{app.chatA1}}</p>
+                      <ul><li><code>SH0060</code><span>{{app.chatA1b}}</span></li><li><code>SH0070</code><span>{{app.chatA1c}}</span></li></ul>
+                    </div>
+                    <div class="app__chat-user"><p>{{app.chatU2}}</p></div>
+                    <div class="app__chat-tool"><svg class="ic"><use href="#i-check" /></svg><b>Sweetflow</b><span>{{app.chatTool}}</span></div>
+                    <div class="app__chat-assistant"><p>{{app.chatA2}}</p></div>
+                  </div>
+                  <div class="app__chat-compose"><span>{{app.chatPlaceholder}}</span><svg class="ic"><use href="#i-send" /></svg></div>
+                </div>
+                <div class="app__term" data-term>
+                  <p><b>$</b> claude</p>
+                  <p class="app__term-dim">Claude Code · Punk Story Pilot</p>
+                  <p class="app__term-dim">{{app.termLine}}</p>
+                  <p><b>&gt;</b> <i class="app__term-cursor"></i></p>
+                </div>
+              </div>
+              <div class="app__win app__win--item" data-window="item" data-x="420" data-y="40" data-y0="40">
+                <div class="app__win-head" data-win-handle>
+                  <div class="app__win-where"><strong data-win-item-name>Woman main</strong><span data-win-item-meta>v022</span></div>
+                  <span class="app__spacer"></span>
+                  <button type="button" class="app__win-btn" data-win-close aria-label="{{app.close}}"><svg class="ic"><use href="#i-x" /></svg></button>
+                </div>
+                <div class="app__win-body">
+                  <div class="app__win-side" data-win-body></div>
+                  <div class="app__win-stage">
+                    <div class="app__win-stage-in" data-win-stage></div>
+                    <div class="app__gallery">
+                      <div class="app__label">{{app.gallery}}<span><svg class="ic"><use href="#i-external" /></svg>{{app.import}}</span></div>
+                      <div class="app__versions-grid" data-gallery data-t-chosen="{{app.chosen}}"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+          </div>
           </div>
         </div>
       </section>
