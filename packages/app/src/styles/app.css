@@ -1677,3 +1677,18 @@ button.topbar__me { position: relative; padding: 0; border: 0; border-radius: 50
 .agent__term .xterm-viewport { background: transparent !important; }
 .agent__ended { flex: none; display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-top: 1px solid var(--line-0); color: var(--fg-3); font-size: 12px; }
 .agent__ended span { flex: 1; }
+
+/* ---------- drop-down (components/Select.tsx): the app's own list, not the system menu ---------- */
+.select {
+  height: var(--ctl); display: inline-flex; align-items: center; gap: 6px; min-width: 0; padding: 0 7px 0 9px;
+  border: 1px solid var(--line-1); border-radius: var(--r-md); background: var(--bg-2); color: var(--fg-0); text-align: left;
+}
+.select:hover:not(:disabled) { border-color: var(--line-2); }
+.select--open, .select:focus-visible { border-color: var(--primary); outline: none; }
+.select:disabled { opacity: .5; cursor: default; }
+.select__value { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.select__chevron { flex: none; color: var(--fg-3); }
+.gen__head .select { width: 100%; }
+.menu--select { position: fixed; left: auto; z-index: 60; overflow: auto; min-width: 0; }
+.menu--select .menu__item { white-space: nowrap; }
+.menu__item--on { color: var(--fg-0); }

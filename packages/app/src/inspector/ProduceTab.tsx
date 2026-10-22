@@ -30,6 +30,7 @@ import { draggedMedia, LibImageActs, MEDIA_DRAG, mediaDrag } from "../library/Li
 import { sharedGroup, sharedMedia, useSharedLibraries } from "../library/shared";
 import { kindOfFile, type GenerateArgs, type ImportItem, type RemoteCreation } from "../data/source";
 import { Popover } from "../components/Popover";
+import { Select } from "../components/Select";
 import { Composer } from "./ReviewTab";
 import { hasFiles, runImport } from "../components/ImportDialog";
 import type { Mark } from "../components/marks";
@@ -541,9 +542,7 @@ function GenerateBox({ node }: { node: ProdNode }) {
             </button>
           ))}
         </div>
-        <select className="sf-select gen__model" value={model} onChange={(e) => setModel(e.target.value)} title="Modelo">
-          {shown.map((m) => <option key={m.name}>{m.name}</option>)}
-        </select>
+        <Select className="gen__model" value={model} options={shown.map((m) => m.name)} onChange={setModel} title="Modelo" />
       </div>
 
       {spec.startFrame || refTypes.length ? (
