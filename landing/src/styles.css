@@ -59,11 +59,9 @@ main, .footer { position: relative; z-index: 1; }
 .btn:disabled { opacity: .55; cursor: default; }
 .btn--primary { background: var(--accent); }
 .btn--primary:hover:not(:disabled) { background: #6ba3ff; }
-.btn--glow {
-  background: linear-gradient(180deg, #6ba3ff, var(--accent)); border-color: rgb(255 255 255 / .25);
-  box-shadow: 0 8px 24px rgb(var(--accent-rgb) / .45);
-}
-.btn--glow:hover:not(:disabled) { background: linear-gradient(180deg, #7bafff, #6098fa); }
+/* Same as --primary: flat, no border, no glow (kept as a class for the markup). */
+.btn--glow { background: var(--accent); }
+.btn--glow:hover:not(:disabled) { background: #6ba3ff; }
 .btn--secondary { background: var(--bg-3); border-color: var(--line); }
 .btn--secondary:hover { background: #26262b; }
 .btn--ghost { background: rgb(255 255 255 / .06); border-color: rgb(255 255 255 / .16); }
