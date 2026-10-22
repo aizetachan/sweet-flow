@@ -60,9 +60,13 @@ void main() {
   // edges, a colour gradient from deep blue (low) to light blue (high) and a
   // fade towards the top and bottom edges. The cursor pushes a band away when
   // it comes near; the bands never stop moving on their own.
+  // Water: a slow current drags the whole pattern sideways and a travelling
+  // ripple warps the whole surface up and down, so everything moves together.
+  float xf = x + t * 0.10;
+  float yw = y + 0.028 * sin(x * 2.2 - t * 0.75) + 0.013 * sin(x * 4.7 + t * 1.15 + 1.3);
   for (int i = 0; i < 4; i++) {
     float fi = float(i);
-    float xi = x * 1.3 + fi * 1.7;
+    float xi = xf * 1.3 + fi * 1.7;
     float curtain = fbm(vec2(xi * 0.9, t * 0.16 + fi * 2.0)) * 0.30;
     float center = 0.22 + 0.17 * fi
       + sin(xi * 1.5 + t * 0.55 + fi * 1.1) * 0.10
@@ -74,8 +78,8 @@ void main() {
     float dir = toM.y / (abs(toM.y) + 0.10);
     center += dir * exp(-dmm * dmm * 4.0) * 0.10 * u_mouseAmt;
 
-    float d = abs(y - center);
-    float thick = 0.16 + 0.08 * fbm(vec2(xi * 1.2, t * 0.2 + fi));
+    float d = abs(yw - center);
+    float thick = 0.20 + 0.08 * fbm(vec2(xi * 1.2, t * 0.2 + fi));
     float band = smoothstep(thick, 0.0, d);
     float shimmer = 0.6 + 0.4 * fbm(vec2(xi * 2.0 - t * 0.4, y * 3.0 + fi));
     float a = band * shimmer * (0.75 - fi * 0.12);
