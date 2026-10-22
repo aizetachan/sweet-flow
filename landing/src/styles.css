@@ -204,11 +204,6 @@ main, .footer { position: relative; z-index: 1; }
 .nav__links { display: flex; gap: 28px; font-size: 14px; font-weight: 500; color: var(--fg-2); }
 .nav__links a:hover { color: var(--fg); }
 .nav__actions { display: flex; align-items: center; gap: 8px; }
-.lang {
-  display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0;
-  border-radius: 10px; border: 1px solid rgb(255 255 255 / .12); background: rgb(255 255 255 / .04);
-  font-size: 12px; font-weight: 600; letter-spacing: .04em; color: var(--fg-2);
-}
 
 
 /* --- hero --- */
@@ -550,8 +545,13 @@ kbd {
 .cta__card .cta__line { position: absolute; }
 
 /* --- footer --- */
-.footer { border-top: 1px solid var(--line); }
-.footer__inner { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 40px 0; }
+/* Footer: like the header, no line and a gradient background, but the other
+   way round: opaque at the bottom, fading out towards the top. */
+.footer {
+  background: linear-gradient(0deg, rgb(14 14 16 / .96) 0%, rgb(14 14 16 / .7) 45%, rgb(14 14 16 / 0) 100%);
+  padding-top: 40px;
+}
+.footer__inner { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 24px 0 40px; }
 .footer__links { display: flex; gap: 28px; font-size: 14px; color: var(--fg-3); }
 .footer__links a:hover { color: var(--fg); }
 .footer__copy { font-size: 14px; color: var(--fg-3); }
