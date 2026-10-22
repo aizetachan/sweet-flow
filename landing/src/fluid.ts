@@ -93,8 +93,12 @@ void main() {
   col = mix(bg, col, smoothstep(0.0, 0.08, 1.0 - y) * 0.9 + 0.1);
   // Dither: a ±0.5/255 blue-noise-ish offset per pixel breaks the visible
   // steps (banding) that 8-bit colour shows in gradients this dark.
-  vec2 dp = fract(vec3(gl_FragCoord.xyx) * vec3(0.1031, 0.1030, 0.0973)).xy;
-  float dither = fract(dot(dp, vec2(31.7, 17.3)) + dot(dp.yx, dp)) - 0.5;
+  vec3 dp3 = fract(vec3(gl_FragCoord.xyx) * vec3(0.1031, 0.1030, 0.0973));
+  dp3 += dot(dp3, dp3.yzx + 33.33);
+  float r1 = fract((dp3.x + dp3.y) * dp3.z);
+  float r2 = fract((dp3.y + dp3.z) * dp3.x);
+  // Triangular dither, ±1 level: two uniform samples summed.
+  float dither = (r1 + r2) - 1.0;
   col += dither / 255.0;
   gl_FragColor = vec4(col, 1.0);
 }
@@ -163,7 +167,7 @@ export function initFluidBackground(): void {
   gl.uniform1f(uAccent, 1);
 
   // Quarter resolution (half of a 1x DPR), it is a blur anyway.
-  const SCALE = 0.65;
+  const SCALE = 1.0; // CSS pixels (half of the device pixels on retina): smooth gradients, no upscaling
   const resize = () => {
     canvas.width = Math.max(1, Math.round(window.innerWidth * SCALE));
     canvas.height = Math.max(1, Math.round(window.innerHeight * SCALE));
