@@ -70,7 +70,9 @@ void main() {
       + curtain - 0.15;
     vec2 toM = vec2(x, center) - m;
     float dmm = length(toM);
-    center += sign(toM.y + 0.0001) * exp(-dmm * dmm * 5.0) * 0.12 * u_mouseAmt;
+    // Smooth push direction (no sign(): that flips abruptly and leaves a seam).
+    float dir = toM.y / (abs(toM.y) + 0.10);
+    center += dir * exp(-dmm * dmm * 4.0) * 0.10 * u_mouseAmt;
 
     float d = abs(y - center);
     float thick = 0.16 + 0.08 * fbm(vec2(xi * 1.2, t * 0.08 + fi));
