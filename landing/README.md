@@ -93,3 +93,46 @@ consola (Hosting › Añadir dominio personalizado) y solo pide dos registros DN
 Consola de Firebase › Firestore Database › colecciones `waitlist` y
 `contacts`. Para exportarlas: `firebase firestore:export` o, más simple,
 copiar desde la consola.
+
+## Estado y pendientes (22 oct 2026)
+
+Ya está **en producción** en https://sweetflow-landing.web.app, en el proyecto
+de Firebase `sweetflow-landing` (plan Spark). Rama `worktree-landing`;
+etiqueta `landing-v1-checkpoint` = estado estable anterior al fondo animado.
+
+### Hecho
+
+- Diseño de Figma implementado (nav, hero, franja, Cómo funciona, Biblioteca,
+  Producción, Editor, Asistente con la ventana nueva, Para equipos, Precios,
+  CTA, pie), sin menciones a IA en textos, metadatos ni imágenes OG.
+- Dos idiomas: inglés por defecto, español por `Accept-Language` (Hosting
+  i18n) y botón ES/EN. Una plantilla + dos JSON.
+- Lista de espera y «Habla con nosotros» escribiendo en Firestore con reglas
+  de solo creación; sin Functions ni correo. Entradas en la consola.
+- Imágenes OG (horizontal y cuadrada) y favicon con el símbolo real.
+- Cabecera ligada al scroll que se convierte en píldora flotante (solo el
+  símbolo); botones a 32 px; principales planos.
+- Fondo: shader WebGL «aurora» (`src/fluid.ts`): bandas horizontales que
+  fluyen como agua en los azules de marca sobre negro, al 85 %, siempre
+  detrás, el cursor solo las aparta. Resolución completa y tramado (sin
+  escalones); hash de ruido sin `sin()` (fallo de Metal).
+- Tarjetas: semitransparentes con desenfoque, borde blanco al 5 %, sin
+  hover, textura del shader al 2–5 % distinta en cada una y derivando.
+- «Para equipos»: un vídeo en bucle con seis planos generados de la
+  producción de prueba (725 KB), al 10 %, cargado solo al acercarse.
+- Pie con degradado opaco abajo que se desvanece hacia arriba.
+- Móvil revisado con Chrome headless a 390 px (no en dispositivo real).
+
+### Pendiente
+
+- **Fusionar `worktree-landing`** en la rama de trabajo
+  (`claude/audiovisual-production-platform-8f9aq1`).
+- Probar en un móvil real (sobre todo el shader y el rendimiento).
+- Borrar la entrada de prueba `prueba-landing@example.com` de `waitlist`.
+- Dominio propio (ahora `sweetflow-landing.web.app`).
+- Enlaces del pie «Documentación» y «Privacidad» apuntan a `#`; «Ver una
+  demo» baja a «Cómo funciona» (no hay demo).
+- Confirmar los precios anuales calculados (4 € y 31,20 €, −20 %).
+- Las imágenes OG están solo en inglés (el texto va dentro de la imagen).
+- Antispam: solo honeypot y reglas; App Check si hiciera falta.
+- Sin analítica.
