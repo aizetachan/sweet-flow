@@ -127,7 +127,7 @@ main, .footer { position: relative; z-index: 1; }
   background: linear-gradient(180deg, var(--card-a), var(--card-b)), var(--fluid-tex, none);
   background-size: auto, cover; background-position: 0 0, var(--tex-x, 50%) var(--tex-y, 50%);
   animation: card-drift-a 46s ease-in-out infinite alternate;
-  opacity: .6; /* leaves room for the backdrop to show */
+  opacity: .2; /* barely there: a 2–5 % tint that drifts */
 }
 .card::after {
   background-image: linear-gradient(180deg, var(--card-a), var(--card-b)), var(--fluid-tex-2, none);
@@ -135,13 +135,22 @@ main, .footer { position: relative; z-index: 1; }
 }
 @keyframes card-drift-a { from { translate: 0 0; } to { translate: 2.5% 1.5%; } }
 @keyframes card-drift-b { from { translate: 1.5% -1.5%; } to { translate: -2% 2%; } }
-@keyframes card-breathe { 0%, 100% { opacity: .12; } 50% { opacity: .5; } }
+@keyframes card-breathe { 0%, 100% { opacity: .04; } 50% { opacity: .16; } }
 .card:nth-child(3n + 1) { --tex-x: 18%; --tex-y: 30%; }
 .card:nth-child(3n + 2) { --tex-x: 72%; --tex-y: 65%; }
 .card:nth-child(3n + 3) { --tex-x: 45%; --tex-y: 90%; }
 .card:nth-child(4), .card:nth-child(5) { --tex-x: 85%; --tex-y: 12%; }
 .card:nth-child(3n + 2)::before, .card:nth-child(3n + 2)::after { animation-delay: -15s, -9s; }
 .card:nth-child(3n + 3)::before, .card:nth-child(3n + 3)::after { animation-delay: -31s, -17s; }
+/* Each card sees the texture at a different angle and scale, so the tint
+   lands in a different place on every one. */
+.card:nth-child(3n + 1)::before { rotate: 0deg; scale: 1.15; }
+.card:nth-child(3n + 1)::after { rotate: 180deg; scale: 1.25; }
+.card:nth-child(3n + 2)::before { rotate: 180deg; scale: 1.3; }
+.card:nth-child(3n + 2)::after { rotate: 9deg; scale: 1.45; }
+.card:nth-child(3n + 3)::before { rotate: -7deg; scale: 1.4; }
+.card:nth-child(3n + 3)::after { rotate: 172deg; scale: 1.2; }
+.card:nth-child(4)::before, .card:nth-child(5)::before { rotate: 6deg; scale: 1.35; }
 @media (prefers-reduced-motion: reduce) {
   .card::before, .card::after { animation: none; }
   .card::after { opacity: .5; }
