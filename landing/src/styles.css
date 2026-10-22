@@ -232,7 +232,7 @@ main, .footer { position: relative; z-index: 1; }
 .strip { padding: 96px 0 8px; }
 .strip__bar {
   position: relative; overflow: hidden; display: flex; align-items: center; justify-content: space-between;
-  padding: 26px 40px; border-radius: 18px; border: 1px solid rgb(255 255 255 / .14);
+  padding: 26px 40px; border-radius: 18px; border: 1px solid rgb(255 255 255 / .05);
   background: linear-gradient(180deg, var(--bg-3), var(--bg-2)); box-shadow: 0 16px 40px rgb(0 0 0 / .45);
 }
 .strip__bar::before {
@@ -333,7 +333,7 @@ main, .footer { position: relative; z-index: 1; }
 .feature__shot { flex: 1 1 0; min-width: 0; }
 .feature__shot img {
   width: 100%; height: auto; aspect-ratio: 680 / 425; object-fit: cover; border-radius: 14px;
-  border: 1px solid var(--line); box-shadow: 0 20px 50px rgb(0 0 0 / .5);
+  border: 1px solid rgb(255 255 255 / .05); box-shadow: 0 20px 50px rgb(0 0 0 / .5);
 }
 .checks { display: flex; flex-direction: column; gap: 12px; }
 .checks li { display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 500; }
@@ -357,7 +357,7 @@ main, .footer { position: relative; z-index: 1; }
 
 .win {
   position: absolute; left: 68px; top: 20px; width: 440px; height: 590px; display: flex; flex-direction: column;
-  border-radius: 14px; background: #121214; border: 1px solid rgb(255 255 255 / .18); overflow: hidden;
+  border-radius: 14px; background: #121214; border: 1px solid rgb(255 255 255 / .05); overflow: hidden;
   box-shadow: 0 0 90px rgb(var(--accent-rgb) / .25), 0 30px 70px rgb(0 0 0 / .6);
 }
 /* The assistant chat window (Figma › Asistente/Window). Geist throughout. */
@@ -414,7 +414,7 @@ main, .footer { position: relative; z-index: 1; }
 
 .toast {
   position: absolute; display: flex; align-items: center; gap: 10px; padding: 10px 14px 10px 12px; border-radius: 12px;
-  background: linear-gradient(180deg, var(--bg-3), var(--bg-2)); border: 1px solid rgb(255 255 255 / .2);
+  background: linear-gradient(180deg, var(--bg-3), var(--bg-2)); border: 1px solid rgb(255 255 255 / .05);
   box-shadow: 0 12px 30px rgb(0 0 0 / .5); white-space: nowrap;
 }
 .toast strong { display: block; font-size: 13px; font-weight: 600; }
@@ -563,7 +563,7 @@ kbd {
 .modal::backdrop { background: rgb(0 0 0 / .65); backdrop-filter: blur(6px); }
 .modal__card {
   position: relative; width: min(440px, calc(100vw - 32px)); padding: 32px; border-radius: 24px;
-  background: linear-gradient(180deg, var(--bg-3), var(--bg-2)); border: 1px solid rgb(255 255 255 / .16);
+  background: linear-gradient(180deg, var(--bg-3), var(--bg-2)); border: 1px solid rgb(255 255 255 / .05);
   box-shadow: 0 30px 80px rgb(0 0 0 / .6), 0 0 90px rgb(var(--accent-rgb) / .12);
 }
 .modal__close {
