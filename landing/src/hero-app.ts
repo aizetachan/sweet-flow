@@ -28,7 +28,22 @@ type Item = {
   version: number;
   when: string;
   note: string;
+  /** The prompt of this picture, and the one of what «Generate» brings; @[Name] marks a mention. */
+  prompt: string;
+  promptResult: string;
   variant: Variant;
+};
+
+/** A prompt with its @ mentions highlighted, like the app's. */
+const renderPrompt = (box: HTMLElement, text: string) => {
+  box.replaceChildren(...text.split(/(@\[[^\]]+\])/).map((part) => {
+    const m = /^@\[([^\]]+)\]$/.exec(part);
+    if (!m) return document.createTextNode(part);
+    const tag = document.createElement("b");
+    tag.className = "app__mention";
+    tag.textContent = `@${m[1]}`;
+    return tag;
+  }));
 };
 
 const tag = (v: number) => `v${String(v).padStart(3, "0")}`;
@@ -152,6 +167,7 @@ export function initHeroApp(root: ParentNode = document): void {
       id, name: k("name"), type: k("type"), img: k("img"), video: k("video"), result: k("result") || k("img"),
       version: Number(k("version") || 1), when: k("when"), note: k("note"), variant: (k("variant") || "shot") as Variant,
       gallery: k("gallery") ? k("gallery").split(",") : [],
+      prompt: k("prompt"), promptResult: k("promptResult") || k("prompt"),
     };
   };
   const home = itemOf("home", app.dataset, "home");
@@ -198,7 +214,7 @@ export function initHeroApp(root: ParentNode = document): void {
     if (el.reviewTrail) el.reviewTrail.style.display = item.version > 1 ? "" : "none";
     if (el.meta) el.meta.textContent = `${t("tModel")} · Nora · ${item.when}`;
     if (el.note) el.note.textContent = item.note;
-    if (el.prompt) el.prompt.textContent = t("tPrompt").replace("{name}", item.name);
+    if (el.prompt) renderPrompt(el.prompt, item.prompt);
     showMedia(item, el.stage, el.img, el.video);
     if (popped && popped.id === item.id) {
       // The panel itself is in the window; the column points there.
@@ -209,6 +225,9 @@ export function initHeroApp(root: ParentNode = document): void {
       setState("item");
     }
   };
+  // The panel starts on the character, drawn by the same code as any pick (prompt included).
+  show(home);
+
   const select = (id: string | null, fromBoard = true) => {
     for (const s of shots) {
       const on = !!id && s.dataset["shot"] === id;
@@ -427,6 +446,7 @@ export function initHeroApp(root: ParentNode = document): void {
     window.setTimeout(() => {
       item.version += 1;
       if (!item.video) [item.img, item.result] = [item.result, item.img];
+      [item.prompt, item.promptResult] = [item.promptResult, item.prompt];
       item.when = t("tNow");
       app.classList.remove("is-generating");
       layer.classList.remove("is-generating");

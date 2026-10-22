@@ -141,9 +141,10 @@
               data-home-when="{{app.v022when}}"
               data-home-note="{{app.v022note}}"
               data-home-variant="character"
+              data-home-prompt="{{app.pHome}}"
+              data-home-prompt-result="{{app.pHomeB}}"
               data-home-gallery="/img/hero/woman-v021.jpg,/img/hero/woman-v019.jpg,/img/hero/woman-v017.jpg,/img/hero/woman-v023.jpg,/img/hero/woman-v021.jpg"
               data-t-model="{{app.model}}"
-              data-t-prompt="{{app.promptHint}}"
               data-t-generate="{{app.generate}}"
               data-t-generating="{{app.generating}}"
               data-t-generated="{{app.generated}}"
@@ -218,7 +219,7 @@
                           <span class="app__ref"><svg class="ic"><use href="#i-plus" /></svg>{{app.add}}</span>
                         </div>
                         <div class="app__label">Prompt</div>
-                        <div class="app__prompt" data-prompt>{{app.promptHintHome}}</div>
+                        <div class="app__prompt" data-prompt></div>
                         <div class="app__gen-row">
                           <span class="app__pill"><svg class="ic"><use href="#i-minus" /></svg><b>1</b><svg class="ic"><use href="#i-plus" /></svg></span>
                           <span class="app__pill"><svg class="ic"><use href="#i-ratio" /></svg>16:9</span>
@@ -486,22 +487,22 @@
                           <span class="app__shot-title"><svg class="ic"><use href="#i-layers" /></svg>Aparicion personaje</span>
                           <span class="app__shot-meta"><span>2 {{app.shots}}</span><span>20.2s</span></span>
                         </button>
-                        <button type="button" class="app__shot" data-shot="s12" data-in-group="g1" aria-pressed="false" data-name="SH0012 · {{app.shotS12}}" data-type="{{app.shot}}" data-img="/img/hero/aparicion-1-lg.jpg" data-video="/video/hero/aparicion-1.mp4" data-version="1" data-when="{{app.when1}}" data-note="{{app.noteAparicion}}">
+                        <button type="button" class="app__shot" data-shot="s12" data-prompt="{{app.pS12}}" data-prompt-result="{{app.pS12B}}" data-in-group="g1" aria-pressed="false" data-name="SH0012 · {{app.shotS12}}" data-type="{{app.shot}}" data-img="/img/hero/aparicion-1-lg.jpg" data-video="/video/hero/aparicion-1.mp4" data-version="1" data-when="{{app.when1}}" data-note="{{app.noteAparicion}}">
                           <span class="app__thumbs"><img src="/img/hero/aparicion-1.jpg" width="480" height="270" alt="" loading="lazy" /></span>
                           <span class="app__shot-title">{{app.shotS12}}<span class="app__status app__status--yellow"><i></i>{{app.inReview}}</span></span>
                           <span class="app__shot-meta"><span><i class="app__avatar app__avatar--n app__avatar--xs">N</i></span><span>10.0s</span></span>
                         </button>
-                        <button type="button" class="app__shot" data-shot="s15" data-in-group="g1" aria-pressed="false" data-name="SH0015 · {{app.shotS15}}" data-type="{{app.shot}}" data-img="/img/hero/aparicion-2.jpg" data-version="3" data-when="{{app.when1}}" data-note="{{app.noteAparicion2}}">
+                        <button type="button" class="app__shot" data-shot="s15" data-prompt="{{app.pS15}}" data-prompt-result="{{app.pS15B}}" data-in-group="g1" aria-pressed="false" data-name="SH0015 · {{app.shotS15}}" data-type="{{app.shot}}" data-img="/img/hero/aparicion-2.jpg" data-version="3" data-when="{{app.when1}}" data-note="{{app.noteAparicion2}}">
                           <span class="app__thumbs"><img src="/img/hero/aparicion-2.jpg" width="480" height="270" alt="" loading="lazy" /></span>
                           <span class="app__shot-title">{{app.shotS15}}<span class="app__status app__status--green"><i></i>{{app.approved}}</span></span>
                           <span class="app__shot-meta"><span><i class="app__avatar app__avatar--n app__avatar--xs">N</i></span><span>10.2s</span></span>
                         </button>
-                        <button type="button" class="app__shot" data-shot="s10" aria-pressed="false" data-name="SH0010" data-type="{{app.shot}}" data-img="/img/hero/boots-lg.jpg" data-video="/video/hero/boots.mp4" data-version="4" data-when="{{app.when2}}" data-note="{{app.noteBoots}}">
+                        <button type="button" class="app__shot" data-shot="s10" data-prompt="{{app.pS10}}" data-prompt-result="{{app.pS10B}}" aria-pressed="false" data-name="SH0010" data-type="{{app.shot}}" data-img="/img/hero/boots-lg.jpg" data-video="/video/hero/boots.mp4" data-version="4" data-when="{{app.when2}}" data-note="{{app.noteBoots}}">
                           <span class="app__thumbs"><img src="/img/hero/boots.jpg" width="480" height="270" alt="" /></span>
                           <span class="app__shot-title app__shot-title--faint">{{app.untitled}}<span class="app__status"><i></i>{{app.pending}}</span></span>
                           <span class="app__shot-meta"><span></span><span>5.1s</span></span>
                         </button>
-                        <button type="button" class="app__shot" data-shot="s60" aria-pressed="false" data-name="SH0060" data-type="{{app.shot}}" data-img="/img/hero/belt-lg.jpg" data-video="/video/hero/belt.mp4" data-version="1" data-when="{{app.when2}}" data-note="{{app.noteBelt}}">
+                        <button type="button" class="app__shot" data-shot="s60" data-prompt="{{app.pS60}}" data-prompt-result="{{app.pS60B}}" aria-pressed="false" data-name="SH0060" data-type="{{app.shot}}" data-img="/img/hero/belt-lg.jpg" data-video="/video/hero/belt.mp4" data-version="1" data-when="{{app.when2}}" data-note="{{app.noteBelt}}">
                           <span class="app__thumbs"><img src="/img/hero/belt.jpg" width="480" height="270" alt="" /></span>
                           <span class="app__shot-title app__shot-title--faint">{{app.untitled}}<span class="app__status"><i></i>{{app.pending}}</span></span>
                           <span class="app__shot-meta"><span></span><span>5.1s</span></span>
@@ -511,17 +512,17 @@
                           <span class="app__shot-title"><svg class="ic"><use href="#i-layers" /></svg>Encender cigarro</span>
                           <span class="app__shot-meta"><span>3 {{app.shots}}</span><span>15.3s</span></span>
                         </button>
-                        <button type="button" class="app__shot" data-shot="s30" data-in-group="g2" aria-pressed="false" data-name="SH0030 · {{app.shotS30}}" data-type="{{app.shot}}" data-img="/img/hero/cigarro-1-lg.jpg" data-video="/video/hero/cigarro-1.mp4" data-version="1" data-when="{{app.when3}}" data-note="{{app.noteCigarro}}">
+                        <button type="button" class="app__shot" data-shot="s30" data-prompt="{{app.pS30}}" data-prompt-result="{{app.pS30B}}" data-in-group="g2" aria-pressed="false" data-name="SH0030 · {{app.shotS30}}" data-type="{{app.shot}}" data-img="/img/hero/cigarro-1-lg.jpg" data-video="/video/hero/cigarro-1.mp4" data-version="1" data-when="{{app.when3}}" data-note="{{app.noteCigarro}}">
                           <span class="app__thumbs"><img src="/img/hero/cigarro-1.jpg" width="480" height="270" alt="" loading="lazy" /></span>
                           <span class="app__shot-title">{{app.shotS30}}<span class="app__status app__status--green"><i></i>{{app.approved}}</span></span>
                           <span class="app__shot-meta"><span><i class="app__avatar app__avatar--n app__avatar--xs">N</i></span><span>5.1s</span></span>
                         </button>
-                        <button type="button" class="app__shot" data-shot="s50" data-in-group="g2" aria-pressed="false" data-name="SH0050 · {{app.shotS50}}" data-type="{{app.shot}}" data-img="/img/hero/cigarro-3.jpg" data-version="2" data-when="{{app.when3}}" data-note="{{app.noteCigarro2}}">
+                        <button type="button" class="app__shot" data-shot="s50" data-prompt="{{app.pS50}}" data-prompt-result="{{app.pS50B}}" data-in-group="g2" aria-pressed="false" data-name="SH0050 · {{app.shotS50}}" data-type="{{app.shot}}" data-img="/img/hero/cigarro-3.jpg" data-version="2" data-when="{{app.when3}}" data-note="{{app.noteCigarro2}}">
                           <span class="app__thumbs"><img src="/img/hero/cigarro-3.jpg" width="480" height="270" alt="" loading="lazy" /></span>
                           <span class="app__shot-title">{{app.shotS50}}<span class="app__status app__status--yellow"><i></i>{{app.inReview}}</span></span>
                           <span class="app__shot-meta"><span><i class="app__avatar app__avatar--n app__avatar--xs">N</i></span><span>5.1s</span></span>
                         </button>
-                        <button type="button" class="app__shot" data-shot="s55" data-in-group="g2" aria-pressed="false" data-name="SH0055 · {{app.shotS55}}" data-type="{{app.shot}}" data-img="/img/hero/cigarro-2.jpg" data-version="3" data-when="{{app.when3}}" data-note="{{app.noteCigarro3}}">
+                        <button type="button" class="app__shot" data-shot="s55" data-prompt="{{app.pS55}}" data-prompt-result="{{app.pS55B}}" data-in-group="g2" aria-pressed="false" data-name="SH0055 · {{app.shotS55}}" data-type="{{app.shot}}" data-img="/img/hero/cigarro-2.jpg" data-version="3" data-when="{{app.when3}}" data-note="{{app.noteCigarro3}}">
                           <span class="app__thumbs"><img src="/img/hero/cigarro-2.jpg" width="480" height="270" alt="" loading="lazy" /></span>
                           <span class="app__shot-title">{{app.shotS55}}<span class="app__status"><i></i>{{app.pending}}</span></span>
                           <span class="app__shot-meta"><span></span><span>5.1s</span></span>
@@ -531,12 +532,12 @@
                           <span class="app__shot-title"><svg class="ic"><use href="#i-layers" /></svg>andar</span>
                           <span class="app__shot-meta"><span>2 {{app.shots}}</span><span>10.2s</span></span>
                         </button>
-                        <button type="button" class="app__shot" data-shot="s11" data-in-group="g3" aria-pressed="false" data-name="SH0011 · {{app.shotS11}}" data-type="{{app.shot}}" data-img="/img/hero/andar-1-lg.jpg" data-video="/video/hero/andar-1.mp4" data-version="2" data-when="{{app.when1}}" data-note="{{app.noteAndar}}">
+                        <button type="button" class="app__shot" data-shot="s11" data-prompt="{{app.pS11}}" data-prompt-result="{{app.pS11B}}" data-in-group="g3" aria-pressed="false" data-name="SH0011 · {{app.shotS11}}" data-type="{{app.shot}}" data-img="/img/hero/andar-1-lg.jpg" data-video="/video/hero/andar-1.mp4" data-version="2" data-when="{{app.when1}}" data-note="{{app.noteAndar}}">
                           <span class="app__thumbs"><img src="/img/hero/andar-1.jpg" width="480" height="270" alt="" loading="lazy" /></span>
                           <span class="app__shot-title">{{app.shotS11}}<span class="app__status app__status--yellow"><i></i>{{app.inReview}}</span></span>
                           <span class="app__shot-meta"><span><i class="app__avatar app__avatar--n app__avatar--xs">N</i></span><span>5.1s</span></span>
                         </button>
-                        <button type="button" class="app__shot" data-shot="s13" data-in-group="g3" aria-pressed="false" data-name="SH0013 · {{app.shotS13}}" data-type="{{app.shot}}" data-img="/img/hero/aparicion-1-lg.jpg" data-video="/video/hero/aparicion-1.mp4" data-version="1" data-when="{{app.when1}}" data-note="{{app.noteAndar2}}">
+                        <button type="button" class="app__shot" data-shot="s13" data-prompt="{{app.pS13}}" data-prompt-result="{{app.pS13B}}" data-in-group="g3" aria-pressed="false" data-name="SH0013 · {{app.shotS13}}" data-type="{{app.shot}}" data-img="/img/hero/aparicion-1-lg.jpg" data-video="/video/hero/aparicion-1.mp4" data-version="1" data-when="{{app.when1}}" data-note="{{app.noteAndar2}}">
                           <span class="app__thumbs"><img src="/img/hero/aparicion-1.jpg" width="480" height="270" alt="" loading="lazy" /></span>
                           <span class="app__shot-title">{{app.shotS13}}<span class="app__status"><i></i>{{app.pending}}</span></span>
                           <span class="app__shot-meta"><span></span><span>5.1s</span></span>

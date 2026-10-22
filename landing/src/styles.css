@@ -772,7 +772,8 @@ kbd {
 .app__label span { font-weight: 500; letter-spacing: 0; text-transform: none; }
 .app__refs { display: flex; gap: 6px; margin-top: 8px; }
 .app__ref { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; width: 58px; height: 50px; border: 1px dashed var(--a-line-2); border-radius: 8px; font-size: 10.5px; color: var(--a-fg-2); }
-.app__prompt { min-height: 64px; margin-top: 8px; padding: 8px 10px; border: 1px solid var(--a-line-2); border-radius: 8px; font-size: 11.5px; line-height: 1.4; color: var(--a-fg-3); }
+.app__prompt { min-height: 64px; margin-top: 8px; padding: 8px 10px; border: 1px solid var(--a-line-2); border-radius: 8px; font-size: 11.5px; line-height: 1.45; color: var(--a-fg); }
+.app__mention { font-weight: 600; color: var(--a-accent); }
 .app__gen-row { display: flex; gap: 8px; margin-top: 10px; }
 .app__pill { display: inline-flex; align-items: center; gap: 8px; height: 26px; padding: 0 10px; border-radius: 8px; background: var(--a-field); font-size: 12px; }
 .app__pill .ic { width: 12px; height: 12px; color: var(--a-fg-2); }
