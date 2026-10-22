@@ -17,3 +17,4 @@ Reglas de trabajo:
   - `MockSource` es la fuente por defecto: la demo debe seguir funcionando sin configuración.
 - **Nombres en disco:** los nombres de carpeta en disco salen siempre de `folderName()`.
 - **Comprobaciones:** antes de hacer commit, ejecuta `pnpm -r typecheck`, `pnpm test` y `pnpm --filter @sweetflow/app build`.
+- **Landing (`landing/`):** proyecto aparte, con su propio workspace de pnpm y su propio proyecto de Firebase (Hosting + Firestore en plan Spark, sin Functions). No forma parte del monorepo: ni comparte dependencias ni entra en sus comprobaciones. Sus comandos se ejecutan desde `landing/` (ver `landing/README.md`).

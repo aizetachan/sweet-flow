@@ -1,0 +1,6 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Ring">
+<circle id="Ring bg" cx="8" cy="8" r="5" stroke="white" stroke-opacity="0.08" stroke-width="2"/>
+<path id="Ring fill" d="M8 1C9.78043 1 11.494 1.67843 12.7918 2.89722L11.4501 4.326C10.5156 3.44847 9.28191 2.96 8 2.96L8 1Z" fill="#B4B4BB"/>
+</g>
+</svg>

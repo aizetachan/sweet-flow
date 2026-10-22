@@ -1,0 +1,11 @@
+node_modules/
+# Generated from src/page.html + src/i18n (pnpm pages)
+/index.html
+/localized/
+dist/
+functions/lib/
+.firebase/
+*.log
+.env
+.env.*
+!.env.example
